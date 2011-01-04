@@ -1,0 +1,23 @@
+Program ::= Decl*;
+
+abstract Decl ::= Type <Name:String>;
+TypeDecl : Decl;
+SampleDecl : Decl;
+
+Field ::= Type <Name:String>;
+
+abstract Type;
+VoidType          : Type;
+PrimType          : Type ::= <Name:String> <Token:int>;
+UserType          : Type ::= <Name:String>;
+StructType        : Type ::= Field*;
+ParseArrayType    : Type ::= Type Dim*;
+abstract ArrayType : Type ::= Type Exp*;
+VariableArrayType : ArrayType;
+FixedArrayType    : ArrayType;
+
+Dim ::= Exp*;
+
+abstract Exp;
+IntegerLiteral : Exp ::= <Value:String>;
+VariableSize : Exp;

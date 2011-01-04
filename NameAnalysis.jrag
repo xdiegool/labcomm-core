@@ -1,0 +1,64 @@
+
+aspect NameAnalysis {
+
+  inh String Decl.lookupName(String name);
+  eq Program.getDecl(int index).lookupName(String name) {
+    for (int i = 0; i < index; i++) {
+      String s = getDecl(i).getName();
+      if (s.equals(name)) {
+      	return s;
+      }
+    }
+    return null;
+  }
+  inh String Field.lookupName(String name);
+  eq StructType.getField(int index).lookupName(String name) {
+    for (int i = 0; i < index; i++) {
+      String s = getField(i).getName();
+      if (s.equals(name)) {
+      	return s;
+      }
+    }
+    return null;
+  }
+
+  inh TypeDecl Decl.lookupType(String name);
+  inh TypeDecl UserType.lookupType(String name);
+  eq Program.getDecl(int index).lookupType(String name) {
+    for(int i = 0; i < index; i++) {
+      Decl d = getDecl(i);  
+      if(d instanceof TypeDecl && d.getName().equals(name)) {
+	return (TypeDecl)d;
+      }
+    }
+    return null;
+  }
+
+  syn TypeDecl UserType.decl() = lookupType(getName());
+  
+  
+  public void ASTNode.nameCheck() {
+    for (int i = 0; i < getNumChild(); i++) {
+      getChild(i).nameCheck();
+    }
+  }
+  
+  public void Decl.nameCheck() {
+    if (lookupType(getName()) != null || lookupName(getName()) != null) {
+      error(getName() + " multiply declared");
+    }
+  }
+  
+  public void Field.nameCheck() {
+    if(lookupName(getName()) != null) {
+      error(getName() + " multiply declared");
+    }
+  }
+  
+  public void UserType.nameCheck() {
+    if (decl() == null) {
+      error("Use of undeclared type");
+    } 
+  }
+
+}

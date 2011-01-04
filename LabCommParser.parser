@@ -1,0 +1,127 @@
+%header {:
+ package AST;
+:};
+%embed {:
+  public static class SourceError extends Error {
+    public SourceError(String msg) {
+      super(msg);
+    }
+  }
+  class Events extends Parser.Events {
+    public void syntaxError(Symbol token) {
+      StringBuffer s = new StringBuffer();
+      s.append(token.getLine(token.getStart()) + ", " + token.getColumn(token.getStart()) + "\n");
+      s.append("  *** Syntactic error: unexpected token " + Terminals.NAMES[token.getId()]);
+      throw new SourceError(s.toString());
+        //super.syntaxError(token);
+        //throw new RuntimeException(token.getLine(token.getStart()) + ", " + 
+	// token.getColumn(token.getStart()) + ": Syntax Error");
+    }
+    public void scannerError(Scanner.Exception e) {
+      StringBuffer s = new StringBuffer();
+      s.append(e.line + ", " + e.column + "\n");
+      s.append("  *** Lexical error: " + e.getMessage());
+      throw new SourceError(s.toString());
+        //super.scannerError(e);
+        //throw new RuntimeException("Unexpected token");
+    }
+
+  }
+
+        {
+            report = new Events(); // Use error handler in parser
+        }
+:};
+
+Program goal =
+     /* Empty program */               {: return new Program(); :}
+  |  decl_list.l                       {: return new Program(l); :}
+  ;
+
+List decl_list =
+    decl.d                          {: return new List().add(d); :}
+  | decl_list.l decl.d              {: return l.add(d); :}
+  ;
+
+Decl decl =
+    type_decl.t                     {: return t; :}
+  | sample_decl.s	            {: return s; :}
+  ;
+
+List var_decl_list =
+    var_decl.v                      {: return new List().add(v); :}
+  | var_decl_list.l var_decl.v      {: return l.add(v); :}
+  ;
+
+Field var_decl =
+    type.t IDENTIFIER SEMICOLON     {: return new Field(t, IDENTIFIER); :}
+  | type.t IDENTIFIER dim_list.d SEMICOLON 
+    {: return new Field(new ParseArrayType(t, d), IDENTIFIER); :}
+  ;
+
+TypeDecl type_decl = 
+    TYPEDEF type.t IDENTIFIER SEMICOLON {: return new TypeDecl(t, IDENTIFIER); :}
+  | TYPEDEF type.t IDENTIFIER dim_list.d SEMICOLON 
+    {: return new TypeDecl(new ParseArrayType(t, d), IDENTIFIER); :}
+  ;
+
+SampleDecl sample_decl = 
+    SAMPLE type.t IDENTIFIER SEMICOLON 
+      {: return new SampleDecl(t, IDENTIFIER); :}
+  | SAMPLE type.t IDENTIFIER dim_list.d SEMICOLON 
+      {: return new SampleDecl(new ParseArrayType(t, d), IDENTIFIER); :}
+  | SAMPLE VOID IDENTIFIER SEMICOLON 
+      {: return new SampleDecl(new VoidType(), IDENTIFIER); :}
+  ;
+
+Type type =
+    prim_type.p                     {: return p; :}
+  | user_type.u                     {: return u; :}
+  | struct_type.s                   {: return s; :}
+  ;
+
+PrimType prim_type =      
+    BOOLEAN                         
+      {: return new PrimType(BOOLEAN, ASTNode.LABCOMM_BOOLEAN); :}
+  | BYTE                            
+      {: return new PrimType(BYTE, ASTNode.LABCOMM_BYTE); :}
+  | SHORT                           
+      {: return new PrimType(SHORT, ASTNode.LABCOMM_SHORT); :}
+  | INT                             
+      {: return new PrimType(INT, ASTNode.LABCOMM_INT); :}
+  | LONG                            
+      {: return new PrimType(LONG, ASTNode.LABCOMM_LONG); :}
+  | FLOAT                           
+      {: return new PrimType(FLOAT, ASTNode.LABCOMM_FLOAT); :}
+  | DOUBLE                          
+      {: return new PrimType(DOUBLE, ASTNode.LABCOMM_DOUBLE); :}
+  | STRING                          
+      {: return new PrimType(STRING, ASTNode.LABCOMM_STRING); :}
+  ;
+
+UserType user_type =      
+    IDENTIFIER                      {: return new UserType(IDENTIFIER); :}
+  ;
+
+StructType struct_type =
+    STRUCT LBRACE var_decl_list.l RBRACE {: return new StructType(l); :}
+  ;
+
+List dim_list =
+    dim.d                           {: return new List().add(d); :}
+  | dim_list.l  dim.d               {: return l.add(d); :}
+  ;
+
+Dim dim =
+    LBRACK exp_list.e RBRACK        {: return new Dim(e); :}
+  ;
+
+List exp_list =
+    exp.e                           {: return new List().add(e); :}
+  | exp_list.l COMMA exp.e          {: return l.add(e); :}
+  ;
+
+Exp exp = 
+    INTEGER_LITERAL                 {: return new IntegerLiteral(INTEGER_LITERAL); :}
+  | UNDERSCORE                      {: return new VariableSize(); :}
+  ;

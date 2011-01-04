@@ -1,0 +1,20 @@
+typedef int int_array_ss[1][_, 3, _][5];
+sample struct { int aa; boolean bb; int_array_ss ias; } struct_array_ss[1][_][_];
+
+typedef int int_t;
+typedef int int_array_t[1][2][3,4];
+typedef struct { int a; } struct_t;
+typedef struct { int a; } struct_array_t[2];
+typedef struct { struct { int a; } a; } struct_struct_t;
+
+sample int int_s;
+sample int int_array_s[1][_, 3, _][5];
+sample struct { int a; double bcd; } struct_s;
+sample struct { int a; } struct_array_s[2];
+sample struct { struct { int a; } a; } struct_struct_s;
+
+sample int_t int_t_s;
+sample int_array_t int_array_t_s;
+sample struct_t struct_t_s;
+sample struct_array_t struct_array_t_s;
+sample struct_struct_t struct_struct_t_s;

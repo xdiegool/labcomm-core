@@ -1,0 +1,1103 @@
+import java.util.Vector;
+
+aspect C_CodeGenEnv {
+
+  // Environment wrapper for C-code generation
+  // handles qualid nesting, indentation, file writing and
+  // prefix propagation
+
+  public class C_env {
+
+    final private class C_printer {
+      
+      private boolean newline = true;
+      private PrintStream out;
+
+      public C_printer(PrintStream out) {
+	this.out = out;
+      }
+
+      public void print(C_env env, String s) {
+	if (newline) {
+	  newline = false;
+	  for (int i = 0 ; i < env.indent ; i++) {
+	    out.print("  ");
+	  }
+	}
+	out.print(s);
+      }
+      public void println(C_env env, String s) {
+	print(env, s);
+	out.println();
+	newline = true;
+      }
+    }
+
+    public final String qualid;
+    public final String lcName;
+    public final String rawPrefix;
+    public final String prefix;
+    private int indent;
+    public final int depth;
+    private C_printer printer;
+
+    private C_env(String qualid, String lcName, String rawPrefix, 
+		  int indent, int depth, C_printer printer) {
+      this.qualid = qualid;
+      this.lcName = lcName;
+      this.rawPrefix = rawPrefix;
+      this.prefix = rawPrefix + "_";
+      this.indent = indent;
+      this.depth = depth;
+      this.printer = printer;
+    }
+
+    public C_env(String qualid, String lcName, String rawPrefix, 
+		 PrintStream out) {
+      this.qualid = qualid;
+      this.lcName = lcName;
+      this.rawPrefix = rawPrefix;
+      this.prefix = rawPrefix + "_";
+      this.depth = 0;
+      this.indent = 0;
+      this.printer = new C_printer(out);
+    }
+
+    public C_env nestArray(String suffix) {
+      return new C_env(qualid + suffix, lcName, rawPrefix, 
+		       indent, depth + 1, printer);
+    }
+
+    public C_env nestStruct(String suffix) {
+      return new C_env(qualid + suffix, lcName, rawPrefix, 
+		       indent, depth, printer);
+    }
+
+    public void indent() {
+      indent++;
+    }
+
+    public void unindent() {
+      indent--;
+    }
+
+    public String prefix() {
+      return rawPrefix;
+    }
+
+    public void print(String s) {
+      printer.print(this, s);
+    }
+
+    public void println(String s) {
+      printer.println(this, s);
+    }
+
+  }
+
+  public C_env ArrayType.C_Nest(C_env env) {
+    throw new Error(this.getClass().getName() + 
+		    ".C_Nest(C_env env)" + 
+		    " not declared");
+  }
+
+  public C_env FixedArrayType.C_Nest(C_env env) {
+    String index = ".a";
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      index += "[i_" + env.depth + "_" + i + "]";
+    }
+    return env.nestArray(index);
+  }
+
+  public C_env VariableArrayType.C_Nest(C_env env) {
+    return env.nestArray(".a[i_" + env.depth + "]");
+  }
+
+
+}
+
+aspect C_IsDynamic {
+  
+  // Determine if a type has dynamically allocated data
+  syn boolean Decl.C_isDynamic() = getType().C_isDynamic();
+  syn boolean Type.C_isDynamic() = false;
+  syn boolean PrimType.C_isDynamic() = getToken() == LABCOMM_STRING;
+  syn boolean UserType.C_isDynamic() = 
+    lookupType(getName()).getType().C_isDynamic();
+  syn boolean StructType.C_isDynamic() {
+    for (int i = 0 ; i < getNumField() ; i++) {
+      if (getField(i).getType().C_isDynamic()) {
+	return true;
+      }
+    }
+    return false;
+  }
+  syn boolean FixedArrayType.C_isDynamic() = getType().C_isDynamic();
+  syn boolean VariableArrayType.C_isDynamic() = true;
+}
+
+aspect C_CodeGen {
+
+  public void Program.C_genH(PrintStream out, Vector includes, 
+			     String lcName, String prefix) {
+    C_env env = new C_env("", lcName, prefix, out);
+
+    // Hackish prettyprint preamble
+    out.println("/* LabComm declarations:");
+    pp(out);
+    out.println("*/");
+    env.println("");
+    env.println("");
+    env.println("#ifndef __LABCOMM_" + env.lcName + "_H__"); 
+    env.println("#define __LABCOMM_" + env.lcName + "_H__");
+    env.println("");
+
+    // Include
+    env.println("#include \"labcomm.h\"");
+    for (int i = 0 ; i < includes.size() ; i++) {
+      env.println("#include \"" + includes.get(i) + "\"");
+    }
+    env.println("");
+
+    C_emitH(env);
+
+    env.println("#endif");
+  }
+
+  public void Program.C_genC(PrintStream out, Vector includes, 
+			     String lcName, String prefix) {
+    C_env env = new C_env("", lcName, prefix, out);
+
+    // Include
+    env.println("#include \"labcomm.h\"");
+    env.println("#include \"labcomm_private.h\"");
+    for (int i = 0 ; i < includes.size() ; i++) {
+      env.println("#include \"" + includes.get(i) + "\"");
+    }
+    env.println("");
+    
+    // Method Implementations
+    C_emitC(env);
+  }
+
+  public void Program.C_emitH(C_env env) {
+    for (int i = 0; i < getNumDecl(); i++) {
+      getDecl(i).C_emitType(env);
+//      getDecl(i).C_emitSignatureDeclaration(env);
+      getDecl(i).C_emitDecoderRegisterDeclaration(env);
+      getDecl(i).C_emitEncoderDeclaration(env);
+      getDecl(i).C_emitSizeofDeclaration(env);
+      env.println("");
+    }
+    C_emitForAll(env);
+  }
+
+  public void Program.C_emitC(C_env env) {
+    C_emitSignature(env);
+    for (int i = 0; i < getNumDecl(); i++) {
+      getDecl(i).C_emitDecoder(env);
+      getDecl(i).C_emitDecoderRegisterHandler(env);
+      getDecl(i).C_emitEncoder(env);
+      getDecl(i).C_emitEncoderRegisterHandler(env);
+      getDecl(i).C_emitSizeof(env);
+    }
+  }
+ 
+}
+
+aspect C_Common {
+
+  public void ArrayType.C_emitLoopVariables(C_env env) {
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      env.println("int i_" + env.depth + "_" + i + ";");
+    }
+  }
+
+}
+
+aspect C_Type {
+
+  public void Decl.C_emitType(C_env env) {
+    throw new Error(this.getClass().getName() + 
+		    ".C_emitType(C_env env)" + 
+		    " not declared");
+  }
+
+  public void TypeDecl.C_emitType(C_env env) {
+    env.println("#ifndef PREDEFINED_" + env.prefix + getName());
+    env.print("typedef ");
+    getType().C_emitType(env, env.prefix + getName());
+    env.println(";");
+    env.println("#endif");
+  }
+
+  public void SampleDecl.C_emitType(C_env env) {
+    env.println("#ifndef PREDEFINED_" + env.prefix + getName());
+    env.print("typedef ");
+    getType().C_emitType(env, env.prefix + getName());
+    env.println(";");
+    env.println("#endif");
+  }
+
+  public void Type.C_emitType(C_env env, String name) {
+    throw new Error(this.getClass().getName() + 
+		    ".C_emitType(C_env env, String name)" + 
+		    " not declared");
+  }
+
+  public void VoidType.C_emitType(C_env env, String name) {
+    env.print("char " + name);
+  }
+
+  public void PrimType.C_emitType(C_env env, String name) {
+    switch (getToken()) {
+      case LABCOMM_BOOLEAN: { env.print("unsigned char"); } break;
+      case LABCOMM_BYTE: { env.print("unsigned char"); } break;
+      case LABCOMM_STRING: { env.print("char*"); } break;
+      case LABCOMM_LONG: { env.print("long long"); } break;
+      default: { env.print(getName()); } break;
+    }
+    env.print(" " + name);
+  }
+
+  public void UserType.C_emitType(C_env env, String name) {
+    env.print(env.prefix + getName() + " " + name);
+  }
+
+  public void StructType.C_emitType(C_env env, String name) {
+    env.println("struct {");
+    env.indent();
+    for (int i = 0 ; i < getNumField() ; i++) {
+      getField(i).C_emitType(env);
+      env.println(";");
+    }
+    env.unindent();
+    env.print("} " + name);
+  }
+
+  public void Field.C_emitType(C_env env) {
+    getType().C_emitType(env, getName());
+  }
+
+  public void FixedArrayType.C_emitType(C_env env, String name) {
+    env.println("struct {");
+    env.indent();
+    StringBuffer index = new StringBuffer("a");
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      index.append("[" + getExp(i).C_getValue() + "]");
+    }
+    getType().C_emitType(env, index.toString());
+    env.println(";");
+    env.unindent();
+    env.print("} " + name);
+  }
+
+  public void VariableArrayType.C_emitType(C_env env, String name) {
+    env.println("struct {");
+    env.indent();
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      if (getExp(i) instanceof VariableSize) {
+	env.println("int n_" + i + ";");
+      } else {
+	env.println("// n_" + i + "=" + getExp(i).C_getValue());
+      }
+    }
+    getType().C_emitType(env, "*a");
+    env.println(";");
+    env.unindent();
+    env.print("} " + name);
+  }
+
+  public String Exp.C_getValue() {
+   throw new Error(this.getClass().getName() + 
+		    ".C_getValue()" + 
+		    " not declared");
+  }
+
+  public String IntegerLiteral.C_getValue() {
+    return getValue();
+  }
+
+}
+
+aspect C_Declarations {
+
+  public void Decl.C_emitDecoderRegisterDeclaration(C_env env) {
+  }
+
+  public void SampleDecl.C_emitDecoderRegisterDeclaration(C_env env) {
+    env.println("void labcomm_decoder_register_" + 
+		env.prefix + getName() + "(");
+    env.indent();
+    env.println("struct labcomm_decoder *d,");
+    env.println("void (*handler)(");
+    env.indent();
+    env.println(env.prefix + getName() + " *v,");
+    env.println("void *context");
+    env.unindent();
+    env.println("),");
+    env.println("void *context");
+    env.unindent();
+    env.println(");");
+  }
+  
+  public void Decl.C_emitEncoderDeclaration(C_env env) {
+  }
+
+  public void SampleDecl.C_emitEncoderDeclaration(C_env env) {
+    env.println("void labcomm_encoder_register_" + 
+		env.prefix + getName() + "(");
+    env.indent();
+    env.println("struct labcomm_encoder *e);");
+    env.unindent();
+
+    env.println("void labcomm_encode_" + env.prefix + getName() + "(");
+    env.indent();
+    env.println("struct labcomm_encoder *e,");
+    env.println(env.prefix + getName() + " *v");
+    env.unindent();
+    env.println(");");
+  }
+
+}
+
+aspect C_Limit {
+
+  public String Exp.C_getLimit(C_env env, int i) {
+    throw new Error(this.getClass().getName() + 
+		    ".C_emitDecoderLimit(C_env env, int i)" + 
+		    " not declared");
+  }
+
+  public String IntegerLiteral.C_getLimit(C_env env, int i) {
+    return getValue();
+  }
+
+  public String VariableSize.C_getLimit(C_env env, int i) {
+    return env.qualid + ".n_" + i;
+  }
+  
+}
+
+aspect C_Index {
+
+  public void ArrayType.C_emitCalcIndex(C_env env) {
+  }
+
+  public void VariableArrayType.C_emitCalcIndex(C_env env) {
+    env.print("int i_" + env.depth + " = ");
+
+    String i_prefix = "i_" + env.depth + "_";
+    String expr = i_prefix + "0";
+    for (int i = 1 ; i < getNumExp() ; i++) {
+      expr = "(" + expr + ") * " +
+	getExp(i).C_getLimit(env, i) + " + " + 
+	i_prefix + i;
+    }
+    env.println(expr + ";");
+  }
+
+}
+
+aspect C_Decoder {
+
+  public void Decl.C_emitDecoder(C_env env) {
+    throw new Error(this.getClass().getName() + 
+		    ".C_emitDecoder(C_env env)" + 
+		    " not declared");
+  }
+
+  public void TypeDecl.C_emitDecoder(C_env env) {
+  }
+
+  public void SampleDecl.C_emitDecoder(C_env env) {
+    env = env.nestStruct("v");
+    env.println("static void decode_" + getName() + "(");
+    env.indent();
+    env.println("labcomm_decoder_t *d,");
+    env.println("void (*handle)(");
+    env.indent();
+    env.println(env.prefix + getName() + " *v,");
+    env.println("void *context");
+    env.unindent();
+    env.println("),");
+    env.println("void *context");
+    env.unindent();
+    env.println(")");
+    env.println("{");
+    env.indent();
+    env.println(env.prefix + getName() + " v;");
+    getType().C_emitDecoder(env);
+    env.println("handle(&v, context);");
+    if (C_isDynamic()) {
+      env.println("{");
+      env.indent();
+      getType().C_emitDecoderDeallocation(env);
+      env.unindent();
+      env.println("}");
+    }
+    env.unindent();
+    env.println("}");
+  }
+
+  public void Type.C_emitDecoder(C_env env) {
+    throw new Error(this.getClass().getName() + 
+		    ".C_emitDecoder(C_env env)" + 
+		    " not declared");
+  }
+
+  public void VoidType.C_emitDecoder(C_env env) {
+  }
+
+  public void PrimType.C_emitDecoder(C_env env) {
+    env.println(env.qualid + " = labcomm_decode_" + getName() + "(d);");
+  }
+
+  public void UserType.C_emitDecoder(C_env env) {
+    lookupType(getName()).getType().C_emitDecoder(env);
+  }
+
+  public void StructType.C_emitDecoder(C_env env) {
+    for (int i = 0 ; i < getNumField() ; i++) {
+      getField(i).C_emitDecoder(env);
+    }
+  }
+
+  public void ArrayType.C_emitDecoder(C_env env) {
+    C_emitDecoderDecodeLimit(env);
+    C_emitDecoderArrayAllocate(env);
+    env.println("{");
+    env.indent();
+    C_emitLoopVariables(env);
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      String iterator = "i_" + env.depth + "_" + i;
+      env.println("for (" + iterator + " = 0" +
+		  " ; " +
+		  iterator + " < " + getExp(i).C_getLimit(env, i) +
+		  " ; " +
+		  iterator + "++) {");
+      env.indent();
+    }
+    C_emitCalcIndex(env);
+    getType().C_emitDecoder(C_Nest(env));
+    for (int i = getNumExp() - 1 ; i >= 0 ; i--) {
+      env.unindent();
+      env.println("}");
+    }
+    env.unindent();
+    env.println("}");
+  }
+
+  public void Field.C_emitDecoder(C_env env) {
+    getType().C_emitDecoder(env.nestStruct("." + getName()));
+  }
+
+  public void Exp.C_emitDecoderDecodeLimit(C_env env, int i) {
+  }
+
+  public void VariableSize.C_emitDecoderDecodeLimit(C_env env, int i) {
+    env.println(env.qualid + ".n_" + i + " = labcomm_decode_int(d);");
+  }
+
+  public void ArrayType.C_emitDecoderDecodeLimit(C_env env) {
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      getExp(i).C_emitDecoderDecodeLimit(env, i);
+    }
+  }
+
+  public void ArrayType.C_emitDecoderArrayAllocate(C_env env) {
+  }
+
+  public void VariableArrayType.C_emitDecoderArrayAllocate(C_env env) {
+    env.print(env.qualid + ".a = malloc(sizeof(" + env.qualid + ".a[0])");
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      env.print(" * " + getExp(i).C_getLimit(env, i));
+    }
+    env.println(");");
+  }
+
+  // Code for deallocation of dynamically allocated data 
+
+  public void Type.C_emitDecoderDeallocation(C_env env) {
+    throw new Error(this.getClass().getName() + 
+		    ".C_emitDecoderDeallocation(C_env env)" + 
+		    " not declared");
+  }
+
+  public void PrimType.C_emitDecoderDeallocation(C_env env) {
+    if (C_isDynamic()) {
+      env.println("free(" + env.qualid + ");");
+    }
+  }
+
+  public void UserType.C_emitDecoderDeallocation(C_env env) {
+    if (C_isDynamic()) {
+      lookupType(getName()).getType().C_emitDecoderDeallocation(env);
+    }
+  }
+
+  public void StructType.C_emitDecoderDeallocation(C_env env) {
+    if (C_isDynamic()) {
+      for (int i = 0 ; i < getNumField() ; i++) {
+	getField(i).C_emitDecoderDeallocation(env);
+      }
+    }
+  }
+
+  public void ArrayType.C_emitDecoderDeallocation(C_env env) {
+    if (getType().C_isDynamic()) {
+      env.println("{");
+      env.indent();
+      C_emitLoopVariables(env);
+      for (int i = 0 ; i < getNumExp() ; i++) {
+	String iterator = "i_" + env.depth + "_" + i;
+	env.println("for (" + iterator + " = 0" +
+		    " ; " +
+		    iterator + " < " + getExp(i).C_getLimit(env, i) +
+		    " ; " +
+		    iterator + "++) {");
+	env.indent();
+      }
+      C_emitCalcIndex(env);
+      getType().C_emitDecoderDeallocation(C_Nest(env));
+      for (int i = 0 ; i < getNumExp() ; i++) {
+	env.unindent();
+	env.println("}");
+      }
+      env.unindent();
+      env.println("}");
+    }
+  }
+
+  public void VariableArrayType.C_emitDecoderDeallocation(C_env env) {
+    super.C_emitDecoderDeallocation(env);
+    env.println("free(" + env.qualid + ".a);");
+  }
+
+  public void Field.C_emitDecoderDeallocation(C_env env) {
+    getType().C_emitDecoderDeallocation(env.nestStruct("." + getName()));
+  }
+
+  public void Decl.C_emitDecoderRegisterHandler(C_env env) {
+    throw new Error(this.getClass().getName() + 
+		    ".C_emitDecoderRegisterHandler(C_env env)" + 
+		    " not declared");
+  }
+
+  public void TypeDecl.C_emitDecoderRegisterHandler(C_env env) {
+  }
+
+  public void SampleDecl.C_emitDecoderRegisterHandler(C_env env) {
+    env.println("void labcomm_decoder_register_" + 
+		env.prefix + getName() + "(");
+    env.indent();
+    env.println("struct labcomm_decoder *d,");
+    env.println("void (*handler)(");
+    env.indent();
+    env.println(env.prefix + getName() + " *v,");
+    env.println("void *context");
+    env.unindent();
+    env.println("),");
+    env.println("void *context");
+    env.unindent();
+    env.println(")");
+    env.println("{");
+    env.indent();
+    env.println("labcomm_internal_decoder_register(");
+    env.indent();
+    env.println("d,");
+    env.println("&labcomm_signature_" + env.prefix + getName() + ",");
+    env.println("(labcomm_decoder_typecast_t)decode_" + getName() + ",");
+    env.println("(labcomm_handler_typecast_t)handler,");
+    env.println("context");
+    env.unindent();
+    env.println(");");
+    env.unindent();
+    env.println("}");
+  }
+
+}
+
+
+aspect C_Encoder {
+
+  public void Decl.C_emitEncoder(C_env env) {
+    throw new Error(this.getClass().getName() + 
+		    ".C_emitEncoder()" + 
+		    " not declared");
+  }
+
+  public void TypeDecl.C_emitEncoder(C_env env) {
+  }
+
+  public void SampleDecl.C_emitEncoder(C_env env) {
+    env = env.nestStruct("(*v)");
+    env.println("static void encode_" + getName() + "(");
+    env.indent();
+    env.println("labcomm_encoder_t *e,");
+    env.println(env.prefix + getName() + " *v");
+    env.unindent();
+    env.println(")");
+    env.println("{");
+    env.indent();
+    env.println("e->writer.write(&e->writer, labcomm_writer_start);");
+    env.println("labcomm_encode_type_index(e, &labcomm_signature_" + 
+		env.prefix + getName() + ");");
+    env.println("{");
+    env.indent();
+    getType().C_emitEncoder(env);
+    env.unindent();
+    env.println("}");
+    env.println("e->writer.write(&e->writer, labcomm_writer_end);");
+    env.unindent();
+    env.println("}");
+
+    // Typesafe encode wrapper
+    env.println("void labcomm_encode_" + env.prefix + getName() + "(");
+    env.println("labcomm_encoder_t *e,");
+    env.println(env.prefix + getName() + " *v");
+    env.unindent();
+    env.println(")");
+    env.println("{");
+    env.indent();
+    env.println("labcomm_internal_encode(e, &labcomm_signature_" + 
+		env.prefix + getName() + ", v);");
+    env.unindent();
+    env.println("}");
+  }
+
+  public void Type.C_emitEncoder(C_env env) {
+    throw new Error(this.getClass().getName() + 
+		    ".C_emitEncoder(C_env env)" + 
+		    " not declared");
+  }
+
+  public void VoidType.C_emitEncoder(C_env env) {
+  }
+
+  public void PrimType.C_emitEncoder(C_env env) {
+    env.println("labcomm_encode_" + getName() + "(e, " + env.qualid + ");");
+  }
+
+  public void UserType.C_emitEncoder(C_env env) {
+    lookupType(getName()).getType().C_emitEncoder(env);
+  }
+
+  public void StructType.C_emitEncoder(C_env env) {
+    for (int i = 0 ; i < getNumField() ; i++) {
+      getField(i).C_emitEncoder(env);
+    }
+  }
+
+  public void ArrayType.C_emitEncoder(C_env env) {
+    C_emitEncoderEncodeLimit(env);
+    env.println("{");
+    env.indent();
+    C_emitLoopVariables(env);
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      String iterator = "i_" + env.depth + "_" + i;
+      env.println("for (" + iterator + " = 0" +
+		  " ; " +
+		  iterator + " < " + getExp(i).C_getLimit(env, i) +
+		  " ; " +
+		  iterator + "++) {");
+      env.indent();
+    }
+    C_emitCalcIndex(env);
+    getType().C_emitEncoder(C_Nest(env));
+    for (int i = getNumExp() - 1 ; i >= 0 ; i--) {
+      env.unindent();
+      env.println("}");
+    }
+    env.unindent();
+    env.println("}");
+  }
+
+  public void Field.C_emitEncoder(C_env env) {
+    getType().C_emitEncoder(env.nestStruct("." + getName()));
+  }
+
+  public void Exp.C_emitEncoderEncodeLimit(C_env env, int i) {
+  }
+
+  public void VariableSize.C_emitEncoderEncodeLimit(C_env env, int i) {
+    env.println("labcomm_encode_int(e, " + env.qualid + ".n_" + i + ");");
+  }
+
+  public void ArrayType.C_emitEncoderEncodeLimit(C_env env) {
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      getExp(i).C_emitEncoderEncodeLimit(env, i);
+    }
+  }
+
+  public void Decl.C_emitEncoderRegisterHandler(C_env env) {
+    throw new Error(this.getClass().getName() + 
+		    ".C_emitEncoderRegisterHandler(C_env env)" + 
+		    " not declared");
+  }
+
+  public void TypeDecl.C_emitEncoderRegisterHandler(C_env env) {
+  }
+
+  public void SampleDecl.C_emitEncoderRegisterHandler(C_env env) {
+    env.println("void labcomm_encoder_register_" + 
+		env.prefix + getName() + "(");
+    env.indent();
+    env.println("struct labcomm_encoder *e");
+    env.unindent();
+    env.println(")");
+    env.println("{");
+    env.indent();
+    env.println("labcomm_internal_encoder_register(");
+    env.indent();
+    env.println("e,");
+    env.println("&labcomm_signature_" + env.prefix + getName() + ",");
+    env.println("(labcomm_encode_typecast_t)encode_" + getName());
+    env.unindent();
+    env.println(");");
+    env.unindent();
+    env.println("}");
+  }
+ 
+
+}
+
+aspect C_Signature {
+
+  public void ASTNode.C_emitSignature(C_env env) {
+    throw new Error(this.getClass().getName() + 
+		    ".C_emitSignature(C_env env)" + 
+		    " not declared");
+  }
+
+  public void Program.C_emitSignature(C_env env) {
+    for (int i = 0; i < getNumDecl(); i++) {
+      getDecl(i).C_emitSignature(env);
+    }
+  }
+
+  public void Decl.C_emitSignature(C_env env) {
+  }
+
+  public void SampleDecl.C_emitSignature(C_env env) {
+    env.println("static unsigned char signature_bytes_" + 
+		       getName() + "[] = {");
+//    C_genFlatSignature(env);
+    SignatureList signature = signature();
+    for (int i = 0 ; i < signature.size() ; i++) {
+      String comment = signature.getComment(i);
+      if (comment != null) {
+        env.println(signature.getIndent(i) + "// " + comment);
+      }
+      byte[] data = signature.getData(i);
+      if (data != null) {
+        env.print(signature.getIndent(i));
+        for (int j = 0 ; j < data.length ; j++) {
+          env.print(data[j] + ", ");
+        }
+        env.println("");
+      }
+    }
+    env.println("};");
+    env.println("labcomm_signature_t labcomm_signature_" + 
+		env.prefix + getName() + " = {");
+    env.indent();
+    env.println("LABCOMM_SAMPLE, \"" + getName() + "\",");
+    env.println("(int (*)(void *))labcomm_sizeof_" + 
+		env.prefix + getName() + ",");
+    env.println("sizeof(signature_bytes_" + getName() + "),");
+    env.println("signature_bytes_"+ getName());
+    env.unindent();
+    env.println(" };");
+  }
+
+  public void ASTNode.C_genFlatSignature(C_env env) {
+    throw new Error(this.getClass().getName() + 
+		    ".C_genFlatSignature(C_env env)" + 
+		    " not declared");
+  }
+
+  public void TypeDecl.C_genFlatSignature(C_env env) {
+    getType().C_genFlatSignature(env);
+  }
+
+  public void SampleDecl.C_genFlatSignature(C_env env) {
+    getType().C_genFlatSignature(env);
+  }
+
+  public void PrimType.C_genFlatSignature(C_env env) {
+    C_genFlatSignature(env, getToken());
+    env.println("// " + getName());
+  }
+
+  public void UserType.C_genFlatSignature(C_env env) {
+    lookupType(getName()).C_genFlatSignature(env);
+  }
+
+  public void ArrayType.C_genFlatSignature(C_env env) {
+    C_genFlatSignature(env, LABCOMM_ARRAY);
+    env.println("// LABCOMM_ARRAY");
+    C_genFlatSignature(env, getNumExp());
+    env.println("// # of dimensions");
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      getExp(i).C_genFlatSignature(env);
+      env.println("");
+    }
+    getType().C_genFlatSignature(env);
+  }
+
+  public void StructType.C_genFlatSignature(C_env env) {
+    C_genFlatSignature(env, LABCOMM_STRUCT);
+    env.println("// LABCOMM_STRUCT");
+    C_genFlatSignature(env, getNumField());
+    env.println("// # of fields");
+    for (int i = 0 ; i < getNumField() ; i++) {
+      getField(i).C_genFlatSignature(env);
+    }
+  }
+
+  public void Field.C_genFlatSignature(C_env env) {
+    C_genFlatSignature(env, getName());
+    env.println("");
+    getType().C_genFlatSignature(env);
+  }
+
+  public void IntegerLiteral.C_genFlatSignature(C_env env) {
+    C_genFlatSignature(env, Integer.parseInt(getValue()));
+    env.print("// " + getValue());
+  }
+
+  public void VariableSize.C_genFlatSignature(C_env env) {
+    C_genFlatSignature(env, 0);
+    env.print("// _");
+  }
+
+  public void ASTNode.C_genFlatSignature(C_env env, int value) {
+    env.print("  ");
+    for (int i = 24 ; i >= 0 ; i -= 8) {
+      env.print("0x");
+      String hex = Integer.toHexString((value >> i) & 0xff);
+      if (hex.length() == 1) { env.print("0"); }
+      env.print(hex);
+      env.print(", ");
+    }
+  }
+
+  public void ASTNode.C_genFlatSignature(C_env env, String value) {
+    C_genFlatSignature(env, value.length());
+    env.println("");
+    env.print("  ");
+    for (int i = 0 ; i < value.length() ; i++) {
+      env.print("'" + value.charAt(i) +"', ");
+    }
+  }
+
+}
+
+aspect C_Sizeof {
+
+  public void Decl.C_emitSizeofDeclaration(C_env env) {
+  }
+
+  public void SampleDecl.C_emitSizeofDeclaration(C_env env) {
+    env.println("extern int labcomm_sizeof_" + env.prefix + getName() +
+		"(" + env.prefix + getName() + " *v);");
+  }
+
+  public int Decl.C_fixedSizeof() {
+    return getType().C_fixedSizeof();
+  }
+
+  public int Type.C_fixedSizeof() {
+    throw new Error(this.getClass().getName() + 
+		    ".C_fixedSizeof()" + 
+		    " not declared");
+  }
+
+  public int VoidType.C_fixedSizeof() {
+    return 0;
+  }
+
+  public int PrimType.C_fixedSizeof() {
+    switch (getToken()) {
+      case LABCOMM_BOOLEAN: { return 1; } 
+      case LABCOMM_BYTE: { return 1; } 
+      case LABCOMM_SHORT: { return 2; } 
+      case LABCOMM_INT: { return 4; } 
+      case LABCOMM_LONG: { return 8; }
+      case LABCOMM_FLOAT: { return 4; }
+      case LABCOMM_DOUBLE: { return 8; }
+      default: { 
+	throw new Error(this.getClass().getName() + 
+			".C_fixedSizeof()" + 
+			" unknown size (" + getName() + ")"); 
+      } 
+    }
+  }
+
+  public int UserType.C_fixedSizeof() {
+    return lookupType(getName()).getType().C_fixedSizeof();
+  }
+
+  public int StructType.C_fixedSizeof() {
+    int result = 0;
+    for (int i = 0 ; i < getNumField() ; i++) {
+      result += getField(i).getType().C_fixedSizeof();
+    }
+    return result;
+  }
+
+  public int ArrayType.C_fixedSizeof() {
+    int elements = 1;
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      int n = Integer.parseInt(((IntegerLiteral)getExp(i)).getValue());
+      elements = elements * n;
+    }
+    return getType().C_fixedSizeof() * elements;
+  }
+
+  public void Decl.C_emitSizeof(C_env env) {
+  }
+
+  public void SampleDecl.C_emitSizeof(C_env env) {
+    env = env.nestStruct("(*v)");
+    env.println("int labcomm_sizeof_" + env.prefix + getName() +
+		"(" + env.prefix + getName() + " *v)");
+    env.println("{");
+    env.indent();
+    if (C_isDynamic()) {
+      env.println("int result = 4;");
+      getType().C_emitSizeof(env);
+      env.println("return result;");
+    } else {
+      env.println("return " + (4 + C_fixedSizeof()) + ";");
+    }    
+    env.unindent();
+    env.println("}");
+  }
+
+  public void Type.C_emitSizeof(C_env env) {
+    throw new Error(this.getClass().getName() + 
+		    ".C_emitSizeof(C_env env)" + 
+		    " not declared");
+  }
+
+  public void PrimType.C_emitSizeof(C_env env) {
+    switch (getToken()) {
+      case LABCOMM_STRING: { 
+	env.println("result += 4 + strlen(" + env.qualid + ");"); 
+      } break;
+      default: { 
+	throw new Error(this.getClass().getName() + 
+			".C_emitSizeof(C_env env)" + 
+			" known size (" + getName() + ")"); 
+      } 
+    }
+  }
+
+  public void UserType.C_emitSizeof(C_env env) {
+    lookupType(getName()).getType().C_emitSizeof(env);
+  }
+
+  public void StructType.C_emitSizeof(C_env env) {
+    int fixed = 0;
+    for (int i = 0 ; i < getNumField() ; i++) {
+      if (getField(i).getType().C_isDynamic()) {
+	getField(i).getType().C_emitSizeof(
+	  env.nestStruct("." + getField(i).getName()));
+      } else {
+	fixed += getField(i).getType().C_fixedSizeof();
+      }
+    }
+    if (fixed > 0) {
+      env.println("result += " + fixed + ";");
+    }
+  }
+
+  public void ArrayType.C_emitSizeof(C_env env) {
+    if (getType().C_isDynamic()) {
+      env.println("{");
+      env.indent();
+      C_emitLoopVariables(env);
+      for (int i = 0 ; i < getNumExp() ; i++) {
+	String iterator = "i_" + env.depth + "_" + i;
+	env.println("for (" + iterator + " = 0" +
+		    " ; " +
+		    iterator + " < " + getExp(i).C_getLimit(env, i) +
+		    " ; " +
+		    iterator + "++) {");
+	env.indent();
+      }
+      C_emitCalcIndex(env);
+      getType().C_emitSizeof(C_Nest(env));
+      for (int i = 0 ; i < getNumExp() ; i++) {
+	env.unindent();
+	env.println("}");
+      }
+      env.unindent();
+      env.println("}");
+    } else {
+      env.print("result += " + getType().C_fixedSizeof());
+      for (int i = 0 ; i < getNumExp() ; i++) {
+	env.print(" * " + getExp(i).C_getLimit(env, i));
+      }
+      env.println(";");      
+    }
+  }
+
+}
+
+aspect C_forAll {
+
+  public void Program.C_emitForAll(C_env env) {
+    env.print("#define LABCOMM_FORALL_SAMPLES_" + env.lcName + 
+		"(func, sep)");
+    env.indent();
+    boolean needSeparator = false;
+    for (int i = 0; i < getNumDecl(); i++) {
+      String s = getDecl(i).C_forAll(env);
+      if (s != null) {
+	if (needSeparator) { env.print(" sep"); }
+	env.println(" \\");
+	env.print(s);
+	needSeparator = true;
+      }
+    }
+    env.println("");
+    env.unindent();
+  }
+  
+  public String Decl.C_forAll(C_env env) {
+    return null;
+  }
+
+  public String SampleDecl.C_forAll(C_env env) {
+    return "func(" + getName() + ", " + env.prefix + getName() + ")";
+  }
+
+}
+
+aspect C_Info {
+
+  public void Program.C_info(PrintStream out, String prefix) {
+    C_env env = new C_env("", "", prefix, out);
+    for (int i = 0; i < getNumDecl(); i++) {
+      getDecl(i).C_info(env);
+    }
+  }
+
+  public void Decl.C_info(C_env env) {
+    throw new Error(this.getClass().getName() + 
+		    ".C_info((C_env env)" + 
+		    " not declared");
+  }
+
+  public void TypeDecl.C_info(C_env env) {
+    env.println("C,typedef," + getName() + "," + getName());
+  }
+
+  public void SampleDecl.C_info(C_env env) {
+    env.println("C,sample," + getName() + "," + getName());
+  }
+
+}

@@ -1,0 +1,12 @@
+sample int an_int;
+sample int a_fixed_int_array[2];
+sample int a_fixed_int_multi_array[2, 2, 2];
+sample int a_fixed_int_array_array_array[2][2][2];
+sample int a_variable_int_array[_];
+sample int a_variable_int_multi_array[_, _, _];
+sample int a_variable_int_array_array_array[_][_][_];
+sample struct {
+  int a;
+  int b;
+} an_int_struct;
+sample void a_void;
