@@ -1,0 +1,7 @@
+This is a very simple example with one labcomm file (simple.lc) defining two samples.
+Example source code:
+	Encoder.java
+	Decoder.java
+And simple scripts
+	compile.sh 	- first runs the LabComm compiler and then compiles Encoder and Decoder
+	run.sh 		- runs, as expected Encoder and then Decoder
