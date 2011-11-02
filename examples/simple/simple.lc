@@ -1,0 +1,9 @@
+sample struct {
+  int a;
+  int b;
+} TwoInts;
+
+sample struct {
+  int x;
+  string s;
+} IntString;
