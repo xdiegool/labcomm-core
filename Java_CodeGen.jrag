@@ -23,6 +23,10 @@ aspect Java_CodeGenEnv {
 
       public Java_printer(File f) {
   	file = f;
+        File parentFile = f.getParentFile();
+        if(parentFile != null) {
+            parentFile.mkdirs();
+        }
       }
 
      public Java_printer(PrintStream out) {
@@ -136,6 +140,16 @@ aspect Java_CodeGenEnv {
 
     public void print_for_end() {
       depth--;
+      unindent();
+      println("}");
+    }
+
+    public void print_block_begin() {
+      println("{");
+      indent();
+    }
+
+    public void print_block_end() {
       unindent();
       println("}");
     }
@@ -445,8 +459,7 @@ aspect Java_Class {
     String prefix = "";
     for (int i = 0 ; i < getNumExp() ; i++) {
       String limit = getExp(i).Java_emitEncoder(env, name + prefix);
-      env.println("{");
-      env.indent();
+      env.print_block_begin();
       env.println("int i_" + (baseDepth + i) + "_max = " + limit + ";");
       prefix = prefix + "[0]";
     }
@@ -457,9 +470,8 @@ aspect Java_Class {
     getType().Java_emitEncoder(env, name);
     for (int i = 0 ; i < getNumExp() ; i++) {
       env.print_for_end();
+      env.print_block_end();
     }
-    env.unindent();
-    env.println("}");
   }
   
   public String Exp.Java_emitEncoder(Java_env env, String name) {

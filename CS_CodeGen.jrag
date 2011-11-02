@@ -23,6 +23,10 @@ aspect CS_CodeGenEnv {
 
       public CS_printer(File f) {
   	file = f;
+        File parentFile = f.getParentFile();
+        if(parentFile != null) {
+            parentFile.mkdirs();
+        }
       }
 
      public CS_printer(PrintStream out) {
@@ -136,6 +140,16 @@ aspect CS_CodeGenEnv {
 
     public void print_for_end() {
       depth--;
+      unindent();
+      println("}");
+    }
+
+    public void print_block_begin() {
+      println("{");
+      indent();
+    }
+
+    public void print_block_end() {
       unindent();
       println("}");
     }
@@ -419,8 +433,7 @@ aspect CS_Class {
     for (int i = 0 ; i < getNumExp() ; i++) {
       String limit = getExp(i).CS_emitEncoder(env, 
 					      name + ".GetLength(" + i + ")");
-      env.println("{");
-      env.indent();
+      env.print_block_begin();
       env.println("int i_" + (baseDepth + i) + "_max = " + limit + ";");
     }
     String index = null;
@@ -435,9 +448,8 @@ aspect CS_Class {
     getType().CS_emitEncoder(env, name + "[" + index + "]");
     for (int i = 0 ; i < getNumExp() ; i++) {
       env.print_for_end();
+      env.print_block_end();
     }
-    env.unindent();
-    env.println("}");
   }
   
   public String Exp.CS_emitEncoder(CS_env env, String name) {
