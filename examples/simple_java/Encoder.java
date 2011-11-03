@@ -26,7 +26,10 @@ public class Encoder
     y.x = 37;
     y.s = "Testing, testing";
 
+    System.out.println("Encoding TwoInts, a="+x.a+", b="+x.b);
     TwoInts.encode(encoder, x);
+
+    System.out.println("Encoding IntString, x="+y.x+", s="+y.s);
     IntString.encode(encoder, y);
   }
 
