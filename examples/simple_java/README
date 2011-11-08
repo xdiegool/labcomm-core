@@ -1,7 +1,15 @@
 This is a very simple example with one labcomm file (simple.lc) defining two samples.
-Example source code:
+Example source code: Encoders and decoders written in Java and C.
 	Encoder.java
 	Decoder.java
+        example_encoder.c
+        example_decoder.c
 And simple scripts
 	compile.sh 	- first runs the LabComm compiler and then compiles Encoder and Decoder
 	run.sh 		- runs, as expected Encoder and then Decoder
+
+When running compile.sh, Java and C files for the two samples defined in simple.lc will
+be generated in the gen directory.
+
+run.sh will then run first the encoder, writing to encoded_data, and then the decoders written
+in Java and C, respectively, reading from the previously written encoded_data.
