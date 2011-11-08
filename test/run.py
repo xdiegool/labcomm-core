@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: iso8859-15 -*-
 
-import labcomm
 import math
 import os
 import sys
@@ -122,6 +121,8 @@ def generate(decl):
     raise Exception("unhandled decl %s" % decl.__class__)
 
 if __name__ == "__main__":
+    sys.path.insert(0, "../lib/python/")    
+    import labcomm
     print os.getcwd(), sys.argv
     if not os.path.exists("gen"):
         os.makedirs("gen")
