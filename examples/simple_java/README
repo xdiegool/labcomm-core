@@ -1,3 +1,6 @@
+NB! Before trying to build and run this example, make sure you have built the LabComm compiler
+by running "ant jar" in the main directory (../../ seen from here).
+
 This is a very simple example with one labcomm file (simple.lc) defining two samples.
 Example source code: Encoders and decoders written in Java and C.
 	Encoder.java

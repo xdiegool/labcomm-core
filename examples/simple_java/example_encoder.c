@@ -18,10 +18,12 @@ int main(int argc, char *argv[]) {
   simple_IntString is;
   is.x = 24;
   is.s = "Hello, LabComm!";
+  printf("Encoding IntString, x=%d, s=%s\n", is.x, is.s);
   labcomm_encode_simple_IntString(encoder, &is);
 
   simple_TwoInts ti;
   ti.a = 13;
   ti.b = 37;
+  printf("Encoding TwoInts, a=%d, b=%d\n", ti.a, ti.b);
   labcomm_encode_simple_TwoInts(encoder, &ti);
 }
