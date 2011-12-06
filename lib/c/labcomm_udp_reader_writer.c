@@ -1,7 +1,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include "labcomm.h"
-#include "/home/sven/slask/UDP/udp_hack.h"
+#include "udp_hack.h"
 
 #define BUFFER_SIZE 2048
 
