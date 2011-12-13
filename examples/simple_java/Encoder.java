@@ -4,6 +4,9 @@ import java.io.OutputStream;
 
 import se.lth.control.labcomm.LabCommEncoderChannel;
 
+/**
+ * Simple encoder 
+ */
 public class Encoder 
 {
 
@@ -35,7 +38,7 @@ public class Encoder
 
 
   public static void main(String[] arg) throws Exception {
-    FileOutputStream fos = new FileOutputStream(new File(arg[0]));
+    FileOutputStream fos = new FileOutputStream(arg[0]);
     Encoder example = new Encoder(fos);
     example.doEncode();
     fos.close();

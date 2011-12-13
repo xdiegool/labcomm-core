@@ -41,7 +41,7 @@ static labcomm_sample_entry_t *get_sample_by_signature_address(
 {
   labcomm_sample_entry_t *p;
   for (p = head ; p && p->signature != signature ; p = p->next) {
-    
+
   }
   return p;
 }
@@ -55,7 +55,7 @@ static labcomm_sample_entry_t *get_sample_by_signature_value(
     if (p->signature->type == signature->type &&
 	p->signature->size == signature->size &&
 	strcmp(p->signature->name, signature->name) == 0 &&
-	bcmp((void*)p->signature->signature, (void*)signature->signature, 
+	bcmp((void*)p->signature->signature, (void*)signature->signature,
 	     signature->size) == 0) {
       break;
     }
@@ -90,7 +90,7 @@ static int get_encoder_index(
   return result;
 }
 
-static void do_encoder_register(struct labcomm_encoder *e, 
+static void do_encoder_register(struct labcomm_encoder *e,
 				labcomm_signature_t *signature,
 				labcomm_encode_typecast_t encode)
 {
@@ -98,7 +98,7 @@ static void do_encoder_register(struct labcomm_encoder *e,
     if (get_encoder_index(e, signature) == 0) {
       int i;
       labcomm_encoder_context_t *context = e->context;
-      labcomm_sample_entry_t *sample = 
+      labcomm_sample_entry_t *sample =
 	(labcomm_sample_entry_t*)malloc(sizeof(labcomm_sample_entry_t));
       sample->next = context->sample;
       sample->index = context->index;
@@ -112,7 +112,7 @@ static void do_encoder_register(struct labcomm_encoder *e,
       labcomm_encode_type_index(e, signature);
       labcomm_encode_string(e, signature->name);
       for (i = 0 ; i < signature->size ; i++) {
-	if (e->writer.pos >= e->writer.count) {	
+	if (e->writer.pos >= e->writer.count) {
 	  e->writer.write(&e->writer, labcomm_writer_continue);
 	}
 	e->writer.data[e->writer.pos] = signature->signature[i];
@@ -124,13 +124,13 @@ static void do_encoder_register(struct labcomm_encoder *e,
 }
 
 static void do_encode(
-  labcomm_encoder_t *encoder, 
-  labcomm_signature_t *signature, 
+  labcomm_encoder_t *encoder,
+  labcomm_signature_t *signature,
   void *value)
 {
   labcomm_encoder_context_t *context = encoder->context;
   labcomm_sample_entry_t *sample;
-  sample = get_sample_by_signature_address(context->sample, 
+  sample = get_sample_by_signature_address(context->sample,
 					   signature);
   if (sample && sample->encode) {
     sample->encode(encoder, value);
@@ -165,7 +165,7 @@ labcomm_encoder_t *labcomm_encoder_new(
 }
 
 void labcomm_internal_encoder_register(
-  labcomm_encoder_t *e, 
+  labcomm_encoder_t *e,
   labcomm_signature_t *signature,
   labcomm_encode_typecast_t encode)
 {
@@ -177,26 +177,26 @@ void labcomm_internal_encoder_register(
 }
 
 void labcomm_internal_encode(
-  labcomm_encoder_t *e, 
-  labcomm_signature_t *signature, 
+  labcomm_encoder_t *e,
+  labcomm_signature_t *signature,
   void *value)
 {
   if (e && e->do_encode) {
     e->do_encode(e, signature, value);
   } else {
     printf("Encoder is missing do_encode\n");
-  }  
+  }
 }
-  
+
 void labcomm_internal_encoder_user_action(labcomm_encoder_t *e,
 					  int action)
 {
   e->writer.write(&e->writer, action);
 }
 
-void labcomm_encoder_free(labcomm_encoder_t* e) 
+void labcomm_encoder_free(labcomm_encoder_t* e)
 {
-  
+
   e->writer.write(&e->writer, labcomm_writer_free);
   free(e);
 }
@@ -208,7 +208,7 @@ void labcomm_encode_type_index(labcomm_encoder_t *e, labcomm_signature_t *s)
 }
 
 static int signature_writer(
-  labcomm_writer_t *w, 
+  labcomm_writer_t *w,
   labcomm_writer_action_t action)
 {
   switch (action) {
@@ -219,13 +219,13 @@ static int signature_writer(
       w->pos = 0;
     } break;
     case labcomm_writer_start: {
-      w->data_size = 1000; 
+      w->data_size = 1000;
       w->count = w->data_size;
       w->data = realloc(w->data, w->data_size);
       w->pos = 0;
     } break;
     case labcomm_writer_continue: {
-      w->data_size += 1000; 
+      w->data_size += 1000;
       w->count = w->data_size;
       w->data = realloc(w->data, w->data_size);
     } break;
@@ -257,7 +257,7 @@ static void collect_flat_signature(
     switch (type) {
       case LABCOMM_ARRAY: {
 	int dimensions, i;
-	
+
 	dimensions = labcomm_decode_int(decoder);
 	labcomm_encode_int(signature_writer, dimensions);
 	for (i = 0 ; i < dimensions ; i++) {
@@ -294,16 +294,16 @@ static void collect_flat_signature(
 }
 
 static void do_decoder_register(
-  labcomm_decoder_t *decoder, 
-  labcomm_signature_t *signature, 
+  labcomm_decoder_t *decoder,
+  labcomm_signature_t *signature,
   labcomm_decoder_typecast_t type_decoder,
   labcomm_handler_typecast_t handler,
   void *handler_context)
 {
-  
+
   labcomm_decoder_context_t *context = decoder->context;
   labcomm_sample_entry_t *sample;
-  sample = get_sample_by_signature_address(context->sample, 
+  sample = get_sample_by_signature_address(context->sample,
 					   signature);
   if (!sample) {
     sample = (labcomm_sample_entry_t*)malloc(sizeof(labcomm_sample_entry_t));
@@ -311,7 +311,7 @@ static void do_decoder_register(
     context->sample = sample;
     sample->index = 0;
     sample->signature = signature;
-  } 
+  }
   sample->decoder = type_decoder;
   sample->handler = handler;
   sample->context = handler_context;
@@ -323,7 +323,7 @@ static int do_decode_one(labcomm_decoder_t *d)
 
   do {
     result = d->reader.read(&d->reader, labcomm_reader_start);
-    if (result > 0) { 
+    if (result > 0) {
       labcomm_decoder_context_t *context = d->context;
 
       result = labcomm_decode_int(d);
@@ -332,7 +332,7 @@ static int do_decode_one(labcomm_decoder_t *d)
 	labcomm_signature_t signature;
 	labcomm_sample_entry_t *entry;
 	int index;
-	
+
 	e->writer.write(&e->writer, labcomm_writer_start);
 	signature.type = result;
 	index = labcomm_decode_int(d);
@@ -343,10 +343,10 @@ static int do_decode_one(labcomm_decoder_t *d)
 	entry = get_sample_by_signature_value(context->sample, &signature);
 	if (! entry) {
 	  // Unknown datatype, bail out
-	  fprintf(stderr,	"%s: unknown datatype '%s' (id=0x%x)\n", 
+	  fprintf(stderr,	"%s: unknown datatype '%s' (id=0x%x)\n",
 		  __FUNCTION__, signature.name, index);
 	} else if (entry->index && entry->index != index) {
-	  fprintf(stderr,	"%s: index mismatch '%s' (id=0x%x != 0x%x)\n", 
+	  fprintf(stderr,	"%s: index mismatch '%s' (id=0x%x != 0x%x)\n",
 		  __FUNCTION__, signature.name, entry->index, index);
 	} else {
 	  entry->index = index;
@@ -360,10 +360,10 @@ static int do_decode_one(labcomm_decoder_t *d)
 	labcomm_encoder_free(e);
       } else {
 	labcomm_sample_entry_t *entry;
-	
+
 	entry = get_sample_by_index(context->sample, result);
 	if (!entry) {
-	  fprintf(stderr,	"%s: type not found (id=0x%x)\n", 
+	  fprintf(stderr,	"%s: type not found (id=0x%x)\n",
 		  __FUNCTION__, result);
 	  result = -ENOENT;
 	} else {
@@ -372,7 +372,7 @@ static int do_decode_one(labcomm_decoder_t *d)
       }
     }
     d->reader.read(&d->reader, labcomm_reader_end);
-  } while (result > 0 && result < LABCOMM_USER);  
+  } while (result > 0 && result < LABCOMM_USER);
   return result;
 }
 
@@ -400,8 +400,8 @@ labcomm_decoder_t *labcomm_decoder_new(
 }
 
 void labcomm_internal_decoder_register(
-  labcomm_decoder_t *d, 
-  labcomm_signature_t *signature, 
+  labcomm_decoder_t *d,
+  labcomm_signature_t *signature,
   labcomm_decoder_typecast_t type_decoder,
   labcomm_handler_typecast_t handler,
   void *handler_context)
@@ -416,9 +416,13 @@ void labcomm_internal_decoder_register(
 int labcomm_decoder_decode_one(labcomm_decoder_t *d)
 {
   int result = -1;
-  if (d && d->do_decode_one) {
+  if (d && d->do_decode_one)
+  {
+    printf("labcomm decode 1\n");
     result = d->do_decode_one(d);
-  } else {
+  }
+  else
+  {
     printf("Decoder is missing do_decode_one\n");
   }
   return result;
@@ -430,7 +434,7 @@ void labcomm_decoder_run(labcomm_decoder_t *d)
   }
 }
 
-void labcomm_decoder_free(labcomm_decoder_t* d) 
+void labcomm_decoder_free(labcomm_decoder_t* d)
 {
   d->reader.read(&d->reader, labcomm_reader_free);
   free(d);

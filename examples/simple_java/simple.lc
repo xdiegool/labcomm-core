@@ -7,3 +7,8 @@ sample struct {
   int x;
   string s;
 } IntString;
+
+sample struct {
+  double x;
+  double y;
+} TwoDoubles;
