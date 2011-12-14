@@ -49,12 +49,6 @@ static int encode(int argc, char *argv[]) {
     //client_exit(fd);
  }
 }
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <labcomm_thr_reader_writer.h>
-#include "gen/simple.h"
-#include "ThrottleDrv/throttle_drv.h"
 
 static void handle_simple_TwoInts(simple_TwoInts *v,void *context) {
   printf("Got TwoInts. a=%d, b=%d\n", v->a, v->b);
@@ -68,21 +62,14 @@ static int decode(int argc, char *argv[]) {
   struct thr_chn_t *p_thr_chn = NULL;
   struct labcomm_decoder *decoder;
   void  *context = NULL;
+  unsigned char dest_mac[ETH_ADR_SIZE] = {0x00, 0x09, 0x6b, 0x10, 0xf3, 0x80};	/* other host MAC address, hardcoded...... :-( */
   int ret = 0;
-  unsigned char dest_mac[ETH_ADR_SIZE] = {0x06, 0x05, 0x04, 0x03, 0x02, 0x01};	/* other host MAC address, hardcoded...... :-( */
   unsigned char chn_id = 0x01;
   unsigned short frag_size = 60;
   unsigned short freq = 1000;  /* milliseconds */
   unsigned char data[200];
 
   char *ifname = argv[1];
-  char *dest_mac_str = argv[2];
-
-  if(parse_MAC_address(dest_mac_str, dest_mac)) {
-        printf("failed to parse dest MAC address\n");
-        return 1;
-  }
-
   if (-1 == thr_init(ifname))
   {
      printf("Throttle Init failure.");
@@ -119,7 +106,7 @@ int main(int argc, char *argv[]) {
 	} else if(argc == 3) {
 		return encode(argc, argv);
 	} else {
-		printf("Usage: \n       For encoding ethN xx:xx:xx:xx:xx:xx\n      For decoding ethN\n"); 
+		printf("Usage: For encoding ethN xx:xx:xx:xx:xx:xx\n       For decoding ethN\n       where ethN is the ethernet interface to use\n       and xx:xx:...:xx is the destination MAC address"); 
 		return 1;
 	}
 }
