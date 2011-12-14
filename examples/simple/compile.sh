@@ -1,4 +1,5 @@
 (cd ../../lib/c; make)
+(cd ../../ ; ant jar)
 
 java -jar ../../labComm.jar --java=gen --c=gen/simple.c --h=gen/simple.h  simple.lc 
 

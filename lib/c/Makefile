@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -g
 
-liblabcomm.a : labcomm.o labcomm_fd_reader_writer.o labcomm_udp_reader_writer.o labcomm_thr_reader_writer.o ethaddr.o ThrottleDrv/ethernet_drv.o ThrottleDrv/throttle_drv.o
+liblabcomm.a : labcomm.o labcomm_fd_reader_writer.o labcomm_udp_reader_writer.o udp_hack.o labcomm_thr_reader_writer.o ethaddr.o ThrottleDrv/ethernet_drv.o ThrottleDrv/throttle_drv.o
 #	ar -r liblabcomm.a labcomm.o labcomm_fd_reader_writer.o ethaddr.o
 	ar -r liblabcomm.a $^
 
