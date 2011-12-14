@@ -13,8 +13,9 @@ the datagram directory contains the same example, but over datagram (UDP and raw
 When running compile.sh, Java and C files for the two samples defined in simple.lc will
 be generated in the gen directory.
 
-run.sh will then run first the encoder, writing to encoded_data, and then the decoders written
-in Java and C, respectively, reading from the previously written encoded_data.
+run.sh will then run first the encoder, writing to encoded_data, and then a
+decoder, reading from the previously written encoded_data written (in Java and
+C, respectively).
 
 NB! Before trying to build and run examples, make sure you have built the LabComm compiler
 by running "ant jar" in the main directory (../../ seen from here) and compiled the labcomm
