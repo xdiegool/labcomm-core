@@ -18,6 +18,6 @@ decoder, reading from the previously written encoded_data written (in Java and
 C, respectively).
 
 NB! Before trying to build and run examples, make sure you have built the LabComm compiler
-by running "ant jar" in the main directory (../../ seen from here) and compiled the labcomm
-descriptions needed. The compile.sh script does this.
+by running "ant jar" in the compiler directory (../../compiler seen from here) and compiled 
+the labcomm descriptions needed. The compile.sh script does this.
 
