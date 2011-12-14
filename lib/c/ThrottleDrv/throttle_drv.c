@@ -20,14 +20,14 @@
 #define THR_PAYLOAD_POS      (THR_FRAG_LEN_POS + sizeof(((thr_header_t*)0)->frag_len))            //21
 #define THR_MSG_HEADER_LEN   THR_PAYLOAD_POS
 
-#define THR_MSG_DST_ADR       (unsigned char*)(&thr_msg[THR_DST_ADR_POS])
-#define THR_MSG_SRC_ADR       (unsigned char*)(&thr_msg[THR_SRC_ADR_POS])
-#define THR_MSG_ETH_TYP       *(unsigned short*)(&thr_msg[THR_ETH_TYP_POS])
-#define THR_MSG_CHN_ID        *(unsigned char*)(&thr_msg[THR_CHN_ID_POS])
-#define THR_MSG_FRAG_NUM      *(unsigned short*)(&thr_msg[THR_FRAG_NUM_POS])
-#define THR_MSG_FRAG_TOT_NUM  *(unsigned short*)(&thr_msg[THR_FRAG_TOT_NUM_POS])
-#define THR_MSG_FRAG_LEN      *(unsigned short*)(&thr_msg[THR_FRAG_LEN_POS])
-#define THR_MSG_PAYLOAD       (unsigned char*)(&thr_msg[THR_PAYLOAD_POS])
+#define THR_MSG_DST_ADR(thr_msg)       (unsigned char*)(&thr_msg[THR_DST_ADR_POS])
+#define THR_MSG_SRC_ADR(thr_msg)       (unsigned char*)(&thr_msg[THR_SRC_ADR_POS])
+#define THR_MSG_ETH_TYP(thr_msg)       *(unsigned short*)(&thr_msg[THR_ETH_TYP_POS])
+#define THR_MSG_CHN_ID(thr_msg)        *(unsigned char*)(&thr_msg[THR_CHN_ID_POS])
+#define THR_MSG_FRAG_NUM(thr_msg)      *(unsigned short*)(&thr_msg[THR_FRAG_NUM_POS])
+#define THR_MSG_FRAG_TOT_NUM(thr_msg)  *(unsigned short*)(&thr_msg[THR_FRAG_TOT_NUM_POS])
+#define THR_MSG_FRAG_LEN(thr_msg)      *(unsigned short*)(&thr_msg[THR_FRAG_LEN_POS])
+#define THR_MSG_PAYLOAD(thr_msg)       (unsigned char*)(&thr_msg[THR_PAYLOAD_POS])
 
 
 /* local type for the Throttle Channel structure */
@@ -39,7 +39,7 @@ struct thr_chn_t
 	unsigned short freq;               /* Message transmission frequency             */
 	thr_msg_handler_t funct;           /* Callback function invoked at the reception */
 	unsigned short msg_length;
-	unsigned short* p_msg;
+	unsigned char* p_msg;
 };
 
 /* Type for the Throttle message */
@@ -186,32 +186,32 @@ int thr_send(const struct thr_chn_t* thr_chn, const char* data, unsigned int len
          else
          {
             /* Compose the Ethernet Frame to be sent */
-            memcpy(THR_MSG_DST_ADR, &thr_chn->dst_adr[0], ETH_ADR_LEN);     /* Destiantion MAC Address  */
-            eth_getMACadr(eth_int, THR_MSG_SRC_ADR);                        /* Source MAC Address       */
-            THR_MSG_ETH_TYP = htons(THROTTLENET_PROTO);                     /* Ethernet Packet Type     */
-            THR_MSG_CHN_ID = thr_chn->id;                                   /* Channel identification   */
-            THR_MSG_FRAG_TOT_NUM = ((length - 1) / thr_chn->frag_size) + 1; /* Total number of fragment */
+            memcpy(THR_MSG_DST_ADR(thr_msg), &thr_chn->dst_adr[0], ETH_ADR_LEN);     /* Destiantion MAC Address  */
+            eth_getMACadr(eth_int, THR_MSG_SRC_ADR(thr_msg));                        /* Source MAC Address       */
+            THR_MSG_ETH_TYP(thr_msg) = htons(THROTTLENET_PROTO);                     /* Ethernet Packet Type     */
+            THR_MSG_CHN_ID(thr_msg) = thr_chn->id;                                   /* Channel identification   */
+            THR_MSG_FRAG_TOT_NUM(thr_msg) = ((length - 1) / thr_chn->frag_size) + 1; /* Total number of fragment */
 
             struct timespec thr_time;
             thr_time.tv_sec = thr_chn->freq / 1000;
             thr_time.tv_nsec = (thr_chn->freq % 1000) * 1000000;
 
             /* Message is splitted into fragments and they are sent */
-            for (i = 1; i <= THR_MSG_FRAG_TOT_NUM; i++)
+            for (i = 1; i <= THR_MSG_FRAG_TOT_NUM(thr_msg); i++)
             {
-               THR_MSG_FRAG_NUM = i; /* fragment number */
+               THR_MSG_FRAG_NUM(thr_msg) = i; /* fragment number */
                /* update the fragment length */
                if (length >= thr_chn->frag_size)
                {
-                  THR_MSG_FRAG_LEN = thr_chn->frag_size;
+                  THR_MSG_FRAG_LEN(thr_msg) = thr_chn->frag_size;
                   length -= thr_chn->frag_size;
                }
                else
                {
-                  THR_MSG_FRAG_LEN = length;
+                  THR_MSG_FRAG_LEN(thr_msg) = length;
                }
-               memcpy ((void*)THR_MSG_PAYLOAD, (void*)data, THR_MSG_FRAG_LEN);                /* update the payload */
-               ret = eth_send(eth_int, &thr_msg[0], (THR_MSG_HEADER_LEN + THR_MSG_FRAG_LEN)); /* send the message   */
+               memcpy ((void*)THR_MSG_PAYLOAD(thr_msg), (void*)data, THR_MSG_FRAG_LEN(thr_msg));                /* update the payload */
+               ret = eth_send(eth_int, &thr_msg[0], (THR_MSG_HEADER_LEN + THR_MSG_FRAG_LEN(thr_msg))); /* send the message   */
                if (-1 == ret)  /*Error during the Ethernet trasmission ? */
                {
                   DISPLAY_ERR("Error during Throttle msg trasmission!");
@@ -219,7 +219,7 @@ int thr_send(const struct thr_chn_t* thr_chn, const char* data, unsigned int len
                }
                else
                {
-                  data += THR_MSG_FRAG_LEN;
+                  data += THR_MSG_FRAG_LEN(thr_msg);
                   nanosleep(&thr_time, NULL);
                }
             }
@@ -277,15 +277,15 @@ int thr_receive(struct thr_chn_t* thr_chn, unsigned char* data, void* param)
                }
                else
                {
-                  printf("Message Index %d on %d. Actual Index %d\n", THR_MSG_FRAG_NUM, THR_MSG_FRAG_TOT_NUM, frag_index);
-                  if (frag_index == THR_MSG_FRAG_NUM) /* The fragment is the one expected ? */
+                  printf("Message Index %d on %d. Actual Index %d\n", THR_MSG_FRAG_NUM(thr_msg), THR_MSG_FRAG_TOT_NUM(thr_msg), frag_index);
+                  if (frag_index == THR_MSG_FRAG_NUM(thr_msg)) /* The fragment is the one expected ? */
                   {
                      /* Rebuild the original data linking the payloads of each fragment */
-                     memcpy((void*)p_data, (void*)THR_MSG_PAYLOAD, THR_MSG_FRAG_LEN);
-                     p_data += THR_MSG_FRAG_LEN;  /* update the pointer to the buffer   */
+                     memcpy((void*)p_data, (void*)THR_MSG_PAYLOAD(thr_msg), THR_MSG_FRAG_LEN(thr_msg));
+                     p_data += THR_MSG_FRAG_LEN(thr_msg);  /* update the pointer to the buffer   */
                      frag_index++;                /* update the fragment index          */
                      ret = p_data - data;         /* update the number of received byte */
-                     if (frag_index > THR_MSG_FRAG_TOT_NUM)
+                     if (frag_index > THR_MSG_FRAG_TOT_NUM(thr_msg))
                      {
                         msg_received = 1;
                      }
@@ -333,9 +333,9 @@ static int thr_msg_check(const unsigned char* thr_msg, unsigned short chn_id, un
 
    if (length > THR_MSG_HEADER_LEN)                    /* Ethernet Raw Packet contains a valid Payload ? */
    {
-      if (THROTTLENET_PROTO == ntohs(THR_MSG_ETH_TYP)) /* Is Ethernet Type THROTTLENET Protocol ?        */
+      if (THROTTLENET_PROTO == ntohs(THR_MSG_ETH_TYP(thr_msg))) /* Is Ethernet Type THROTTLENET Protocol ?        */
       {
-         if (THR_MSG_CHN_ID == chn_id)                 /* Is Channel identification correct ?            */
+         if (THR_MSG_CHN_ID(thr_msg) == chn_id)                 /* Is Channel identification correct ?            */
          {
             /* throttle message is correct */
          }
