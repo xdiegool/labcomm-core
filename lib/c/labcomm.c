@@ -418,7 +418,6 @@ int labcomm_decoder_decode_one(labcomm_decoder_t *d)
   int result = -1;
   if (d && d->do_decode_one)
   {
-    printf("labcomm decode 1\n");
     result = d->do_decode_one(d);
   }
   else

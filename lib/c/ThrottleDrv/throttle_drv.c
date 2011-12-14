@@ -133,7 +133,9 @@ struct thr_chn_t* thr_open_chn(const unsigned char* dst_adr, unsigned char chn_i
          tmp_chn->freq = freq;
          tmp_chn->funct = funct;
       }
+#ifdef DEBUG
       printf("thr_open_chn: callback = %x\n", tmp_chn->funct);
+#endif
 
    }
 
@@ -277,7 +279,9 @@ int thr_receive(struct thr_chn_t* thr_chn, unsigned char* data, void* param)
                }
                else
                {
-                  printf("Message Index %d on %d. Actual Index %d\n", THR_MSG_FRAG_NUM(thr_msg), THR_MSG_FRAG_TOT_NUM(thr_msg), frag_index);
+#ifdef DEBUG
+                  printf("thr_receive: Message Index %d on %d. Actual Index %d\n", THR_MSG_FRAG_NUM(thr_msg), THR_MSG_FRAG_TOT_NUM(thr_msg), frag_index);
+#endif
                   if (frag_index == THR_MSG_FRAG_NUM(thr_msg)) /* The fragment is the one expected ? */
                   {
                      /* Rebuild the original data linking the payloads of each fragment */
@@ -292,7 +296,7 @@ int thr_receive(struct thr_chn_t* thr_chn, unsigned char* data, void* param)
                   }
                   else
                   {
-                     printf("Fragment mismatch: Fragment discarded.\n");
+                     printf("thr_receive: Fragment mismatch: Fragment discarded.\n");
                      frag_index = 1;
                      p_data = data;
                   }
@@ -308,10 +312,14 @@ int thr_receive(struct thr_chn_t* thr_chn, unsigned char* data, void* param)
          }
          else
          {
-            printf("Number of byte receive %d\n",ret);
+#ifdef DEBUG
+            printf("thr_receive: Number of byte receive %d\n",ret);
+#endif
             thr_chn->msg_length = ret;
             memcpy(thr_chn->p_msg, data, ret); /* copy the msg into the thr structure */
-            printf("calling %x\n", thr_chn->funct);
+#ifdef DEBUG
+            printf("thr_receive: calling %x\n", thr_chn->funct);
+#endif
             (thr_chn->funct)(param);
             free(thr_chn->p_msg);
             thr_chn->p_msg = NULL;
@@ -374,9 +382,13 @@ int thr_read(struct thr_chn_t* thr_chn, unsigned char* data, int length)
       if (length > thr_chn->msg_length)
       {
          length = thr_chn->msg_length;
+#ifdef DEBUG
          printf("thr_read: truncating length to %d\n", length);
+#endif
       }
+#ifdef DEBUG
       printf("thr_read: calling memcpy(%x, %x, %d\n", data, thr_chn->p_msg, length);
+#endif
       memcpy(data, thr_chn->p_msg, length); /* copy the msg into the thr structure */
       ret = length;
       thr_chn->msg_length = 0;

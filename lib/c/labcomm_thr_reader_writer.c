@@ -33,7 +33,6 @@ int labcomm_thr_reader(labcomm_reader_t *r, labcomm_reader_action_t action)
     case labcomm_reader_start:
     case labcomm_reader_continue:
     {
-       printf("labcomm_reader_start or continue...\n");
       if (r->pos < r->count)
       {
         result = r->count - r->pos;
@@ -42,7 +41,6 @@ int labcomm_thr_reader(labcomm_reader_t *r, labcomm_reader_action_t action)
       {
         int err;
         r->pos = 0;
-        printf("labcomm_thr_reader_writer. calling thr_read: %x, %x, %d\n", ctx, r->data, r->data_size);
         err = thr_read(ctx, r->data, r->data_size);
         if (err <= 0)
         {
