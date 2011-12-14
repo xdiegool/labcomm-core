@@ -10,13 +10,26 @@ int main(int argc, char *argv[]) {
   struct thr_chn_t *p_thr_chn = NULL;
   struct labcomm_encoder *encoder;
   int i, j;
-  unsigned char dest_mac[ETH_ADR_SIZE] = {0x00, 0x09, 0x6b, 0x10, 0xf3, 0x80};	/* other host MAC address, hardcoded...... :-( */
+//  unsigned char dest_mac[ETH_ADR_SIZE] = {0x00, 0x09, 0x6b, 0x10, 0xf3, 0x80};	/* other host MAC address, hardcoded...... :-( */
+  unsigned char dest_mac[ETH_ADR_SIZE] = {0x00, 0x09, 0x6b, 0xe3, 0x81, 0xbf};	/* other host MAC address, hardcoded...... :-( */
   unsigned char chn_id = 0x01;
   unsigned short frag_size = 60;
   unsigned short freq = 1000;  /* milliseconds */
 
-  char *filename = argv[1];
-  if (-1 == thr_init("eth0"))
+  char *ifname = argv[1];
+  char *dest_mac_str = argv[2];
+
+  if(argc != 3) {
+	printf("usage: thr_encoder ethN xx:xx:xx:xx:xx:xx\n");
+	return 1;
+  } 
+
+  if(parse_MAC_address(dest_mac_str, dest_mac)) {
+	printf("failed to parse dest MAC address\n");
+	return 1;
+  }
+  
+  if (-1 == thr_init(ifname))
   {
      printf("Throttle Init failure.");
   }

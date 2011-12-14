@@ -24,8 +24,20 @@ int main(int argc, char *argv[]) {
   unsigned short freq = 1000;  /* milliseconds */
   unsigned char data[200];
 
-  char *filename = argv[1];
-  if (-1 == thr_init("eth2"))
+  char *ifname = argv[1];
+  char *dest_mac_str = argv[2];
+
+  if(argc != 3) {
+        printf("usage: thr_encoder ethN xx:xx:xx:xx:xx:xx\n");
+        return 1;
+  }
+
+  if(parse_MAC_address(dest_mac_str, dest_mac)) {
+        printf("failed to parse dest MAC address\n");
+        return 1;
+  }
+
+  if (-1 == thr_init(ifname))
   {
      printf("Throttle Init failure.");
   }
