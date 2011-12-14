@@ -1,7 +1,3 @@
-NB! Before trying to build and run examples, make sure you have built the LabComm compiler
-by running "ant jar" in the main directory (../../ seen from here) and compiled the labcomm
-descriptions needed. The compile.sh script does this.
-
 This is a very simple example with one labcomm file (simple.lc) defining two samples.
 Example source code: Encoders and decoders written in Java and C.
 	Encoder.java
@@ -12,8 +8,15 @@ And simple scripts
 	compile.sh 	- first runs the LabComm compiler and then compiles Encoder and Decoder
 	run.sh 		- runs, as expected Encoder and then Decoder
 
+the datagram directory contains the same example, but over datagram (UDP and raw etherne )protocols.
+
 When running compile.sh, Java and C files for the two samples defined in simple.lc will
 be generated in the gen directory.
 
 run.sh will then run first the encoder, writing to encoded_data, and then the decoders written
 in Java and C, respectively, reading from the previously written encoded_data.
+
+NB! Before trying to build and run examples, make sure you have built the LabComm compiler
+by running "ant jar" in the main directory (../../ seen from here) and compiled the labcomm
+descriptions needed. The compile.sh script does this.
+
