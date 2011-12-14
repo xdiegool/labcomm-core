@@ -11,7 +11,7 @@ def run_labcomm(base):
     if not os.path.exists("gen/java/%s" % base):
         os.makedirs("gen/java/%s" % base)
     cmd = " ".join([
-        "java -jar ../labComm.jar",
+        "java -jar ../compiler/labComm.jar",
         "--c=gen/%s.c" % base,
         "--h=gen/%s.h" % base,
         "--python=gen/%s.py" % base,
