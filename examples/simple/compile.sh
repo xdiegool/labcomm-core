@@ -1,3 +1,5 @@
+(cd ../../lib/c; make)
+
 java -jar ../../labComm.jar --java=gen --c=gen/simple.c --h=gen/simple.h  simple.lc 
 
 javac -cp ../../lib/java:. gen/*.java Encoder.java Decoder.java
