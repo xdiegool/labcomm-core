@@ -8,3 +8,5 @@ udp_decoder.c : d:o
 thr_example.c : the samei over a raw ethernet datagram protocol, in one file,and parameterized 
 		to take the ethernet interface to use and the destination to send to as 
 		command line parameters
+
+thr_example2.c: similar, but bidirectional. The "server" opens a new channel and responds when receiving TwoInts
