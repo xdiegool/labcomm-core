@@ -40,6 +40,7 @@ struct thr_chn_t
 	thr_msg_handler_t funct;           /* Callback function invoked at the reception */
 	unsigned short msg_length;
 	unsigned char* p_msg;
+	unsigned char last_sender_adr[ETH_ADR_LEN];/* src MAC address of last message */
 };
 
 /* Type for the Throttle message */
@@ -142,6 +143,9 @@ struct thr_chn_t* thr_open_chn(const unsigned char* dst_adr, unsigned char chn_i
    return(tmp_chn);
 }
 
+void thr_close_chn(struct thr_chn_t* c){
+   free(c);
+}
 
 /**
 * @fn         int thr_send(const struct thr_chn_t* thr_chn, const char* data, unsigned int length)
@@ -317,6 +321,7 @@ int thr_receive(struct thr_chn_t* thr_chn, unsigned char* data, void* param)
 #endif
             thr_chn->msg_length = ret;
             memcpy(thr_chn->p_msg, data, ret); /* copy the msg into the thr structure */
+            memcpy(thr_chn->last_sender_adr, THR_MSG_SRC_ADR(thr_msg), 6); /* ... and the address of the sender */
 #ifdef DEBUG
             printf("thr_receive: calling %x\n", thr_chn->funct);
 #endif
@@ -394,4 +399,8 @@ int thr_read(struct thr_chn_t* thr_chn, unsigned char* data, int length)
       thr_chn->msg_length = 0;
    }
    return(ret);
+}
+
+unsigned char* get_sender_addr(struct thr_chn_t* ch) {
+	return ch->last_sender_adr;
 }
