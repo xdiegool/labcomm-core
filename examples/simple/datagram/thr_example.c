@@ -76,7 +76,7 @@ static int decode(int argc, char *argv[]) {
   }
   else
   {
-    p_thr_chn = thr_open_chn(dest_mac, chn_id, frag_size, freq, labcomm_decoder_decode_one);
+    p_thr_chn = thr_open_chn(dest_mac, chn_id, frag_size, freq, (thr_msg_handler_t)labcomm_decoder_decode_one);
     decoder = labcomm_decoder_new(labcomm_thr_reader, p_thr_chn);
     if (!decoder)
     {
