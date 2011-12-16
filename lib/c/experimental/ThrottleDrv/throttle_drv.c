@@ -404,3 +404,7 @@ int thr_read(struct thr_chn_t* thr_chn, unsigned char* data, int length)
 unsigned char* get_sender_addr(struct thr_chn_t* ch) {
 	return ch->last_sender_adr;
 }
+
+unsigned char get_channel(struct thr_chn_t* ch) {
+	return ch->id;
+}
