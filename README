@@ -1,0 +1,60 @@
+Embryo of documentation. More details on http://wiki.cs.lth.se/moin/LabComm
+
+*** The LabComm data description language: ***
+
+Primitive types
+
+  sample boolean a_boolean;
+  sample byte a_byte;
+  sample short a_short;
+  sample int an_int;
+  sample long a_long;
+  sample float a_float;
+  sample double a_double;
+  sample string a_string;
+
+
+Arrays
+
+  sample int fixed_array[3];
+  sample int variable_array[_];                // Note 1
+  sample int fixed_array_of_array[3][4];       // Note 2
+  sample int fixed_rectangular_array[3, 4];    // Note 2
+  sample int variable_array_of_array[_][_];    // Notes 1 & 2
+  sample int variable_rectangular_array[_, _]; // Notes 1 & 2
+
+1 In contrast to C, LabComm supports both fixed and variable (denoted by '_') sized arrays.
+2 In contrast to Java, LabComm supports multidimensional arrays and not only arrays of arrays. 
+
+
+Structures
+
+  sample struct {
+    int an_int_field;
+    double a_double_field;
+  } a_struct;
+
+
+User defined types
+
+  typedef struct {
+    int field_1;
+    byte field_2;
+  } user_type[_];
+  sample user_type a_user_type_instance;
+  sample user_type another_user_type_instance;
+
+
+Example sample declaration (e.g. example.lc)
+
+  sample struct {
+    int sequence;
+    struct {
+      boolean last;
+      string data;
+    } line[_];
+  } log_message;
+
+From an .lc file, the labcomm compiler can generate marshalling and demarshalling code
+for C, Java, Python, and C#.
+
