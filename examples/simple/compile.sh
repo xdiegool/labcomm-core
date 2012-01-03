@@ -1,7 +1,7 @@
 (cd ../../lib/c; make)
 (cd ../../compiler ; ant jar)
 
-java -jar ../../compiler/labComm.jar --java=gen --c=gen/simple.c --h=gen/simple.h  simple.lc 
+java -jar ../../compiler/labComm.jar --java=gen --c=gen/simple.c --h=gen/simple.h  --python=gen/simple.py simple.lc 
 
 javac -cp ../../lib/java:. gen/*.java Encoder.java Decoder.java
 
