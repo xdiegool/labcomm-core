@@ -14,7 +14,6 @@ static void handle_simple_TwoInts_foo(simple_TwoInts *v,void *context) {
 }
 
 static int encode(int argc, char *argv[]) {
-  struct thr_chn_t *p_thr_chn = NULL;
   struct thr_chn_t *p_thr_chn2 = NULL;
   struct labcomm_encoder *encoder;
   struct labcomm_decoder *decoder;
@@ -39,7 +38,6 @@ static int encode(int argc, char *argv[]) {
   }
   else
   {
-    p_thr_chn = thr_open_chn(dest_mac, chn_id, frag_size, freq,NULL);
     p_thr_chn2 = thr_open_chn(dest_mac, chn_id, frag_size, freq,(thr_msg_handler_t)labcomm_decoder_decode_one);
     encoder = labcomm_encoder_new(labcomm_thr_writer, p_thr_chn2);
     labcomm_encoder_register_simple_TwoInts(encoder);
@@ -71,7 +69,6 @@ static int encode(int argc, char *argv[]) {
 
     labcomm_encoder_free(encoder);
     labcomm_decoder_free(decoder);
-    thr_close_chn(p_thr_chn);
     thr_close_chn(p_thr_chn2);
     //client_exit(fd);
  }
