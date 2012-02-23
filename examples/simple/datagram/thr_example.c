@@ -10,8 +10,7 @@ static int encode(int argc, char *argv[]) {
   struct thr_chn_t *p_thr_chn = NULL;
   struct labcomm_encoder *encoder;
   int i, j;
-//  unsigned char dest_mac[ETH_ADR_SIZE] = {0x00, 0x09, 0x6b, 0x10, 0xf3, 0x80};	/* other host MAC address, hardcoded...... :-( */
-  unsigned char dest_mac[ETH_ADR_SIZE] = {0x00, 0x09, 0x6b, 0xe3, 0x81, 0xbf};	/* other host MAC address, hardcoded...... :-( */
+  struct ether_addr dest_mac;
   unsigned char chn_id = 0x01;
   unsigned short frag_size = 60;
   unsigned short freq = 1000;  /* milliseconds */
@@ -19,7 +18,7 @@ static int encode(int argc, char *argv[]) {
   char *ifname = argv[1];
   char *dest_mac_str = argv[2];
 
-  if(parse_MAC_address(dest_mac_str, dest_mac)) {
+  if(parse_MAC_address(dest_mac_str, &dest_mac)) {
 	printf("failed to parse dest MAC address\n");
 	return 1;
   }
@@ -30,7 +29,7 @@ static int encode(int argc, char *argv[]) {
   }
   else
   {
-    p_thr_chn = thr_open_chn(dest_mac, chn_id, frag_size, freq, NULL);
+    p_thr_chn = thr_open_chn(&dest_mac, chn_id, frag_size, freq, NULL);
     encoder = labcomm_encoder_new(labcomm_thr_writer, p_thr_chn);
     labcomm_encoder_register_simple_TwoInts(encoder);
     labcomm_encoder_register_simple_IntString(encoder);
@@ -62,7 +61,7 @@ static int decode(int argc, char *argv[]) {
   struct thr_chn_t *p_thr_chn = NULL;
   struct labcomm_decoder *decoder;
   void  *context = NULL;
-  unsigned char dest_mac[ETH_ADR_SIZE] = {0x00, 0x09, 0x6b, 0x10, 0xf3, 0x80};	/* other host MAC address, hardcoded...... :-( */
+  struct ether_addr dest_mac;
   int ret = 0;
   unsigned char chn_id = 0x01;
   unsigned short frag_size = 60;
@@ -76,7 +75,7 @@ static int decode(int argc, char *argv[]) {
   }
   else
   {
-    p_thr_chn = thr_open_chn(dest_mac, chn_id, frag_size, freq, (thr_msg_handler_t)labcomm_decoder_decode_one);
+    p_thr_chn = thr_open_chn(&dest_mac, chn_id, frag_size, freq, (thr_msg_handler_t)labcomm_decoder_decode_one);
     decoder = labcomm_decoder_new(labcomm_thr_reader, p_thr_chn);
     if (!decoder)
     {

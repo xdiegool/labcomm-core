@@ -5,10 +5,9 @@
 #include "stdlib.h"
 #include <string.h>
 #include <time.h>
-#include <arpa/inet.h>
+// #include <arpa/inet.h>
 
 #define THROTTLENET_PROTO 0x544e
-#define ETH_ADR_LEN   6
 
 #define THR_DST_ADR_POS      0
 #define THR_SRC_ADR_POS      (THR_DST_ADR_POS  + sizeof(((thr_header_t*)0)->dst_adr))             //6
@@ -20,8 +19,8 @@
 #define THR_PAYLOAD_POS      (THR_FRAG_LEN_POS + sizeof(((thr_header_t*)0)->frag_len))            //21
 #define THR_MSG_HEADER_LEN   THR_PAYLOAD_POS
 
-#define THR_MSG_DST_ADR(thr_msg)       (unsigned char*)(&thr_msg[THR_DST_ADR_POS])
-#define THR_MSG_SRC_ADR(thr_msg)       (unsigned char*)(&thr_msg[THR_SRC_ADR_POS])
+#define THR_MSG_DST_ADR(thr_msg)       (struct ether_addr*)(&thr_msg[THR_DST_ADR_POS])
+#define THR_MSG_SRC_ADR(thr_msg)       (struct ether_addr*)(&thr_msg[THR_SRC_ADR_POS])
 #define THR_MSG_ETH_TYP(thr_msg)       *(unsigned short*)(&thr_msg[THR_ETH_TYP_POS])
 #define THR_MSG_CHN_ID(thr_msg)        *(unsigned char*)(&thr_msg[THR_CHN_ID_POS])
 #define THR_MSG_FRAG_NUM(thr_msg)      *(unsigned short*)(&thr_msg[THR_FRAG_NUM_POS])
@@ -33,21 +32,21 @@
 /* local type for the Throttle Channel structure */
 struct thr_chn_t
 {
-	unsigned char dst_adr[ETH_ADR_LEN];/* destination MAC address                    */
+	struct ether_addr dst_adr;         /* destination MAC address                    */
 	unsigned char id;                  /* Channel id                                 */
 	unsigned short frag_size;          /* Fragment size                              */
 	unsigned short freq;               /* Message transmission frequency             */
 	thr_msg_handler_t funct;           /* Callback function invoked at the reception */
 	unsigned short msg_length;
 	unsigned char* p_msg;
-	unsigned char last_sender_adr[ETH_ADR_LEN];/* src MAC address of last message */
+	struct ether_addr last_sender_adr;/* src MAC address of last message */
 };
 
 /* Type for the Throttle message */
 typedef struct
 {
-   unsigned char  dst_adr[ETH_ADR_LEN];  /* destination MAC address  */
-   unsigned char  src_adr[ETH_ADR_LEN];  /* source MAC address       */
+   struct ether_addr dst_adr;  /* destination MAC address  */
+   struct ether_addr src_adr;  /* source MAC address       */
    unsigned short eth_type;              /* ethernet packet type     */
    unsigned char  chn_id;                /* channel identification   */
    unsigned short frag_num;              /* fragment number          */
@@ -105,7 +104,7 @@ int thr_init(const char* eth_int_name)
 * @retval     struct thr_chn_t*: pointer to the Channel structure. NULL on error and errno is set appropriately.
 *
 *******************************************************************************/
-struct thr_chn_t* thr_open_chn(const unsigned char* dst_adr, unsigned char chn_id, unsigned char frag_size, unsigned short freq, const thr_msg_handler_t funct)
+struct thr_chn_t* thr_open_chn(const struct ether_addr* dst_adr, unsigned char chn_id, unsigned char frag_size, unsigned short freq, const thr_msg_handler_t funct)
 {
    struct thr_chn_t* tmp_chn = NULL; /* pointer to Channel structure */
 
@@ -128,7 +127,7 @@ struct thr_chn_t* thr_open_chn(const unsigned char* dst_adr, unsigned char chn_i
       else
       {
          /* Update the Channel structure */
-         memcpy(tmp_chn->dst_adr, dst_adr, sizeof(tmp_chn->dst_adr));
+         memcpy(&tmp_chn->dst_adr, dst_adr, sizeof(tmp_chn->dst_adr));
          tmp_chn->id = chn_id;
          tmp_chn->frag_size = frag_size;
          tmp_chn->freq = freq;
@@ -192,7 +191,7 @@ int thr_send(const struct thr_chn_t* thr_chn, const char* data, unsigned int len
          else
          {
             /* Compose the Ethernet Frame to be sent */
-            memcpy(THR_MSG_DST_ADR(thr_msg), &thr_chn->dst_adr[0], ETH_ADR_LEN);     /* Destiantion MAC Address  */
+            memcpy(THR_MSG_DST_ADR(thr_msg), &thr_chn->dst_adr, sizeof(thr_chn->dst_adr)); /* Destiantion MAC Address  */
             eth_getMACadr(eth_int, THR_MSG_SRC_ADR(thr_msg));                        /* Source MAC Address       */
             THR_MSG_ETH_TYP(thr_msg) = htons(THROTTLENET_PROTO);                     /* Ethernet Packet Type     */
             THR_MSG_CHN_ID(thr_msg) = thr_chn->id;                                   /* Channel identification   */
@@ -321,7 +320,7 @@ int thr_receive(struct thr_chn_t* thr_chn, unsigned char* data, void* param)
 #endif
             thr_chn->msg_length = ret;
             memcpy(thr_chn->p_msg, data, ret); /* copy the msg into the thr structure */
-            memcpy(thr_chn->last_sender_adr, THR_MSG_SRC_ADR(thr_msg), 6); /* ... and the address of the sender */
+            memcpy(&thr_chn->last_sender_adr, THR_MSG_SRC_ADR(thr_msg), 6); /* ... and the address of the sender */
 #ifdef DEBUG
             printf("thr_receive: calling %x\n", thr_chn->funct);
 #endif
@@ -401,8 +400,8 @@ int thr_read(struct thr_chn_t* thr_chn, unsigned char* data, int length)
    return(ret);
 }
 
-unsigned char* get_sender_addr(struct thr_chn_t* ch) {
-	return ch->last_sender_adr;
+struct ether_addr* get_sender_addr(struct thr_chn_t* ch) {
+	return &ch->last_sender_adr;
 }
 
 unsigned char get_channel(struct thr_chn_t* ch) {

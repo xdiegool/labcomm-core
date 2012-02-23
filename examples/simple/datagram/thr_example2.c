@@ -8,18 +8,17 @@
 
 
 static void handle_simple_TwoInts_foo(simple_TwoInts *v,void *context) {
-  unsigned char *src = get_sender_addr((struct thr_chn_t *)context); 
+  struct ether_addr *src = get_sender_addr((struct thr_chn_t *)context); 
   printf("Got TwoInts. a=%d, b=%d\n", v->a, v->b);
   printf("... src addr: %x:%x:%x:%x:%x:%x\n", src[0],  src[1], src[2], src[3], src[4], src[5]);
 }
 
 static int encode(int argc, char *argv[]) {
-  struct thr_chn_t *p_thr_chn2 = NULL;
+  struct thr_chn_t *p_thr_chn = NULL;
   struct labcomm_encoder *encoder;
   struct labcomm_decoder *decoder;
   int i, j;
-//  unsigned char dest_mac[ETH_ADR_SIZE] = {0x00, 0x09, 0x6b, 0x10, 0xf3, 0x80};	/* other host MAC address, hardcoded...... :-( */
-  unsigned char dest_mac[ETH_ADR_SIZE] = {0x00, 0x09, 0x6b, 0xe3, 0x81, 0xbf};	/* other host MAC address, hardcoded...... :-( */
+  struct ether_addr dest_mac;
   unsigned char chn_id = 0x01;
   unsigned short frag_size = 60;
   unsigned short freq = 1000;  /* milliseconds */
@@ -27,7 +26,7 @@ static int encode(int argc, char *argv[]) {
   char *ifname = argv[1];
   char *dest_mac_str = argv[2];
 
-  if(parse_MAC_address(dest_mac_str, dest_mac)) {
+  if(parse_MAC_address(dest_mac_str, &dest_mac)) {
 	printf("failed to parse dest MAC address\n");
 	return 1;
   }
@@ -38,17 +37,17 @@ static int encode(int argc, char *argv[]) {
   }
   else
   {
-    p_thr_chn2 = thr_open_chn(dest_mac, chn_id, frag_size, freq,(thr_msg_handler_t)labcomm_decoder_decode_one);
-    encoder = labcomm_encoder_new(labcomm_thr_writer, p_thr_chn2);
+    p_thr_chn = thr_open_chn(&dest_mac, chn_id, frag_size, freq,(thr_msg_handler_t)labcomm_decoder_decode_one);
+    encoder = labcomm_encoder_new(labcomm_thr_writer, p_thr_chn);
     labcomm_encoder_register_simple_TwoInts(encoder);
     labcomm_encoder_register_simple_IntString(encoder);
-    decoder = labcomm_decoder_new(labcomm_thr_reader, p_thr_chn2);
+    decoder = labcomm_decoder_new(labcomm_thr_reader, p_thr_chn);
     if (!decoder)
     {
       printf("Failed to allocate decoder %s:%d\n", __FUNCTION__, __LINE__);
       return 1;
     }
-    labcomm_decoder_register_simple_TwoInts(decoder, handle_simple_TwoInts_foo, p_thr_chn2);
+    labcomm_decoder_register_simple_TwoInts(decoder, handle_simple_TwoInts_foo, p_thr_chn);
 
     int ret;
     unsigned char data[200];
@@ -64,18 +63,18 @@ static int encode(int argc, char *argv[]) {
     printf("Encoding TwoInts, a=%d, b=%d\n", ti.a, ti.b);
     labcomm_encode_simple_TwoInts(encoder, &ti);
     printf("Decoding:\n");
-    thr_receive(p_thr_chn2, data, decoder);
-    thr_receive(p_thr_chn2, data, decoder);
+    thr_receive(p_thr_chn, data, decoder);
+    thr_receive(p_thr_chn, data, decoder);
 
     labcomm_encoder_free(encoder);
     labcomm_decoder_free(decoder);
-    thr_close_chn(p_thr_chn2);
+    thr_close_chn(p_thr_chn);
     //client_exit(fd);
  }
 }
 
 static void handle_simple_TwoInts(simple_TwoInts *v,void *context) {
-  unsigned char *src = get_sender_addr((struct thr_chn_t *)context); 
+  struct ether_addr *src = get_sender_addr((struct thr_chn_t *)context); 
   unsigned char ch_id = get_channel((struct thr_chn_t *)context); 
   printf("Got TwoInts. a=%d, b=%d\n", v->a, v->b);
   printf("... src addr: %x:%x:%x:%x:%x:%x\n", src[0],  src[1], src[2], src[3], src[4], src[5]);
@@ -91,14 +90,15 @@ static void handle_simple_TwoInts(simple_TwoInts *v,void *context) {
 
 static void handle_simple_IntString(simple_IntString *v,void *context) {
   printf("Got IntString. x=%d, s=%s\n", v->x, v->s);
-  unsigned char *src = get_sender_addr((struct thr_chn_t *)context); 
+  struct ether_addr *src = get_sender_addr((struct thr_chn_t *)context); 
   printf("... src addr: %x:%x:%x:%x:%x:%x\n", src[0],  src[1], src[2], src[3], src[4], src[5]);
 }
 
 static int decode(int argc, char *argv[]) {
   struct thr_chn_t *p_thr_chn = NULL;
   struct labcomm_decoder *decoder;
-  unsigned char dest_mac[ETH_ADR_SIZE] = {0x00, 0x09, 0x6b, 0x10, 0xf3, 0x80};	/* other host MAC address, hardcoded...... :-( */
+  struct ether_addr dest_mac; 	// Not used in this simple decoder example.
+				// The return channel is opened in the handler
   int ret = 0;
   unsigned char chn_id = 0x01;
   unsigned short frag_size = 60;
@@ -112,7 +112,7 @@ static int decode(int argc, char *argv[]) {
   }
   else
   {
-    p_thr_chn = thr_open_chn(dest_mac, chn_id, frag_size, freq, (thr_msg_handler_t)labcomm_decoder_decode_one);
+    p_thr_chn = thr_open_chn(&dest_mac, chn_id, frag_size, freq, (thr_msg_handler_t)labcomm_decoder_decode_one);
     decoder = labcomm_decoder_new(labcomm_thr_reader, p_thr_chn);
     if (!decoder)
     {
