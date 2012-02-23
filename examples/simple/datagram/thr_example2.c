@@ -10,7 +10,7 @@
 static void handle_simple_TwoInts_foo(simple_TwoInts *v,void *context) {
   struct ether_addr *src = get_sender_addr((struct thr_chn_t *)context); 
   printf("Got TwoInts. a=%d, b=%d\n", v->a, v->b);
-  printf("... src addr: %x:%x:%x:%x:%x:%x\n", src[0],  src[1], src[2], src[3], src[4], src[5]);
+  printf("... src addr: %x:%x:%x:%x:%x:%x\n", src->ether_addr_octet[0],  src->ether_addr_octet[1], src->ether_addr_octet[2], src->ether_addr_octet[3], src->ether_addr_octet[4], src->ether_addr_octet[5]);
 }
 
 static int encode(int argc, char *argv[]) {
@@ -77,7 +77,7 @@ static void handle_simple_TwoInts(simple_TwoInts *v,void *context) {
   struct ether_addr *src = get_sender_addr((struct thr_chn_t *)context); 
   unsigned char ch_id = get_channel((struct thr_chn_t *)context); 
   printf("Got TwoInts. a=%d, b=%d\n", v->a, v->b);
-  printf("... src addr: %x:%x:%x:%x:%x:%x\n", src[0],  src[1], src[2], src[3], src[4], src[5]);
+  printf("... src addr: %x:%x:%x:%x:%x:%x\n", src->ether_addr_octet[0],  src->ether_addr_octet[1], src->ether_addr_octet[2], src->ether_addr_octet[3], src->ether_addr_octet[4], src->ether_addr_octet[5]);
   struct thr_chn_t *ch = thr_open_chn(src, ch_id, (unsigned short)50, (unsigned short)100, NULL);
   struct labcomm_encoder *enc = labcomm_encoder_new(labcomm_thr_writer, ch);
   labcomm_encoder_register_simple_TwoInts(enc);
@@ -91,7 +91,7 @@ static void handle_simple_TwoInts(simple_TwoInts *v,void *context) {
 static void handle_simple_IntString(simple_IntString *v,void *context) {
   printf("Got IntString. x=%d, s=%s\n", v->x, v->s);
   struct ether_addr *src = get_sender_addr((struct thr_chn_t *)context); 
-  printf("... src addr: %x:%x:%x:%x:%x:%x\n", src[0],  src[1], src[2], src[3], src[4], src[5]);
+  printf("... src addr: %x:%x:%x:%x:%x:%x\n", src->ether_addr_octet[0],  src->ether_addr_octet[1], src->ether_addr_octet[2], src->ether_addr_octet[3], src->ether_addr_octet[4], src->ether_addr_octet[5]);
 }
 
 static int decode(int argc, char *argv[]) {
