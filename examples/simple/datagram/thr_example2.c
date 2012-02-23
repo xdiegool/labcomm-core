@@ -79,7 +79,7 @@ static void handle_simple_TwoInts(simple_TwoInts *v,void *context) {
   unsigned char ch_id = get_channel((struct thr_chn_t *)context); 
   printf("Got TwoInts. a=%d, b=%d\n", v->a, v->b);
   printf("... src addr: %x:%x:%x:%x:%x:%x\n", src[0],  src[1], src[2], src[3], src[4], src[5]);
-  struct thr_chan_t *ch = thr_open_chn(src, ch_id, (unsigned short)50, (unsigned short)100, NULL);
+  struct thr_chn_t *ch = thr_open_chn(src, ch_id, (unsigned short)50, (unsigned short)100, NULL);
   struct labcomm_encoder *enc = labcomm_encoder_new(labcomm_thr_writer, ch);
   labcomm_encoder_register_simple_TwoInts(enc);
   v->a *= 2;
