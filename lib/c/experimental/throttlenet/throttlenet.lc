@@ -6,30 +6,31 @@ typedef byte[6] eth_addr;
 typedef struct { 
 	string creatorId;
 	string svcId;
-	int version;
-} serviceID; // Should probably be a PalCom-like struct
+	int version;		//unique
+	string versionName;	//human readable
+} serviceID; // Should probably be a PalCom[_]like struct
 
 typedef struct {
 	string key;
-	byte value[-];
+	byte value[[_]];
 } property_t; // used for type info, grounding, etc.
 
 typedef struct {
 	string name;
-	property_t properties[-];
-	param_t params[-];
+	property_t properties[[_]];
+	param_t params[[_]];
 } command_t;
 
 typedef struct {
 	string name;
-	property_t properties[-];
+	property_t properties[[_]];
 } param_t;
 
 typedef struct {
 	servicID svcID;
 	string   name;
-        command_t commands[-];
-	byte data_description[-];
+        command_t commands[[_]];
+	byte data_description[[_]];
 } serviceDescription; // d:o PalCom
 
 typedef struct {
@@ -50,7 +51,7 @@ sample struct {
 } services_query;
 
 sample struct {
-	service_instance svcs[-]
+	service_instance svcs[[_]]
 } services_list;
 
 sample struct {
@@ -58,7 +59,7 @@ sample struct {
 	number_t bytes_per_period;
 	float periodtime; // in seconds  // or number_t microseconds?
 	// importance?
-} service_allocate_channel; // client -> GlobeThrottle to request connection
+} service_allocate_channel; // client [_]> GlobeThrottle to request connection
 
 sample struct {
 	// requesting service instance?
