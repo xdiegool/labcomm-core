@@ -1,0 +1,84 @@
+typedef short number_t; // placeholder for protocol buffers like encoding
+typedef byte[6] eth_addr;
+
+// *** Service registration,  lookup, and channel allocation
+
+typedef struct { 
+	string creatorId;
+	string svcId;
+	int version;
+} serviceID; // Should probably be a PalCom-like struct
+
+typedef struct {
+	string key;
+	byte value[-];
+} property_t; // used for type info, grounding, etc.
+
+typedef struct {
+	string name;
+	property_t properties[-];
+	param_t params[-];
+} command_t;
+
+typedef struct {
+	string name;
+	property_t properties[-];
+} param_t;
+
+typedef struct {
+	servicID svcID;
+	string   name;
+        command_t commands[-];
+	byte data_description[-];
+} serviceDescription; // d:o PalCom
+
+typedef struct {
+	eth_addr device; // or more generic, as in PalCom?
+	serviceID svcID;
+	number_t  instanceID;
+	string instance_name;
+} service_instance;
+
+sample struct {
+	service_instance svc;
+	number_t chnID;   // the channel to use for connecting to the service
+} service_register;
+
+sample boolean ack;
+
+sample struct {
+} services_query;
+
+sample struct {
+	service_instance svcs[-]
+} services_list;
+
+sample struct {
+	service_instance svc;
+	number_t bytes_per_period;
+	float periodtime; // in seconds  // or number_t microseconds?
+	// importance?
+} service_allocate_channel; // client -> GlobeThrottle to request connection
+
+sample struct {
+	// requesting service instance?
+	number_t chnId; // the channel to send the connect message on
+} service_channel_ACK;
+
+sample struct {
+	float max_utilization;
+	// min period?
+} service_channel_NACK;
+
+
+// *** service to service connection negotiation
+
+typedef struct {
+	number_t sender_chnId; // The chnID at the sender's side that will receive the response, and subsequent traffic;
+} connect_t;
+
+
+sample connect_t connect_request;
+sample connect_t connect_response;
+
+
