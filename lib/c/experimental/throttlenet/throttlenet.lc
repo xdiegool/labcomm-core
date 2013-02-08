@@ -1,5 +1,5 @@
-typedef short number_t; // placeholder for protocol buffers like encoding
-typedef byte[6] eth_addr;
+typedef long number_t; // placeholder for protocol buffers like encoding
+typedef byte eth_addr[6];
 
 // *** Service registration,  lookup, and channel allocation
 
@@ -12,25 +12,25 @@ typedef struct {
 
 typedef struct {
 	string key;
-	byte value[[_]];
+	byte value[_];
 } property_t; // used for type info, grounding, etc.
 
 typedef struct {
 	string name;
-	property_t properties[[_]];
-	param_t params[[_]];
-} command_t;
-
-typedef struct {
-	string name;
-	property_t properties[[_]];
+	property_t properties[_];
 } param_t;
 
 typedef struct {
-	servicID svcID;
+	string name;
+	property_t properties[_];
+	param_t params[_];
+} command_t;
+
+typedef struct {
+	serviceID svcID;
 	string   name;
-        command_t commands[[_]];
-	byte data_description[[_]];
+        command_t commands[_];
+	byte data_description[_];
 } serviceDescription; // d:o PalCom
 
 typedef struct {
@@ -48,38 +48,28 @@ sample struct {
 sample boolean ack;
 
 sample struct {
+	short dummy;
 } services_query;
 
 sample struct {
-	service_instance svcs[[_]]
+	service_instance svcs[_];
 } services_list;
 
 sample struct {
 	service_instance svc;
 	number_t bytes_per_period;
-	float periodtime; // in seconds  // or number_t microseconds?
+	number_t period_time; //microseconds
 	// importance?
 } service_allocate_channel; // client [_]> GlobeThrottle to request connection
 
 sample struct {
-	// requesting service instance?
-	number_t chnId; // the channel to send the connect message on
-} service_channel_ACK;
+	number_t chnId;
+	eth_addr remote_device;	
+	number_t remote_chnId; 
+} service_channel_open; // sent as response to service_allocate_channel (sent to both sides)
 
 sample struct {
-	float max_utilization;
+	short max_utilization; // in percent
 	// min period?
 } service_channel_NACK;
-
-
-// *** service to service connection negotiation
-
-typedef struct {
-	number_t sender_chnId; // The chnID at the sender's side that will receive the response, and subsequent traffic;
-} connect_t;
-
-
-sample connect_t connect_request;
-sample connect_t connect_response;
-
 
