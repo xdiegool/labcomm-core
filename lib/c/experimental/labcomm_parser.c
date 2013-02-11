@@ -12,13 +12,35 @@
 #define FALSE 0
 #define TRUE 1
 
+#define	USER_ID_BASE	0x00000080
+
+typedef enum{
+	TYPE_DECL = 0x00000001,
+	SAMPLE_DECL = 0x00000002,
+
+	ARRAY_DECL = 0x00000010,
+	STRUCT_DECL = 0x00000011,
+
+	TYPE_BOOLEAN  = 0x00000020,
+	TYPE_BYTE  = 0x00000021,
+	TYPE_SHORT  = 0x00000022,
+	TYPE_INTEGER  = 0x00000023,
+	TYPE_LONG  = 0x00000024,
+	TYPE_FLOAT  = 0x00000025,
+	TYPE_DOUBLE  = 0x00000026,
+	TYPE_STRING  = 0x00000027
+} labcomm_type ;
+
 void error(char *s) {
-	fprintf(stderr, "%s\n", s);
+	fprintf(stderr, "%s", s);
+	fprintf(stderr, "\nexiting\n");
 	exit(1);
 }
+
 #define BUF_SIZE 1024
 #define STACK_SIZE 16
 
+/* internal type: stack for the parser */
 typedef struct {
 	unsigned char* c;
 	unsigned int size;
@@ -28,6 +50,15 @@ typedef struct {
 	unsigned int top;
 } buffer;
 
+/* aux method for reading a big endian uint32 from a char* (i.e. ntohl but for explicit char*) */
+static int unpack32(unsigned char *c, unsigned int idx) {
+	unsigned int b0=(c[idx]) << 3 ; 
+	unsigned int b1=(c[idx+1]) << 2 ;
+	unsigned int b2=(c[idx+2]) << 1 ;
+	unsigned int b3=c[idx+3];
+
+	return  b0 | b1 | b2 | b3;
+}
 
 void dumpStack(buffer *b) {
 #ifdef DEBUG
@@ -82,28 +113,10 @@ void advancen(buffer *b, size_t n) {
 	b->idx+=n;
 }
 
-static int unpack32(unsigned char *c, unsigned int idx) {
-	unsigned int b0=(c[idx]) << 3 ; 
-	unsigned int b1=(c[idx+1]) << 2 ;
-	unsigned int b2=(c[idx+2]) << 1 ;
-	unsigned int b3=c[idx+3];
-
-	return  b0 | b1 | b2 | b3;
-}
-
-
 unsigned int peek32(buffer *b) {
-#if 0
-	unsigned int b0=(b->c[b->idx]) << 3 ; 
-	unsigned int b1=(b->c[b->idx+1]) << 2 ;
-	unsigned int b2=(b->c[b->idx+2]) << 1 ;
-	unsigned int b3=b->c[b->idx+3];
-
-	return  b0 | b1 | b2 | b3;
-#else
 	return unpack32(b->c, b->idx);
-#endif
 }
+
 void advance32(buffer *b) {
 	b->idx+=4;
 }
@@ -122,26 +135,13 @@ void getStr(buffer *b, char *dest, size_t size) {
 	b->idx += size;
 }
 
-#define TYPE_DECL 	0x00000001
-#define SAMPLE_DECL	0x00000002
-#define USER_ID_BASE 	0x00000080
-
-#define ARRAY_DECL	0x00000010
-#define STRUCT_DECL	0x00000011
-
-#define TYPE_BOOLEAN 	0x00000020
-#define TYPE_BYTE 	0x00000021
-#define TYPE_SHORT 	0x00000022
-#define TYPE_INTEGER 	0x00000023
-#define TYPE_LONG 	0x00000024
-#define TYPE_FLOAT 	0x00000025
-#define TYPE_DOUBLE 	0x00000026
-#define TYPE_STRING 	0x00000027
-
 //XXX experimental
-unsigned int signatures_length[10];
-unsigned char signatures_name[10][64]; //HERE BE DRAGONS: add range checks
-unsigned char signatures[10][128]; 
+#define MAX_SIGNATURES 10
+#define MAX_NAME_LEN 32 
+#define MAX_SIG_LEN 128
+unsigned int signatures_length[MAX_SIGNATURES];
+unsigned char signatures_name[MAX_SIGNATURES][MAX_NAME_LEN]; //HERE BE DRAGONS: add range checks
+unsigned char signatures[MAX_SIGNATURES][MAX_SIG_LEN]; 
 
 unsigned int get_signature_len(unsigned int uid){
 	return signatures_length[uid-USER_ID_BASE];
@@ -156,7 +156,7 @@ unsigned char* get_signature(unsigned int uid){
 void dump_signature(unsigned int uid){
 	int i;
 	unsigned int len = get_signature_len(uid);
-	printf("sig %x : %s (len=%d):\n", uid, get_signature_name(uid), len);
+	printf("signature for uid %x : %s (len=%d):\n", uid, get_signature_name(uid), len);
 	unsigned char* sig = get_signature(uid);
 	for(i=0; i<len; i++) {
 		printf("%2.2x ",sig[i]);
@@ -269,10 +269,18 @@ int accept_sample_decl(buffer *d){
 		unsigned int end = d->idx;
 		unsigned int len = end-start;
 		printf("signature for uid %x (start=%x,end=%x, nlen=%d,len=%d)\n", uid, start,end, nlen, len);
-		signatures_length[uid-USER_ID_BASE] = len;
-		memcpy(signatures_name[uid-USER_ID_BASE], &d->c[nstart+3], nlen+1);
-		signatures_name[uid-USER_ID_BASE][nlen+1]=0;
-		memcpy(signatures[uid-USER_ID_BASE], &d->c[start], len);
+		if(len <= MAX_SIG_LEN) {
+			signatures_length[uid-USER_ID_BASE] = len;
+			memcpy(signatures_name[uid-USER_ID_BASE], &d->c[nstart+3], nlen+1);
+		} else {
+			error("sig longer than max length (this ought to be dynamic...)");
+		}
+		if(nlen < MAX_NAME_LEN) { // reserve space for terminating NULL
+			signatures_name[uid-USER_ID_BASE][nlen+1]=0;
+			memcpy(signatures[uid-USER_ID_BASE], &d->c[start], len);
+		} else {
+			error("sig name longer than max length (this ought to be dynamic...");
+		}
 		return TRUE;
 	} else {
 		return FALSE;
@@ -438,7 +446,9 @@ int accept_sample_data(buffer *d){
 	accept_user_id(d);
 	unsigned int uid = pop(d);	
 	printf("sample data... %x\n", uid);
+#ifdef DEBUG
 	dump_signature(uid);
+#endif
 	unsigned int siglen = get_signature_len(uid);
 	unsigned char *sig = get_signature(uid);
 	skip_packed_sample_data(d, sig, siglen);
@@ -458,10 +468,14 @@ int skip_struct(buffer *d, unsigned char *sig, unsigned int len, unsigned int *p
 		//skip name 
 		unsigned int namelen = unpack32(sig, *pos);
 		*pos += (4+namelen); // 32bit len + actual string
+#ifdef DEBUG
 		printf("namelen==%d \n",namelen);
+#endif
 		unsigned int type = unpack32(sig, *pos);
 		*pos += 4;
+#ifdef DEBUG
 		printf("type == %x\n", type);
+#endif
 		skipped += skip_type(type, d, sig, len, pos);
 	}
 	return skipped;
@@ -472,14 +486,14 @@ int skip_type(unsigned int type, buffer *d,
 		unsigned char *sig, unsigned int len, unsigned int *pos) 
 {
 	int skipped=0;
-	printf("skip_type %x\n", type);
+	printf("skip_type %x:", type);
 	switch(type) {
 		case TYPE_BOOLEAN :
-			printf("boolean %d\n", get(d));
+			printf("boolean [%d]\n", get(d));
 			skipped++;
 			break;
 		case TYPE_BYTE : 
-			printf("byte %d\n", get(d));
+			printf("byte [%d]\n", get(d));
 			skipped++;
 			break;
 		case TYPE_SHORT : 
@@ -488,7 +502,7 @@ int skip_type(unsigned int type, buffer *d,
 			skipped+=2;
 			break;
 		case TYPE_INTEGER :
-			printf("integer %d\n", get32(d));
+			printf("integer [%d]\n", get32(d));
 			skipped +=4;
 			break;
 		case TYPE_FLOAT : 
@@ -506,10 +520,10 @@ int skip_type(unsigned int type, buffer *d,
 			{unsigned int len = get32(d);
 			//advancen(d,len);
 			int i;
-			printf("string ");
+			printf("string [");
 			for(i=0; i<len; i++)
 				printf("%c", get(d));
-			printf("\n ");
+			printf("]\n");
 			skipped+=len+4;
 			break;}
 		case ARRAY_DECL :
