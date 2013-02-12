@@ -11,6 +11,9 @@
 
 #define DEBUG 
 #undef DEBUG_STACK
+#undef DEBUG_READ
+
+#define EXIT_WHEN_RECEIVING_DATA //arrays (at least varsize not working)
 
 #define FALSE 0
 #define TRUE 1
@@ -236,7 +239,7 @@ int do_parse(buffer *d) {
 		return TRUE;
 	} else if (type == SAMPLE_DECL) {
 		advance32(d);
-		printf("sample ");
+		printf("sample_decl ");
 		accept_user_id(d);
 		unsigned int nstart = d->idx;
 		unsigned int uid = pop(d);
@@ -245,29 +248,33 @@ int do_parse(buffer *d) {
 		unsigned int start = d->idx;
 		unsigned int nlen = pop(d);
 		accept_type(d);
-		printf(" : ");
+		//printf(" : ");
 		//unsigned int dt = pop(d);
 		unsigned int end = d->idx;
 		unsigned int len = end-start;
-#if 0
+
 		if(len <= MAX_SIG_LEN) {
 			signatures_length[uid-USER_ID_BASE] = len;
-			memcpy(signatures_name[uid-USER_ID_BASE], &d->c[nstart+3], nlen+1);
+			memcpy(signatures[uid-USER_ID_BASE], &d->c[start], len);
 		} else {
 			error("sig longer than max length (this ought to be dynamic...)");
 		}
-		if(nlen < MAX_NAME_LEN) { // reserve space for terminating NULL
+
+		if(nlen < MAX_NAME_LEN) { // leave 1 byte for terminating NULL
+			signatures_name[uid-USER_ID_BASE][0] = nlen;
+			memcpy(signatures_name[uid-USER_ID_BASE], &d->c[nstart+3], nlen);
 			signatures_name[uid-USER_ID_BASE][nlen+1]=0;
-			memcpy(signatures[uid-USER_ID_BASE], &d->c[start], len);
 		} else {
 			error("sig name longer than max length (this ought to be dynamic...");
 		}
-		printf("signature for uid %x: %s (start=%x,end=%x, nlen=%d,len=%d)\n", uid, get_signature_name(uid), start,end, nlen, len);
-#endif
-		printf("signature for uid %x: (start=%x,end=%x, nlen=%d,len=%d)\n", uid, start,end, nlen, len);
+		//printf("signature for uid %x: %s (start=%x,end=%x, nlen=%d,len=%d)\n", uid, get_signature_name(uid), start,end, nlen, len);
 	} else {
+#ifdef EXIT_WHEN_RECEIVING_DATA
 		printf("*** got sample data, exiting\n");
 		exit(0);
+#else
+		accept_sample_data(d);
+#endif
 	}
 }
 
@@ -396,7 +403,6 @@ int accept_struct_decl(buffer *d){
 			accept_field(d);
 		}
 //		push(d,tid);
-		printf("----\n");
 		return TRUE;
 	} else {
 		printf("accept_struct_decl: type=%x, should not happen\n",tid);
@@ -620,6 +626,7 @@ int read_file(FILE *f, buffer *b) {
 
 void test_read(buffer *buf) {
 	int r = read_file(stdin, buf);
+#ifdef DEBUG_READ
 	printf("read %d bytes:\n\n", r);
 	int i;
 	for(i=0; i<r; i++) {
@@ -627,6 +634,7 @@ void test_read(buffer *buf) {
 		if(i%8 == 7) printf("\n");
 	}
 	printf("\n");
+#endif
 }
 int main() {
 	buffer buf;
