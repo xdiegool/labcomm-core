@@ -12,3 +12,8 @@ sample struct {
   double x;
   double y;
 } TwoDoubles;
+
+sample struct {
+  int fixed[2];
+  int variable[_];
+} TwoArrays;

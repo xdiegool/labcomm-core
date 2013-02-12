@@ -63,7 +63,7 @@ static int unpack32(unsigned char *c, unsigned int idx) {
 }
 
 void dumpStack(buffer *b) {
-#ifdef DEBUG
+#ifdef DEBUG_STACK
 	int i;
 	printf("=== stack: ");
 	for(i=0; i<STACK_SIZE; i++) { //HERE BE DRAGONS
@@ -195,7 +195,6 @@ int accept_string(buffer *d);
 int accept_string_length(buffer *d);
 int accept_char(buffer *d);
 int accept_type(buffer *d);
-int accept_basic_type(buffer *d);
 int accept_boolean_type(buffer *d);
 int accept_byte_type(buffer *d);
 int accept_short_type(buffer *d);
@@ -215,83 +214,39 @@ int accept_field(buffer *d);
 int accept_sample_data(buffer *d);
 int accept_packed_sample_data(buffer *d);
 
-int read_file(FILE *f, buffer *b) {
-	int s = fread(b->c, sizeof(char), b->capacity, f);
-	b->size = s;
-	b->idx=0;
-	return s;
-}
-
-void test_read(buffer *buf) {
-	int r = read_file(stdin, buf);
-	printf("read %d bytes:\n\n", r);
-	int i;
-	for(i=0; i<r; i++) {
-		printf("%x ", buf->c[i]);
-		if(i%8 == 7) printf("\n");
-	}
-	printf("\n");
-}
-int main() {
-	buffer buf;
-
-	if( init_buffer(&buf, BUF_SIZE, STACK_SIZE) ) {
-		printf("failed to init buffer\n");
-		exit(1);
-	}
-	test_read(&buf);
-	do{
-		printf("trying to read another packet\n");
-	} while(more(&buf) && accept_packet(&buf)); 
-	printf("done\n");
-}
-
-	
-int accept_packet(buffer *d) {
-	if(accept_type_decl(d)) {
-		printf("*** got type decl\n");
-	} else if(accept_sample_decl(d)) {
-		printf("*** got sample decl\n");
-	} else if(accept_sample_data(d)) {
-		printf("*** got sample data\n");
-	} else {
-//	error("unexpected %x, expecting packet", d->c[d->idx]); 
-		error("packet");
-	}
-}
-int accept_type_decl(buffer *d){
+int do_parse(buffer *d) {
 	unsigned int type = peek32(d) ;
 	if(type == TYPE_DECL ) {
 		advance32(d);
 		accept_user_id(d);
 		unsigned int uid = pop(d);
+		printf(", name = ");
 		accept_string(d);
 		// ignore, for now. This should do something as
 		// char *name = (char*) pop(d);
 		// store or print name
 		// free(name)
+		printf(" : ");
 		accept_type(d);
 		unsigned int type = pop(d);
 
 		//push(d, type);
+		printf("\n");
 		return TRUE;
-	}else {
-		return FALSE;
-	}
-}
-
-int accept_sample_decl(buffer *d){
-	unsigned int type = peek32(d) ;
-	if (type == SAMPLE_DECL) {
+	} else if (type == SAMPLE_DECL) {
 		advance32(d);
+		printf("sample ");
 		accept_user_id(d);
 		unsigned int nstart = d->idx;
 		unsigned int uid = pop(d);
+		printf(", name = ");
 		accept_string(d);
 		unsigned int start = d->idx;
 		unsigned int nlen = pop(d);
 		accept_type(d);
-		unsigned int dt = pop(d);
+		printf(" : ");
+		//unsigned int dt = pop(d);
+#if 0
 		unsigned int end = d->idx;
 		unsigned int len = end-start;
 		if(len <= MAX_SIG_LEN) {
@@ -307,18 +262,18 @@ int accept_sample_decl(buffer *d){
 			error("sig name longer than max length (this ought to be dynamic...");
 		}
 		printf("signature for uid %x: %s (start=%x,end=%x, nlen=%d,len=%d)\n", uid, get_signature_name(uid), start,end, nlen, len);
-		return TRUE;
+#endif
 	} else {
-		return FALSE;
+		printf("*** got sample data, exiting\n");
+		exit(0);
 	}
 }
 
 int accept_user_id(buffer *d){
 	unsigned int uid = peek32(d);
 	if(uid >= USER_ID_BASE) {
-		push(d, uid);
 		advance32(d);
-		//printf("uid = %x\n", uid);
+		printf("uid = %x ", uid);
 		return TRUE;
 	} else {
 		return FALSE;
@@ -330,7 +285,7 @@ int accept_string(buffer *d){
 	push(d, len);
 	char *str=malloc(len);
 	getStr(d, str, len);
-	printf("%s\n", str);
+	printf("%s", str);
 #ifdef RETURN_STRINGS
 	push(d, str);
 #else
@@ -347,67 +302,54 @@ int accept_string(buffer *d){
 //}
 
 int accept_type(buffer *d){
-	if(accept_basic_type(d)) {
-	} else if(accept_user_id(d)) {
-		//printf("user_id \n");
-	} else if(accept_array_decl(d)) {
-		//printf("array_decl \n");
-	} else if(accept_struct_decl(d)) {
-		//printf("struct_decl \n");
-	} else {	
-		return FALSE;
-	}
-}
-int accept_basic_type(buffer *d){
 	unsigned int type = peek32(d);
 	switch(type) {
 		case TYPE_BOOLEAN :
-			//printf("boolean \n");
+			printf("boolean");
+			advance32(d);
 			break;
 		case TYPE_BYTE :
-			//printf("byte \n");
+			printf("byte");
+			advance32(d);
 			break;
 		case TYPE_SHORT :
-			//printf("short \n");
+			printf("short");
+			advance32(d);
 			break;
 		case TYPE_INTEGER :
-			//printf("integer \n");
+			printf("integer");
+			advance32(d);
 			break;
 		case TYPE_LONG :
-			//printf("long \n");
+			printf("long");
+			advance32(d);
 			break;
 		case TYPE_FLOAT :
-			//printf("float \n");
+			printf("float");
+			advance32(d);
 			break;
 		case TYPE_DOUBLE :
-			//printf("double \n");
+			printf("double");
+			advance32(d);
 			break;
 		case TYPE_STRING :
-			//printf("string \n");
+			printf("string");
+			advance32(d);
+			break;
+		case ARRAY_DECL :
+			accept_array_decl(d);
+			break;
+		case STRUCT_DECL :
+			accept_struct_decl(d);
 			break;
 		default :
+			printf("accept_basic_type default (type==%x) should not happen\n", type);
 			return FALSE;
 	}
-	advance32(d);
-	push(d,type);
+	//push(d,type);
 	return TRUE;
 }
-#if 0 // handle all basic types above
-int accept_boolean_type(buffer *d){
-}
-int accept_byte_type(buffer *d){
-}
-int accept_short_type(buffer *d){
-}
-int accept_integer_type(buffer *d){
-}
-int accept_long_type(buffer *d){
-}
-int accept_float_type(buffer *d){
-}
-int accept_string_type(buffer *d){
-}
-#endif
+
 int accept_array_decl(buffer *d){
 	unsigned int tid = peek32(d);
 	if(tid == ARRAY_DECL) {
@@ -434,47 +376,38 @@ int accept_array_decl(buffer *d){
 		//push(d,tid);
 		return TRUE;
 	} else {
+		printf("accept_array_decl: type=%x, should not happen\n",tid);
 		return FALSE;
 	}
 }
-#if 0
-int accept_number_of_indices(buffer *d){
-}
-int accept_indices(buffer *d){
-}
-int accept_variable_index(buffer *d){
-}
-int accept_fixed_index(buffer *d){
-}
-#endif
 int accept_struct_decl(buffer *d){
 	unsigned int tid = peek32(d);
 	if(tid == STRUCT_DECL) {
 		advance32(d);
 		unsigned int nf = get32(d);
-		printf("%d field struct: ", nf);
+		printf(", %d field struct:\n", nf);
 		int i;
 		int numVar=0;
 		int size=0;
 		for(i=0; i<nf; i++) {
+			printf("\t");
 			accept_field(d);
 		}
-		push(d,tid);
+//		push(d,tid);
+		printf("----\n");
 		return TRUE;
 	} else {
+		printf("accept_struct_decl: type=%x, should not happen\n",tid);
 		return FALSE;
 	}
 }
-#if 0
-int accept_number_of_fields(buffer *d){
-}
-#endif
 int accept_field(buffer *d){
+	printf("field ");
 	accept_string(d);
 	// ignore, for now
+	printf(" : ");
 	accept_type(d);
-	unsigned int type = pop(d);
-	printf("field: %x \n", type);
+	printf("\n");
 }
 int accept_sample_data(buffer *d){
 	accept_user_id(d);
@@ -675,3 +608,36 @@ int skip_packed_sample_data(buffer *d, unsigned char *sig, unsigned int siglen) 
 	printf("skipped %d bytes\n", skipped);
 	return TRUE;
 }
+
+int read_file(FILE *f, buffer *b) {
+	int s = fread(b->c, sizeof(char), b->capacity, f);
+	b->size = s;
+	b->idx=0;
+	return s;
+}
+
+void test_read(buffer *buf) {
+	int r = read_file(stdin, buf);
+	printf("read %d bytes:\n\n", r);
+	int i;
+	for(i=0; i<r; i++) {
+		printf("%x ", buf->c[i]);
+		if(i%8 == 7) printf("\n");
+	}
+	printf("\n");
+}
+int main() {
+	buffer buf;
+
+	if( init_buffer(&buf, BUF_SIZE, STACK_SIZE) ) {
+		printf("failed to init buffer\n");
+		exit(1);
+	}
+	test_read(&buf);
+	do{
+		printf("trying to read another packet\n");
+	} while(more(&buf) && do_parse(&buf)); 
+	printf("done\n");
+}
+
+	
