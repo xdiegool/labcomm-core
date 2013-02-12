@@ -10,6 +10,7 @@
 #include <string.h>
 
 #define DEBUG 
+#undef DEBUG_STACK
 
 #define FALSE 0
 #define TRUE 1
@@ -222,7 +223,7 @@ int do_parse(buffer *d) {
 		unsigned int uid = pop(d);
 		printf(", name = ");
 		accept_string(d);
-		// ignore, for now. This should do something as
+		pop(d); // ignore, for now. This should do something as
 		// char *name = (char*) pop(d);
 		// store or print name
 		// free(name)
@@ -246,9 +247,9 @@ int do_parse(buffer *d) {
 		accept_type(d);
 		printf(" : ");
 		//unsigned int dt = pop(d);
-#if 0
 		unsigned int end = d->idx;
 		unsigned int len = end-start;
+#if 0
 		if(len <= MAX_SIG_LEN) {
 			signatures_length[uid-USER_ID_BASE] = len;
 			memcpy(signatures_name[uid-USER_ID_BASE], &d->c[nstart+3], nlen+1);
@@ -263,6 +264,7 @@ int do_parse(buffer *d) {
 		}
 		printf("signature for uid %x: %s (start=%x,end=%x, nlen=%d,len=%d)\n", uid, get_signature_name(uid), start,end, nlen, len);
 #endif
+		printf("signature for uid %x: (start=%x,end=%x, nlen=%d,len=%d)\n", uid, start,end, nlen, len);
 	} else {
 		printf("*** got sample data, exiting\n");
 		exit(0);
@@ -274,6 +276,7 @@ int accept_user_id(buffer *d){
 	if(uid >= USER_ID_BASE) {
 		advance32(d);
 		printf("uid = %x ", uid);
+		push(d, uid);
 		return TRUE;
 	} else {
 		return FALSE;
@@ -355,7 +358,7 @@ int accept_array_decl(buffer *d){
 	if(tid == ARRAY_DECL) {
 		advance32(d);
 		unsigned int nidx = get32(d);
-		printf("%d dim array: ", nidx);
+		printf("%d dim array", nidx);
 		int i;
 		unsigned int numVar=0;
 		unsigned int size=1;
@@ -363,16 +366,15 @@ int accept_array_decl(buffer *d){
 			unsigned int idx = get32(d);
 			if(idx == 0) {
 				numVar++;
-				printf("variable index (numVar=%d), ",numVar);
+				printf("[_] ");
 			} else {
-				printf("fixed index: %d, ", idx);
+				printf("[%d] ", idx);
 				size*=idx;
 			}
-			printf("\n");
 		}
+		printf(" of ");
 		unsigned int et=accept_type(d);
-		printf("array element type: %x\n", et);
-		pop(d);
+		//pop(d);
 		//push(d,tid);
 		return TRUE;
 	} else {
@@ -404,7 +406,7 @@ int accept_struct_decl(buffer *d){
 int accept_field(buffer *d){
 	printf("field ");
 	accept_string(d);
-	// ignore, for now
+	pop(d); // ignore, for now
 	printf(" : ");
 	accept_type(d);
 	printf("\n");
@@ -635,7 +637,7 @@ int main() {
 	}
 	test_read(&buf);
 	do{
-		printf("trying to read another packet\n");
+		printf("------------\n");
 	} while(more(&buf) && do_parse(&buf)); 
 	printf("done\n");
 }
