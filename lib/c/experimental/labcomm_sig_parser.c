@@ -13,7 +13,7 @@
 #undef DEBUG_STACK
 #undef DEBUG_READ
 
-#define EXIT_WHEN_RECEIVING_DATA //arrays (at least varsize not working)
+#undef EXIT_WHEN_RECEIVING_DATA //arrays (at least varsize not working)
 
 #define FALSE 0
 #define TRUE 1
@@ -437,7 +437,7 @@ int skip_array(buffer *d, unsigned char *sig, unsigned int len, unsigned int *po
 	unsigned int skip = 0;
 	unsigned int tot_nbr_elem_tmp = 1;
 	unsigned int nIdx = unpack32(sig, *pos);
-	printf("skip_array: nIdx = %d\n", nIdx);
+	printf("skip_array: nIdx = %d (from sig)\n", nIdx);
 	*pos +=4;
 	unsigned int idx[nIdx];
 	unsigned int nVar=0;
@@ -447,7 +447,7 @@ int skip_array(buffer *d, unsigned char *sig, unsigned int len, unsigned int *po
 	for(i=0; i<nIdx; i++) {
 		idx[i] = unpack32(sig, *pos);
 		*pos += 4;
-		printf("skip_array: idx[%d]=%d\n", i, idx[i]);
+		printf("skip_array: idx[%d]=%d (from sig)\n", i, idx[i]);
 		if(idx[i] == 0) {
 			nVar++;
 		} else {
@@ -458,7 +458,8 @@ int skip_array(buffer *d, unsigned char *sig, unsigned int len, unsigned int *po
 
 	for(i=0; i<nVar; i++) {
 		var[i] = get32(d);	
-		printf("skip_array: var[%d]=%d\n", i, var[i]);
+		printf("skip_array: var[%d]=%d (from sample)\n", i, var[i]);
+		tot_nbr_elem_tmp *= var[i];
 	}
 
 	unsigned int type = unpack32(sig, *pos);
@@ -468,13 +469,11 @@ int skip_array(buffer *d, unsigned char *sig, unsigned int len, unsigned int *po
 
 	skip = elemSize * tot_nbr_elem_tmp;
 
-	printf("skip_array: skip: %d * %d = %d\n", elemSize, tot_nbr_elem_tmp, skip);
+	printf("skip_array: skip: %d * %d = %d\n", tot_nbr_elem_tmp, elemSize ,skip);
 	
 	advancen(d, skip);
 
-	skip += nVar;
-
-	return skip;
+	return skip + 4*nVar;
 }
 
 int skip_struct(buffer *d, unsigned char *sig, unsigned int len, unsigned int *pos) {
@@ -486,14 +485,19 @@ int skip_struct(buffer *d, unsigned char *sig, unsigned int len, unsigned int *p
 	for(i=0; i<nFields; i++) {
 		//skip name 
 		unsigned int namelen = unpack32(sig, *pos);
-		*pos += (4+namelen); // 32bit len + actual string
 #ifdef DEBUG
-		printf("namelen==%d \n",namelen);
+		printf("namelen==%d",namelen);
+		char name[namelen+1];
+		name[namelen]=0;
+		strncpy(name, sig+*pos+4, namelen);
+		printf(", name = %s",name);
 #endif
+		*pos += (4+namelen); // 32bit len + actual string
+
 		unsigned int type = unpack32(sig, *pos);
 		*pos += 4;
 #ifdef DEBUG
-		printf("type == %x\n", type);
+		printf(": type == %x\n", type);
 #endif
 		skipped += skip_type(type, d, sig, len, pos);
 	}
@@ -548,6 +552,7 @@ int skip_type(unsigned int type, buffer *d,
 		case ARRAY_DECL :
 			printf("array\n");
 			skipped += skip_array(d, sig, len, pos);
+			break;
 		case STRUCT_DECL :
 			printf("struct\n");
 			skipped += skip_struct(d, sig, len, pos);
@@ -590,8 +595,8 @@ int skip_type(unsigned int type, buffer *d,
 			skipped+=len+4;
 			break;}
 		case ARRAY_DECL :
-			printf("array\n");
 			skipped += skip_array(d, sig, len, pos);
+			break;
 		case STRUCT_DECL :
 			skipped += skip_struct(d, sig, len, pos);
 			break;
