@@ -15,5 +15,5 @@ sample struct {
 
 sample struct {
   int fixed[2];
-  int variable[_];
+  int variable[2,_];
 } TwoArrays;
