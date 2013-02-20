@@ -41,6 +41,7 @@ int main(int argc, char *argv[]) {
 	foo[k] = k;
   }
 
+  printf("Encoding TwoArrays...\n");
   labcomm_encode_simple_TwoArrays(encoder, &ta);
 
   ti.a = 23;
