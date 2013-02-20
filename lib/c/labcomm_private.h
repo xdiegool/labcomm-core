@@ -30,7 +30,7 @@
 /*
  * Start index for user defined types
  */
-#define LABCOMM_USER     0x80
+#define LABCOMM_USER     0x60
 
 /*
  * Semi private decoder declarations
@@ -269,6 +269,13 @@ LABCOMM_ENCODE(long, long long)
 LABCOMM_ENCODE(float, float)
 LABCOMM_ENCODE(double, double)
 
+/* 
+ * Pack the 32 bit number data as a sequence of 7 bit chunks, represented in bytes 
+ * with the high bit meaning that more data is to come.
+ *
+ * The chunks are sent "little endian": each 7 bit chunk is more significant than
+ * the previous.
+ */ 
 static inline void labcomm_pack32(labcomm_writer_t *w, unsigned int data)
 {
   unsigned int tmp, i; 

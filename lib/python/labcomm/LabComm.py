@@ -44,7 +44,7 @@
 # User data:
 #
 #   +----+----+----+----+
-#   | id >= 0x00000080  |
+#   | id >= 0x00000060  |
 #   +----+----+----+----+
 #   | user data
 #   | ...
@@ -107,7 +107,7 @@ i_FLOAT   = 0x25
 i_DOUBLE  = 0x26
 i_STRING  = 0x27
 
-i_USER    = 0x80
+i_USER    = 0x60
 
 def indent(i, s):
     return ("\n%s" % (" " * i)).join(s.split("\n"))

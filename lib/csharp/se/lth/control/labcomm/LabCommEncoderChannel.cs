@@ -18,8 +18,8 @@ namespace se.lth.control.labcomm {
 
     public void register(LabCommDispatcher dispatcher) {
       int index = registry.add(dispatcher);
-      encodeInt(LabComm.SAMPLE);
-      encodeInt(index);
+      encodePacked32(LabComm.SAMPLE);
+      encodePacked32(index);
       encodeString(dispatcher.getName());
       byte[] signature = dispatcher.getSignature();
       for (int i = 0 ; i < signature.Length ; i++) {
@@ -29,7 +29,7 @@ namespace se.lth.control.labcomm {
     }
 
     public void begin(Type c) {
-      encodeInt(registry.getTag(c));
+      encodePacked32(registry.getTag(c));
     }
 
     public void end(Type c) {
@@ -84,9 +84,18 @@ namespace se.lth.control.labcomm {
 
     public void encodeString(String value) {
       byte[] buf = Encoding.UTF8.GetBytes(value);
-      WriteInt(buf.Length, 4);
+      EncodePacked32(buf.Length, 4);
       bytes.Write(buf, 0, buf.Length);
     }
 
+    public void encodePacked32(Int64 value) {
+      Int64 tmp = value;
+
+      while(tmp >= 0x80) {
+        encodeByte( (byte) ((tmp & 0x7f) | 0x80 ) );
+        tmp >>= 7;           
+      }
+      encodeByte( (byte) (tmp & 0x7f) );
+    }
   }
 }
