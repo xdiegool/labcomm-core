@@ -143,7 +143,6 @@ public class LabCommDecoderChannel implements LabCommDecoder {
       byte c = in.readByte();
       res |= (c & 0x7f) << 7*i;
       cont = (c & 0x80) != 0;
-      System.out.println("decodePacked32: "+res);
       i++;
     } while(cont);
 
