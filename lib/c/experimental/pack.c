@@ -1,11 +1,12 @@
 #include <stdio.h>
 
+typedef unsigned int number;
 
-unsigned char do_pack(unsigned char *buf, unsigned long i) 
+unsigned char do_pack(unsigned char *buf, number i) 
 {
 	printf("do_pack %lu == %lx\n", i, i);
 
-	unsigned long tmp = i;
+	number tmp = i;
 	unsigned char res = 0;
 
 	while ( tmp >= 0x80 ) {
@@ -17,14 +18,16 @@ unsigned char do_pack(unsigned char *buf, unsigned long i)
 	return res+1;
 }
 
-unsigned long do_unpack(unsigned char *buf) 
+number do_unpack(unsigned char *buf) 
 {
-	unsigned long res=0;
+	number res=0;
 	unsigned char i=0;
 	unsigned char cont=1;
 	do {
-		res |= (buf[i] & 0x7f) << 7*i; 
-		cont = buf[i++] & 0x80;
+		unsigned char c = buf[i];
+		res |= (c & 0x7f) << 7*i; 
+		cont = c & 0x80;
+		i++;
 	} while(cont);
 
 	return res;
@@ -65,7 +68,7 @@ int main()
 	print_packed(buf, len);
 	printf("... unpacks to %u\n\n", do_unpack(buf));
 
-	len = do_pack(buf, 0xffffffffffffffff);
+	len = do_pack(buf, 0xffffffff);
 	print_packed(buf, len);
 	printf("... unpacks to %lx\n", do_unpack(buf));
 

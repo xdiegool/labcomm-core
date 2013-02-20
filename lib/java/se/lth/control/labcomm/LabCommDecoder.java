@@ -14,5 +14,6 @@ public interface LabCommDecoder {
   public float decodeFloat() throws IOException;
   public double decodeDouble() throws IOException;
   public String decodeString() throws IOException;
+  public int decodePacked32() throws IOException;
 
 }

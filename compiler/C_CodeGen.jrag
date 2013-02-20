@@ -496,7 +496,8 @@ aspect C_Decoder {
   }
 
   public void VariableSize.C_emitDecoderDecodeLimit(C_env env, int i) {
-    env.println(env.qualid + ".n_" + i + " = labcomm_decode_int(d);");
+    //env.println(env.qualid + ".n_" + i + " = labcomm_decode_int(d);");
+    env.println(env.qualid + ".n_" + i + " = labcomm_decode_packed32(d);");
   }
 
   public void ArrayType.C_emitDecoderDecodeLimit(C_env env) {
@@ -721,7 +722,8 @@ aspect C_Encoder {
   }
 
   public void VariableSize.C_emitEncoderEncodeLimit(C_env env, int i) {
-    env.println("labcomm_encode_int(e, " + env.qualid + ".n_" + i + ");");
+    //env.println("labcomm_encode_int(e, " + env.qualid + ".n_" + i + ");");
+    env.println("labcomm_encode_packed32(e, " + env.qualid + ".n_" + i + ");");
   }
 
   public void ArrayType.C_emitEncoderEncodeLimit(C_env env) {

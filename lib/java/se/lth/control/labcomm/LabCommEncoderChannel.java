@@ -21,8 +21,8 @@ public class LabCommEncoderChannel implements LabCommEncoder {
 
   public void register(LabCommDispatcher dispatcher) throws IOException {
     int index = registry.add(dispatcher);
-    encodeInt(LabComm.SAMPLE);
-    encodeInt(index);
+    encodePacked32(LabComm.SAMPLE);
+    encodePacked32(index);
     encodeString(dispatcher.getName());
     byte[] signature = dispatcher.getSignature();
     for (int i = 0 ; i < signature.length ; i++) {
@@ -32,7 +32,7 @@ public class LabCommEncoderChannel implements LabCommEncoder {
   }
 
   public void begin(Class<? extends LabCommSample> c) throws IOException {
-    encodeInt(registry.getTag(c));
+    encodePacked32(registry.getTag(c));
   }
 
   public void end(Class<? extends LabCommSample> c) throws IOException {
@@ -70,9 +70,31 @@ public class LabCommEncoderChannel implements LabCommEncoder {
   }
 
   public void encodeString(String value) throws IOException {
-    data.writeShort(0); // HACK...
-    data.writeUTF(value);
+    //data.writeShort(0); // HACK...
+    //data.writeUTF(value);
+
+    //kludge, to replace above hack with packed length
+    ByteArrayOutputStream tmpb = new ByteArrayOutputStream();
+    DataOutputStream tmps = new DataOutputStream(tmpb);
+
+    tmps.writeUTF(value);
+    tmps.flush();
+    byte[] tmp = tmpb.toByteArray();
+  
+    encodePacked32(tmp.length-2);
+    for (int i = 2 ; i < tmp.length ; i++) {
+      encodeByte(tmp[i]);
+    }
   }
 
+  public void encodePacked32(long value) throws IOException {
+    long tmp = value;
+
+    while( tmp >= 0x80 ) {
+      encodeByte( (byte) ((tmp & 0x7f) | 0x80 ) );
+      tmp >>>= 7;
+    }
+    encodeByte( (byte) (tmp & 0x7f) );
+  }
 }
 
