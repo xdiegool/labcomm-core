@@ -84,7 +84,7 @@ namespace se.lth.control.labcomm {
 
     public void encodeString(String value) {
       byte[] buf = Encoding.UTF8.GetBytes(value);
-      EncodePacked32(buf.Length, 4);
+      encodePacked32(buf.Length);
       bytes.Write(buf, 0, buf.Length);
     }
 

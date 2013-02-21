@@ -169,7 +169,7 @@ namespace se.lth.control.labcomm {
 
       do {
         byte c = decodeByte();
-	res |= (c & 0x7f) << 7*i;
+	res |= (uint) ((c & 0x7f) << 7*i);
         cont = (c & 0x80) != 0;
         i++;
       } while(cont);
