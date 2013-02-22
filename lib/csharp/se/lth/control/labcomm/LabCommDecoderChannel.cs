@@ -56,7 +56,7 @@ namespace se.lth.control.labcomm {
 
     private void collectFlatSignature(LabCommEncoder e) {
       int type = decodePacked32();
-      e.encodeInt(type);
+      e.encodePacked32(type);
       switch (type) {
       case LabComm.ARRAY: {
         int dimensions = decodePacked32();
