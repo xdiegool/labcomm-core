@@ -588,7 +588,8 @@ class Encoder(Codec):
         self.encode_byte(tmp & 0x7f)
 
     def encode_type(self, index):
-        self.pack("!i", index)
+        self.encode_packed32(index)
+#        self.pack("!i", index)
             
     def encode_boolean(self, v):
         if v:
@@ -616,7 +617,9 @@ class Encoder(Codec):
 
     def encode_string(self, v):
         s = v.encode("utf8")
-        self.pack("!i%ds" % len(s), len(s), s)
+	self.encode_packed32(len(s));
+	self.pack("%ds" % len(s),s)
+#        self.pack("!i%ds" % len(s), len(s), s)
 
 class Decoder(Codec):
     def __init__(self, reader):
