@@ -1,8 +1,17 @@
 #ifndef _LABCOMM_PRIVATE_H_
 #define _LABCOMM_PRIVATE_H_
 
-#include <endian.h>
-#include <stdio.h>
+#ifdef ARM_CORTEXM3_CODESOURCERY
+  #include <machine/endian.h>
+#else
+  #include <endian.h>
+#endif
+
+// Some projects can not use stdio.h.
+#ifndef LABCOMM_NO_STDIO
+  #include <stdio.h>
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 #include "labcomm.h"
@@ -51,6 +60,8 @@ typedef struct labcomm_decoder {
 		      labcomm_handler_typecast_t,
 		      void *context);
   int (*do_decode_one)(struct labcomm_decoder *decoder);
+  labcomm_error_handler_callback on_error;
+  labcomm_handle_new_datatype_callback on_new_datatype;
 } labcomm_decoder_t;
 
 /*
@@ -176,6 +187,7 @@ typedef struct labcomm_encoder {
   void (*do_encode)(struct labcomm_encoder *encoder, 
 		    labcomm_signature_t *signature, 
 		    void *value);
+  labcomm_error_handler_callback on_error;
 } labcomm_encoder_t;
 
 void labcomm_internal_encoder_register(
@@ -198,7 +210,7 @@ void labcomm_internal_encoder_user_action(struct labcomm_encoder *encoder,
   static inline void labcomm_write_##name(labcomm_writer_t *w, type data) { \
     int i;								\
     for (i = sizeof(type) - 1 ; i >= 0 ; i--) {				\
-      if (w->pos >= w->count) {						\
+      if (w->pos >= w->count) { /*buffer is full*/			\
 	w->write(w, labcomm_writer_continue);				\
       }									\
       w->data[w->pos] = ((unsigned char*)(&data))[i];			\

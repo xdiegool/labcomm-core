@@ -1,10 +1,24 @@
 #ifndef _LABCOMM_H_
 #define _LABCOMM_H_
 
-#include <endian.h>
-#include <stdio.h>
+#ifdef ARM_CORTEXM3_CODESOURCERY
+  #include <machine/endian.h>
+#else
+  #include <endian.h>
+#endif
+
+// Some projects can not use stdio.h.
+#ifndef LABCOMM_NO_STDIO
+  #include <stdio.h>
+#endif
+
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
+
+/* Forward declaration */
+struct labcomm_encoder;
+struct labcomm_decoder;
 
 /*
  * Signature entry
@@ -17,11 +31,62 @@ typedef struct {
   unsigned char *signature; 
 } labcomm_signature_t;
 
+/*
+ * Error handling.
+ */
+
+/* Error IDs */
+enum labcomm_error {
+  LABCOMM_ERROR_ENUM_BEGIN_GUARD,	// _must_ be the first enum element. labcomm_error_get_str() depends on this.
+  LABCOMM_ERROR_ENC_NO_REG_SIGNATURE, 	
+  LABCOMM_ERROR_ENC_MISSING_DO_REG,
+  LABCOMM_ERROR_ENC_MISSING_DO_ENCODE,
+  LABCOMM_ERROR_ENC_BUF_FULL,
+  LABCOMM_ERROR_DEC_MISSING_DO_REG,
+  LABCOMM_ERROR_DEC_MISSING_DO_DECODE_ONE,
+  LABCOMM_ERROR_DEC_UNKNOWN_DATATYPE,
+  LABCOMM_ERROR_DEC_INDEX_MISMATCH,
+  LABCOMM_ERROR_DEC_TYPE_NOT_FOUND,
+  LABCOMM_ERROR_UNIMPLEMENTED_FUNC,
+  LABCOMM_ERROR_MEMORY,
+  LABCOMM_ERROR_USER_DEF,			
+  LABCOMM_ERROR_ENUM_END_GUARD		// _must_ be the last enum element. labcomm_error_get_str() depends on this.
+};
+
+/* Error strings. _must_ be the same order as in enum labcomm_error */
+extern const char *labcomm_error_strings[];
+
+/* The callback prototype for error handling.\
+ * First parameter is the error ID.
+ * The second paramters is the number of va_args that comes after this one. If noneit should be 0.
+ * Optionaly other paramters can be supplied depending on what is needed for this error ID.
+ */
+typedef void (* labcomm_error_handler_callback)(enum labcomm_error error_id, size_t nbr_va_args, ...); 
+
+/* Default error handler, prints message to stderr. 
+ * Extra info about the error can be supplied as char* as VA-args. Especially user defined errors should supply a describing string. if nbr_va_args > 1 the first variable argument must be a printf format string and the possibly following arguments are passed as va_args to vprintf. 
+ */
+void on_error_fprintf(enum labcomm_error error_id, size_t nbr_va_args, ...);
+
+/* Register a callback for the error handler for this encoder. */
+void labcomm_register_error_handler_encoder(struct labcomm_encoder *encoder, labcomm_error_handler_callback callback);
+
+/* Register a callback for the error handler for this decoder. */
+void labcomm_register_error_handler_decoder(struct labcomm_decoder *decoder, labcomm_error_handler_callback callback);
+
+/* Get a string describing the supplied standrad labcomm error. */
+const char *labcomm_error_get_str(enum labcomm_error error_id);
+
+typedef int (* labcomm_handle_new_datatype_callback)(struct labcomm_decoder *decoder,
+		labcomm_signature_t *sig);
+
+void labcomm_decoder_register_new_datatype_handler(struct labcomm_decoder *d,
+		labcomm_handle_new_datatype_callback on_new_datatype);
+
 
 /*
  * Decoder
  */
-struct labcomm_decoder;
 
 typedef enum { 
   labcomm_reader_alloc, 
@@ -38,6 +103,7 @@ typedef struct labcomm_reader {
   int count;
   int pos;
   int (*read)(struct labcomm_reader *, labcomm_reader_action_t);
+  labcomm_error_handler_callback on_error;
 }  labcomm_reader_t;
 
 struct labcomm_decoder *labcomm_decoder_new(
@@ -53,7 +119,6 @@ void labcomm_decoder_free(
 /*
  * Encoder
  */
-struct labcomm_encoder;
 
 typedef enum { 
   labcomm_writer_alloc, 
@@ -71,9 +136,9 @@ typedef struct labcomm_writer {
   int count;
   int pos;
   int (*write)(struct labcomm_writer *, labcomm_writer_action_t);
+  labcomm_error_handler_callback on_error;
 } labcomm_writer_t;
 
-struct labcomm_encoder;
 struct labcomm_encoder *labcomm_encoder_new(
   int (*writer)(labcomm_writer_t *, labcomm_writer_action_t),
   void *writer_context);
