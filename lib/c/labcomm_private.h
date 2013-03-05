@@ -39,7 +39,7 @@
 /*
  * Start index for user defined types
  */
-#define LABCOMM_USER     0x80
+#define LABCOMM_USER     0x60
 
 /*
  * Semi private decoder declarations
@@ -120,12 +120,45 @@ LABCOMM_DECODE(int, int)
 LABCOMM_DECODE(long, long long)
 LABCOMM_DECODE(float, float)
 LABCOMM_DECODE(double, double)
+
+static inline unsigned int labcomm_unpack32(labcomm_reader_t *r)
+{
+  unsigned int res=0;
+  unsigned char i=0;
+  unsigned char cont=1;
+  do {
+    if (r->pos >= r->count) {	
+      r->read(r, labcomm_reader_continue);
+    }
+#ifdef IDIOTDEBUG
+    {
+	int k;
+	for(k=0; k<=r->pos; k++) printf("%2x\n", r->data[k]);
+    }
+#endif
+    unsigned char c = r->data[r->pos];
+    res |= (c & 0x7f) << 7*i;
+    cont = c & 0x80;
+#ifdef IDIOTDEBUG
+    printf("unpack32: %x (%x, %d, %d)\n", res, c, i, cont);
+#endif
+    i++;
+    r->pos++;
+  } while(cont);
+  return res;
+}
+
+static inline unsigned int labcomm_decode_packed32(labcomm_decoder_t *d) 
+{
+    return labcomm_unpack32(&d->reader);
+}
+
 static inline char *labcomm_read_string(labcomm_reader_t *r)
 {
   char *result;
   int length, i; 
   
-  length = labcomm_read_int(r);
+  length = labcomm_unpack32(r);
   result = malloc(length + 1);
   for (i = 0 ; i < length ; i++) {
     if (r->pos >= r->count) {	
@@ -247,12 +280,43 @@ LABCOMM_ENCODE(int, int)
 LABCOMM_ENCODE(long, long long)
 LABCOMM_ENCODE(float, float)
 LABCOMM_ENCODE(double, double)
+
+/* 
+ * Pack the 32 bit number data as a sequence of 7 bit chunks, represented in bytes 
+ * with the high bit meaning that more data is to come.
+ *
+ * The chunks are sent "little endian": each 7 bit chunk is more significant than
+ * the previous.
+ */ 
+static inline void labcomm_pack32(labcomm_writer_t *w, unsigned int data)
+{
+  unsigned int tmp, i; 
+
+  tmp = data;
+
+  while (tmp >= 0x80) {
+    if (w->pos >= w->count) {	
+      w->write(w, labcomm_writer_continue);
+    }
+    w->data[w->pos] = (tmp & 0x7f) | 0x80;
+    w->pos++;
+    tmp >>= 7;
+  } 
+  w->data[w->pos] = tmp; 
+  w->pos++;
+}
+
+static inline void labcomm_encode_packed32(labcomm_encoder_t *e, unsigned int data) 
+{ 
+    labcomm_pack32(&e->writer, data);				
+}
+
 static inline void labcomm_write_string(labcomm_writer_t *w, char *s)
 {
   int length, i; 
 
   length = strlen((char*)s);
-  labcomm_write_int(w, length);
+  labcomm_pack32(w, length);
   for (i = 0 ; i < length ; i++) {
     if (w->pos >= w->count) {	
       w->write(w, labcomm_writer_continue);

@@ -44,7 +44,7 @@
 # User data:
 #
 #   +----+----+----+----+
-#   | id >= 0x00000080  |
+#   | id >= 0x00000060  |
 #   +----+----+----+----+
 #   | user data
 #   | ...
@@ -89,6 +89,12 @@
 #??  +----+----+----+----+
 #  
 #   
+# type numbers and lengths do not have a fixed lenght, but are packed into sequences 
+# of 7 bit chunks, represented in bytes with the high bit meaning that more data 
+# is to come.
+#
+# The chunks are sent "little endian": each 7 bit chunk is more significant than
+# the previous. See encode_packed32 and decode_packed32 in in Codec classes below.
 
 import struct as packer
 
@@ -107,7 +113,7 @@ i_FLOAT   = 0x25
 i_DOUBLE  = 0x26
 i_STRING  = 0x27
 
-i_USER    = 0x80
+i_USER    = 0x60
 
 def indent(i, s):
     return ("\n%s" % (" " * i)).join(s.split("\n"))
@@ -306,9 +312,9 @@ class array(object):
         
     def encode_decl(self, encoder):
         encoder.encode_type(i_ARRAY)
-        encoder.encode_int(len(self.indices))
+        encoder.encode_packed32(len(self.indices))
         for i in self.indices:
-            encoder.encode_int(i)
+            encoder.encode_packed32(i)
         encoder.encode_type_number(self.decl)
 
     def min_max_shape(self, l, depth=0, shape=[]):
@@ -344,7 +350,7 @@ class array(object):
                             (shape, self.indices))
         for i in range(len(self.indices)):
             if self.indices[i] == 0:
-                encoder.encode_int(shape[i])
+                encoder.encode_packed32(shape[i])
             elif self.indices[i] != shape[i]:
                 raise Exception("Actual dimension %d in %s differs from %s" %
                                 (i, shape, self.indices))
@@ -362,10 +368,10 @@ class array(object):
         self.encode_value(encoder, value, depth)
 
     def decode_decl(self, decoder):
-        n_indices = decoder.decode_int()
+        n_indices = decoder.decode_packed32()
         indices = []
         for i in range(n_indices):
-            index = decoder.decode_int()
+            index = decoder.decode_packed32()
             indices.append(index)
         elem_decl = decoder.decode_decl()
         return array(indices, elem_decl)
@@ -383,7 +389,7 @@ class array(object):
         indices = []
         for i in self.indices:
             if i == 0:
-                i = decoder.decode_int()
+                i = decoder.decode_packed32()
             indices.append(i)
         return self.decode_value(decoder, indices)
 
@@ -400,7 +406,7 @@ class array(object):
         indices = []
         for i in self.indices:
             if i == 0:
-                i = decoder.decode_int()
+                i = decoder.decode_packed32()
             indices.append(i)
         return self.new_instance_value(indices)
     
@@ -414,7 +420,7 @@ class struct:
 
     def encode_decl(self, encoder):
         encoder.encode_type(i_STRUCT)
-        encoder.encode_int(len(self.field))
+        encoder.encode_packed32(len(self.field))
         for (name, decl) in self.field:
             encoder.encode_string(name)
             encoder.encode_type_number(decl)
@@ -429,7 +435,7 @@ class struct:
                 decl.encode(encoder, obj.__getattribute__(name))
 
     def decode_decl(self, decoder):
-        n_field = decoder.decode_int()
+        n_field = decoder.decode_packed32()
         field = []
         for i in range(n_field):
             name = decoder.decode_string()
@@ -540,7 +546,7 @@ class Codec(object):
         index.sort()
         for i in index:
             e = self.index_to_decl[i]
-            if i >= 0x80 and isinstance(e, sample):
+            if i >= i_USER and isinstance(e, sample):
                 result.append(e)
         return result
         
@@ -573,8 +579,17 @@ class Encoder(Codec):
         except KeyError:
             decl.encode_decl(self)
             
+    def encode_packed32(self, v):
+        tmp = v & 0xffffffff;
+        
+        while(tmp >= 0x80 ):
+          self.encode_byte( (tmp & 0x7f) | 0x80 ) 
+          tmp >>= 7
+        self.encode_byte(tmp & 0x7f)
+
     def encode_type(self, index):
-        self.pack("!i", index)
+        self.encode_packed32(index)
+#        self.pack("!i", index)
             
     def encode_boolean(self, v):
         if v:
@@ -602,7 +617,9 @@ class Encoder(Codec):
 
     def encode_string(self, v):
         s = v.encode("utf8")
-        self.pack("!i%ds" % len(s), len(s), s)
+	self.encode_packed32(len(s));
+	self.pack("%ds" % len(s),s)
+#        self.pack("!i%ds" % len(s), len(s), s)
 
 class Decoder(Codec):
     def __init__(self, reader):
@@ -648,8 +665,18 @@ class Decoder(Codec):
 
         return result
     
+    def decode_packed32(self):
+        res = 0
+        i = 0
+        cont = True
+        while (cont):
+          c = self.decode_byte()
+          res |=  (c & 0x7f) << 7*i
+          cont = (c & 0x80) != 0;
+        return res
+
     def decode_type_number(self):
-        return self.unpack("!i")
+        return self.decode_packed32()
         
     def decode_boolean(self):
         return self.unpack("!b") != 0
@@ -673,7 +700,7 @@ class Decoder(Codec):
         return self.unpack("!d")
     
     def decode_string(self):
-        length = self.unpack("!i")
+        length =  self.decode_packed32()
         return self.unpack("!%ds" % length).decode("utf8")
 
 

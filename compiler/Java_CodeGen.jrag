@@ -578,7 +578,7 @@ aspect Java_Class {
   }
 
   public void VariableSize.Java_emitDecoder(Java_env env) {
-    env.print("d.decodeInt()");
+    env.print("d.decodePacked32()");
   }
 
   public void StructType.Java_emitDecoder(Java_env env, String name) {

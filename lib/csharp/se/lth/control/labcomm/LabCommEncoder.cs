@@ -15,6 +15,7 @@ namespace se.lth.control.labcomm {
     void encodeFloat(float value);
     void encodeDouble(double value);
     void encodeString(String value);
+    void encodePacked32(Int64 value);
     
   }
 
