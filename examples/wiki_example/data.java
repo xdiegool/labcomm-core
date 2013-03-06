@@ -56,7 +56,7 @@ public class data implements LabCommSample {
   }
   
   private static byte[] signature = new byte[] {
-    0, 0, 0, 37, 
+    37, 
   };
 
 }

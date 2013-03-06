@@ -4,30 +4,30 @@
 
 static unsigned char signature_bytes_log_message[] = {
 // struct { 2 fields
-0, 0, 0, 17, 
-  0, 0, 0, 2, 
+17, 
+  2, 
   // int 'sequence'
-  0, 0, 0, 8, 
+  8, 
   115, 101, 113, 117, 101, 110, 99, 101, 
-  0, 0, 0, 35, 
+  35, 
   // array [_] 'line'
-  0, 0, 0, 4, 
+  4, 
   108, 105, 110, 101, 
   // array [_]
-  0, 0, 0, 16, 
-    0, 0, 0, 1, 
-    0, 0, 0, 0, 
+  16, 
+    1, 
+    0, 
     // struct { 2 fields
-    0, 0, 0, 17, 
-      0, 0, 0, 2, 
+    17, 
+      2, 
       // boolean 'last'
-      0, 0, 0, 4, 
+      4, 
       108, 97, 115, 116, 
-      0, 0, 0, 32, 
+      32, 
       // string 'data'
-      0, 0, 0, 4, 
+      4, 
       100, 97, 116, 97, 
-      0, 0, 0, 39, 
+      39, 
     // }
   // }
 // }
@@ -39,7 +39,7 @@ labcomm_signature_t labcomm_signature_example_log_message = {
   signature_bytes_log_message
  };
 static unsigned char signature_bytes_data[] = {
-0, 0, 0, 37, 
+37, 
 };
 labcomm_signature_t labcomm_signature_example_data = {
   LABCOMM_SAMPLE, "data",
@@ -58,7 +58,7 @@ static void decode_log_message(
 {
   example_log_message v;
   v.sequence = labcomm_decode_int(d);
-  v.line.n_0 = labcomm_decode_int(d);
+  v.line.n_0 = labcomm_decode_packed32(d);
   v.line.a = malloc(sizeof(v.line.a[0]) * v.line.n_0);
   {
     int i_0_0;
@@ -106,7 +106,7 @@ static void encode_log_message(
   labcomm_encode_type_index(e, &labcomm_signature_example_log_message);
   {
     labcomm_encode_int(e, (*v).sequence);
-    labcomm_encode_int(e, (*v).line.n_0);
+    labcomm_encode_packed32(e, (*v).line.n_0);
     {
       int i_0_0;
       for (i_0_0 = 0 ; i_0_0 < (*v).line.n_0 ; i_0_0++) {

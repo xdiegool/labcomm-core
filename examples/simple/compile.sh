@@ -1,4 +1,4 @@
-(cd ../../lib/c; make)
+(cd ../../lib/c; make -e LABCOMM_NO_EXPERIMENTAL=true)
 (cd ../../compiler ; ant jar)
 
 java -jar ../../compiler/labComm.jar --java=gen --c=gen/simple.c --h=gen/simple.h  --python=gen/simple.py simple.lc 

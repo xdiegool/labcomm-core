@@ -1,10 +1,14 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
+
+// Some projects can not use stdio.h.
+#ifndef LABCOMM_NO_STDIO
+  #include <stdio.h>
+#endif
 
 #define BUFLEN 512
 #define NPACK 10

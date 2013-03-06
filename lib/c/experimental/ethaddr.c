@@ -1,5 +1,9 @@
-#include <stdio.h>
 #include "ethaddr.h"
+
+// Some projects can not use stdio.h.
+#ifndef LABCOMM_NO_STDIO
+  #include <stdio.h>
+#endif
 
 #if ETH_ALEN != 6 
 	#warning "Assumption that ETH_ALEN == 6 appears false. Here be dragons."

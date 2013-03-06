@@ -4,7 +4,7 @@
        clean           - removes all generated files and class files
  Targets for working from Eclipse:
        gen             - generates java files
-       genClean        - removes all generated files and their class files
+       cleanGen        - removes all generated files and their class files
 -->
 <project name="LabComm" default="build" basedir=".">
 
@@ -77,7 +77,9 @@ classpath="tools/jastadd2.jar"/>
      <!-- delete all .class files recursively -->
     <delete>
       <fileset dir="." includes="**/*.class"/>
+      <fileset dir="." includes="labComm.jar"/>
     </delete>
+
 </target>
 
 
