@@ -290,7 +290,7 @@ LABCOMM_ENCODE(double, double)
  */ 
 static inline void labcomm_pack32(labcomm_writer_t *w, unsigned int data)
 {
-  unsigned int tmp, i; 
+  unsigned int tmp; 
 
   tmp = data;
 

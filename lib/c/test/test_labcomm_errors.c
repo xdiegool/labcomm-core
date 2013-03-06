@@ -142,8 +142,8 @@ int test_dec_missing_do_decode_one()
 int main()
 {
   printf("####> Begin tests.\n");
-  size_t nbr_succeed = 0;
-  size_t nbr_tests = 6; // Increment this when new tests are written.
+  unsigned int nbr_succeed = 0;
+  unsigned int nbr_tests = 6; // Increment this when new tests are written.
   nbr_succeed += test_enc_not_reg_encoder_sign();
   nbr_succeed += test_enc_missing_do_reg();
   nbr_succeed += test_enc_missing_do_encode();
@@ -159,7 +159,7 @@ int main()
   //nbr_succeed += test_unimplemented_func(); // This test will be obsolete in the future ;-)
   //nbr_succeed += test_user_def();           // There are no user defined errors in the library of course.
 
-  printf("####> End tests.\nSummary: %i/%i tests succeed.\n", nbr_succeed, nbr_tests);
+  printf("####> End tests.\nSummary: %u/%u tests succeed.\n", nbr_succeed, nbr_tests);
   if (nbr_succeed == nbr_tests) {
 	  return EXIT_SUCCESS;
   } else {
