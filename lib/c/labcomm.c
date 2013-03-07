@@ -181,13 +181,30 @@ static int get_encoder_index(
   return result;
 }
 
+void labcomm_encode_signature(struct labcomm_encoder *e,
+                              labcomm_signature_t *signature) 
+{
+  int i;
+  e->writer.write(&e->writer, labcomm_writer_start);
+  labcomm_encode_packed32(e, signature->type);
+  labcomm_encode_type_index(e, signature);
+  labcomm_encode_string(e, signature->name);
+  for (i = 0 ; i < signature->size ; i++) {
+    if (e->writer.pos >= e->writer.count) {
+      e->writer.write(&e->writer, labcomm_writer_continue);
+    }
+    e->writer.data[e->writer.pos] = signature->signature[i];
+    e->writer.pos++;
+  }
+  e->writer.write(&e->writer, labcomm_writer_end);
+}
+
 static void do_encoder_register(struct labcomm_encoder *e,
 				labcomm_signature_t *signature,
 				labcomm_encode_typecast_t encode)
 {
   if (signature->type == LABCOMM_SAMPLE) {
     if (get_encoder_index(e, signature) == 0) {
-      int i;
       labcomm_encoder_context_t *context = e->context;
       labcomm_sample_entry_t *sample =
 	(labcomm_sample_entry_t*)malloc(sizeof(labcomm_sample_entry_t));
@@ -198,18 +215,11 @@ static void do_encoder_register(struct labcomm_encoder *e,
       context->index++;
       context->sample = sample;
 
-      e->writer.write(&e->writer, labcomm_writer_start);
-      labcomm_encode_packed32(e, signature->type);
-      labcomm_encode_type_index(e, signature);
-      labcomm_encode_string(e, signature->name);
-      for (i = 0 ; i < signature->size ; i++) {
-	if (e->writer.pos >= e->writer.count) {
-	  e->writer.write(&e->writer, labcomm_writer_continue);
-	}
-	e->writer.data[e->writer.pos] = signature->signature[i];
-	e->writer.pos++;
-      }
-      e->writer.write(&e->writer, labcomm_writer_end);
+#ifdef OLD_STUFF
+      labcomm_encode_signature(e, signature);
+#else
+      e->writer.write(&e->writer, labcomm_writer_send_signature, signature, e);
+#endif
     }
   }
 }
@@ -231,7 +241,7 @@ static void do_encode(
 }
 
 labcomm_encoder_t *labcomm_encoder_new(
-  int (*writer)(labcomm_writer_t *, labcomm_writer_action_t),
+  int (*writer)(labcomm_writer_t *, labcomm_writer_action_t, ...),
   void *writer_context)
 {
   labcomm_encoder_t *result = malloc(sizeof(labcomm_encoder_t));
@@ -314,7 +324,7 @@ void labcomm_encode_type_index(labcomm_encoder_t *e, labcomm_signature_t *s)
 
 static int signature_writer(
   labcomm_writer_t *w,
-  labcomm_writer_action_t action)
+  labcomm_writer_action_t action, ...)
 {
   switch (action) {
     case labcomm_writer_alloc: {

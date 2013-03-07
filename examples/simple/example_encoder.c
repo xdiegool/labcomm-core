@@ -15,7 +15,6 @@ int main(int argc, char *argv[]) {
   encoder = labcomm_encoder_new(labcomm_fd_writer, &fd);
   labcomm_encoder_register_simple_TwoInts(encoder);
   labcomm_encoder_register_simple_IntString(encoder);
-  labcomm_encoder_register_simple_TwoArrays(encoder);
   simple_IntString is;
   is.x = 24;
   is.s = "Hello, LabComm!";
@@ -29,6 +28,8 @@ int main(int argc, char *argv[]) {
   labcomm_encode_simple_TwoInts(encoder, &ti);
 
   int foo[20];
+
+  labcomm_encoder_register_simple_TwoArrays(encoder);
 
   simple_TwoArrays ta;
   ta.fixed.a[0] = 17;

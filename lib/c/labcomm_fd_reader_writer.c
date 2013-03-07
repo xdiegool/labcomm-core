@@ -59,8 +59,9 @@ int labcomm_fd_reader(
 
 int labcomm_fd_writer(
   labcomm_writer_t *w, 
-  labcomm_writer_action_t action)
+  labcomm_writer_action_t action, ...)
 {
+  va_list argp;
   int result = 0;
   int *fd = w->context;
 
@@ -98,6 +99,18 @@ int labcomm_fd_writer(
     } break;
     case labcomm_writer_available: {
       result = w->count - w->pos; 
+    } break;
+    case labcomm_writer_send_signature: {
+      //TODO: move to generic auxilliary writer functions file in lib?
+
+      va_start(argp, action);
+      labcomm_signature_t *signature = va_arg(argp, labcomm_signature_t*);
+      struct labcomm_encoder *e = va_arg(argp, struct labcomm_encoder*);
+      va_end(argp);
+
+      printf("Sending signature: %s\n", signature->name);
+      labcomm_encode_signature(e, signature);
+ 
     } break;
   }
   return result;

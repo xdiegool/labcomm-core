@@ -335,7 +335,7 @@ static inline void labcomm_encode_string(labcomm_encoder_t *e,
 void labcomm_encode_type_index(labcomm_encoder_t *e, labcomm_signature_t *s);
 
 static inline int labcomm_buffer_write(struct labcomm_writer *w, 
-                                       labcomm_writer_action_t action)
+                                       labcomm_writer_action_t action, ...)
 {
   // If this gets called, it is an error, 
   // so note error and let producer proceed

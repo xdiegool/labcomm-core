@@ -31,6 +31,9 @@ typedef struct {
   unsigned char *signature; 
 } labcomm_signature_t;
 
+//TODO: something along the lines of...
+void labcomm_encode_signature(struct labcomm_encoder*, labcomm_signature_t*);
+
 /*
  * Error handling.
  */
@@ -127,6 +130,7 @@ typedef enum {
   labcomm_writer_continue, 
   labcomm_writer_end, 
   labcomm_writer_available,
+  labcomm_writer_send_signature
 } labcomm_writer_action_t;
 
 typedef struct labcomm_writer {
@@ -135,12 +139,12 @@ typedef struct labcomm_writer {
   int data_size;
   int count;
   int pos;
-  int (*write)(struct labcomm_writer *, labcomm_writer_action_t);
+  int (*write)(struct labcomm_writer *, labcomm_writer_action_t, ...);
   labcomm_error_handler_callback on_error;
 } labcomm_writer_t;
 
 struct labcomm_encoder *labcomm_encoder_new(
-  int (*writer)(labcomm_writer_t *, labcomm_writer_action_t),
+  int (*writer)(labcomm_writer_t *, labcomm_writer_action_t, ...),
   void *writer_context);
 void labcomm_encoder_free(
   struct labcomm_encoder *encoder);
