@@ -6,4 +6,5 @@ extern int labcomm_fd_reader(
 
 extern int labcomm_fd_writer(
   labcomm_writer_t *r, 
-  labcomm_writer_action_t action);
+  labcomm_writer_action_t action,
+  ...);
