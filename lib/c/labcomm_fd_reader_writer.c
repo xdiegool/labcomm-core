@@ -112,6 +112,9 @@ int labcomm_fd_writer(
       labcomm_encode_signature(e, signature);
  
     } break;
+    case labcomm_writer_user_action: {
+      result = -ENOTSUP;
+    } break;
   }
   return result;
 }

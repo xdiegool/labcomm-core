@@ -355,6 +355,9 @@ static int signature_writer(
     } break;
     case labcomm_writer_available: {
     } break;
+    case labcomm_writer_send_signature:
+    case labcomm_writer_user_action:
+      return -ENOTSUP;  //HERE BE DRAGONS: should probably be cleaned up 
   }
   return 0;
 

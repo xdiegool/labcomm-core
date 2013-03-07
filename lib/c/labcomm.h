@@ -124,13 +124,14 @@ void labcomm_decoder_free(
  */
 
 typedef enum { 
-  labcomm_writer_alloc, 
-  labcomm_writer_free,
-  labcomm_writer_start, 
-  labcomm_writer_continue, 
-  labcomm_writer_end, 
-  labcomm_writer_available,
-  labcomm_writer_send_signature
+  labcomm_writer_alloc,          // no args
+  labcomm_writer_free,           // no args
+  labcomm_writer_start,          // no args
+  labcomm_writer_continue,       // no args
+  labcomm_writer_end,            // no args
+  labcomm_writer_available,      // no args
+  labcomm_writer_send_signature, // args = (labcomm_signature_t*, struct labcomm_encoder*)
+  labcomm_writer_user_action	 // args = (int user_action, ... defined by the writer)
 } labcomm_writer_action_t;
 
 typedef struct labcomm_writer {
