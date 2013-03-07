@@ -1,6 +1,7 @@
 #include "labcomm_mem_writer.h"
 
-#include "stddef.h"  // For size_t.
+#include <stddef.h>  // For size_t.
+#include <stdarg.h>
 #include <errno.h>
 
 #include "labcomm.h"
@@ -26,8 +27,9 @@ static void copy_data(labcomm_writer_t *w, labcomm_mem_writer_context_t *mcontex
  * Write encoded messages to memory. w->context is assumed to be a pointer to a
  * labcomm_mem_writer_context_t structure.
  */
-int labcomm_mem_writer(labcomm_writer_t *w, labcomm_writer_action_t action)
+int labcomm_mem_writer(labcomm_writer_t *w, labcomm_writer_action_t action, ...)
 {
+  va_list argp;
   int result = 0;
   // Unwrap pointers for easy access.
   labcomm_mem_writer_context_t *mcontext = (labcomm_mem_writer_context_t *) w->context;
@@ -93,7 +95,17 @@ int labcomm_mem_writer(labcomm_writer_t *w, labcomm_writer_action_t action)
     } break;
   case labcomm_writer_available:{
     result = w->count - w->pos;
-        } break;
+     } break;
+  case labcomm_writer_send_signature: {
+    va_start(argp, action);
+    labcomm_signature_t *signature = va_arg(argp, labcomm_signature_t*);
+    struct labcomm_encoder *e = va_arg(argp, struct labcomm_encoder*);
+    va_end(argp);
+    labcomm_encode_signature(e, signature);
+    } break;
+  case labcomm_writer_user_action:{
+     result = -ENOTSUP;
+    } break;
   }
   return result;
 }

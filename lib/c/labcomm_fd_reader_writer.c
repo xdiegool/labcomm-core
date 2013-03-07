@@ -108,9 +108,7 @@ int labcomm_fd_writer(
       struct labcomm_encoder *e = va_arg(argp, struct labcomm_encoder*);
       va_end(argp);
 
-      printf("Sending signature: %s\n", signature->name);
       labcomm_encode_signature(e, signature);
- 
     } break;
     case labcomm_writer_user_action: {
       result = -ENOTSUP;

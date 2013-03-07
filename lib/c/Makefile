@@ -16,8 +16,8 @@ TEST_GEN_DIR=$(TESTDATA_DIR)/gen
 
 CREATED_DIRS=$(TEST_DIR) $(TESTDATA_DIR) $(TEST_GEN_DIR)
 
-# Disable experimental objects by invoking make like `make -e LABCOMM_NO_EXPERIMENTAL=true`
-ifneq ($(LABCOMM_NO_EXPERIMENTAL),true)
+# Enable experimental objects by invoking make like `make -e LABCOMM_EXPERIMENTAL=true`
+ifeq ($(LABCOMM_EXPERIMENTAL),true)
 	OBJS += experimental/udp_hack.o experimental/ethaddr.o \
 		experimental/labcomm_thr_reader_writer.o \
 		experimental/ThrottleDrv/ethernet_drv.o \
@@ -48,7 +48,9 @@ ethaddr.o: ethaddr.c
 $(CREATED_DIRS):
 	mkdir -p $@
 
-run-test: $(TEST_DIR)/test_labcomm_errors |$(TEST_DIR)
+## NB! the tests need CUnit to be installed
+run-test: $(TEST_DIR)/test_labcomm $(TEST_DIR)/test_labcomm_errors |$(TEST_DIR)
+	test/test_labcomm
 	test/test_labcomm_errors
 
 $(TEST_DIR)/test_labcomm_errors: $(TEST_DIR)/test_labcomm_errors.o liblabcomm.a |$(TEST_DIR)
