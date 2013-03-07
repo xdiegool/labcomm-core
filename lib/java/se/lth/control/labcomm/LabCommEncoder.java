@@ -15,5 +15,6 @@ public interface LabCommEncoder {
   public void encodeFloat(float value) throws IOException;
   public void encodeDouble(double value) throws IOException;
   public void encodeString(String value) throws IOException;
+  public void encodePacked32(long value) throws IOException;
 
 }

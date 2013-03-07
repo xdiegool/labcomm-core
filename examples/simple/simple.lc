@@ -1,0 +1,19 @@
+sample struct {
+  int a;
+  int b;
+} TwoInts;
+
+sample struct {
+  int x;
+  string s;
+} IntString;
+
+sample struct {
+  double x;
+  double y;
+} TwoDoubles;
+
+sample struct {
+  int fixed[2];
+  int variable[2,_];
+} TwoArrays;

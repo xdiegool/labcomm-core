@@ -25,6 +25,6 @@ public class LabComm {
   /*
    * Start of 
    */
-  public static final int FIRST_USER_INDEX = 0x80;
+  public static final int FIRST_USER_INDEX = 0x60;
 
 }

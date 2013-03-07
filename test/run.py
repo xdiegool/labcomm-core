@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: iso8859-15 -*-
 
-import labcomm
 import math
 import os
 import sys
@@ -12,7 +11,7 @@ def run_labcomm(base):
     if not os.path.exists("gen/java/%s" % base):
         os.makedirs("gen/java/%s" % base)
     cmd = " ".join([
-        "java -jar ../labComm.jar",
+        "java -jar ../compiler/labComm.jar",
         "--c=gen/%s.c" % base,
         "--h=gen/%s.h" % base,
         "--python=gen/%s.py" % base,
@@ -122,6 +121,8 @@ def generate(decl):
     raise Exception("unhandled decl %s" % decl.__class__)
 
 if __name__ == "__main__":
+    sys.path.insert(0, "../lib/python/")    
+    import labcomm
     print os.getcwd(), sys.argv
     if not os.path.exists("gen"):
         os.makedirs("gen")

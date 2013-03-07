@@ -1,0 +1,797 @@
+import java.io.*;
+import java.util.*;
+
+aspect Java_CodeGenEnv {
+
+  // Environment wrapper for Java-code generation
+  // handles indentation, file writing, 
+
+  public class Java_env {
+
+    private int indent;
+    private int depth;
+    private Java_printer printer;
+    private HashMap unique = new HashMap();
+
+    final private class Java_printer {
+      
+      private boolean newline = true;
+      private File file;
+      private PrintStream out;
+      private IOException exception;
+      
+
+      public Java_printer(File f) {
+  	file = f;
+        File parentFile = f.getParentFile();
+        if(parentFile != null) {
+            parentFile.mkdirs();
+        }
+      }
+
+     public Java_printer(PrintStream out) {
+        this.out = out;
+      }
+
+      public void close() throws IOException {
+	if (out != null) {
+  	  out.close();
+        }
+	if (exception != null) {
+	  throw exception;
+        }
+      }
+
+      public PrintStream getPrintStream() {
+	return(out);
+      }
+
+      public void checkOpen() {
+	if (out == null && exception == null) {
+          try {
+    	    out = new PrintStream(new FileOutputStream(file));
+          } catch (IOException e) {
+	    exception = e;
+          }
+        }
+      }
+
+      public void print(Java_env env, String s) {
+	checkOpen();
+        if (newline) {
+          newline = false;
+          for (int i = 0 ; i < env.indent ; i++) {
+            out.print("  ");
+          }
+        }
+        out.print(s);
+      }
+
+      public void println(Java_env env, String s) {
+	checkOpen();
+        print(env, s);
+        out.println();
+        newline = true;
+      }
+    }
+
+    private Java_env(int indent, Java_printer printer) {
+      this.indent = indent;
+      this.printer = printer;
+    }
+
+    public Java_env(File f) {
+      this.indent = 0;
+      this.printer = new Java_printer(f);
+    }
+
+    public Java_env(PrintStream out) {
+      this.indent = 0;
+      this.printer = new Java_printer(out);
+    }
+
+    public void close() throws IOException {
+      printer.close();
+    }
+
+    public PrintStream getPrintStream() {
+      return printer.getPrintStream();
+    }
+    public void indent(int amount) {
+      indent += amount;
+    }
+
+    public void indent() {
+      indent(1);
+    }
+
+    public void unindent(int amount) {
+      indent -= amount;
+    }
+
+    public void unindent() {
+      unindent(1);
+    }
+
+    public void print(String s) {
+      printer.print(this, s);
+    }
+
+    public void println(String s) {
+      printer.println(this, s);
+    }
+
+    public void println() {
+      printer.println(this, "");
+    }
+
+    public int getDepth() {
+      return depth;
+    }
+
+    public String print_for_begin(String limit) {
+      print("for (int i_" + depth + " = 0 ; ");
+      print("i_" + depth + " < " + limit + " ; ");
+      println("i_" + depth + "++) {");
+      indent();
+      depth++;
+      return "[i_" + (depth - 1) + "]";
+    }
+
+    public void print_for_end() {
+      depth--;
+      unindent();
+      println("}");
+    }
+
+    public void print_block_begin() {
+      println("{");
+      indent();
+    }
+
+    public void print_block_end() {
+      unindent();
+      println("}");
+    }
+
+    public String getUnique(Object o) {
+      String result = (String)unique.get(o);
+      if (result == null) {
+   	result = "_" + (unique.size() + 1) + "_";
+      }
+      unique.put(o, result);
+      return result;
+    }
+
+  }
+
+}
+
+aspect Java_StructName {
+
+  inh int Decl.Java_Depth();
+  inh int Type.Java_Depth();
+  eq Program.getDecl(int i).Java_Depth() = 0;
+  eq StructType.getField(int i).Java_Depth() = Java_Depth() + 1;
+
+  inh String Type.Java_structName();
+  eq Program.getDecl(int i).Java_structName() = getDecl(i).getName();
+  eq StructType.getField(int i).Java_structName() {
+    if (Java_Depth() == 0) {
+      return "struct_" + getField(i).getName();
+    } else {
+      return Java_structName() + "_" + getField(i).getName();
+    }
+  }
+}
+
+aspect Java_Void {
+
+  syn boolean Decl.isVoid() = getType().isVoid();
+  syn boolean Type.isVoid() = false;
+  syn boolean VoidType.isVoid() = true;
+
+}
+
+aspect Java_CodeGen {
+
+  public void Program.J_gen(String dir, String pack) throws IOException {
+    Java_env env;
+/*
+    // Registration class
+    env = new Java_env(new File(dir, "LabCommRegister.java"));
+    if (pack != null && pack.length() > 0) {
+      env.println("package " + pack + ";");
+    }
+    env.println("public class LabCommRegister {");
+    env.println();
+    env.indent();
+    Java_emitTypeRegister(env);
+    env.unindent();
+    env.println();
+    env.println("}");
+    env.close();
+*/
+    for (int i = 0; i < getNumDecl(); i++) {
+      Decl d = getDecl(i);
+      try {
+        env = new Java_env(new File(dir, d.getName() + ".java"));
+        d.Java_emitClass(env, pack);
+        env.close();
+      } catch (Error e) {
+	System.err.println(d.getName());
+	throw e;
+      }
+    }
+  }
+
+}
+
+aspect Java_Register {
+
+  public void Program.Java_emitTypeRegister(Java_env env) {
+    /*
+    env.println("static void register(LabCommChannel c) {");
+    env.indent();
+    for (int i = 0; i < getNumDecl(); i++) {
+      getDecl(i).Java_emitTypeRegister(env);
+    }
+    env.unindent();
+    env.println("}");
+*/
+
+  }
+
+  public void Decl.Java_emitTypeRegister(Java_env env) {
+    throw new Error(this.getClass().getName() + 
+		    ".Java_emitTypeRegister(Java_env env)" + 
+		    " not declared");
+  }
+
+  public void SampleDecl.Java_emitTypeRegister(Java_env env) {
+    env.println(getName() + ".register(c);");
+  }
+
+  public void TypeDecl.Java_emitTypeRegister(Java_env env) {
+    // TODO
+  }
+
+}
+
+aspect Java_Class {
+
+  public void Decl.Java_emitClass(Java_env env, String pack) {
+    throw new Error(this.getClass().getName() + 
+		    ".Java_emitClass(Java_env env, String pack)" + 
+		    " not declared");
+  }
+
+  public void TypeDecl.Java_emitClass(Java_env env, String pack) {
+    if (getType().Java_needInstance()) {
+      // Hackish prettyprint preamble
+      env.println("/* ");
+      pp(env.getPrintStream());
+      env.println("*/");
+
+      if (pack != null && pack.length() > 0) {
+        env.println("package " + pack + ";");
+      }
+
+      env.println("import java.io.IOException;");
+      env.println("import se.lth.control.labcomm.LabCommType;");
+      env.println("import se.lth.control.labcomm.LabCommEncoder;");
+      env.println("import se.lth.control.labcomm.LabCommDecoder;");
+      env.println();
+      env.println("public class " + getName() + " implements LabCommType {");
+      env.println();
+      env.indent();
+      getType().Java_emitInstance(env);
+      Java_emitEncoder(env);
+      Java_emitDecoder(env);
+      env.unindent();
+      env.println("}");
+    }
+  }
+
+  public void SampleDecl.Java_emitClass(Java_env env, String pack) {
+    env.println("/* ");
+    pp(env.getPrintStream());
+    env.println("*/");
+
+    if (pack != null && pack.length() > 0) {
+      env.println("package " + pack + ";");
+    }
+
+    env.println("import java.io.IOException;");
+    env.println("import se.lth.control.labcomm.LabCommDecoder;");
+    env.println("import se.lth.control.labcomm.LabCommDispatcher;");
+    env.println("import se.lth.control.labcomm.LabCommEncoder;");
+    env.println("import se.lth.control.labcomm.LabCommHandler;");
+    env.println("import se.lth.control.labcomm.LabCommSample;");
+    env.println();
+    env.println("public class " + getName() + " implements LabCommSample {");
+    env.println();
+    env.indent();
+    getType().Java_emitInstance(env);
+    env.println("public interface Handler extends LabCommHandler {");
+    env.print("  public void handle_" + getName() + "(");
+    if (!isVoid()) {
+      getType().Java_emitType(env);
+      env.print(" value");
+    }
+    env.println(") throws Exception;");
+    env.println("}");
+    env.println();
+    env.println("public static void register(LabCommDecoder d, Handler h) throws IOException {");
+    env.indent();
+    env.println("d.register(new Dispatcher(), h);");
+    env.unindent();
+    env.println("}");
+    env.println();
+
+    env.println("public static void register(LabCommEncoder e) throws IOException {");
+    env.indent();
+    env.println("e.register(new Dispatcher());");
+    env.unindent();
+    env.println("}");
+    env.println(); 
+
+    env.println("private static class Dispatcher implements LabCommDispatcher {");
+    env.indent();
+    env.println(); 
+    env.println("public Class getSampleClass() {");
+    env.indent();
+    env.println("return " + getName() + ".class;");
+    env.unindent();
+    env.println("}");
+    env.println(); 
+    env.println("public String getName() {");
+    env.indent();
+    env.println("return \"" + getName() + "\";");
+    env.unindent();
+    env.println("}");
+    env.println(); 
+    env.println("public byte[] getSignature() {");
+    env.indent();
+    env.println("return signature;");
+    env.unindent();
+    env.println("}");
+    env.println(); 
+    env.println("public void decodeAndHandle(LabCommDecoder d,");
+    env.println("                            LabCommHandler h) throws Exception {");
+    env.indent();
+    if (isVoid()) {
+      env.println(getName() + ".decode(d);");
+      env.println("((Handler)h).handle_" + getName() + "();"); 
+    } else {
+      env.println("((Handler)h).handle_" + getName() + "(" + getName() + ".decode(d));"); 
+    }
+    env.unindent();
+    env.println("}");
+    env.println("");
+    env.unindent();
+    env.println("}");
+    env.println("");
+
+    Java_emitEncoder(env);
+    Java_emitDecoder(env);
+    env.println("private static byte[] signature = new byte[] {");
+    env.indent();
+    SignatureList signature = signature();
+    for (int i = 0 ; i < signature.size() ; i++) {
+      String comment = signature.getComment(i);
+      if (comment != null) {
+        env.println(signature.getIndent(i) + "// " + comment);
+      }
+      byte[] data = signature.getData(i);
+      if (data != null) {
+        env.print(signature.getIndent(i));
+        for (int j = 0 ; j < data.length ; j++) {
+	  env.print(data[j] + ", ");
+        }
+        env.println();
+      }
+    }
+    env.unindent();
+    env.println("};");
+    env.unindent();
+    env.println();
+    env.println("}");
+  }
+
+  public void TypeDecl.Java_emitEncoder(Java_env env) {
+    env.print("public static void encode(LabCommEncoder e");
+    if (!isVoid()) {
+      env.print(", ");
+      getType().Java_emitType(env);
+      env.print(" value");
+    }
+    env.println(") throws IOException {");
+    env.indent();
+    getType().Java_emitEncoder(env, "value");
+    env.unindent();
+    env.println("}");
+    env.println();
+  }
+
+  public void SampleDecl.Java_emitEncoder(Java_env env) {
+    env.print("public static void encode(LabCommEncoder e");
+    if (!isVoid()) {
+      env.print(", ");
+      getType().Java_emitType(env);
+      env.print(" value");
+    }
+    env.println(") throws IOException {");
+    env.indent();
+    env.println("e.begin(" + getName() + ".class);");
+    getType().Java_emitEncoder(env, "value");
+    env.println("e.end(" + getName() + ".class);");
+    env.unindent();
+    env.println("}");
+    env.println();
+  }
+
+  public void Type.Java_emitEncoder(Java_env env, String name) {
+    throw new Error(this.getClass().getName() + 
+		    ".Java_emitEncoder(Java_env env, String name)" + 
+		    " not declared");
+  }
+
+  public void VoidType.Java_emitEncoder(Java_env env, String name) {
+  }
+
+  public void PrimType.Java_emitEncoder(Java_env env, String name) {
+    switch (getToken()) {
+      case LABCOMM_BOOLEAN: { env.print("e.encodeBoolean"); } break;
+      case LABCOMM_BYTE: { env.print("e.encodeByte"); } break;
+      case LABCOMM_SHORT: { env.print("e.encodeShort"); } break;
+      case LABCOMM_INT: { env.print("e.encodeInt"); } break;
+      case LABCOMM_LONG: { env.print("e.encodeLong"); } break;
+      case LABCOMM_FLOAT: { env.print("e.encodeFloat"); } break;
+      case LABCOMM_DOUBLE: { env.print("e.encodeDouble"); } break;
+      case LABCOMM_STRING: { env.print("e.encodeString"); } break;
+    }
+    env.println("(" + name + ");");
+  }
+
+  public void ArrayType.Java_emitEncoder(Java_env env, String name) {
+    int baseDepth = env.getDepth();
+    String prefix = "";
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      String limit = getExp(i).Java_emitEncoder(env, name + prefix);
+      env.print_block_begin();
+      env.println("int i_" + (baseDepth + i) + "_max = " + limit + ";");
+      prefix = prefix + "[0]";
+    }
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      String limit = "i_" + (baseDepth + i) + "_max";
+      name = name + env.print_for_begin(limit);
+    }
+    getType().Java_emitEncoder(env, name);
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      env.print_for_end();
+      env.print_block_end();
+    }
+  }
+  
+  public String Exp.Java_emitEncoder(Java_env env, String name) {
+    throw new Error(this.getClass().getName() + 
+		    ".Java_emitEncoder(Java_env env, String name)" + 
+		    " not declared");
+  }
+
+  public String IntegerLiteral.Java_emitEncoder(Java_env env, String name) {
+    return getValue();
+  }
+
+  public String VariableSize.Java_emitEncoder(Java_env env, String name) {
+    env.println("e.encodeInt(" + name + ".length);");
+    return name + ".length";
+  }
+
+  public void StructType.Java_emitEncoder(Java_env env, String name) {
+    for (int i = 0 ; i < getNumField() ; i++) {
+      Field f = getField(i);
+      f.getType().Java_emitEncoder(env, name + "." + f.getName());
+    }
+  }
+
+  public void UserType.Java_emitEncoder(Java_env env, String name) {
+    if (Java_needInstance()) {
+      env.println(getName() + ".encode(e, " + name + ");");
+    } else {
+      decl().getType().Java_emitEncoder(env, name);
+    }
+  }
+
+  public void Decl.Java_emitDecoder(Java_env env) {
+    env.print("public static ");
+    getType().Java_emitType(env);
+    env.println(" decode(LabCommDecoder d) throws IOException {");
+    env.indent();
+    if (!isVoid()) {
+      getType().Java_emitType(env);
+      env.println(" result;");
+      getType().Java_emitDecoder(env, "result");
+      env.println("return result;");
+    }
+    env.unindent();
+    env.println("}");
+    env.println();
+  }
+
+  public void Type.Java_emitDecoder(Java_env env, String name) {
+    throw new Error(this.getClass().getName() + 
+		    ".Java_emitDecoder(Java_env env, String name)" + 
+		    " not declared");
+  }
+
+  public void VoidType.Java_emitDecoder(Java_env env, String name) {
+  }
+
+  public void PrimType.Java_emitDecoder(Java_env env, String name) {
+    env.print(name + " = ");
+    switch (getToken()) {
+      case LABCOMM_BOOLEAN: { env.println("d.decodeBoolean();"); } break;
+      case LABCOMM_BYTE: { env.println("d.decodeByte();"); } break;
+      case LABCOMM_SHORT: { env.println("d.decodeShort();"); } break;
+      case LABCOMM_INT: { env.println("d.decodeInt();"); } break;
+      case LABCOMM_LONG: { env.println("d.decodeLong();"); } break;
+      case LABCOMM_FLOAT: { env.println("d.decodeFloat();"); } break;
+      case LABCOMM_DOUBLE: { env.println("d.decodeDouble();"); } break;
+      case LABCOMM_STRING: { env.println("d.decodeString();"); } break;
+    }
+  }
+
+  public void ArrayType.Java_emitDecoder(Java_env env, String name) {
+    env.println("{");
+    env.indent();
+    int baseDepth = env.getDepth();
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      env.print("int i_" + (baseDepth + i) + "_max = ");
+      getExp(i).Java_emitDecoder(env);
+      env.println(";");
+    }
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      String limit = "i_" + (baseDepth + i) + "_max";
+      env.print(name + " = "); 
+      Java_emitNew(env, limit, getNumExp() - i);
+      env.println(";");
+      name = name + env.print_for_begin(limit);
+    }
+    getType().Java_emitDecoder(env, name);
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      env.print_for_end();
+    }
+    env.unindent();
+    env.println("}");
+  }
+
+  public void Exp.Java_emitDecoder(Java_env env) {
+    throw new Error(this.getClass().getName() + 
+		    ".Java_emitDecoder(Java_env env)" + 
+		    " not declared");
+  }
+
+  public void IntegerLiteral.Java_emitDecoder(Java_env env) {
+    env.print(getValue());
+  }
+
+  public void VariableSize.Java_emitDecoder(Java_env env) {
+    env.print("d.decodePacked32()");
+  }
+
+  public void StructType.Java_emitDecoder(Java_env env, String name) {
+    env.print(name + " = new ");
+    Java_emitType(env);
+    env.println("();");
+    for (int i = 0 ; i < getNumField() ; i++) {
+      Field f = getField(i);
+      f.getType().Java_emitDecoder(env, name + "." + f.getName());
+    }
+  }
+
+  public void UserType.Java_emitDecoder(Java_env env, String name) {
+    if (Java_needInstance()) {
+      env.println(name + " = " + getName() + ".decode(d);");
+    } else {
+      decl().getType().Java_emitDecoder(env, name);
+    }
+  }
+
+  public void Type.Java_emitNew(Java_env env, String size) {
+    throw new Error(this.getClass().getName() + 
+		    ".Java_emitNew(Java_env env, String size)" + 
+		    " not declared");
+  }
+
+  public void ArrayType.Java_emitNew(Java_env env, String size, int depth) {
+    env.print("new ");
+    getType().Java_emitTypePrefix(env);
+    env.print("[" + size + "]");
+    getType().Java_emitTypeSuffix(env);
+    for (int i = 1 ; i < depth ; i++) {
+      env.print("[]");
+    }
+  }
+
+  public void Type.Java_emitTypePrefix(Java_env env) {
+    throw new Error(this.getClass().getName() + 
+		    ".Java_emitTypePrefix(Java_env env)" + 
+		    " not declared");
+  }
+
+  public void PrimType.Java_emitTypePrefix(Java_env env) {
+    switch (getToken()) {
+      case LABCOMM_STRING: { env.print("String"); } break;
+      default: { env.print(getName()); } break;
+    }
+  }
+
+  public void UserType.Java_emitTypePrefix(Java_env env) {
+    if (Java_needInstance()) {
+      env.print(getName());
+    } else {
+      decl().getType().Java_emitTypePrefix(env);
+    } 
+  }
+
+  public void ArrayType.Java_emitTypePrefix(Java_env env){
+    getType().Java_emitTypePrefix(env);
+  }
+
+  public void StructType.Java_emitTypePrefix(Java_env env){
+    env.print(Java_structName());
+  }
+
+  public void Type.Java_emitTypeSuffix(Java_env env) {
+  }
+
+  public void UserType.Java_emitTypeSuffix(Java_env env) {
+    if (! Java_needInstance()) {
+      decl().getType().Java_emitTypeSuffix(env);
+    } 
+  }
+
+  public void ArrayType.Java_emitTypeSuffix(Java_env env){
+    getType().Java_emitTypeSuffix(env);
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      env.print("[]");
+    }
+  }
+
+  public boolean Type.Java_needInstance() {
+    throw new Error(this.getClass().getName() + 
+		    ".Java_needInstance()" + 
+		    " not declared");
+  }
+
+  public boolean PrimType.Java_needInstance() {
+    return false;
+  }
+
+  public boolean UserType.Java_needInstance() {
+    return decl().getType().Java_needInstance();
+  }
+
+  public boolean StructType.Java_needInstance() {
+    return true;
+  }
+
+  public boolean ArrayType.Java_needInstance() {
+    return getType().Java_needInstance();
+  }
+
+  public boolean Type.Java_isPrimitive() {
+    return false;
+  }
+
+  public boolean PrimType.Java_isPrimitive() {
+    return true;
+  }
+
+  public void Type.Java_emitInstance(Java_env env) {
+    throw new Error(this.getClass().getName() + 
+		    ".Java_emitInstance(Java_env env)" + 
+		    " not declared");
+  }
+
+  public void VoidType.Java_emitInstance(Java_env env) {
+  }
+
+  public void PrimType.Java_emitInstance(Java_env env) {
+  }
+
+  public void ArrayType.Java_emitInstance(Java_env env) {
+    getType().Java_emitInstance(env);
+  }
+
+  public void StructType.Java_emitInstance(Java_env env) {
+    if (Java_Depth() > 0) {
+      env.println("public static class " + Java_structName() + " {");
+      env.indent();
+    }
+    for (int i = 0 ; i < getNumField() ; i++) {
+      getField(i).getType().Java_emitInstance(env);
+    }
+    for (int i = 0 ; i < getNumField() ; i++) {
+      getField(i).Java_emitField(env);
+    }
+    if (Java_Depth() > 0) {
+      env.unindent();
+      env.println("}");
+    }
+    env.println();
+  }
+
+  public void UserType.Java_emitInstance(Java_env env) {
+  }
+
+  public void Field.Java_emitField(Java_env env) {
+    env.print("public ");
+    getType().Java_emitType(env);
+    env.println(" " + getName() + ";");    
+  }
+
+  public void Type.Java_emitType(Java_env env) {
+    throw new Error(this.getClass().getName() + 
+		    ".Java_emitType(Java_env env)" + 
+		    " not declared");
+  }
+
+  public void VoidType.Java_emitType(Java_env env) {
+    env.print("void");
+  }
+
+  public void PrimType.Java_emitType(Java_env env) {
+    switch (getToken()) {
+      case LABCOMM_STRING: { env.print("String"); } break;
+      default: { env.print(getName()); } break;
+    }
+  }
+
+  public void UserType.Java_emitType(Java_env env) {
+    decl().getType().Java_emitType(env);
+  }
+
+  public void ArrayType.Java_emitType(Java_env env){
+    getType().Java_emitType(env);
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      env.print("[]");
+    }
+  }
+
+  public void StructType.Java_emitType(Java_env env){
+    env.print(Java_structName());
+  }
+
+}
+
+aspect Java_Info {
+
+  public void Program.Java_info(PrintStream out) {
+    Java_env env = new Java_env(out);
+    for (int i = 0; i < getNumDecl(); i++) {
+      getDecl(i).Java_info(env);
+    }
+  }
+
+  public void Decl.Java_info(Java_env env) {
+    throw new Error(this.getClass().getName() + 
+		    ".Java_info(Java_env env)" + 
+		    " not declared");
+  }
+
+  public void TypeDecl.Java_info(Java_env env) {
+    env.print("Java,typedef," + getName() + ",");
+    getType().Java_emitType(env);
+    env.println();
+  }
+
+  public void SampleDecl.Java_info(Java_env env) {
+    env.print("Java,sample," + getName() + ",");
+    getType().Java_emitType(env);
+    env.println();
+  }
+
+}

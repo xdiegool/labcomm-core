@@ -1,0 +1,215 @@
+import java.util.*;
+
+aspect Signature {  
+
+  public class SignatureLine {
+  
+    private int indent;
+    private byte[] data;
+    private String comment;
+
+    public SignatureLine(int indent, byte[] data, String comment) {
+      this.indent = indent;
+      this.data = data;
+      this.comment = comment;
+    }
+
+    public int getIndent() {
+      return indent;
+    }
+
+    public byte[] getData() {
+      return data;
+    }
+
+    public String getComment() {
+      return comment;
+    }
+
+  }
+
+  public class SignatureList {
+
+    private int indent;
+    private ArrayList list = new ArrayList();
+    
+    public void add(byte[] data, String comment) {
+      list.add(new SignatureLine(indent, data, comment));
+    }
+
+    public void addInt(int value, String comment) {
+	byte[] packed = new byte[5];
+	
+//	System.out.println("addInt: "+value);
+	int tmp = value;
+	int len = 0;
+
+	while( tmp >= 0x80 ) {
+		packed[len] = (byte) ((tmp & 0x7f) | 0x80 ) ;
+		tmp >>>= 7;
+		len++;
+	}
+	packed[len] = (byte) (tmp & 0x7f);
+//	System.out.println("packed: "+packed[len]+ "len = "+len);
+
+	add(java.util.Arrays.copyOf(packed, len+1), comment);
+
+//      byte[] data = new byte[4];
+//      for (int i = 0 ; i < 4 ; i++) {
+//        data[3 - i] = (byte)((value >> (8 * i)) & 0xff);
+//      }
+//      add(data, comment);
+    }
+
+    public void addString(String value, String comment) {
+      addInt(value.length(), comment);
+      byte[] data = new byte[value.length()];
+      for (int i = 0 ; i < value.length() ; i++) {
+        data[i] = (byte)(value.charAt(i) & 0xff);
+      }
+      add(data, null);
+    }
+
+    public int size() {
+      return list.size();
+    }
+
+    public String getIndent(int i) {
+      StringBuffer result = new StringBuffer();
+      int indent = ((SignatureLine)list.get(i)).getIndent();
+      for (i = 0 ; i < indent ; i++) {
+        result.append("  ");
+      }
+      return result.toString();
+    }
+
+    public byte[] getData(int i) {
+      return ((SignatureLine)list.get(i)).getData();
+    }
+
+    public String getComment(int i) {
+      return ((SignatureLine)list.get(i)).getComment();
+    }
+
+    public void indent() {
+      indent++;
+    }
+
+    public void unindent() {
+      indent--;
+    }
+
+  }
+
+  public SignatureList Decl.signature() {
+    SignatureList result = new SignatureList();
+    flatSignature(result);
+    return result;
+  }
+
+  public void ASTNode.flatSignature(SignatureList list) {
+    throw new Error(this.getClass().getName() + 
+                    ".flatSignature(SignatureList list)" + 
+                    " not declared");
+  }
+
+  public void TypeDecl.flatSignature(SignatureList list) {
+    getType().flatSignature(list);
+  }
+
+  public void SampleDecl.flatSignature(SignatureList list) {
+    getType().flatSignature(list);
+  }
+
+  public void VoidType.flatSignature(SignatureList list) {
+    list.addInt(LABCOMM_STRUCT, "void");
+    list.addInt(0, null);
+  }
+
+  public void PrimType.flatSignature(SignatureList list) {
+    list.addInt(getToken(), null);
+  }
+
+  public void UserType.flatSignature(SignatureList list) {
+    lookupType(getName()).flatSignature(list);
+  }
+
+  public void ArrayType.flatSignature(SignatureList list) {
+    list.addInt(LABCOMM_ARRAY, signatureComment());
+    list.indent();
+    list.addInt(getNumExp(), null);
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      getExp(i).flatSignature(list);
+    }
+    getType().flatSignature(list);
+    list.unindent();
+    list.add(null, "}");
+  }
+
+  public void StructType.flatSignature(SignatureList list) {
+    list.addInt(LABCOMM_STRUCT, "struct { " + getNumField() + " fields");
+    list.indent();
+    list.addInt(getNumField(), null);
+    for (int i = 0 ; i < getNumField() ; i++) {
+      getField(i).flatSignature(list);
+    }
+    list.unindent();
+    list.add(null, "}");
+  }
+
+  public void Field.flatSignature(SignatureList list) {
+    list.addString(getName(), signatureComment());
+    getType().flatSignature(list);
+  }
+
+  public void IntegerLiteral.flatSignature(SignatureList list) {
+    list.addInt(Integer.parseInt(getValue()), null);
+  }
+
+  public void VariableSize.flatSignature(SignatureList list) {
+    list.addInt(0, null);
+  }
+
+  public String ArrayType.signatureComment() {
+    StringBuffer result = new StringBuffer("array [");
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      if (i > 0) {
+	result.append(", ");
+      }
+      result.append(getExp(i).signatureComment());
+    }
+    result.append("]");
+    return result.toString();
+  }
+
+  public String ASTNode.signatureComment() {
+    throw new Error(this.getClass().getName() + 
+                    ".signatureComment()" + 
+                    " not declared");
+  }
+
+  public String Field.signatureComment() {
+    return getType().signatureComment() + " '" + getName() +"'";
+  }
+
+  public String PrimType.signatureComment() {
+    return getName();
+  }
+
+  public String UserType.signatureComment() {
+    return getName();
+  }
+
+  public String StructType.signatureComment() {
+    return "struct";
+  }
+
+  public String IntegerLiteral.signatureComment() {
+    return getValue();
+  }
+
+  public String VariableSize.signatureComment() {
+    return "_";
+  }
+
+}

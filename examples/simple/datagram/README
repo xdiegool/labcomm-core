@@ -1,0 +1,12 @@
+The simple labcomm example over a datagram channel
+
+files:
+
+udp_encoder.c : the same as the simple encoder, but over an UDP writer
+udp_decoder.c : d:o
+
+thr_example.c : the samei over a raw ethernet datagram protocol, in one file,and parameterized 
+		to take the ethernet interface to use and the destination to send to as 
+		command line parameters
+
+thr_example2.c: similar, but bidirectional. The "server" opens a new channel and responds when receiving TwoInts

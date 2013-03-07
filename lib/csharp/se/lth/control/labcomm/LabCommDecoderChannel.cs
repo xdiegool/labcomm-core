@@ -18,11 +18,11 @@ namespace se.lth.control.labcomm {
     public void runOne() {
       bool done = false;
       while (!done) {
-	int tag = decodeInt();
+	int tag = decodePacked32();
 	switch (tag) {
 	case LabComm.TYPEDEF:
         case LabComm.SAMPLE: {
-          int index = decodeInt();
+          int index = decodePacked32();
           String name = decodeString();
 	  MemoryStream signature = new MemoryStream();
 	  collectFlatSignature(new LabCommEncoderChannel(signature));
@@ -55,19 +55,19 @@ namespace se.lth.control.labcomm {
     }
 
     private void collectFlatSignature(LabCommEncoder e) {
-      int type = decodeInt();
-      e.encodeInt(type);
+      int type = decodePacked32();
+      e.encodePacked32(type);
       switch (type) {
       case LabComm.ARRAY: {
-        int dimensions = decodeInt();
-        e.encodeInt(dimensions);
+        int dimensions = decodePacked32();
+        e.encodePacked32(dimensions);
         for (int i = 0 ; i < dimensions ; i++) {
-          e.encodeInt(decodeInt());
+          e.encodePacked32(decodePacked32());
         }
         collectFlatSignature(e);
       } break;
       case LabComm.STRUCT: {
-        int fields = decodeInt();
+        int fields = decodePacked32();
         e.encodeInt(fields);
         for (int i = 0 ; i < fields ; i++) {
           e.encodeString(decodeString());
@@ -155,12 +155,26 @@ namespace se.lth.control.labcomm {
     }
 
     public String decodeString() {
-      int length = (int)ReadInt(4);
+      //int length = (int)ReadInt(4);
+      int length = decodePacked32();
       byte[] buf = new byte[length];
       ReadBytes(buf, length);
       return Encoding.UTF8.GetString(buf);
     }
 
-  }
+    public int decodePacked32() {
+      Int64 res = 0;
+      byte i = 0;
+      bool cont = true; 
 
+      do {
+        byte c = decodeByte();
+	res |= (uint) ((c & 0x7f) << 7*i);
+        cont = (c & 0x80) != 0;
+        i++;
+      } while(cont);
+
+      return (int) (res & 0xffffffff);
+    }
+  }
 } 

@@ -18,11 +18,11 @@ public class LabCommDecoderChannel implements LabCommDecoder {
   public void runOne() throws Exception {
     boolean done = false;
     while (!done) {
-      int tag = decodeInt();
+      int tag = decodePacked32();
       switch (tag) {
 	case LabComm.TYPEDEF:
 	case LabComm.SAMPLE: {
-	  int index = decodeInt();
+	  int index = decodePacked32();
 	  String name = decodeString();
 	  ByteArrayOutputStream signature = new ByteArrayOutputStream();
 	  collectFlatSignature(new LabCommEncoderChannel(signature));
@@ -55,20 +55,20 @@ public class LabCommDecoderChannel implements LabCommDecoder {
   }
 
   private void collectFlatSignature(LabCommEncoder out) throws IOException {
-    int type = decodeInt();
-    out.encodeInt(type);
+    int type = decodePacked32();
+    out.encodePacked32(type);
     switch (type) {
       case LabComm.ARRAY: {
-	int dimensions = decodeInt();
-	out.encodeInt(dimensions);
+	int dimensions = decodePacked32();
+	out.encodePacked32(dimensions);
 	for (int i = 0 ; i < dimensions ; i++) {
-	  out.encodeInt(decodeInt());
+	  out.encodePacked32(decodePacked32());
 	}
 	collectFlatSignature(out);
       } break;
       case LabComm.STRUCT: {
-	int fields = decodeInt();
-	out.encodeInt(fields);
+	int fields = decodePacked32();
+	out.encodePacked32(fields);
 	for (int i = 0 ; i < fields ; i++) {
 	  out.encodeString(decodeString());
 	  collectFlatSignature(out);
@@ -124,9 +124,29 @@ public class LabCommDecoderChannel implements LabCommDecoder {
   }
 
   public String decodeString() throws IOException {
-    in.readShort(); // HACK
-    return in.readUTF();
+    //in.readShort(); // HACK
+    //return in.readUTF();
+    int len = decodePacked32() & 0xffffffff;
+    byte[] chars = new byte[len];
+    for(int i=0; i<len; i++) {
+      chars[i] = in.readByte();
+    }
+    return new String(chars);
   }
 
+  public int decodePacked32() throws IOException {
+    long res=0;
+    byte i=0;
+    boolean cont=true;
+
+    do {
+      byte c = in.readByte();
+      res |= (c & 0x7f) << 7*i;
+      cont = (c & 0x80) != 0;
+      i++;
+    } while(cont);
+
+    return (int) (res & 0xffffffff);
+  }
 }
 

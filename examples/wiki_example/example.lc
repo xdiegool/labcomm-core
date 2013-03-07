@@ -1,0 +1,8 @@
+sample struct {
+  int sequence;
+  struct {
+    boolean last;
+    string data;
+  } line[_];
+} log_message;
+sample float data;

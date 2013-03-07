@@ -1,0 +1,7 @@
+Throttlenet library
+
+The library consists of a generic part and readers/writers for the low-level transport.
+
+The stable low-level is the _fd_ variety, on top of unix file descriptors.
+
+Currently, experimental varieties include datagrams on top of UDP and raw ethernet
