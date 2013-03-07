@@ -1,6 +1,6 @@
 #include <errno.h>
 #include <unistd.h>
-#include "labcomm.h"
+#include "labcomm_fd_reader_writer.h"
 
 #define BUFFER_SIZE 2048
 
