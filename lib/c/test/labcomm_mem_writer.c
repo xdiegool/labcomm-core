@@ -27,7 +27,7 @@ static void copy_data(labcomm_writer_t *w, labcomm_mem_writer_context_t *mcontex
  * Write encoded messages to memory. w->context is assumed to be a pointer to a
  * labcomm_mem_writer_context_t structure.
  */
-int labcomm_mem_writer(labcomm_writer_t *w, labcomm_writer_action_t action)
+int labcomm_mem_writer(labcomm_writer_t *w, labcomm_writer_action_t action, ...)
 {
   int result = 0;
   // Unwrap pointers for easy access.

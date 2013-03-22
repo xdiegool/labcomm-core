@@ -2,7 +2,7 @@
 
 int labcomm_dynamic_buffer_writer(
   labcomm_writer_t *w,
-  labcomm_writer_action_t action)
+  labcomm_writer_action_t action, ...)
 {
   switch (action) {
     case labcomm_writer_alloc: {

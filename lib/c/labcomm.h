@@ -147,13 +147,13 @@ typedef struct labcomm_writer {
   int count;
   int pos;
   int error;
-  int (*write)(struct labcomm_writer *, labcomm_writer_action_t);
+  int (*write)(struct labcomm_writer *, labcomm_writer_action_t, ...);
   int (*ioctl)(struct labcomm_writer *, int, va_list);
   labcomm_error_handler_callback on_error;
 } labcomm_writer_t;
 
 struct labcomm_encoder *labcomm_encoder_new(
-  int (*writer)(labcomm_writer_t *, labcomm_writer_action_t),
+  int (*writer)(labcomm_writer_t *, labcomm_writer_action_t, ...),
   void *writer_context);
 void labcomm_encoder_free(
   struct labcomm_encoder *encoder);
@@ -162,4 +162,10 @@ int labcomm_encoder_ioctl(struct labcomm_encoder *encoder,
 			  int ioctl_action,
 			  ...);
 
+void labcomm_encoder_start(struct labcomm_encoder *e,
+                           labcomm_signature_t *s) ;
+
+//HERE BE DRAGONS: is the signature_t* needed here?
+void labcomm_encoder_end(struct labcomm_encoder *e,
+                           labcomm_signature_t *s) ;
 #endif

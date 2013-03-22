@@ -62,7 +62,7 @@ int labcomm_fd_reader(
 
 int labcomm_fd_writer(
   labcomm_writer_t *w, 
-  labcomm_writer_action_t action)
+  labcomm_writer_action_t action, ...)
 {
   int result = 0;
   int *fd = w->context;

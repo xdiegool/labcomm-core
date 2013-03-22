@@ -183,6 +183,25 @@ static int get_encoder_index(
   return result;
 }
 
+void labcomm_encoder_start(struct labcomm_encoder *e,
+                           labcomm_signature_t *s) 
+{
+  int index = get_encoder_index(e, s);
+  e->writer.write(&e->writer, labcomm_writer_start, index);
+}
+
+void labcomm_encoder_end(struct labcomm_encoder *e, 
+                         labcomm_signature_t *s) 
+{
+  e->writer.write(&e->writer, labcomm_writer_end);
+}
+
+void labcomm_encode_type_index(labcomm_encoder_t *e, labcomm_signature_t *s)
+{
+  int index = get_encoder_index(e, s);
+  labcomm_encode_packed32(e, index);
+}
+
 void labcomm_encode_signature(struct labcomm_encoder *e,
                               labcomm_signature_t *signature) 
 {
@@ -248,7 +267,7 @@ static void do_encode(
 }
 
 labcomm_encoder_t *labcomm_encoder_new(
-  int (*writer)(labcomm_writer_t *, labcomm_writer_action_t),
+  int (*writer)(labcomm_writer_t *, labcomm_writer_action_t, ...),
   void *writer_context)
 {
   labcomm_encoder_t *result = malloc(sizeof(labcomm_encoder_t));
@@ -341,12 +360,6 @@ int labcomm_encoder_ioctl(struct labcomm_encoder *encoder,
   return result;
 }
 
-
-void labcomm_encode_type_index(labcomm_encoder_t *e, labcomm_signature_t *s)
-{
-  int index = get_encoder_index(e, s);
-  labcomm_encode_packed32(e, index);
-}
 
 static void collect_flat_signature(
   labcomm_decoder_t *decoder,
