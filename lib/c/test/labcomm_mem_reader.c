@@ -67,6 +67,9 @@ int labcomm_mem_reader(labcomm_reader_t *r, labcomm_reader_action_t action)
       r->pos = 0;
       result = 0;
     } break;
+    case labcomm_reader_ioctl: {
+      result = -ENOTSUP;
+    }
   }
   return result;
 }

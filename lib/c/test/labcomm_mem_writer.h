@@ -11,7 +11,7 @@ struct labcomm_mem_writer_context_t {
   unsigned char *buf;  // Allocated destination buffer.
 };
 
-int labcomm_mem_writer(labcomm_writer_t *w, labcomm_writer_action_t action, ...);
+int labcomm_mem_writer(labcomm_writer_t *w, labcomm_writer_action_t action);
 
 /* Wrapper the internal static function copy_data. This is needed so that the exceptions can be unit tested. */
 void test_copy_data(labcomm_writer_t *w, labcomm_mem_writer_context_t *mcontext, unsigned char *mbuf);

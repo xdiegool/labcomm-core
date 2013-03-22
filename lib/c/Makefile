@@ -2,11 +2,11 @@
 
 # Use LLVM clang if it's found.
 CC = $(shell hash clang 2>/dev/null && echo clang || echo gcc)
-CFLAGS = -g -Wall -I .
+CFLAGS = -g -Wall -Werror -I. -Itest
 LDFLAGS = -L .
 LDLIBS_TEST = -lcunit -llabcomm
 
-OBJS= labcomm.o labcomm_fd_reader_writer.o labcomm_mem_reader.o labcomm_mem_writer.o
+OBJS= labcomm.o labcomm_dynamic_buffer_reader_writer.o labcomm_fd_reader_writer.o labcomm_mem_reader.o labcomm_mem_writer.o
 LABCOMMC_PATH=../../compiler
 LABCOMMC_JAR=$(LABCOMMC_PATH)/labComm.jar
 
@@ -14,9 +14,11 @@ TEST_DIR=test
 TESTDATA_DIR=$(TEST_DIR)/testdata
 TEST_GEN_DIR=$(TESTDATA_DIR)/gen
 
+VPATH=$(TEST_DIR)
+
 CREATED_DIRS=$(TEST_DIR) $(TESTDATA_DIR) $(TEST_GEN_DIR)
 
-# Enable experimental objects by invoking make like `make -e LABCOMM_EXPERIMENTAL=true`
+# Enable experimental objects by invoking make like `make LABCOMM_EXPERIMENTAL=true`
 ifeq ($(LABCOMM_EXPERIMENTAL),true)
 	OBJS += experimental/udp_hack.o experimental/ethaddr.o \
 		experimental/labcomm_thr_reader_writer.o \
@@ -39,9 +41,9 @@ labcomm.o : labcomm.c labcomm.h  labcomm_private.h
 
 labcomm_fd_reader_writer.o : labcomm_fd_reader_writer.c  labcomm_fd_reader_writer.h  labcomm.h  labcomm_private.h
 
-labcomm_mem_reader.o: labcomm_fd_reader_writer.c labcomm_fd_reader_writer.h
+$(TEST_DIR)/labcomm_mem_reader.o: labcomm_fd_reader_writer.c labcomm_fd_reader_writer.h
 
-labcomm_mem_writer.o: labcomm_mem_writer.c labcomm_mem_writer.h cppmacros.h
+$(TEST_DIR)/labcomm_mem_writer.o: labcomm_mem_writer.c labcomm_mem_writer.h cppmacros.h
 
 ethaddr.o: ethaddr.c
 

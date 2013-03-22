@@ -39,7 +39,7 @@
 /*
  * Start index for user defined types
  */
-#define LABCOMM_USER     0x60
+#define LABCOMM_USER     0x40
 
 /*
  * Semi private decoder declarations
@@ -196,7 +196,7 @@ static inline void labcomm_buffer_reader_setup(
   void *data,
   int length)
 {
-  r->context = NULL; // Used as errer flag
+  r->context = NULL; // Used as error flag
   r->data = data;  
   r->data_size = length;
   r->count = length;
@@ -232,10 +232,6 @@ void labcomm_internal_encode(
   labcomm_encoder_t *encoder, 
   labcomm_signature_t *signature, 
   void *value);
-
-#define LABCOMM_USER_ACTION(i) (i + 100)
-void labcomm_internal_encoder_user_action(struct labcomm_encoder *encoder, 
-					  int action);
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 
@@ -335,7 +331,7 @@ static inline void labcomm_encode_string(labcomm_encoder_t *e,
 void labcomm_encode_type_index(labcomm_encoder_t *e, labcomm_signature_t *s);
 
 static inline int labcomm_buffer_write(struct labcomm_writer *w, 
-                                       labcomm_writer_action_t action, ...)
+                                       labcomm_writer_action_t action)
 {
   // If this gets called, it is an error, 
   // so note error and let producer proceed
