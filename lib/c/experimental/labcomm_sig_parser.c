@@ -9,78 +9,15 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../labcomm_private.h"
+#include "labcomm_sig_parser.h"
 
-#undef DEBUG 
-#undef DEBUG_STACK
-#undef DEBUG_READ
-
-#undef QUIET 		//just print type and size when skipping data
-#undef VERBOSE 		// print in great detail
-
-#ifdef QUIET
-#define INFO_PRINTF(format, args...)  
-#undef VERBOSE
-#else
-#define INFO_PRINTF(format, args...)  \
-      printf (format , ## args)
-#endif
-
-#ifdef VERBOSE
-#define VERBOSE_PRINTF(format, args...)  \
-      printf (format , ## args)
-#else
-#define VERBOSE_PRINTF(format, args...)  
-#endif
-
-#undef EXIT_WHEN_RECEIVING_DATA 
-
-#undef RETURN_STRINGS  // highly experimental, and not used
-
-#ifndef TRUE
-
-#define FALSE 0
-#define TRUE 1
-
-#endif
-
-
-typedef enum{
-        TYPE_DECL = LABCOMM_TYPEDEF,
-        SAMPLE_DECL = LABCOMM_SAMPLE,
-
-        ARRAY_DECL = LABCOMM_ARRAY,
-        STRUCT_DECL = LABCOMM_STRUCT,
-
-        TYPE_BOOLEAN  = LABCOMM_BOOLEAN,
-        TYPE_BYTE  = LABCOMM_BYTE,
-        TYPE_SHORT  = LABCOMM_SHORT,
-        TYPE_INTEGER  = LABCOMM_INT,
-        TYPE_LONG  = LABCOMM_LONG,
-        TYPE_FLOAT  = LABCOMM_FLOAT,
-        TYPE_DOUBLE  = LABCOMM_DOUBLE,
-        TYPE_STRING  = LABCOMM_STRING
-} labcomm_type ;
-
-void error(char *s) {
+static void error(char *s) {
 	fprintf(stderr, "%s", s);
 	fprintf(stderr, "\nexiting\n");
 	exit(1);
 }
 
-#define BUF_SIZE 1024
 #define STACK_SIZE 16
-
-/* internal type: stack for the parser */
-typedef struct {
-	unsigned char* c;
-	unsigned int size;
-	unsigned int capacity;
-	unsigned int idx;
-	void** stack;
-	unsigned int top;
-} buffer;
-
 
 /* aux method for reading a big endian uint32 from a char* (i.e. ntohl but for explicit char*) */
 static unsigned int unpack32(unsigned char *c, unsigned int idx) {
@@ -143,12 +80,21 @@ void* pop(buffer *b) {
 int init_buffer(buffer *b, size_t size, size_t stacksize) {
 	b->c = malloc(size);
 	b->capacity = size;
+	b->size = 0;
 	b->idx = 0;
 
 	b->stack = calloc(stacksize, sizeof(b->stack));
+	b->stacksize = stacksize;
 	b->top = stacksize-1;
 
 	return b->c == NULL || b->stack == NULL;
+}
+
+int read_file(FILE *f, buffer *b) {
+        int s = fread(b->c, sizeof(char), b->capacity, f);
+        b->size = s;
+        b->idx=0;
+        return s;
 }
 
 int more(buffer *b) 
@@ -196,10 +142,6 @@ void getStr(buffer *b, char *dest, size_t size) {
 	b->idx += size;
 }
 
-//XXX experimental
-#define MAX_SIGNATURES 10
-#define MAX_NAME_LEN 32 
-#define MAX_SIG_LEN 128
 unsigned int signatures_length[MAX_SIGNATURES];
 unsigned char signatures_name[MAX_SIGNATURES][MAX_NAME_LEN]; //HERE BE DRAGONS: add range checks
 unsigned char signatures[MAX_SIGNATURES][MAX_SIG_LEN]; 
@@ -246,32 +188,32 @@ int labcomm_sizeof(unsigned int type)
 	}
 }
 
-int accept_packet(buffer *d);
-int accept_type_decl(buffer *d);
-int accept_sample_decl(buffer *d);
-int accept_user_id(buffer *d);
-int accept_string(buffer *d);
-int accept_string_length(buffer *d);
-int accept_char(buffer *d);
-int accept_type(buffer *d);
-int accept_boolean_type(buffer *d);
-int accept_byte_type(buffer *d);
-int accept_short_type(buffer *d);
-int accept_integer_type(buffer *d);
-int accept_long_type(buffer *d);
-int accept_float_type(buffer *d);
-int accept_long_type(buffer *d);
-int accept_string_type(buffer *d);
-int accept_array_decl(buffer *d);
-int accept_number_of_indices(buffer *d);
-int accept_indices(buffer *d);
-int accept_variable_index(buffer *d);
-int accept_fixed_index(buffer *d);
-int accept_struct_decl(buffer *d);
-int accept_number_of_fields(buffer *d);
-int accept_field(buffer *d);
-int accept_sample_data(buffer *d);
-int accept_packed_sample_data(buffer *d);
+static int accept_packet(buffer *d);
+static int accept_type_decl(buffer *d);
+static int accept_sample_decl(buffer *d);
+static int accept_user_id(buffer *d);
+static int accept_string(buffer *d);
+static int accept_string_length(buffer *d);
+static int accept_char(buffer *d);
+static int accept_type(buffer *d);
+static int accept_boolean_type(buffer *d);
+static int accept_byte_type(buffer *d);
+static int accept_short_type(buffer *d);
+static int accept_integer_type(buffer *d);
+static int accept_long_type(buffer *d);
+static int accept_float_type(buffer *d);
+static int accept_long_type(buffer *d);
+static int accept_string_type(buffer *d);
+static int accept_array_decl(buffer *d);
+static int accept_number_of_indices(buffer *d);
+static int accept_indices(buffer *d);
+static int accept_variable_index(buffer *d);
+static int accept_fixed_index(buffer *d);
+static int accept_struct_decl(buffer *d);
+static int accept_number_of_fields(buffer *d);
+static int accept_field(buffer *d);
+static int accept_sample_data(buffer *d);
+static int accept_packed_sample_data(buffer *d);
 
 static unsigned char labcomm_varint_sizeof(unsigned int i)
 {
@@ -352,7 +294,7 @@ int do_parse(buffer *d) {
 	}
 }
 
-int accept_user_id(buffer *d){
+static int accept_user_id(buffer *d){
         unsigned char nbytes;
 	unsigned int uid = peek_varint(d, &nbytes);
 	if(uid >= LABCOMM_USER) {
@@ -365,7 +307,7 @@ int accept_user_id(buffer *d){
 	}
 }
 
-int accept_string(buffer *d){
+static int accept_string(buffer *d){
 	unsigned int len = get_varint(d);
 	char *str=malloc(len);
 	getStr(d, str, len); 
@@ -378,7 +320,7 @@ int accept_string(buffer *d){
 	push(d, (void *) (unsigned long) len);
 	return TRUE;
 }
-int accept_type(buffer *d){
+static int accept_type(buffer *d){
 	unsigned char nbytes;
         unsigned int type = peek_varint(d, &nbytes) ;
 	switch(type) {
@@ -428,7 +370,7 @@ int accept_type(buffer *d){
 	return TRUE;
 }
 
-int accept_array_decl(buffer *d){
+static int accept_array_decl(buffer *d){
         unsigned char nbytes;
         unsigned int tid = peek_varint(d, &nbytes) ;
 	if(tid == ARRAY_DECL) {
@@ -458,7 +400,7 @@ int accept_array_decl(buffer *d){
 		return FALSE;
 	}
 }
-int accept_struct_decl(buffer *d){
+static int accept_struct_decl(buffer *d){
 	unsigned char nbytes;
         unsigned int tid = peek_varint(d, &nbytes) ;
 	if(tid == STRUCT_DECL) {
@@ -479,7 +421,7 @@ int accept_struct_decl(buffer *d){
 		return FALSE;
 	}
 }
-int accept_field(buffer *d){
+static int accept_field(buffer *d){
 	VERBOSE_PRINTF("field ");
 	accept_string(d);
 	pop(d); // ignore, for now
@@ -491,7 +433,7 @@ int accept_field(buffer *d){
 	accept_type(d);
 	VERBOSE_PRINTF("\n");
 }
-int accept_sample_data(buffer *d){
+static int accept_sample_data(buffer *d){
 	accept_user_id(d);
 	unsigned int uid = (unsigned int) (unsigned long) pop(d);	
 	printf("sample data... %x\n", uid);
@@ -505,9 +447,9 @@ int accept_sample_data(buffer *d){
 }
 //int accept_packed_sample_data(buffer *d){
 
-int skip_type(unsigned int,buffer*,unsigned char*,unsigned int,unsigned int*) ;
+static int skip_type(unsigned int,buffer*,unsigned char*,unsigned int,unsigned int*) ;
 
-int skip_array(buffer *d, unsigned char *sig, unsigned int len, unsigned int *pos) {
+static int skip_array(buffer *d, unsigned char *sig, unsigned int len, unsigned int *pos) {
 	unsigned int skip = 0;
 	unsigned int tot_nbr_elem_tmp = 1;
 	unsigned char nbytes;
@@ -704,48 +646,3 @@ int skip_packed_sample_data(buffer *d, unsigned char *sig, unsigned int siglen) 
 	printf("skipped %d bytes\n", skipped);
 	return TRUE;
 }
-
-int read_file(FILE *f, buffer *b) {
-	int s = fread(b->c, sizeof(char), b->capacity, f);
-	b->size = s;
-	b->idx=0;
-	return s;
-}
-
-void test_read(buffer *buf) {
-	int r = read_file(stdin, buf);
-#ifdef DEBUG_READ
-	printf("read %d bytes:\n\n", r);
-	int i;
-	for(i=0; i<r; i++) {
-		printf("%x ", buf->c[i]);
-		if(i%8 == 7) printf("\n");
-	}
-	printf("\n");
-#endif
-}
-int main() {
-	buffer buf;
-
-#ifdef DEBUG_VARINT_SIZEOF
-	printf("varint_sizeof 0 : %d\n", labcomm_varint_sizeof(0));
-	printf("varint_sizeof 1 : %d\n", labcomm_varint_sizeof(1));
-	printf("varint_sizeof 127 : %d\n", labcomm_varint_sizeof(127));
-	printf("varint_sizeof 128 : %d\n", labcomm_varint_sizeof(128));
-	printf("varint_sizeof 65536 : %d\n", labcomm_varint_sizeof(65536));
-	printf("varint_sizeof 1000000 : %d\n", labcomm_varint_sizeof(1000000));
-	printf("varint_sizeof 0xffffffff : %d\n", labcomm_varint_sizeof(0xffffffff));
-#endif
-
-	if( init_buffer(&buf, BUF_SIZE, STACK_SIZE) ) {
-		printf("failed to init buffer\n");
-		exit(1);
-	}
-	test_read(&buf);
-	do{
-		printf("--------------------------------------------- new packet: \n");
-	} while(more(&buf) && do_parse(&buf)); 
-	printf("EOF\n");
-}
-
-	
