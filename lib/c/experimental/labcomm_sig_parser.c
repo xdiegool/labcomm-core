@@ -508,7 +508,7 @@ int skip_struct(buffer *d, unsigned char *sig, unsigned int len, unsigned int *p
 		unsigned int namelen = unpack_varint(sig, *pos, &nbytes);
 #ifdef DEBUG
 		VERBOSE_PRINTF("namelen==%d",namelen);
-		char name[namelen+1];
+		char name[namelen+1]; //HERE BE DRAGONS. alloca?
 		strncpy(name, sig+*pos+nbytes, namelen);
 		name[namelen]=0;
 		VERBOSE_PRINTF(", name = %s",name);
