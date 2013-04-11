@@ -11,9 +11,27 @@
 
 #include "../labcomm_private.h"
 
-#define DEBUG 
+#undef DEBUG 
 #undef DEBUG_STACK
 #undef DEBUG_READ
+
+#undef QUIET 		//just print type and size when skipping data
+#undef VERBOSE 		// print in great detail
+
+#ifdef QUIET
+#define INFO_PRINTF(format, args...)  
+#undef VERBOSE
+#else
+#define INFO_PRINTF(format, args...)  \
+      printf (format , ## args)
+#endif
+
+#ifdef VERBOSE
+#define VERBOSE_PRINTF(format, args...)  \
+      printf (format , ## args)
+#else
+#define VERBOSE_PRINTF(format, args...)  
+#endif
 
 #undef EXIT_WHEN_RECEIVING_DATA 
 
@@ -203,7 +221,7 @@ void dump_signature(unsigned int uid){
 	unsigned char* sig = get_signature(uid);
 	for(i=0; i<len; i++) {
 		printf("%2.2x ",sig[i]);
-		if( (i+1)%8==0 ) printf("\n");
+		if( i < len-1 && (i+1)%8==0 ) printf("\n");
 	}
 	printf("\n");
 }
@@ -274,27 +292,27 @@ int do_parse(buffer *d) {
 		advancen(d, nbytes);
 		accept_user_id(d);
 		unsigned int uid = (unsigned int) (unsigned long) pop(d);
-		printf(", name = ");
+		VERBOSE_PRINTF(", name = ");
 		accept_string(d);
 		pop(d); // ignore, for now. 
 #ifdef RETURN_STRINGS
 		char *str = (char *) pop(d);
 		free(str);
 #endif
-		printf(" : ");
+		VERBOSE_PRINTF(" : ");
 		accept_type(d);
 		unsigned int type = (unsigned int) (unsigned long) pop(d);
 
 		//push(d, type);
-		printf("\n");
+		VERBOSE_PRINTF("\n");
 		return TRUE;
 	} else if (type == SAMPLE_DECL) {
 		advancen(d, nbytes);
-		printf("sample_decl ");
+		VERBOSE_PRINTF("sample_decl ");
 		accept_user_id(d);
 		unsigned int nstart = d->idx;
 		unsigned int uid = (unsigned int) (unsigned long) pop(d);
-		printf(", name = ");
+		VERBOSE_PRINTF(", name = ");
 		accept_string(d);
 		unsigned int start = d->idx;
 		unsigned int nlen = (unsigned int) (unsigned long) pop(d);
@@ -323,7 +341,7 @@ int do_parse(buffer *d) {
 		} else {
 			error("sig name longer than max length (this ought to be dynamic...");
 		}
-		printf("signature for uid %x: %s (start=%x,end=%x, nlen=%d,len=%d)\n", uid, get_signature_name(uid), start,end, nlen, len);
+		VERBOSE_PRINTF("signature for uid %x: %s (start=%x,end=%x, nlen=%d,len=%d)\n", uid, get_signature_name(uid), start,end, nlen, len);
 	} else {
 #ifdef EXIT_WHEN_RECEIVING_DATA
 		printf("*** got sample data, exiting\n");
@@ -339,7 +357,7 @@ int accept_user_id(buffer *d){
 	unsigned int uid = peek_varint(d, &nbytes);
 	if(uid >= LABCOMM_USER) {
 		advancen(d, nbytes);
-		printf("uid = %x ", uid);
+		VERBOSE_PRINTF("uid = %x ", uid);
 		push(d, (void *) (unsigned long) uid);
 		return TRUE;
 	} else {
@@ -350,8 +368,8 @@ int accept_user_id(buffer *d){
 int accept_string(buffer *d){
 	unsigned int len = get_varint(d);
 	char *str=malloc(len);
-	getStr(d, str, len);
-	printf("%s", str);
+	getStr(d, str, len); 
+	VERBOSE_PRINTF("%s", str);
 #ifdef RETURN_STRINGS
 	push(d, str);
 #else
@@ -365,35 +383,35 @@ int accept_type(buffer *d){
         unsigned int type = peek_varint(d, &nbytes) ;
 	switch(type) {
 		case TYPE_BOOLEAN :
-			printf("boolean");
+			VERBOSE_PRINTF("boolean");
 			advancen(d, nbytes);
 			break;
 		case TYPE_BYTE :
-			printf("byte");
+			VERBOSE_PRINTF("byte");
 			advancen(d, nbytes);
 			break;
 		case TYPE_SHORT :
-			printf("short");
+			VERBOSE_PRINTF("short");
 			advancen(d, nbytes);
 			break;
 		case TYPE_INTEGER :
-			printf("integer");
+			VERBOSE_PRINTF("integer");
 			advancen(d, nbytes);
 			break;
 		case TYPE_LONG :
-			printf("long");
+			VERBOSE_PRINTF("long");
 			advancen(d, nbytes);
 			break;
 		case TYPE_FLOAT :
-			printf("float");
+			VERBOSE_PRINTF("float");
 			advancen(d, nbytes);
 			break;
 		case TYPE_DOUBLE :
-			printf("double");
+			VERBOSE_PRINTF("double");
 			advancen(d, nbytes);
 			break;
 		case TYPE_STRING :
-			printf("string");
+			VERBOSE_PRINTF("string");
 			advancen(d, nbytes);
 			break;
 		case ARRAY_DECL :
@@ -416,7 +434,7 @@ int accept_array_decl(buffer *d){
 	if(tid == ARRAY_DECL) {
 		advancen(d, nbytes);
 		unsigned int nidx = get_varint(d);
-		printf("%d dim array", nidx);
+		VERBOSE_PRINTF("%d dim array", nidx);
 		int i;
 		unsigned int numVar=0;
 		unsigned int size=1;
@@ -424,13 +442,13 @@ int accept_array_decl(buffer *d){
 			unsigned int idx = get_varint(d);
 			if(idx == 0) {
 				numVar++;
-				printf("[_] ");
+				VERBOSE_PRINTF("[_] ");
 			} else {
-				printf("[%d] ", idx);
+				VERBOSE_PRINTF("[%d] ", idx);
 				size*=idx;
 			}
 		}
-		printf(" of ");
+		VERBOSE_PRINTF(" of ");
 		unsigned int et=accept_type(d);
 		//pop(d);
 		//push(d,tid);
@@ -446,12 +464,12 @@ int accept_struct_decl(buffer *d){
 	if(tid == STRUCT_DECL) {
 		advancen(d, nbytes);
 		unsigned int nf = get_varint(d);
-		printf(", %d field struct:\n", nf);
+		VERBOSE_PRINTF(", %d field struct:\n", nf);
 		int i;
 		int numVar=0;
 		int size=0;
 		for(i=0; i<nf; i++) {
-			printf("\t");
+			VERBOSE_PRINTF("\t");
 			accept_field(d);
 		}
 //		push(d,tid);
@@ -462,16 +480,16 @@ int accept_struct_decl(buffer *d){
 	}
 }
 int accept_field(buffer *d){
-	printf("field ");
+	VERBOSE_PRINTF("field ");
 	accept_string(d);
 	pop(d); // ignore, for now
 #ifdef RETURN_STRINGS
 		char *str = (char *) pop(d);
 		free(str);
 #endif
-	printf(" : ");
+	VERBOSE_PRINTF(" : ");
 	accept_type(d);
-	printf("\n");
+	VERBOSE_PRINTF("\n");
 }
 int accept_sample_data(buffer *d){
 	accept_user_id(d);
@@ -494,7 +512,7 @@ int skip_array(buffer *d, unsigned char *sig, unsigned int len, unsigned int *po
 	unsigned int tot_nbr_elem_tmp = 1;
 	unsigned char nbytes;
 	unsigned int nIdx = unpack_varint(sig, *pos, &nbytes);
-	printf("skip_array: nIdx = %d (from sig)\n", nIdx);
+	VERBOSE_PRINTF("skip_array: nIdx = %d (from sig)\n", nIdx);
 	*pos +=nbytes;
 	unsigned int idx[nIdx];
 	unsigned int nVar=0;
@@ -504,7 +522,7 @@ int skip_array(buffer *d, unsigned char *sig, unsigned int len, unsigned int *po
 	for(i=0; i<nIdx; i++) {
 		idx[i] = unpack_varint(sig, *pos, &nbytes);
 		*pos += nbytes;
-		printf("skip_array: idx[%d]=%d (from sig)\n", i, idx[i]);
+		VERBOSE_PRINTF("skip_array: idx[%d]=%d (from sig)\n", i, idx[i]);
 		if(idx[i] == 0) {
 			nVar++;
 		} else {
@@ -517,7 +535,7 @@ int skip_array(buffer *d, unsigned char *sig, unsigned int len, unsigned int *po
 	for(i=0; i<nVar; i++) {
 		var[i] = get_varint_size(d, &nbytes);	
 		varSize += nbytes;
-		printf("skip_array: var[%d]=%d (from sample)\n", i, var[i]);
+		VERBOSE_PRINTF("skip_array: var[%d]=%d (from sample)\n", i, var[i]);
 		tot_nbr_elem_tmp *= var[i];
 	}
 
@@ -528,7 +546,7 @@ int skip_array(buffer *d, unsigned char *sig, unsigned int len, unsigned int *po
 
 	skip = elemSize * tot_nbr_elem_tmp;
 
-	printf("skip_array: skip: %d * %d = %d\n", tot_nbr_elem_tmp, elemSize ,skip);
+	VERBOSE_PRINTF("skip_array: skip: %d * %d = %d\n", tot_nbr_elem_tmp, elemSize ,skip);
 	
 	advancen(d, skip);
 
@@ -542,23 +560,23 @@ int skip_struct(buffer *d, unsigned char *sig, unsigned int len, unsigned int *p
 	*pos += nbytes;
 	unsigned int i;
 	unsigned int skipped=0;
-	printf("skip_struct (%d fields)\n", nFields);
+	VERBOSE_PRINTF("skip_struct (%d fields)\n", nFields);
 	for(i=0; i<nFields; i++) {
 		//skip name 
 		unsigned int namelen = unpack_varint(sig, *pos, &nbytes);
 #ifdef DEBUG
-		printf("namelen==%d",namelen);
+		VERBOSE_PRINTF("namelen==%d",namelen);
 		char name[namelen+1];
-		name[namelen]=0;
 		strncpy(name, sig+*pos+nbytes, namelen);
-		printf(", name = %s",name);
+		name[namelen]=0;
+		VERBOSE_PRINTF(", name = %s",name);
 #endif
 		*pos += (nbytes+namelen); // 32bit len + actual string
 
 		unsigned int type = unpack_varint(sig, *pos, &nbytes);
 		*pos += nbytes;
 #ifdef DEBUG
-		printf(": type == %x\n", type);
+		VERBOSE_PRINTF(": type == %x\n", type);
 #endif
 		skipped += skip_type(type, d, sig, len, pos);
 	}
@@ -630,7 +648,7 @@ int skip_type(unsigned int type, buffer *d,
 		unsigned char *sig, unsigned int len, unsigned int *pos) 
 {
 	int skipped=0;
-	printf("skip_type %x\n", type);
+	VERBOSE_PRINTF("skip_type %x\n", type);
 	switch(type) {
 		case TYPE_BOOLEAN :
 		case TYPE_BYTE : 
@@ -725,9 +743,9 @@ int main() {
 	}
 	test_read(&buf);
 	do{
-		printf("------------\n");
+		printf("--------------------------------------------- new packet: \n");
 	} while(more(&buf) && do_parse(&buf)); 
-	printf("done\n");
+	printf("EOF\n");
 }
 
 	
