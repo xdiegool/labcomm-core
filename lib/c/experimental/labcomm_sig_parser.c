@@ -35,7 +35,7 @@
 
 #undef EXIT_WHEN_RECEIVING_DATA 
 
-#define RETURN_STRINGS  // highly experimental, and not used
+#undef RETURN_STRINGS  // highly experimental, and not used
 
 #ifndef TRUE
 
