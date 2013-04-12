@@ -807,7 +807,7 @@ aspect C_Signature {
 		env.prefix + getName() + " = {");
     env.indent();
     env.println("LABCOMM_SAMPLE, \"" + getName() + "\",");
-    env.println("(int (*)(void *))labcomm_sizeof_" + 
+    env.println("(int (*)(labcomm_signature_t *, void *))labcomm_sizeof_" + 
 		env.prefix + getName() + ",");
     env.println("sizeof(signature_bytes_" + getName() + "),");
     env.println("signature_bytes_"+ getName());
@@ -905,7 +905,7 @@ aspect C_Sizeof {
 
   public void SampleDecl.C_emitSizeofDeclaration(C_env env) {
     env.println("extern int labcomm_sizeof_" + env.prefix + getName() +
-		"(" + env.prefix + getName() + " *v);");
+		"(labcomm_signature_t *sig, " + env.prefix + getName() + " *v);");
   }
 
   public int Decl.C_fixedSizeof() {
@@ -966,7 +966,7 @@ aspect C_Sizeof {
   public void SampleDecl.C_emitSizeof(C_env env) {
     env = env.nestStruct("(*v)");
     env.println("int labcomm_sizeof_" + env.prefix + getName() +
-		"(" + env.prefix + getName() + " *v)");
+		"(labcomm_signature_t *sig, " + env.prefix + getName() + " *v)");
     env.println("{");
     env.indent();
     if (C_isDynamic()) {

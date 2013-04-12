@@ -23,16 +23,13 @@ struct labcomm_decoder;
 /*
  * Signature entry
  */
-typedef struct {
+typedef struct labcomm_signature{
   int type;
   char *name;
-  int (*encoded_size)(void *);
+  int (*encoded_size)(struct labcomm_signature *, void *); // void * == encoded_sample *
   int size;
   unsigned char *signature; 
 } labcomm_signature_t;
-
-//TODO: something along the lines of...
-void labcomm_encode_signature(struct labcomm_encoder*, labcomm_signature_t*);
 
 /*
  * Error handling.
