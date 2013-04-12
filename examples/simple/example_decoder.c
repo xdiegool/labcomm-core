@@ -26,6 +26,20 @@ static void handle_simple_TwoArrays(simple_TwoArrays *d,void *context) {
     printf("\n");
 }
 
+static void handle_simple_TwoFixedArrays(simple_TwoFixedArrays *d,void *context) {
+  printf("Got TwoFixedArrays:");
+    int i;
+    for(i=0; i<2; i++) {
+        printf("%d ",d->a.a[i]);
+    }
+    printf("\n");
+    for(i=0; i<3; i++) {
+        printf("%d ",d->b.a[0+2*i]);
+        printf("%d ",d->b.a[1+2*i]);
+    }
+    printf("\n");
+}
+
 int main(int argc, char *argv[]) {
   int fd;
   struct labcomm_decoder *decoder;
@@ -44,6 +58,7 @@ int main(int argc, char *argv[]) {
   labcomm_decoder_register_simple_TwoInts(decoder, handle_simple_TwoInts, context);
   labcomm_decoder_register_simple_IntString(decoder, handle_simple_IntString, context);
   labcomm_decoder_register_simple_TwoArrays(decoder, handle_simple_TwoArrays, context);
+  labcomm_decoder_register_simple_TwoFixedArrays(decoder, handle_simple_TwoFixedArrays, context);
 
   printf("Decoding:\n");
   labcomm_decoder_run(decoder);

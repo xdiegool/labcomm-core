@@ -17,3 +17,8 @@ sample struct {
   int fixed[2];
   int variable[2,_];
 } TwoArrays;
+
+sample struct {
+  int a[2];
+  int b[2,3];
+} TwoFixedArrays;

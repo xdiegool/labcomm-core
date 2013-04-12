@@ -5,7 +5,8 @@ import java.io.InputStream;
 import se.lth.control.labcomm.LabCommDecoderChannel;
 
 public class Decoder
-  implements TwoInts.Handler, IntString.Handler, TwoArrays.Handler
+  implements TwoInts.Handler, IntString.Handler, TwoArrays.Handler, TwoFixedArrays.Handler
+
 {
 
   LabCommDecoderChannel decoder;
@@ -17,6 +18,7 @@ public class Decoder
     TwoInts.register(decoder, this);
     IntString.register(decoder, this);
     TwoArrays.register(decoder, this);
+    TwoFixedArrays.register(decoder, this);
 
     try {
       System.out.println("Running decoder.");
@@ -46,6 +48,20 @@ public class Decoder
     }
     System.out.println();
   }
+
+  public void handle_TwoFixedArrays(TwoFixedArrays d) throws java.io.IOException {
+    System.out.println("Got TwoFixedArrays:");
+    for(int i=0; i<d.a.length; i++) {
+	System.out.print(d.a[i]+" ");
+    }
+    System.out.println();
+    for(int i=0; i<d.b[0].length; i++) {
+	System.out.print(d.b[0][i]+" ");
+	System.out.print(d.b[1][i]+" ");
+    }
+    System.out.println();
+  }
+
 
   public static void main(String[] arg) throws Exception {
     Decoder example = new Decoder(

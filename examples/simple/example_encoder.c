@@ -51,4 +51,10 @@ int main(int argc, char *argv[]) {
   labcomm_encode_simple_TwoInts(encoder, &ti);
 
 
+  simple_TwoFixedArrays tfa;
+
+  printf("Encoding TwoFixedArrays...\n");
+  labcomm_encoder_register_simple_TwoFixedArrays(encoder);
+  labcomm_encode_simple_TwoFixedArrays(encoder, &tfa);
+
 }

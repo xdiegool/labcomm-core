@@ -970,11 +970,11 @@ aspect C_Sizeof {
     env.println("{");
     env.indent();
     if (C_isDynamic()) {
-      env.println("int result = 4;");
+      env.println("int result = 0;");
       getType().C_emitSizeof(env);
       env.println("return result;");
     } else {
-      env.println("return " + (4 + C_fixedSizeof()) + ";");
+      env.println("return " + (0 + C_fixedSizeof()) + ";");
     }    
     env.unindent();
     env.println("}");
@@ -989,7 +989,7 @@ aspect C_Sizeof {
   public void PrimType.C_emitSizeof(C_env env) {
     switch (getToken()) {
       case LABCOMM_STRING: { 
-	env.println("result += 4 + strlen(" + env.qualid + ");"); 
+	env.println("result += 0 + strlen(" + env.qualid + ");"); 
       } break;
       default: { 
 	throw new Error(this.getClass().getName() + 

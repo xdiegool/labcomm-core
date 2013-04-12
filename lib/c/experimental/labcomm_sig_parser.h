@@ -33,7 +33,7 @@
 
 #undef EXIT_WHEN_RECEIVING_DATA 
 
-#undef RETURN_STRINGS  // highly experimental, and not used
+#define RETURN_STRINGS  //  not really tested
 
 #ifndef TRUE
 
@@ -68,6 +68,7 @@ typedef struct {
 	void** stack;
 	size_t stacksize;
 	unsigned int top;
+	int current_decl_is_varsize;
 } buffer;
 
 int init_buffer(buffer *b, size_t size, size_t stacksize) ;
