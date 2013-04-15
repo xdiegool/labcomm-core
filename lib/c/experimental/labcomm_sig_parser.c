@@ -5,6 +5,19 @@
  * registered handler.
  */
 
+
+/* TODO, and notes about strange quirks
+ *
+ * - the return values for the accept_ functions are not really used anymore
+ *   as the parser "peeks" and calls the correct accept function instead. 
+ *   This should be refactored
+ *
+ * - The RETURN_STRINGS and where/if to allocate strings is to be decided, it
+ *   is currently no longer used
+ */
+      
+
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
