@@ -65,9 +65,11 @@ typedef struct {
 	size_t size;
 	size_t capacity;
 	unsigned int idx;
-	void** stack;
+	unsigned int val_top;
+	int * val_stack;
+	unsigned int ptr_top;
+	void** ptr_stack;
 	size_t stacksize;
-	unsigned int top;
 	int current_decl_is_varsize;
 } buffer;
 

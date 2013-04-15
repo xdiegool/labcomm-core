@@ -56,25 +56,44 @@ static int unpack_varint(unsigned char *buf, unsigned int idx, unsigned char *si
         return res;
 }
 
-void dumpStack(buffer *b) {
+void dumpValStack(buffer *b) {
 #ifdef DEBUG_STACK
 	int i;
-	printf("=== stack: ");
+	printf("=== value stack: ");
 	for(i=0; i<STACK_SIZE; i++) { //HERE BE DRAGONS
-		printf("%2.2x ", b->stack[i]);
+		printf("%2.2x ", b->val_stack[i]);
 	}
-	printf("    top==%d\n", b->top);
+	printf("    top==%d\n", b->val_top);
+#endif
+}
+void dumpPtrStack(buffer *b) {
+#ifdef DEBUG_STACK
+	int i;
+	printf("=== pointer stack: ");
+	for(i=0; i<STACK_SIZE; i++) { //HERE BE DRAGONS
+		printf("%2.2x ", b->ptr_stack[i]);
+	}
+	printf("    top==%d\n", b->ptr_top);
 #endif
 }
 
-void push(buffer *b, void* e) {
-	b->stack[b->top]=e;
-	b->top=b->top-1;
-	dumpStack(b);
+void push_val(buffer *b, unsigned int e) {
+	b->val_stack[b->val_top]=e;
+	b->val_top=b->val_top-1;
+	dumpValStack(b);
 }
-void* pop(buffer *b) {
-	b->top=b->top+1;
-	return b->stack[b->top];
+unsigned int pop_val(buffer *b) {
+	b->val_top=b->val_top+1;
+	return b->val_stack[b->val_top];
+}
+void push_ptr(buffer *b, void* e) {
+	b->ptr_stack[b->ptr_top]=e;
+	b->ptr_top=b->ptr_top-1;
+	dumpPtrStack(b);
+}
+void* pop_ptr(buffer *b) {
+	b->ptr_top=b->ptr_top+1;
+	return b->ptr_stack[b->ptr_top];
 }
 	
 int init_buffer(buffer *b, size_t size, size_t stacksize) {
@@ -83,11 +102,15 @@ int init_buffer(buffer *b, size_t size, size_t stacksize) {
 	b->size = 0;
 	b->idx = 0;
 
-	b->stack = calloc(stacksize, sizeof(b->stack));
 	b->stacksize = stacksize;
-	b->top = stacksize-1;
 
-	return b->c == NULL || b->stack == NULL;
+	b->val_stack = calloc(stacksize, sizeof(b->val_stack));
+	b->val_top = stacksize-1;
+
+	b->ptr_stack = calloc(stacksize, sizeof(b->ptr_stack));
+	b->ptr_top = stacksize-1;
+
+	return b->c == NULL || b->val_stack == NULL || b->ptr_stack == NULL;
 }
 
 int read_file(FILE *f, buffer *b) {
@@ -143,17 +166,22 @@ void getStr(buffer *b, char *dest, size_t size) {
 }
 
 unsigned int signatures_length[MAX_SIGNATURES];
+unsigned int signatures_name_length[MAX_SIGNATURES];
 unsigned char signatures_name[MAX_SIGNATURES][MAX_NAME_LEN]; //HERE BE DRAGONS: add range checks
 unsigned char signatures[MAX_SIGNATURES][MAX_SIG_LEN]; 
 
 unsigned int get_signature_len(unsigned int uid){
 	return signatures_length[uid-LABCOMM_USER];
 }
-unsigned char* get_signature_name(unsigned int uid){
-	return &signatures_name[uid-LABCOMM_USER][1];
-}
 unsigned char* get_signature(unsigned int uid){
 	return signatures[uid-LABCOMM_USER];
+}
+
+unsigned int get_signature_name_len(unsigned int uid){
+	return signatures_name_length[uid-LABCOMM_USER];
+}
+unsigned char* get_signature_name(unsigned int uid){
+	return signatures_name[uid-LABCOMM_USER];
 }
 
 labcomm_signature_t sig_ts[MAX_SIGNATURES];
@@ -267,17 +295,17 @@ int do_parse(buffer *d) {
 	if(type == TYPE_DECL ) {
 		advancen(d, nbytes);
 		accept_user_id(d);
-		unsigned int uid = (unsigned int) (unsigned long) pop(d);
+		unsigned int uid = pop_val(d);
 		VERBOSE_PRINTF(", name = ");
 		accept_string(d);
-		pop(d); // ignore, for now. 
+		pop_val(d); // ignore length, for now. 
 #ifdef RETURN_STRINGS
-		char *str = (char *) pop(d);
+		char *str = (char *) pop_ptr(d);
 		free(str);
 #endif
 		VERBOSE_PRINTF(" : ");
 		accept_type(d);
-		unsigned int type = (unsigned int) (unsigned long) pop(d);
+		unsigned int type = pop_val(d);
 
 		//push(d, type);
 		VERBOSE_PRINTF("\n");
@@ -288,23 +316,23 @@ int do_parse(buffer *d) {
 		VERBOSE_PRINTF("sample_decl ");
 		accept_user_id(d);
 		unsigned int nstart = d->idx;
-		unsigned int uid = (unsigned int) (unsigned long) pop(d);
+		unsigned int uid = pop_val(d);
 		labcomm_signature_t *newsig = get_sig_t(uid);
 		newsig->type = type;
 		VERBOSE_PRINTF(", name = ");
 		accept_string(d);
 		unsigned int start = d->idx;
-		unsigned int nlen = (unsigned int) (unsigned long) pop(d);
+		unsigned int nlen = pop_val(d);
 #ifdef RETURN_STRINGS
-		char *str = (char *) pop(d);
+		char *str = (char *) pop_ptr(d);
 		free(str);
 #endif
 		unsigned char lenlen = labcomm_varint_sizeof(nlen);
 		accept_type(d);
 		//printf(" : ");
 		//unsigned int dt = pop(d);
-		pop(d); // ignore type, for now
-		unsigned int enc_size = (unsigned int) (unsigned long) pop(d);
+		pop_val(d); // ignore type, for now
+		unsigned int enc_size = pop_val(d);
 		unsigned int end = d->idx;
 		unsigned int len = end-start;
 
@@ -318,8 +346,8 @@ int do_parse(buffer *d) {
 		}
 
 		if(nlen < MAX_NAME_LEN) { // leave 1 byte for terminating NULL
-			signatures_name[uid-LABCOMM_USER][0] = nlen;
-			memcpy(signatures_name[uid-LABCOMM_USER], &d->c[nstart+lenlen-1], nlen+1);
+			signatures_name_length[uid-LABCOMM_USER] = nlen;
+			memcpy(signatures_name[uid-LABCOMM_USER], &d->c[nstart+lenlen], nlen);
 			signatures_name[uid-LABCOMM_USER][nlen+1]=0;
 			newsig->name = signatures_name[uid-LABCOMM_USER];
 		} else {
@@ -355,7 +383,7 @@ static int accept_user_id(buffer *d){
 	if(uid >= LABCOMM_USER) {
 		advancen(d, nbytes);
 		VERBOSE_PRINTF("uid = %x ", uid);
-		push(d, (void *) (unsigned long) uid);
+		push_val(d, uid);
 		return TRUE;
 	} else {
 		return FALSE;
@@ -368,11 +396,11 @@ static int accept_string(buffer *d){
 	getStr(d, str, len); 
 	VERBOSE_PRINTF("%s", str);
 #ifdef RETURN_STRINGS
-	push(d, str);
+	push_ptr(d, str);
 #else
 	free(str);
 #endif
-	push(d, (void *) (unsigned long) len);
+	push_val(d, len);
 	return TRUE;
 }
 static int accept_type(buffer *d){
@@ -382,43 +410,43 @@ static int accept_type(buffer *d){
 		case TYPE_BOOLEAN :
 			VERBOSE_PRINTF("boolean");
 			advancen(d, nbytes);
-			push(d, (void *) (unsigned long) 1);
+			push_val(d, 1);
 			break;
 		case TYPE_BYTE :
 			VERBOSE_PRINTF("byte");
 			advancen(d, nbytes);
-			push(d, (void *) (unsigned long) 1);
+			push_val(d,  1);
 			break;
 		case TYPE_SHORT :
 			VERBOSE_PRINTF("short");
 			advancen(d, nbytes);
-			push(d, (void *) (unsigned long) 2);
+			push_val(d,  2);
 			break;
 		case TYPE_INTEGER :
 			VERBOSE_PRINTF("integer");
 			advancen(d, nbytes);
-			push(d, (void *) (unsigned long) 4);
+			push_val(d,  4);
 			break;
 		case TYPE_LONG :
 			VERBOSE_PRINTF("long");
 			advancen(d, nbytes);
-			push(d, (void *) (unsigned long) 8);
+			push_val(d,  8);
 			break;
 		case TYPE_FLOAT :
 			VERBOSE_PRINTF("float");
 			advancen(d, nbytes);
-			push(d, (void *) (unsigned long) 4);
+			push_val(d,  4);
 			break;
 		case TYPE_DOUBLE :
 			VERBOSE_PRINTF("double");
 			advancen(d, nbytes);
-			push(d, (void *) (unsigned long) 8);
+			push_val(d,  8);
 			break;
 		case TYPE_STRING :
 			VERBOSE_PRINTF("string");
 			advancen(d, nbytes);
 			buffer_set_varsize(d);
-			push(d, (void *) (unsigned long)0);
+			push_val(d, 0);
 			break;
 		case ARRAY_DECL :
 			accept_array_decl(d);
@@ -430,10 +458,10 @@ static int accept_type(buffer *d){
 			break;
 		default :
 			printf("accept_basic_type default (type==%x) should not happen\n", type);
-			push(d, (void *) (unsigned long)0);
+			push_val(d, 0);
 			return FALSE;
 	}
-	push(d,(void *) (unsigned long) type);
+	push_val(d, type);
 	return TRUE;
 }
 
@@ -460,24 +488,24 @@ static int accept_array_decl(buffer *d){
 		}
 		VERBOSE_PRINTF(" of ");
 		accept_type(d);
-		unsigned int et= (unsigned int) (unsigned long) pop(d); 
-		unsigned int es= (unsigned int) (unsigned long) pop(d);
+		unsigned int et= pop_val(d); 
+		unsigned int es= pop_val(d);
 #ifdef DEBUG
 		printf("accept_array_decl: et = %x\n", et);
 #endif
 		if(numVar == 0) {
 #ifdef DEBUG
-			printf("size=%d, es=%d\n", size, s);
+			printf("size=%d, es=%d\n", size, es);
 #endif
-			push(d, (void *) (unsigned long) (size*es));
+			push_val(d,  (size*es));
 		}
 		//pop(d);
-		push(d,(void *) (unsigned long) tid);
+		push_val(d, tid);
 		return TRUE;
 	} else {
 		printf("accept_array_decl: type=%x, should not happen\n",tid);
-		push(d,(void *) (unsigned long) 0);
-		push(d,(void *) (unsigned long) tid);
+		push_val(d, 0);
+		push_val(d, tid);
 		return FALSE;
 	}
 }
@@ -495,35 +523,35 @@ static int accept_struct_decl(buffer *d){
 		for(i=0; i<nf; i++) {
 			VERBOSE_PRINTF("\t");
 			accept_field(d);
-			fieldsizes += (unsigned int) (unsigned long) pop(d);
+			fieldsizes += pop_val(d);
 		}
-		push(d, (void *) (unsigned long) fieldsizes);
-//		push(d, (void *) (unsigned long)tid);
+		push_val(d, fieldsizes);
+//		push_val(d, tid);
 		return TRUE;
 	} else {
 		printf("accept_struct_decl: type=%x, should not happen\n",tid);
-		push(d, (void *) (unsigned long)0);
-		push(d, (void *) (unsigned long) tid);
+		push_val(d, 0);
+		push_val(d, tid);
 		return FALSE;
 	}
 }
 static int accept_field(buffer *d){
 	VERBOSE_PRINTF("field ");
 	accept_string(d);
-	pop(d); // ignore length, for now
+	pop_val(d); // ignore length, for now
 #ifdef RETURN_STRINGS
-		char *str = (char *) pop(d);
+		char *str = (char *) pop_ptr(d);
 		free(str);
 #endif
 	VERBOSE_PRINTF(" : ");
 	accept_type(d);
-	pop(d); // ignore type, for now
+	pop_val(d); // ignore type, for now
 	//push(d, pop(d) == NOP
 	VERBOSE_PRINTF("\n");
 }
 static int accept_sample_data(buffer *d){
 	accept_user_id(d);
-	unsigned int uid = (unsigned int) (unsigned long) pop(d);	
+	unsigned int uid = pop_val(d);	
 	printf("sample data... %x\n", uid);
 #ifdef DEBUG
 	dump_signature(uid);
