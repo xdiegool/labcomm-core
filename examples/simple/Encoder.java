@@ -16,7 +16,7 @@ public class Encoder
     throws Exception 
   {
     encoder = new LabCommEncoderChannel(out);
-    TwoInts.register(encoder);
+    theTwoInts.register(encoder);
     IntString.register(encoder);
   }
 
@@ -29,8 +29,8 @@ public class Encoder
     y.x = 37;
     y.s = "Testing, testing";
 
-    System.out.println("Encoding TwoInts, a="+x.a+", b="+x.b);
-    TwoInts.encode(encoder, x);
+    System.out.println("Encoding theTwoInts, a="+x.a+", b="+x.b);
+    theTwoInts.encode(encoder, x);
 
     System.out.println("Encoding IntString, x="+y.x+", s="+y.s);
     IntString.encode(encoder, y);

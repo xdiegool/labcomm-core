@@ -13,7 +13,8 @@ int main(int argc, char *argv[]) {
   printf("C encoder writing to %s\n", filename);
   fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC, 0644);
   encoder = labcomm_encoder_new(labcomm_fd_writer, &fd);
-  labcomm_encoder_register_simple_TwoInts(encoder);
+  labcomm_encoder_register_simple_theTwoInts(encoder);
+  labcomm_encoder_register_simple_anotherTwoInts(encoder);
   labcomm_encoder_register_simple_IntString(encoder);
   simple_IntString is;
   is.x = 24;
@@ -21,11 +22,17 @@ int main(int argc, char *argv[]) {
   printf("Encoding IntString, x=%d, s=%s\n", is.x, is.s);
   labcomm_encode_simple_IntString(encoder, &is);
 
-  simple_TwoInts ti;
+  simple_theTwoInts ti;
   ti.a = 13;
   ti.b = 37;
-  printf("Encoding TwoInts, a=%d, b=%d\n", ti.a, ti.b);
-  labcomm_encode_simple_TwoInts(encoder, &ti);
+  printf("Encoding theTwoInts, a=%d, b=%d\n", ti.a, ti.b);
+  labcomm_encode_simple_theTwoInts(encoder, &ti);
+
+  simple_anotherTwoInts ati;
+  ati.a = 23;
+  ati.b = 47;
+  printf("Encoding anotherTwoInts, a=%d, b=%d\n", ati.a, ati.b);
+  labcomm_encode_simple_anotherTwoInts(encoder, &ati);
 
   int foo[20];
 
@@ -47,8 +54,8 @@ int main(int argc, char *argv[]) {
 
   ti.a = 23;
   ti.b = 47;
-  printf("Encoding TwoInts, a=%d, b=%d\n", ti.a, ti.b);
-  labcomm_encode_simple_TwoInts(encoder, &ti);
+  printf("Encoding theTwoInts, a=%d, b=%d\n", ti.a, ti.b);
+  labcomm_encode_simple_theTwoInts(encoder, &ti);
 
 
   simple_TwoFixedArrays tfa;

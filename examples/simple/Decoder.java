@@ -5,7 +5,7 @@ import java.io.InputStream;
 import se.lth.control.labcomm.LabCommDecoderChannel;
 
 public class Decoder
-  implements TwoInts.Handler, IntString.Handler, TwoArrays.Handler, TwoFixedArrays.Handler
+  implements theTwoInts.Handler, anotherTwoInts.Handler, IntString.Handler, TwoArrays.Handler, TwoFixedArrays.Handler
 
 {
 
@@ -15,7 +15,8 @@ public class Decoder
     throws Exception 
   {
     decoder = new LabCommDecoderChannel(in);
-    TwoInts.register(decoder, this);
+    theTwoInts.register(decoder, this);
+    anotherTwoInts.register(decoder, this);
     IntString.register(decoder, this);
     TwoArrays.register(decoder, this);
     TwoFixedArrays.register(decoder, this);
@@ -28,8 +29,18 @@ public class Decoder
     }
   }
 
-  public void handle_TwoInts(TwoInts d) throws java.io.IOException {
-    System.out.println("Got TwoInts, a="+d.a+", b="+d.b);
+  public void printTwoInts(TwoInts d) throws java.io.IOException {
+    System.out.println("a="+d.a+", b="+d.b);
+  }
+
+  public void handle_theTwoInts(TwoInts d) throws java.io.IOException {
+    System.out.print("Got theTwoInts: ");
+    printTwoInts(d);
+  }
+
+  public void handle_anotherTwoInts(TwoInts d) throws java.io.IOException {
+    System.out.print("Got anotherheTwoInts: ");
+    printTwoInts(d);
   }
 
   public void handle_IntString(IntString d) throws java.io.IOException {

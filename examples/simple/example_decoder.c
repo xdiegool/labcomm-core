@@ -4,8 +4,12 @@
 #include <labcomm_fd_reader_writer.h>
 #include "gen/simple.h"
 
-static void handle_simple_TwoInts(simple_TwoInts *v,void *context) {
-  printf("Got TwoInts. a=%d, b=%d\n", v->a, v->b);
+static void handle_simple_theTwoInts(simple_TwoInts *v,void *context) {
+  printf("Got theTwoInts. a=%d, b=%d\n", v->a, v->b);
+}
+
+static void handle_simple_anotherTwoInts(simple_TwoInts *v,void *context) {
+  printf("Got anotherTwoInts. a=%d, b=%d\n", v->a, v->b);
 }
 
 static void handle_simple_IntString(simple_IntString *v,void *context) {
@@ -55,7 +59,8 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  labcomm_decoder_register_simple_TwoInts(decoder, handle_simple_TwoInts, context);
+  labcomm_decoder_register_simple_theTwoInts(decoder, handle_simple_theTwoInts, context);
+  labcomm_decoder_register_simple_anotherTwoInts(decoder, handle_simple_anotherTwoInts, context);
   labcomm_decoder_register_simple_IntString(decoder, handle_simple_IntString, context);
   labcomm_decoder_register_simple_TwoArrays(decoder, handle_simple_TwoArrays, context);
   labcomm_decoder_register_simple_TwoFixedArrays(decoder, handle_simple_TwoFixedArrays, context);
