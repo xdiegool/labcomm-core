@@ -33,7 +33,7 @@ int main() {
 	test_read(&buf);
 	do{
 		printf("--------------------------------------------- new packet: \n");
-	} while(more(&buf) && do_parse(&buf)); 
+	} while(more(&buf) && accept_packet(&buf)); 
 	printf("EOF\n");
 }
 

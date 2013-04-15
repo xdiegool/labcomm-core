@@ -76,6 +76,8 @@ typedef struct {
 int init_buffer(buffer *b, size_t size, size_t stacksize) ;
 int read_file(FILE *f, buffer *b);
 
+int accept_packet(buffer *d);
+
 //XXX experimental
 #define MAX_SIGNATURES 10
 #define MAX_NAME_LEN 32 
@@ -83,15 +85,16 @@ int read_file(FILE *f, buffer *b);
 
 #define STACK_SIZE 16
 
+labcomm_signature_t *get_sig_t(unsigned int uid);
+
 unsigned int get_signature_len(unsigned int uid);
 unsigned char* get_signature_name(unsigned int uid);
 unsigned char* get_signature(unsigned int uid);
 void dump_signature(unsigned int uid);
 
-int do_parse(buffer *d);
 
 /* parse signature and skip the corresponding bytes in the buffer 
  */
-int skip_packed_sample_data(buffer *d, unsigned char *sig, unsigned int siglen);
+int skip_packed_sample_data(buffer *d, labcomm_signature_t *sig);
 
 #endif
