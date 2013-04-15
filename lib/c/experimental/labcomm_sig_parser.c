@@ -165,30 +165,35 @@ void getStr(buffer *b, char *dest, size_t size) {
 	b->idx += size;
 }
 
+labcomm_signature_t sig_ts[MAX_SIGNATURES];
+
 unsigned int signatures_length[MAX_SIGNATURES];
 unsigned int signatures_name_length[MAX_SIGNATURES];
 unsigned char signatures_name[MAX_SIGNATURES][MAX_NAME_LEN]; //HERE BE DRAGONS: add range checks
 unsigned char signatures[MAX_SIGNATURES][MAX_SIG_LEN]; 
 
-unsigned int get_signature_len(unsigned int uid){
-	return signatures_length[uid-LABCOMM_USER];
-}
-unsigned char* get_signature(unsigned int uid){
-	return signatures[uid-LABCOMM_USER];
-}
-
-unsigned int get_signature_name_len(unsigned int uid){
-	return signatures_name_length[uid-LABCOMM_USER];
-}
-unsigned char* get_signature_name(unsigned int uid){
-	return signatures_name[uid-LABCOMM_USER];
-}
-
-labcomm_signature_t sig_ts[MAX_SIGNATURES];
-
 labcomm_signature_t *get_sig_t(unsigned int uid) 
 {
 	return &sig_ts[uid-LABCOMM_USER];
+}
+
+unsigned int get_signature_len(unsigned int uid){
+	//return signatures_length[uid-LABCOMM_USER];
+	return sig_ts[uid-LABCOMM_USER].size;
+}
+unsigned char* get_signature(unsigned int uid){
+	//return signatures[uid-LABCOMM_USER];
+	return sig_ts[uid-LABCOMM_USER].signature;
+}
+
+//is this needed?
+//unsigned int get_signature_name_len(unsigned int uid){
+//	return signatures_name_length[uid-LABCOMM_USER];
+//}
+
+unsigned char* get_signature_name(unsigned int uid){
+	//return signatures_name[uid-LABCOMM_USER];
+	return sig_ts[uid-LABCOMM_USER].name;
 }
 
 void dump_signature(unsigned int uid){
@@ -269,10 +274,10 @@ static unsigned char labcomm_varint_sizeof(unsigned int i)
 
 int encoded_size_static(labcomm_signature_t *sig, void *unused)
 {
-	if(sig->cached_size == -1) {
+	if(sig->cached_encoded_size == -1) {
 		error("encoded_size_static called for var_size sample or uninitialized signature\n");
 	}
-	return sig->cached_size;
+	return sig->cached_encoded_size;
 }
 
 /* This function probably never will be implemented, as it would be 
@@ -356,11 +361,11 @@ int do_parse(buffer *d) {
 		VERBOSE_PRINTF("signature for uid %x: %s (start=%x,end=%x, nlen=%d,len=%d)\n", uid, get_signature_name(uid), start,end, nlen, len);
 		INFO_PRINTF("SIG: %s\n", newsig->name);	
 		if(! d->current_decl_is_varsize) {
-			newsig->cached_size = enc_size;
+			newsig->cached_encoded_size = enc_size;
 			newsig->encoded_size = encoded_size_static;
 			INFO_PRINTF(".... is static size = %d\n", enc_size);
 		} else {
-			newsig->cached_size = -1;
+			newsig->cached_encoded_size = -1;
 			newsig->encoded_size = encoded_size_parse_sig;
 			INFO_PRINTF(".... is variable size\n");
 		}
