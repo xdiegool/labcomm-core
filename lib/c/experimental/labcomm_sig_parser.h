@@ -11,10 +11,50 @@
 #include "../labcomm_private.h"
 
 #undef DEBUG 
-#undef DEBUG_STACK
+#define DEBUG_STACK
 
 #undef QUIET 		//just print type and size when skipping data
 #undef VERBOSE 		// print in great detail
+
+
+//XXX experimental settings, should probably be dynamic
+#define MAX_SIGNATURES 10
+#define MAX_NAME_LEN 32 
+#define MAX_SIG_LEN 128
+
+#define STACK_SIZE 16
+
+
+/* internal type: stack for the parser */
+typedef struct {
+	unsigned char* c;
+	size_t size;
+	size_t capacity;
+	unsigned int idx;
+	unsigned int val_top;
+	int * val_stack;
+	unsigned int ptr_top;
+	void** ptr_stack;
+	size_t stacksize;
+	int current_decl_is_varsize;
+} buffer;
+
+int init_buffer(buffer *b, size_t size, size_t stacksize) ;
+int read_file(FILE *f, buffer *b);
+
+int accept_packet(buffer *d);
+
+labcomm_signature_t *get_sig_t(unsigned int uid);
+
+unsigned int get_signature_len(unsigned int uid);
+unsigned char* get_signature_name(unsigned int uid);
+unsigned char* get_signature(unsigned int uid);
+void dump_signature(unsigned int uid);
+
+
+/* parse signature and skip the corresponding bytes in the buffer 
+ */
+int skip_packed_sample_data(buffer *d, labcomm_signature_t *sig);
 
 #ifdef QUIET
 #define INFO_PRINTF(format, args...)  
@@ -33,7 +73,7 @@
 
 #undef EXIT_WHEN_RECEIVING_DATA 
 
-#define RETURN_STRINGS  //  not really tested
+#undef RETURN_STRINGS  //  not really tested
 
 #ifndef TRUE
 
@@ -58,43 +98,4 @@ typedef enum{
         TYPE_DOUBLE  = LABCOMM_DOUBLE,
         TYPE_STRING  = LABCOMM_STRING
 } labcomm_type ;
-
-/* internal type: stack for the parser */
-typedef struct {
-	unsigned char* c;
-	size_t size;
-	size_t capacity;
-	unsigned int idx;
-	unsigned int val_top;
-	int * val_stack;
-	unsigned int ptr_top;
-	void** ptr_stack;
-	size_t stacksize;
-	int current_decl_is_varsize;
-} buffer;
-
-int init_buffer(buffer *b, size_t size, size_t stacksize) ;
-int read_file(FILE *f, buffer *b);
-
-int accept_packet(buffer *d);
-
-//XXX experimental
-#define MAX_SIGNATURES 10
-#define MAX_NAME_LEN 32 
-#define MAX_SIG_LEN 128
-
-#define STACK_SIZE 16
-
-labcomm_signature_t *get_sig_t(unsigned int uid);
-
-unsigned int get_signature_len(unsigned int uid);
-unsigned char* get_signature_name(unsigned int uid);
-unsigned char* get_signature(unsigned int uid);
-void dump_signature(unsigned int uid);
-
-
-/* parse signature and skip the corresponding bytes in the buffer 
- */
-int skip_packed_sample_data(buffer *d, labcomm_signature_t *sig);
-
 #endif

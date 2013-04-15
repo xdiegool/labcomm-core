@@ -95,7 +95,9 @@ void dumpPtrStack(buffer *b) {
 void push_val(buffer *b, unsigned int e) {
 	b->val_stack[b->val_top]=e;
 	b->val_top=b->val_top-1;
+#ifdef DEBUG
 	dumpValStack(b);
+#endif
 }
 unsigned int pop_val(buffer *b) {
 	b->val_top=b->val_top+1;
@@ -104,7 +106,9 @@ unsigned int pop_val(buffer *b) {
 void push_ptr(buffer *b, void* e) {
 	b->ptr_stack[b->ptr_top]=e;
 	b->ptr_top=b->ptr_top-1;
+#ifdef DEBUG
 	dumpPtrStack(b);
+#endif
 }
 void* pop_ptr(buffer *b) {
 	b->ptr_top=b->ptr_top+1;
@@ -304,6 +308,7 @@ int accept_packet(buffer *d) {
         unsigned int type = peek_varint(d, &nbytes) ;
 	if(type == TYPE_DECL ) {
 		advancen(d, nbytes);
+		int b = accept_user_id(d);
 		if(accept_user_id(d)) {
 			unsigned int uid = pop_val(d);
 			VERBOSE_PRINTF(", name = ");
@@ -419,6 +424,7 @@ static int accept_string(buffer *d){
 	push_val(d, len);
 	return TRUE;
 }
+/* pushes size and type id */
 static int accept_type(buffer *d){
 	unsigned char nbytes;
         unsigned int type = peek_varint(d, &nbytes) ;
@@ -466,21 +472,24 @@ static int accept_type(buffer *d){
 			break;
 		case ARRAY_DECL :
 			accept_array_decl(d);
-			//push(d, pop(d)) == NOP
+			pop_val(d); // ignore element type
+			// push(d, pop(d) is a NOP --> leave size on stack
 			break;
 		case STRUCT_DECL :
 			accept_struct_decl(d);
-			//push(d, pop(d)) == NOP
+			// push(d, pop(d) is a NOP --> leave size on stack
 			break;
 		default :
 			printf("accept_basic_type default (type==%x) should not happen\n", type);
 			push_val(d, 0);
+			push_val(d, type);
 			return FALSE;
 	}
 	push_val(d, type);
 	return TRUE;
 }
 
+/* pushes size and element type */
 static int accept_array_decl(buffer *d){
         unsigned char nbytes;
         unsigned int tid = peek_varint(d, &nbytes) ;
@@ -515,10 +524,10 @@ static int accept_array_decl(buffer *d){
 #endif
 			push_val(d,  (size*es));
 		} else {
-//HERE BE DRAGONS! shouldn't we push some (non-) size?
+//HERE BE DRAGONS! push a (non-) size for variable size arrays?
+			push_val(d, 0);
 		}
-		//pop(d);
-		push_val(d, tid);
+		push_val(d, et);
 		return TRUE;
 	} else {
 		printf("accept_array_decl: type=%x, should not happen\n",tid);
@@ -554,7 +563,7 @@ static int accept_struct_decl(buffer *d){
 	}
 }
 
-/* pushes name (if enabled) and field size */
+/* pushes field size */
 static int accept_field(buffer *d){
 	VERBOSE_PRINTF("field ");
 	accept_string(d);
@@ -566,7 +575,8 @@ static int accept_field(buffer *d){
 	VERBOSE_PRINTF(" : ");
 	accept_type(d);
 	pop_val(d); // ignore type, for now
-	//push(d, pop(d) == NOP , leave size on the stack
+	// push(pop() is really a NOP , leave size on the stack when debugging done
+	VERBOSE_PRINTF(" : ");
 	VERBOSE_PRINTF("\n");
 }
 static int accept_sample_data(buffer *d){
