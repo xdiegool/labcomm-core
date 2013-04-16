@@ -11,50 +11,73 @@
 #include "../labcomm_private.h"
 
 #undef DEBUG 
-#define DEBUG_STACK
+#undef DEBUG_STACK
 
 #undef QUIET 		//just print type and size when skipping data
 #undef VERBOSE 		// print in great detail
 
+#define STATIC_ALLOCATION  //dynamic allocation not completely implemented
 
-//XXX experimental settings, should probably be dynamic
-#define MAX_SIGNATURES 10
+#ifdef STATIC_ALLOCATION
+#define MAX_SIGNATURES 16
 #define MAX_NAME_LEN 32 
 #define MAX_SIG_LEN 128
+#endif
 
-#define STACK_SIZE 16
-
-
-/* internal type: stack for the parser */
+/* internal type: stack &c. for the parser */
 typedef struct {
-	unsigned char* c;
-	size_t size;
-	size_t capacity;
-	unsigned int idx;
-	unsigned int val_top;
-	int * val_stack;
-	unsigned int ptr_top;
-	void** ptr_stack;
-	size_t stacksize;
-	int current_decl_is_varsize;
-} buffer;
+        unsigned char* c;
+        size_t size;
+        size_t capacity;
+        unsigned int idx;
+        unsigned int val_top;
+        int * val_stack;
+        unsigned int ptr_top;
+        void** ptr_stack;
+        size_t stacksize;
+        int current_decl_is_varsize;
 
-int init_buffer(buffer *b, size_t size, size_t stacksize) ;
-int read_file(FILE *f, buffer *b);
+	size_t max_signatures;                 // set by init(...)
+	size_t max_name_len;
+	size_t max_sig_len; 
+#ifdef STATIC_ALLOCATION
+	labcomm_signature_t sig_ts[MAX_SIGNATURES];
 
-int accept_packet(buffer *d);
+	unsigned int signatures_length[MAX_SIGNATURES];
+	unsigned int signatures_name_length[MAX_SIGNATURES];
+	unsigned char signatures_name[MAX_SIGNATURES][MAX_NAME_LEN]; 
+	unsigned char signatures[MAX_SIGNATURES][MAX_SIG_LEN];
+#else
+	labcomm_signature_t *sig_ts;           // [MAX_SIGNATURES]
 
-labcomm_signature_t *get_sig_t(unsigned int uid);
+	unsigned int *signatures_length;       // [MAX_SIGNATURES]
+	unsigned char **signatures;            // [MAX_SIGNATURES][MAX_SIG_LEN];
 
-unsigned int get_signature_len(unsigned int uid);
-unsigned char* get_signature_name(unsigned int uid);
-unsigned char* get_signature(unsigned int uid);
-void dump_signature(unsigned int uid);
+	unsigned int *signatures_name_length;  // [MAX_SIGNATURES]
+	unsigned char **signatures_name;       // [MAX_SIGNATURES][MAX_NAME_LEN];
+#endif
+
+} labcomm_sig_parser_t;
 
 
-/* parse signature and skip the corresponding bytes in the buffer 
+int labcomm_sig_parser_init(labcomm_sig_parser_t *p, size_t size, 
+                            size_t stacksize, size_t max_num_signatures, 
+                            size_t max_name_len, size_t max_sig_len);
+int labcomm_sig_parser_read_file(labcomm_sig_parser_t *p, FILE *f);
+
+int accept_packet(labcomm_sig_parser_t *p);
+
+labcomm_signature_t *get_sig_t(labcomm_sig_parser_t *p,unsigned int uid);
+
+unsigned int get_signature_len(labcomm_sig_parser_t *p,unsigned int uid);
+unsigned char* get_signature_name(labcomm_sig_parser_t *p,unsigned int uid);
+unsigned char* get_signature(labcomm_sig_parser_t *p,unsigned int uid);
+void dump_signature(labcomm_sig_parser_t *p,unsigned int uid);
+
+
+/* parse signature and skip the corresponding bytes in the labcomm_sig_parser 
  */
-int skip_packed_sample_data(buffer *d, labcomm_signature_t *sig);
+int skip_packed_sample_data(labcomm_sig_parser_t *p, labcomm_signature_t *sig);
 
 #ifdef QUIET
 #define INFO_PRINTF(format, args...)  
