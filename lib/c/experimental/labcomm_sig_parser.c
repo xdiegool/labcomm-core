@@ -27,7 +27,7 @@
 #include "labcomm_sig_parser.h"
 
 static void error(char *s) {
-	fprintf(stderr, "%s", s);
+	fprintf(stderr, "ERROR: %s", s);
 	fprintf(stderr, "\nexiting\n");
 	exit(1);
 }
@@ -70,46 +70,56 @@ static int unpack_varint(unsigned char *buf, unsigned int idx, unsigned char *si
 }
 
 void dumpValStack(labcomm_sig_parser_t *b) {
-#ifdef DEBUG_STACK
 	int i;
 	printf("=== value stack: ");
+#ifdef DEBUG_STACK_VERBOSE
 	for(i=0; i<STACK_SIZE; i++) { //HERE BE DRAGONS
 		printf("%2.2x ", b->val_stack[i]);
 	}
-	printf("    top==%d\n", b->val_top);
 #endif
+	printf("    top==%d\n", b->val_top);
 }
 void dumpPtrStack(labcomm_sig_parser_t *b) {
-#ifdef DEBUG_STACK
 	int i;
 	printf("=== pointer stack: ");
+#ifdef DEBUG_STACK_VERBOSE
 	for(i=0; i<STACK_SIZE; i++) { //HERE BE DRAGONS
 		printf("%2.2x ", b->ptr_stack[i]);
 	}
-	printf("    top==%d\n", b->ptr_top);
 #endif
+	printf("    top==%d\n", b->ptr_top);
 }
 
 void push_val(labcomm_sig_parser_t *b, unsigned int e) {
 	b->val_stack[b->val_top]=e;
 	b->val_top=b->val_top-1;
-#ifdef DEBUG
+	if(b->val_top<0) error("value stack overrun");
+#if defined DEBUG && !defined QUIET_STACK
 	dumpValStack(b);
 #endif
 }
 unsigned int pop_val(labcomm_sig_parser_t *b) {
 	b->val_top=b->val_top+1;
+	if(b->val_top>b->stacksize) error("value stack underrun");
+#if defined DEBUG && !defined QUIET_STACK
+	dumpValStack(b);
+#endif
 	return b->val_stack[b->val_top];
 }
 void push_ptr(labcomm_sig_parser_t *b, void* e) {
 	b->ptr_stack[b->ptr_top]=e;
 	b->ptr_top=b->ptr_top-1;
+	if(b->ptr_top<0) error("pointer stack overrun");
 #ifdef DEBUG
 	dumpPtrStack(b);
 #endif
 }
 void* pop_ptr(labcomm_sig_parser_t *b) {
 	b->ptr_top=b->ptr_top+1;
+	if(b->ptr_top>b->stacksize) error("pointer stack underrun");
+#ifdef DEBUG
+	dumpPtrStack(b);
+#endif
 	return b->ptr_stack[b->ptr_top];
 }
 	
@@ -296,7 +306,7 @@ static unsigned char labcomm_varint_sizeof(unsigned int i)
 int encoded_size_static(labcomm_signature_t *sig, void *unused)
 {
 	if(sig->cached_encoded_size == -1) {
-		error("encoded_size_static called for var_size sample or uninitialized signature\n");
+		error("encoded_size_static called for var_size sample or uninitialized signature");
 	}
 	return sig->cached_encoded_size;
 }
@@ -328,6 +338,7 @@ static int accept_signature(labcomm_sig_parser_t *d)
 		free(str);
 #endif
 		unsigned char lenlen = labcomm_varint_sizeof(nlen);
+		VERBOSE_PRINTF("\ntype = ");
 		accept_type(d);
 		//printf(" : ");
 		//unsigned int dt = pop(d);
@@ -355,7 +366,7 @@ static int accept_signature(labcomm_sig_parser_t *d)
 		} else {
 			error("sig name longer than max length (this ought to be dynamic...");
 		}
-		VERBOSE_PRINTF("signature for uid %x: %s (start=%x,end=%x, nlen=%d,len=%d)\n", uid, get_signature_name(uid), start,end, nlen, len);
+		VERBOSE_PRINTF("signature for uid %x: %s (start=%x,end=%x, nlen=%d,len=%d)\n", uid, get_signature_name(d, uid), start,end, nlen, len);
 		INFO_PRINTF("SIG: %s\n", newsig->name);	
 		if(! d->current_decl_is_varsize) {
 			newsig->cached_encoded_size = enc_size;
@@ -368,7 +379,7 @@ static int accept_signature(labcomm_sig_parser_t *d)
 		}
 		return TRUE;
 	} else {
-		error("sample_decl with uid < LABCOMM_USER\n");	
+		error("sample_decl with uid < LABCOMM_USER");	
 		return FALSE;
 	}
 }
@@ -396,7 +407,7 @@ int accept_packet(labcomm_sig_parser_t *d) {
 		accept_sample_data(d);
 #endif
 	} else {
-		error("got unknown type (<LABCOMM_USER)\n");
+		error("got unknown type (<LABCOMM_USER)");
 		exit(1);
 	}
 }
@@ -433,42 +444,42 @@ static int accept_type(labcomm_sig_parser_t *d){
         unsigned int type = peek_varint(d, &nbytes) ;
 	switch(type) {
 		case TYPE_BOOLEAN :
-			VERBOSE_PRINTF("boolean");
+			VERBOSE_PRINTF("boolean\n");
 			advancen(d, nbytes);
 			push_val(d, 1);
 			break;
 		case TYPE_BYTE :
-			VERBOSE_PRINTF("byte");
+			VERBOSE_PRINTF("byte\n");
 			advancen(d, nbytes);
 			push_val(d,  1);
 			break;
 		case TYPE_SHORT :
-			VERBOSE_PRINTF("short");
+			VERBOSE_PRINTF("short\n");
 			advancen(d, nbytes);
 			push_val(d,  2);
 			break;
 		case TYPE_INTEGER :
-			VERBOSE_PRINTF("integer");
+			VERBOSE_PRINTF("integer\n");
 			advancen(d, nbytes);
 			push_val(d,  4);
 			break;
 		case TYPE_LONG :
-			VERBOSE_PRINTF("long");
+			VERBOSE_PRINTF("long\n");
 			advancen(d, nbytes);
 			push_val(d,  8);
 			break;
 		case TYPE_FLOAT :
-			VERBOSE_PRINTF("float");
+			VERBOSE_PRINTF("float\n");
 			advancen(d, nbytes);
 			push_val(d,  4);
 			break;
 		case TYPE_DOUBLE :
-			VERBOSE_PRINTF("double");
+			VERBOSE_PRINTF("double\n");
 			advancen(d, nbytes);
 			push_val(d,  8);
 			break;
 		case TYPE_STRING :
-			VERBOSE_PRINTF("string");
+			VERBOSE_PRINTF("string\n");
 			advancen(d, nbytes);
 			labcomm_sig_parser_t_set_varsize(d);
 			push_val(d, 0);
@@ -483,7 +494,7 @@ static int accept_type(labcomm_sig_parser_t *d){
 			// push(d, pop(d) is a NOP --> leave size on stack
 			break;
 		default :
-			printf("accept_basic_type default (type==%x) should not happen\n", type);
+			printf("accept_type default (type==%x) should not happen\n", type);
 			push_val(d, 0);
 			push_val(d, type);
 			return FALSE;
@@ -547,13 +558,12 @@ static int accept_struct_decl(labcomm_sig_parser_t *d){
 	if(tid == STRUCT_DECL) {
 		advancen(d, nbytes);
 		unsigned int nf = get_varint(d);
-		VERBOSE_PRINTF(", %d field struct:\n", nf);
+		VERBOSE_PRINTF("%d field struct:\n", nf);
 		int i;
 		int numVar=0;
 		int size=0;
 		unsigned int fieldsizes=0;
 		for(i=0; i<nf; i++) {
-			VERBOSE_PRINTF("\t");
 			accept_field(d);
 			fieldsizes += pop_val(d);
 		}
@@ -568,18 +578,17 @@ static int accept_struct_decl(labcomm_sig_parser_t *d){
 
 /* pushes field size */
 static int accept_field(labcomm_sig_parser_t *d){
-	VERBOSE_PRINTF("field ");
+	VERBOSE_PRINTF("\tfield name: ");
 	accept_string(d);
 	pop_val(d); // ignore length, for now
 #ifdef RETURN_STRINGS
 		char *str = (char *) pop_ptr(d);
 		free(str);
 #endif
-	VERBOSE_PRINTF(" : ");
+	VERBOSE_PRINTF("\n\ttype: ");
 	accept_type(d);
 	pop_val(d); // ignore type, for now
 	// push(pop() is really a NOP , leave size on the stack when debugging done
-	VERBOSE_PRINTF(" : ");
 	VERBOSE_PRINTF("\n");
 }
 static int accept_sample_data(labcomm_sig_parser_t *d){
@@ -587,7 +596,7 @@ static int accept_sample_data(labcomm_sig_parser_t *d){
 	unsigned int uid = pop_val(d);	
 	printf("sample data... uid=0x%x\n", uid);
 #ifdef DEBUG
-	dump_signature(uid);
+	dump_signature(d, uid);
 #endif
 	labcomm_signature_t *sigt = get_sig_t(d, uid);
 	int encoded_size = sigt->encoded_size(sigt, NULL);
@@ -657,18 +666,18 @@ int skip_struct(labcomm_sig_parser_t *d, unsigned char *sig, unsigned int len, u
 		//skip name 
 		unsigned int namelen = unpack_varint(sig, *pos, &nbytes);
 #ifdef DEBUG
-		VERBOSE_PRINTF("namelen==%d",namelen);
+		VERBOSE_PRINTF("field #%d:\n----namelen==%d\n",i,namelen);
 		char name[namelen+1]; //HERE BE DRAGONS. alloca?
 		strncpy(name, sig+*pos+nbytes, namelen);
 		name[namelen]=0;
-		VERBOSE_PRINTF(", name = %s",name);
+		VERBOSE_PRINTF("----name = %s\n",name);
 #endif
 		*pos += (nbytes+namelen); // 32bit len + actual string
 
 		unsigned int type = unpack_varint(sig, *pos, &nbytes);
 		*pos += nbytes;
 #ifdef DEBUG
-		VERBOSE_PRINTF(": type == %x\n", type);
+		VERBOSE_PRINTF("----type == %x\n", type);
 #endif
 		skipped += skip_type(type, d, sig, len, pos);
 	}

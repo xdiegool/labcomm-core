@@ -11,17 +11,20 @@
 #include "../labcomm_private.h"
 
 #undef DEBUG 
-#undef DEBUG_STACK
+#undef QUIET_STACK	   // don't print anything for push/pop
+#undef DEBUG_STACK_VERBOSE // dump stack, otherwise just print value of top
 
 #undef QUIET 		//just print type and size when skipping data
 #undef VERBOSE 		// print in great detail
 
-#define STATIC_ALLOCATION  //dynamic allocation not completely implemented
+#undef STATIC_ALLOCATION  //dynamic allocation not completely implemented
 
 #ifdef STATIC_ALLOCATION
+
 #define MAX_SIGNATURES 16
 #define MAX_NAME_LEN 32 
 #define MAX_SIG_LEN 128
+
 #endif
 
 /* internal type: stack &c. for the parser */
@@ -30,9 +33,9 @@ typedef struct {
         size_t size;
         size_t capacity;
         unsigned int idx;
-        unsigned int val_top;
+        int val_top;
         int * val_stack;
-        unsigned int ptr_top;
+        int ptr_top;
         void** ptr_stack;
         size_t stacksize;
         int current_decl_is_varsize;
