@@ -13,9 +13,14 @@
  *   This should be refactored
  *
  * - The RETURN_STRINGS and where/if to allocate strings is to be decided, it
- *   is currently no longer used
+ *   is currently not used
  * 
- * - TYPE_DECL is not tested
+ * - TYPE_DECL is not tested (is it ever sent?)
+ * 
+ * - The dynamic allocation of the parser is not quite dynamic, the sizes are
+ *   set through the init function, and are then static.
+ *   This should be adapted when allocation is parameterized/user-definable
+ *   for the entire lib.
  */
       
 
