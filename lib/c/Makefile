@@ -3,10 +3,10 @@
 # Use LLVM clang if it's found.
 CC = $(shell hash clang 2>/dev/null && echo clang || echo gcc)
 CFLAGS = -g -Wall -Werror -I. -Itest
-LDFLAGS = -L .
+LDFLAGS = -L.
 LDLIBS_TEST = -lcunit -llabcomm
 
-OBJS= labcomm.o labcomm_dynamic_buffer_reader_writer.o labcomm_fd_reader_writer.o labcomm_mem_reader.o labcomm_mem_writer.o
+OBJS= labcomm.o labcomm_dynamic_buffer_writer.o labcomm_fd_reader_writer.o labcomm_mem_reader.o labcomm_mem_writer.o
 LABCOMMC_PATH=../../compiler
 LABCOMMC_JAR=$(LABCOMMC_PATH)/labComm.jar
 
@@ -55,20 +55,16 @@ run-test: $(TEST_DIR)/test_labcomm $(TEST_DIR)/test_labcomm_errors |$(TEST_DIR)
 	test/test_labcomm
 	test/test_labcomm_errors
 
-$(TEST_DIR)/test_labcomm_errors: $(TEST_DIR)/test_labcomm_errors.o liblabcomm.a |$(TEST_DIR)
-	$(CC) $(CFLAGS) $(LDFLAGS) -llabcomm -o $@ $^
+$(TEST_DIR)/%.o: $(TEST_DIR)/%.c
+	$(CC) $(CFLAGS) -o $@ -c $<
 
-$(TEST_DIR)/test_labcomm_errors.o: $(TEST_DIR)/test_labcomm_errors.c $(TEST_DIR)/test_labcomm_errors.h |$(TEST_DIR)
-	cd test; $(CC) $(CFLAGS) -I .. -c $(patsubst $(TEST_DIR)/%, %, $^)
+$(TEST_DIR)/%: $(TEST_DIR)/%.o
+	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS) $(LDLIBS_TEST)
 
-$(TEST_DIR)/test_labcomm.o: $(TEST_DIR)/test_labcomm.c $(TEST_GEN_DIR)/test_sample.h |$(TEST_DIR)
-	$(CC) -c $(CFLAGS) -o $@ $<
-
-$(TEST_DIR)/test_labcomm: $(TEST_DIR)/test_labcomm.o $(TEST_GEN_DIR)/test_sample.o liblabcomm.a
-	$(CC) $(CFLAGS) $(LDFLAGS) $(filter-out %.a,$^) $(LDLIBS) $(LDLIBS_TEST) -o $@
-
-$(TEST_GEN_DIR)/%.c $(TEST_GEN_DIR)/%.h: $(TESTDATA_DIR)/%.lc $(LABCOMMC_JAR) |$(TEST_GEN_DIR)
-	java -jar $(LABCOMMC_JAR) --c=$(patsubst %.h,%.c,$@) --h=$(patsubst %.c,%.h,$@) $<
+$(TEST_GEN_DIR)/%.c $(TEST_GEN_DIR)/%.h: $(TESTDATA_DIR)/%.lc \
+					 $(LABCOMMC_JAR) | $(TEST_GEN_DIR)
+	java -jar $(LABCOMMC_JAR) \
+		--c=$(patsubst %.h,%.c,$@) --h=$(patsubst %.c,%.h,$@) $<
 
 $(LABCOMMC_JAR):
 	@echo "======Building LabComm compiler======"
@@ -83,7 +79,11 @@ clean:
 	$(RM) test/*.o
 	$(RM) test/*.gch
 	$(RM) test/test_labcomm_errors
+	$(RM) test/testdata/gen/*.[cho]
 	$(RM) $(TEST_DIR)/test_labcomm
 
 distclean: clean
 	$(RM) liblabcomm.a
+
+# Extra dependencies
+$(TEST_DIR)/test_labcomm:  $(TEST_GEN_DIR)/test_sample.o

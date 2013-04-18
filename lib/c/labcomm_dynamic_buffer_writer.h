@@ -9,6 +9,7 @@ extern int labcomm_dynamic_buffer_reader(
 
 extern int labcomm_dynamic_buffer_writer(
   labcomm_writer_t *writer, 
-  labcomm_writer_action_t action, ...);
+  labcomm_writer_action_t action,
+  ...);
 
 #endif

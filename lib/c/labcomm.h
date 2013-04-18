@@ -155,15 +155,10 @@ struct labcomm_encoder *labcomm_encoder_new(
   void *writer_context);
 void labcomm_encoder_free(
   struct labcomm_encoder *encoder);
+
 /* See labcomm_ioctl.h for predefined ioctl_action values */
 int labcomm_encoder_ioctl(struct labcomm_encoder *encoder, 
 			  int ioctl_action,
 			  ...);
 
-void labcomm_encoder_start(struct labcomm_encoder *e,
-                           labcomm_signature_t *s) ;
-
-//HERE BE DRAGONS: is the signature_t* needed here?
-void labcomm_encoder_end(struct labcomm_encoder *e,
-                           labcomm_signature_t *s) ;
 #endif

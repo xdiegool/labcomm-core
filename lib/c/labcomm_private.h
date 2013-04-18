@@ -1,14 +1,10 @@
 #ifndef _LABCOMM_PRIVATE_H_
 #define _LABCOMM_PRIVATE_H_
 
-#ifdef ARM_CORTEXM3_CODESOURCERY
-  #include <machine/endian.h>
+#ifdef LABCOMM_COMPAT
+  #include LABCOMM_COMPAT
 #else
   #include <endian.h>
-#endif
-
-// Some projects can not use stdio.h.
-#ifndef LABCOMM_NO_STDIO
   #include <stdio.h>
 #endif
 
@@ -233,6 +229,16 @@ void labcomm_internal_encode(
   labcomm_signature_t *signature, 
   void *value);
 
+/* Should these really be visible? */
+void labcomm_encoder_start(struct labcomm_encoder *e,
+                           labcomm_signature_t *s) ;
+
+//HERE BE DRAGONS: is the signature_t* needed here?
+void labcomm_encoder_end(struct labcomm_encoder *e,
+                           labcomm_signature_t *s) ;
+
+
+
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 
 #define LABCOMM_ENCODE(name, type)					\
@@ -329,34 +335,5 @@ static inline void labcomm_encode_string(labcomm_encoder_t *e,
 }
 
 void labcomm_encode_type_index(labcomm_encoder_t *e, labcomm_signature_t *s);
-
-static inline int labcomm_buffer_write(struct labcomm_writer *w, 
-                                       labcomm_writer_action_t action, ...)
-{
-  // If this gets called, it is an error, 
-  // so note error and let producer proceed
-  w->context = w;
-  w->pos = 0;
-  return 0;
-}
-
-
-static inline int labcomm_buffer_writer_error(struct labcomm_writer *w) 
-{
-  return w->context != NULL;
-} 
-
-
-static inline void labcomm_buffer_writer_setup(struct labcomm_writer *w,
-                                               void *data,
-                                               int length)
-{
-  w->context = NULL; // Used as error flag
-  w->data = data;
-  w->data_size = length;
-  w->count = length;
-  w->pos = 0;
-  w->write = labcomm_buffer_write;
-}
 
 #endif

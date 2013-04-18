@@ -1,36 +1,16 @@
+#ifdef LABCOMM_COMPAT
+  #include LABCOMM_COMPAT
+#else
+  #include <stdio.h>
+  #include <strings.h>
+#endif
+
 #include <errno.h>
 #include <string.h>
-
-#ifndef __VXWORKS__
-  #ifdef ARM_CORTEXM3_CODESOURCERY
-    #include <string.h>
-  #else
-    #include <strings.h>
-  #endif
-#endif
-
-#ifndef ARM_CORTEXM3_CODESOURCERY
-  #include <stdlib.h>
-#endif
-
-// Some projects can not use stdio.h.
-#ifndef LABCOMM_NO_STDIO
-  #include <stdio.h>
-#endif
-
-#ifdef __VXWORKS__
-  #if (CPU == PPC603)
-    #undef _LITTLE_ENDIAN
-  #endif
-  #if (CPU == PENTIUM4)
-    #undef _BIG_ENDIAN
-  #endif
-#endif
-
 #include "labcomm.h"
 #include "labcomm_private.h"
 #include "labcomm_ioctl.h"
-#include "labcomm_dynamic_buffer_reader_writer.h"
+#include "labcomm_dynamic_buffer_writer.h"
 
 typedef struct labcomm_sample_entry {
   struct labcomm_sample_entry *next;
@@ -359,7 +339,6 @@ int labcomm_encoder_ioctl(struct labcomm_encoder *encoder,
   }
   return result;
 }
-
 
 static void collect_flat_signature(
   labcomm_decoder_t *decoder,

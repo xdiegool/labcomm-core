@@ -37,7 +37,7 @@ void reset_callback_erro_id()
   callback_error_id = -128;
 }
 
-int encoded_size_mock(void *voidp)
+int encoded_size_mock(struct labcomm_signature *signature, void *voidp)
 {
   return 0;
 }
@@ -50,7 +50,12 @@ int test_enc_not_reg_encoder_sign()
   labcomm_encoder_t *encoder = labcomm_encoder_new(labcomm_mem_writer, mcontext);
   labcomm_register_error_handler_encoder(encoder, test_callback);
   
-  labcomm_signature_t signature = {.type = 0, .name = "test_signature", .encoded_size = encoded_size_mock, .size = 0, .signature = (unsigned char *) "0"};
+  labcomm_signature_t signature = {
+    .type = 0, 
+    .name = "test_signature", 
+    .encoded_size = encoded_size_mock, 
+    .size = 0, 
+    .signature = (unsigned char *) "0"};
   encoder->do_encode(encoder, &signature, NULL);
 
   return assert_callback(LABCOMM_ERROR_ENC_NO_REG_SIGNATURE, __FUNCTION__, "");
