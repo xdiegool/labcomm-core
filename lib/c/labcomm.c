@@ -432,38 +432,53 @@ static int do_decode_one(labcomm_decoder_t *d)
       result = labcomm_decode_packed32(d);
 //      printf("do_decode_one: result(2) = %x\n", result);
       if (result == LABCOMM_TYPEDEF || result == LABCOMM_SAMPLE) {
+	/* TODO: should the labcomm_dynamic_buffer_writer be 
+	   a permanent part of labcomm_decoder? */
 	labcomm_encoder_t *e = labcomm_encoder_new(
 	  labcomm_dynamic_buffer_writer, 0);
 	labcomm_signature_t signature;
-	labcomm_sample_entry_t *entry;
-	int index;
+	labcomm_sample_entry_t *entry = NULL;
+	int index, err;
 
-	e->writer.write(&e->writer, labcomm_writer_start);
-	signature.type = result;
 	index = labcomm_decode_packed32(d); //int
 	signature.name = labcomm_decode_string(d);
-//	printf("do_decode_one: result = %x, index = %x, name=%s\n", result, index, signature.name);
+	signature.type = result;
+	e->writer.write(&e->writer, labcomm_writer_start);
+	/* printf("do_decode_one: result = %x, index = %x, name=%s\n", 
+	   result, index, signature.name); */
 	collect_flat_signature(d, e);
-	signature.size = e->writer.pos;
-	signature.signature = e->writer.data;
+	e->writer.write(&e->writer, labcomm_writer_end);
+	err = labcomm_encoder_ioctl(e, LABCOMM_IOCTL_WRITER_GET_BYTES_WRITTEN,
+				    &signature.size);
+	if (err < 0) {
+	  printf("Failed to get size: %s\n", strerror(-err));
+	  goto free_signature_name;
+	}
+	err = labcomm_encoder_ioctl(e, LABCOMM_IOCTL_WRITER_GET_BYTE_POINTER,
+				    &signature.signature);
+	if (err < 0) {
+	  printf("Failed to get pointer: %s\n", strerror(-err));
+	  goto free_signature_name;
+	}
 	entry = get_sample_by_signature_value(context->sample, &signature);
 	if (! entry) {
-	  // Unknown datatype, bail out
-          /*d->on_error(LABCOMM_ERROR_DEC_UNKNOWN_DATATYPE, 4, "%s(): unknown datatype '%s' (id=0x%x)\n", __FUNCTION__, signature.name, index);*/
-		d->on_new_datatype(d, &signature);
+	  /* Unknown datatype, bail out */
+	  d->on_new_datatype(d, &signature);
 	} else if (entry->index && entry->index != index) {
-          d->on_error(LABCOMM_ERROR_DEC_INDEX_MISMATCH, 5, "%s(): index mismatch '%s' (id=0x%x != 0x%x)\n", __FUNCTION__, signature.name, entry->index, index);
+          d->on_error(LABCOMM_ERROR_DEC_INDEX_MISMATCH, 5, 
+		      "%s(): index mismatch '%s' (id=0x%x != 0x%x)\n", 
+		      __FUNCTION__, signature.name, entry->index, index);
 	} else {
-		// TODO unnessesary, since entry->index == index in above if statement
+	  // TODO unnessesary, since entry->index == index in above if statement
 	  entry->index = index;
 	}
+      free_signature_name:
 	free(signature.name);
-	e->writer.write(&e->writer, labcomm_writer_end);
+	labcomm_encoder_free(e);
 	if (!entry) {
 	  // No handler for found type, bail out (after cleanup)
 	  result = -ENOENT;
 	}
-	labcomm_encoder_free(e);
       } else {
 	labcomm_sample_entry_t *entry;
 
@@ -479,6 +494,8 @@ static int do_decode_one(labcomm_decoder_t *d)
       }
     }
     d->reader.read(&d->reader, labcomm_reader_end);
+    /* TODO: should we really loop, or is it OK to
+       return after a typedef/sample */
   } while (result > 0 && result < LABCOMM_USER);
   return result;
 }

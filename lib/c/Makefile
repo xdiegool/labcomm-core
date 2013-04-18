@@ -51,14 +51,15 @@ $(CREATED_DIRS):
 	mkdir -p $@
 
 ## NB! the tests need CUnit to be installed
-run-test: $(TEST_DIR)/test_labcomm $(TEST_DIR)/test_labcomm_errors |$(TEST_DIR)
+run-test: $(TEST_DIR)/test_labcomm $(TEST_DIR)/test_labcomm_errors \
+	  | $(TEST_DIR)
 	test/test_labcomm
 	test/test_labcomm_errors
 
 $(TEST_DIR)/%.o: $(TEST_DIR)/%.c
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-$(TEST_DIR)/%: $(TEST_DIR)/%.o
+$(TEST_DIR)/%: $(TEST_DIR)/%.o | liblabcomm.a
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS) $(LDLIBS_TEST)
 
 $(TEST_GEN_DIR)/%.c $(TEST_GEN_DIR)/%.h: $(TESTDATA_DIR)/%.lc \
