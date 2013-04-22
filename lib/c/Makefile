@@ -2,7 +2,7 @@
 
 # Use LLVM clang if it's found.
 CC = $(shell hash clang 2>/dev/null && echo clang || echo gcc)
-CFLAGS = -g -Wall -Werror -I. -Itest
+CFLAGS = -g -Wall -Werror -O3  -I. -Itest
 LDFLAGS = -L.
 LDLIBS_TEST = -lcunit -llabcomm
 
@@ -10,6 +10,7 @@ OBJS= labcomm.o labcomm_dynamic_buffer_writer.o labcomm_fd_reader_writer.o labco
 LABCOMMC_PATH=../../compiler
 LABCOMMC_JAR=$(LABCOMMC_PATH)/labComm.jar
 
+TESTS=test_labcomm_private test_labcomm test_labcomm_errors
 TEST_DIR=test
 TESTDATA_DIR=$(TEST_DIR)/testdata
 TEST_GEN_DIR=$(TESTDATA_DIR)/gen
@@ -51,15 +52,15 @@ $(CREATED_DIRS):
 	mkdir -p $@
 
 ## NB! the tests need CUnit to be installed
-run-test: $(TEST_DIR)/test_labcomm $(TEST_DIR)/test_labcomm_errors \
-	  | $(TEST_DIR)
-	test/test_labcomm
-	test/test_labcomm_errors
+run-test: $(TESTS:%=run-test-%)
+
+run-test-%: $(TEST_DIR)/% | $(TEST_DIR)
+	$<
 
 $(TEST_DIR)/%.o: $(TEST_DIR)/%.c
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-$(TEST_DIR)/%: $(TEST_DIR)/%.o | liblabcomm.a
+$(TEST_DIR)/%: $(TEST_DIR)/%.o liblabcomm.a
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS) $(LDLIBS_TEST)
 
 $(TEST_GEN_DIR)/%.c $(TEST_GEN_DIR)/%.h: $(TESTDATA_DIR)/%.lc \
@@ -88,3 +89,4 @@ distclean: clean
 
 # Extra dependencies
 $(TEST_DIR)/test_labcomm:  $(TEST_GEN_DIR)/test_sample.o
+$(TEST_DIR)/test_labcomm_private.o: labcomm_private.h

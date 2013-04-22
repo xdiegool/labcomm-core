@@ -8,6 +8,7 @@
   #include <stdio.h>
 #endif
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include "labcomm.h"
@@ -117,31 +118,52 @@ LABCOMM_DECODE(long, long long)
 LABCOMM_DECODE(float, float)
 LABCOMM_DECODE(double, double)
 
+/* 
+ * Unpack a 32 bit unsigned number from a sequence bytes, where the 
+ * first byte is prefixed with a variable length bit pattern that
+ * indicates the number of bytes used for encoding. The encoding
+ * is inspired by the UTF-8 encoding.
+ *
+ * 0b0     - 1 byte  (0x00000000 - 0x0000007f)
+ * 0b10    - 2 bytes (0x00000080 - 0x00003fff)
+ * 0b110   - 3 bytes (0x00004000 - 0x001fffff)
+ * 0b1110  - 4 bytes (0x00200000 - 0x0fffffff)
+ * 0b11110 - 5 bytes (0x10000000 - 0xffffffff) [4 bits unused]
+ */
 static inline unsigned int labcomm_unpack32(labcomm_reader_t *r)
 {
-  unsigned int res=0;
-  unsigned char i=0;
-  unsigned char cont=1;
-  do {
+  unsigned int result = 0;
+  int n, i;
+  unsigned char tag;
+
+  if (r->pos >= r->count) {	
+    r->read(r, labcomm_reader_continue);
+  }
+  tag = r->data[r->pos];
+  r->pos++;
+  if (tag < 0x80) {
+    n = 1;
+    result = tag;
+  } else if (tag < 0xc0) {
+    n = 2;
+    result = tag & 0x3f;
+  } else if (tag < 0xe0) {
+    n = 3;
+    result = tag & 0x1f;
+  } else if (tag < 0xf0) {
+    n = 4;
+    result = tag & 0x0f;
+  } else {
+    n = 5;
+  }
+  for (i = 1 ; i < n ; i++) {
     if (r->pos >= r->count) {	
       r->read(r, labcomm_reader_continue);
     }
-#ifdef IDIOTDEBUG
-    {
-	int k;
-	for(k=0; k<=r->pos; k++) printf("%2x\n", r->data[k]);
-    }
-#endif
-    unsigned char c = r->data[r->pos];
-    res |= (c & 0x7f) << 7*i;
-    cont = c & 0x80;
-#ifdef IDIOTDEBUG
-    printf("unpack32: %x (%x, %d, %d)\n", res, c, i, cont);
-#endif
-    i++;
+    result = (result << 8) | r->data[r->pos];
     r->pos++;
-  } while(cont);
-  return res;
+  }
+  return result;
 }
 
 static inline unsigned int labcomm_decode_packed32(labcomm_decoder_t *d) 
@@ -229,13 +251,14 @@ void labcomm_internal_encode(
   labcomm_signature_t *signature, 
   void *value);
 
-/* Should these really be visible? */
-void labcomm_encoder_start(struct labcomm_encoder *e,
-                           labcomm_signature_t *s) ;
+void labcomm_encoder_start(
+  labcomm_encoder_t *encoder,
+  labcomm_signature_t *signature);
 
 //HERE BE DRAGONS: is the signature_t* needed here?
-void labcomm_encoder_end(struct labcomm_encoder *e,
-                           labcomm_signature_t *s) ;
+void labcomm_encoder_end(
+  labcomm_encoder_t *encoder,
+  labcomm_signature_t *signature);
 
 
 
@@ -284,34 +307,58 @@ LABCOMM_ENCODE(float, float)
 LABCOMM_ENCODE(double, double)
 
 /* 
- * Pack the 32 bit number data as a sequence of 7 bit chunks, represented in bytes 
- * with the high bit meaning that more data is to come.
+ * Pack the 32 bit unsigned number data as a sequence bytes, where the 
+ * first byte is prefixed with a variable length bit pattern that
+ * indicates the number of bytes used for encoding. The encoding
+ * is inspired by the UTF-8 encoding.
  *
- * The chunks are sent "little endian": each 7 bit chunk is more significant than
- * the previous.
- */ 
+ * 0b0     - 1 byte  (0x00000000 - 0x0000007f)
+ * 0b10    - 2 bytes (0x00000080 - 0x00003fff)
+ * 0b110   - 3 bytes (0x00004000 - 0x001fffff)
+ * 0b1110  - 4 bytes (0x00200000 - 0x0fffffff)
+ * 0b11110 - 5 bytes (0x10000000 - 0xffffffff) [4 bits unused]
+ */
 static inline void labcomm_pack32(labcomm_writer_t *w, unsigned int data)
 {
-  unsigned int tmp; 
-
-  tmp = data;
-
-  while (tmp >= 0x80) {
-    if (w->pos >= w->count) {	
-      w->write(w, labcomm_writer_continue);
-    }
-    w->data[w->pos] = (tmp & 0x7f) | 0x80;
-    w->pos++;
-    tmp >>= 7;
-  } 
-  w->data[w->pos] = tmp; 
-  w->pos++;
+  int n;
+  unsigned char tag;
+  unsigned char tmp[4] = { (data >> 24) & 0xff, 
+			   (data >> 16) & 0xff, 
+			   (data >>  8) & 0xff, 
+			   (data      ) & 0xff }; 
+  if (data < 0x80) {
+    n = 1;
+    tag = 0x00;
+  } else if (data < 0x4000) { 
+    n = 2;
+    tag = 0x80;
+  } else if (data < 0x200000) { 
+    n = 3;
+    tag = 0xc0;
+  } else if (data < 0x10000000) { 
+    n = 4;
+    tag = 0xe0;
+  } else  {
+    n = 5;
+    tag = 0xf0;
+  }
+  if (w->pos + n - 1 >= w->count) {	
+    w->write(w, labcomm_writer_continue, n);
+  }
+  switch (n) {
+    case 5: w->data[w->pos++] = tag; tag = 0;
+    case 4: w->data[w->pos++] = tmp[0] | tag; tag = 0;
+    case 3: w->data[w->pos++] = tmp[1] | tag; tag = 0;
+    case 2: w->data[w->pos++] = tmp[2] | tag; tag = 0;
+    case 1: w->data[w->pos++] = tmp[3] | tag;
+  }
 }
 
 static inline void labcomm_encode_packed32(labcomm_encoder_t *e, unsigned int data) 
 { 
     labcomm_pack32(&e->writer, data);				
 }
+
 
 static inline void labcomm_write_string(labcomm_writer_t *w, char *s)
 {

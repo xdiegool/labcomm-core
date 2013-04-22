@@ -3,10 +3,6 @@
 
 #include "labcomm.h"
 
-extern int labcomm_dynamic_buffer_reader(
-  labcomm_reader_t *reader, 
-  labcomm_reader_action_t action);
-
 extern int labcomm_dynamic_buffer_writer(
   labcomm_writer_t *writer, 
   labcomm_writer_action_t action,
