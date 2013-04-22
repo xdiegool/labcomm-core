@@ -346,11 +346,36 @@ static inline void labcomm_pack32(labcomm_writer_t *w, unsigned int data)
     w->write(w, labcomm_writer_continue, n);
   }
   switch (n) {
-    case 5: w->data[w->pos++] = tag; tag = 0;
-    case 4: w->data[w->pos++] = tmp[0] | tag; tag = 0;
-    case 3: w->data[w->pos++] = tmp[1] | tag; tag = 0;
-    case 2: w->data[w->pos++] = tmp[2] | tag; tag = 0;
-    case 1: w->data[w->pos++] = tmp[3] | tag;
+    case 5: { 
+      if (w->pos >= w->count) {					
+	w->write(w, labcomm_writer_continue);				
+      }
+      w->data[w->pos++] = tag; tag = 0;
+    }
+    case 4: { 
+      if (w->pos >= w->count) {					
+	w->write(w, labcomm_writer_continue);				
+      }
+      w->data[w->pos++] = tmp[0] | tag; tag = 0;
+    }
+    case 3: { 
+      if (w->pos >= w->count) {					
+	w->write(w, labcomm_writer_continue);				
+      }
+      w->data[w->pos++] = tmp[1] | tag; tag = 0;
+    }
+    case 2: { 
+      if (w->pos >= w->count) {					
+	w->write(w, labcomm_writer_continue);				
+      }
+      w->data[w->pos++] = tmp[2] | tag; tag = 0;
+    }
+    case 1: { 
+      if (w->pos >= w->count) {					
+	w->write(w, labcomm_writer_continue);				
+      }
+      w->data[w->pos++] = tmp[3] | tag;
+    }
   }
 }
 
