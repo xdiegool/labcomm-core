@@ -42,18 +42,17 @@ static labcomm_decoder_t decoder = {
     .data_size = sizeof(buffer),
     .count = sizeof(buffer),
     .pos = 0,
-//    .error = 0,
     .read = test_read,
     .ioctl = NULL,
     .on_error = NULL,
   },
   .do_register = NULL,
-//  .do_decode = NULL,
   .on_error = NULL,
 };
 
 typedef unsigned int packed32;
 typedef unsigned char boolean;
+typedef unsigned char byte;
 
 #define TEST_WRITE_READ(type, format, value, expect_count, expect_bytes) \
   {									\
@@ -109,13 +108,20 @@ int main(void)
   TEST_WRITE_READ(packed32, "%d", 0xfffffff, 4, "\xef\xff\xff\xff");
   TEST_WRITE_READ(packed32, "%d", 0x10000000, 5, "\xf0\x10\x00\x00\x00");
   TEST_WRITE_READ(packed32, "%d", 0xffffffff, 5, "\xf0\xff\xff\xff\xff");
-  TEST_WRITE_READ(boolean, "%d", 0, 1, "\00");
+  TEST_WRITE_READ(boolean, "%d", 0, 1, "\x00");
+  TEST_WRITE_READ(boolean, "%d", 1, 1, "\x01");
+  TEST_WRITE_READ(byte, "%d", 0, 1, "\x00");
+  TEST_WRITE_READ(byte, "%d", 1, 1, "\x01");
+  TEST_WRITE_READ(byte, "%d", 0xff, 1, "\xff");
   TEST_WRITE_READ(short, "%d", 0, 2, "\x00\x00");
   TEST_WRITE_READ(short, "%d", 0x7fff, 2, "\x7f\xff");
   TEST_WRITE_READ(short, "%d", -1, 2, "\xff\xff");
   TEST_WRITE_READ(int, "%d", 0, 4, "\x00\x00\x00\x00");
   TEST_WRITE_READ(int, "%d", 0x7fffffff, 4, "\x7f\xff\xff\xff");
   TEST_WRITE_READ(int, "%d", -1, 4, "\xff\xff\xff\xff");
+  TEST_WRITE_READ(long, "%ld", 0L, 8, "\x00\x00\x00\x00\x00\x00\x00\x00");
+  TEST_WRITE_READ(long, "%ld", 0x7fffffffffffffffL, 8, "\x7f\xff\xff\xff\xff\xff\xff\xff");
+  TEST_WRITE_READ(long, "%ld", -1L, 8, "\xff\xff\xff\xff\xff\xff\xff\xff");
   TEST_WRITE_READ(float, "%f", 0.0, 4, "\x00\x00\x00\x00");
   TEST_WRITE_READ(float, "%f", 1.0, 4, "\x3f\x80\x00\x00");
   TEST_WRITE_READ(float, "%f", 2.0, 4, "\x40\x00\x00\x00");
