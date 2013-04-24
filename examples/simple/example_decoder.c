@@ -1,8 +1,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <labcomm_fd_reader_writer.h>
+#include <labcomm_fd_reader.h>
 #include "gen/simple.h"
+#include <stdio.h>
 
 static void handle_simple_theTwoInts(simple_TwoInts *v,void *context) {
   printf("Got theTwoInts. a=%d, b=%d\n", v->a, v->b);

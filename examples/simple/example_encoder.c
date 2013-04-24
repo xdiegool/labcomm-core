@@ -1,8 +1,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <labcomm_fd_reader_writer.h>
+#include <labcomm_fd_writer.h>
 #include "gen/simple.h"
+#include <stdio.h>
 
 int main(int argc, char *argv[]) {
   int fd;
