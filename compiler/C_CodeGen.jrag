@@ -803,8 +803,8 @@ aspect C_Signature {
       }
     }
     env.println("};");
-    env.println("labcomm_signature_t labcomm_signature_" + 
-		env.prefix + getName() + " = {");
+    env.println("LABCOMM_DECLARE_SIGNATURE(labcomm_signature_" + 
+		env.prefix + getName() + ") = {");
     env.indent();
     env.println("LABCOMM_SAMPLE, \"" + getName() + "\",");
     env.println("(int (*)(labcomm_signature_t *, void *))labcomm_sizeof_" + 

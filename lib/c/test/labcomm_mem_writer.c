@@ -2,6 +2,7 @@
 
 #include <stddef.h>  // For size_t.
 #include <stdarg.h>
+#include <stdlib.h>
 #include <errno.h>
 
 #include "labcomm.h"

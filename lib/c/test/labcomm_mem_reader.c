@@ -1,6 +1,8 @@
 #include "labcomm_mem_reader.h"
 
 #include <errno.h>
+#include <stdlib.h>
+#include <string.h>
 
 /* This implementation assumes labcomm will call end exactly once after each start
  * It is not allowed to save data in mcontext->enc_data,
@@ -13,7 +15,9 @@
  */
 
 // TODO make labcomm use result!
-int labcomm_mem_reader(labcomm_reader_t *r, labcomm_reader_action_t action)
+int labcomm_mem_reader(labcomm_reader_t *r, 
+		       labcomm_reader_action_t action,
+		       ...)
 {
   int result = -EINVAL;
   labcomm_mem_reader_context_t *mcontext = (labcomm_mem_reader_context_t *) r->context;

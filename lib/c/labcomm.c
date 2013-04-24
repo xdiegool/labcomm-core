@@ -7,10 +7,14 @@
 
 #include <errno.h>
 #include <string.h>
+#include <stdarg.h>
+
 #include "labcomm.h"
 #include "labcomm_private.h"
 #include "labcomm_ioctl.h"
 #include "labcomm_dynamic_buffer_writer.h"
+
+#define LABCOMM_VERSION "LabComm2013"
 
 typedef struct labcomm_sample_entry {
   struct labcomm_sample_entry *next;
@@ -146,6 +150,8 @@ static labcomm_sample_entry_t *get_sample_by_index(
   return p;
 }
 
+#ifdef LABCOMM_ENCODER_LINEAR_SEARCH
+
 static int get_encoder_index(
   labcomm_encoder_t *e,
   labcomm_signature_t *s)
@@ -162,6 +168,25 @@ static int get_encoder_index(
   }
   return result;
 }
+
+#else
+
+static int get_encoder_index(
+  labcomm_encoder_t *e,
+  labcomm_signature_t *s)
+{
+  int result = 0;
+  extern  labcomm_signature_t labcomm_first_signature;
+  extern  labcomm_signature_t labcomm_last_signature;
+
+  if (&labcomm_first_signature <= s && s <= &labcomm_last_signature) {
+    //fprintf(stderr, "%d\n", (int)(s - &labcomm_start));
+    result = s - &labcomm_first_signature + LABCOMM_USER;
+  }
+  return result;
+}
+
+#endif
 
 void labcomm_encoder_start(struct labcomm_encoder *e,
                            labcomm_signature_t *s) 
@@ -299,12 +324,6 @@ void labcomm_internal_encode(
   } else {
     e->on_error(LABCOMM_ERROR_ENC_MISSING_DO_ENCODE, 0);
   }
-}
-
-void labcomm_internal_encoder_user_action(labcomm_encoder_t *e,
-					  int action)
-{
-  e->writer.write(&e->writer, action);
 }
 
 void labcomm_encoder_free(labcomm_encoder_t* e)
@@ -501,7 +520,7 @@ static int do_decode_one(labcomm_decoder_t *d)
 }
 
 labcomm_decoder_t *labcomm_decoder_new(
-  int (*reader)(labcomm_reader_t *, labcomm_reader_action_t),
+  int (*reader)(labcomm_reader_t *, labcomm_reader_action_t, ...),
   void *reader_context)
 {
   labcomm_decoder_t *result = malloc(sizeof(labcomm_decoder_t));
@@ -522,7 +541,7 @@ labcomm_decoder_t *labcomm_decoder_new(
     result->do_decode_one = do_decode_one;
     result->on_error = on_error_fprintf;
     result->on_new_datatype = on_new_datatype;
-    result->reader.read(&result->reader, labcomm_reader_alloc);
+    result->reader.read(&result->reader, labcomm_reader_alloc, LABCOMM_VERSION);
   }
   return result;
 }

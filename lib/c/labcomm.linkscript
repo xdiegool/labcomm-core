@@ -1,0 +1,8 @@
+SECTIONS { 
+  labcomm : {
+    labcomm_first_signature = ABSOLUTE(.) ;
+    *(labcomm)
+    labcomm_last_signature = ABSOLUTE(.) ;
+  }
+}
+INSERT AFTER .data;

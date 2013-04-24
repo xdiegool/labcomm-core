@@ -2,6 +2,7 @@
 #include "CUnit/Basic.h"
 #include "CUnit/Console.h"
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include <labcomm.h>
 #include <labcomm_mem_writer.h>

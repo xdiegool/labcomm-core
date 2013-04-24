@@ -1,20 +1,8 @@
 #ifndef _LABCOMM_H_
 #define _LABCOMM_H_
 
-#ifdef ARM_CORTEXM3_CODESOURCERY
-  #include <machine/endian.h>
-#else
-  #include <endian.h>
-#endif
-
-// Some projects can not use stdio.h.
-#ifndef LABCOMM_NO_STDIO
-  #include <stdio.h>
-#endif
-
-#include <stdlib.h>
-#include <string.h>
 #include <stdarg.h>
+#include <unistd.h>
 
 /* Forward declaration */
 struct labcomm_encoder;
@@ -94,7 +82,8 @@ void labcomm_decoder_register_new_datatype_handler(struct labcomm_decoder *d,
  */
 
 typedef enum { 
-  labcomm_reader_alloc, 
+  labcomm_reader_alloc,     /* (..., char *labcomm_version)
+			       Allocate all neccessary data */
   labcomm_reader_free,
   labcomm_reader_start, 
   labcomm_reader_continue, 
@@ -108,13 +97,13 @@ typedef struct labcomm_reader {
   int data_size;
   int count;
   int pos;
-  int (*read)(struct labcomm_reader *, labcomm_reader_action_t);
+  int (*read)(struct labcomm_reader *, labcomm_reader_action_t, ...);
   int (*ioctl)(struct labcomm_reader *, int, va_list);
   labcomm_error_handler_callback on_error;
 }  labcomm_reader_t;
 
 struct labcomm_decoder *labcomm_decoder_new(
-  int (*reader)(labcomm_reader_t *, labcomm_reader_action_t),
+  int (*reader)(labcomm_reader_t *, labcomm_reader_action_t, ...),
   void *reader_context);
 int labcomm_decoder_decode_one(
   struct labcomm_decoder *decoder);
@@ -128,7 +117,8 @@ void labcomm_decoder_free(
  */
 
 typedef enum { 
-  labcomm_writer_alloc,              /* Allocate all neccessary data */
+  labcomm_writer_alloc,              /* (..., char *labcomm_version)
+					Allocate all neccessary data */
   labcomm_writer_free,               /* Free all allocated data */
   labcomm_writer_start,              /* Start writing an ordinary sample */
   labcomm_writer_continue,           /* Buffer full during ordinary sample */

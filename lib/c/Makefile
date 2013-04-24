@@ -2,15 +2,15 @@
 
 # Use LLVM clang if it's found.
 CC = $(shell hash clang 2>/dev/null && echo clang || echo gcc)
-CFLAGS = -g -Wall -Werror -O3  -I. -Itest
+CFLAGS = -g -Wall -Werror -O3  -I. -Itest -DLABCOMM_ENCODER_LINEAR_SEARCH
 LDFLAGS = -L.
-LDLIBS_TEST = -lcunit -llabcomm
+LDLIBS_TEST = -Tlabcomm.linkscript  -lcunit -llabcomm
 
-OBJS= labcomm.o labcomm_dynamic_buffer_writer.o labcomm_fd_reader_writer.o labcomm_mem_reader.o labcomm_mem_writer.o
+OBJS= labcomm.o labcomm_dynamic_buffer_writer.o labcomm_fd_reader.o labcomm_fd_writer.o labcomm_mem_reader.o labcomm_mem_writer.o
 LABCOMMC_PATH=../../compiler
 LABCOMMC_JAR=$(LABCOMMC_PATH)/labComm.jar
 
-TESTS=test_labcomm_private test_labcomm test_labcomm_errors
+TESTS=test_labcomm_basic_type_encoding test_labcomm test_labcomm_errors
 TEST_DIR=test
 TESTDATA_DIR=$(TEST_DIR)/testdata
 TEST_GEN_DIR=$(TESTDATA_DIR)/gen
@@ -42,9 +42,9 @@ labcomm.o : labcomm.c labcomm.h  labcomm_private.h
 
 labcomm_fd_reader_writer.o : labcomm_fd_reader_writer.c  labcomm_fd_reader_writer.h  labcomm.h  labcomm_private.h
 
-$(TEST_DIR)/labcomm_mem_reader.o: labcomm_fd_reader_writer.c labcomm_fd_reader_writer.h
+#$(TEST_DIR)/labcomm_mem_reader.o: labcomm_fd_reader_writer.c labcomm_fd_reader_writer.h
 
-$(TEST_DIR)/labcomm_mem_writer.o: labcomm_mem_writer.c labcomm_mem_writer.h cppmacros.h
+#$(TEST_DIR)/labcomm_mem_writer.o: labcomm_mem_writer.c labcomm_mem_writer.h cppmacros.h
 
 ethaddr.o: ethaddr.c
 

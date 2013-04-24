@@ -1,4 +1,6 @@
 #include <errno.h>
+#include <stdlib.h>
+#include <stdarg.h>
 #include "labcomm_ioctl.h"
 #include "labcomm_dynamic_buffer_writer.h"
 

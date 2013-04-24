@@ -39,6 +39,12 @@
 #define LABCOMM_USER     0x40
 
 /*
+ *
+ */
+#define LABCOMM_DECLARE_SIGNATURE(name) \
+  labcomm_signature_t name __attribute__((section("labcomm")))
+
+/*
  * Semi private decoder declarations
  */
 typedef void (*labcomm_handler_typecast_t)(void *, void *);
@@ -192,34 +198,6 @@ static inline char *labcomm_read_string(labcomm_reader_t *r)
 static inline char *labcomm_decode_string(labcomm_decoder_t *d)
 {
   return labcomm_read_string(&d->reader);
-}
-
-static inline int labcomm_buffer_read(struct labcomm_reader *r, 
-				      labcomm_reader_action_t action)
-{
-  // If this gets called, it is an error, 
-  // so note error and let producer proceed
-  r->context = r;
-  r->pos = 0;
-  return 0;
-}
-
-static inline int labcomm_buffer_reader_error(struct labcomm_reader *r) 
-{
-  return r->context != NULL;
-} 
-
-static inline void labcomm_buffer_reader_setup(
-  labcomm_reader_t *r,
-  void *data,
-  int length)
-{
-  r->context = NULL; // Used as error flag
-  r->data = data;  
-  r->data_size = length;
-  r->count = length;
-  r->pos = 0;
-  r->read = labcomm_buffer_read;
 }
 
 /*

@@ -9,7 +9,7 @@ int test_write(struct labcomm_writer *w, labcomm_writer_action_t a, ...)
   exit(1);
 }
 
-int test_read(struct labcomm_reader *r, labcomm_reader_action_t a)
+int test_read(struct labcomm_reader *r, labcomm_reader_action_t a, ...)
 {
   fprintf(stderr, "test_read should not be called\n");
   exit(1);
@@ -40,7 +40,7 @@ static labcomm_decoder_t decoder = {
     .context = NULL,
     .data = buffer,
     .data_size = sizeof(buffer),
-    .count = sizeof(buffer),
+    .count = 0,
     .pos = 0,
     .read = test_read,
     .ioctl = NULL,
@@ -60,7 +60,8 @@ typedef unsigned char byte;
     encoder.writer.pos = 0;						\
     labcomm_encode_##type(&encoder, value);				\
     writer_assert(#type, __LINE__, expect_count, (uint8_t*)expect_bytes); \
-    decoder.reader.pos = 0;					\
+    decoder.reader.count = encoder.writer.pos;				\
+    decoder.reader.pos = 0;						\
     decoded = labcomm_decode_##type(&decoder);				\
     if (decoded != value) {						\
       fprintf(stderr, "Decode error" format " != " format " @%s:%d \n", value, decoded, \
