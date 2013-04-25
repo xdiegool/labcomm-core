@@ -485,7 +485,7 @@ aspect Java_Class {
   }
 
   public String VariableSize.Java_emitEncoder(Java_env env, String name) {
-    env.println("e.encodeInt(" + name + ".length);");
+    env.println("e.encodePacked32(" + name + ".length);");
     return name + ".length";
   }
 
