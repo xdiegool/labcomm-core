@@ -18,6 +18,7 @@ public class Encoder
     encoder = new LabCommEncoderChannel(out);
     theTwoInts.register(encoder);
     IntString.register(encoder);
+    TwoArrays.register(encoder);
   }
 
   public void doEncode() throws java.io.IOException {
@@ -29,11 +30,24 @@ public class Encoder
     y.x = 37;
     y.s = "Testing, testing";
 
+    TwoArrays ta = new TwoArrays();
+    ta.fixed = new int[] {14, 25};
+//    ta.variable = new int[][] {{1,2},{0x11,0x12},{0x21,0x22},{0x31,0x32}};
+    ta.variable = new int[][] {{1,2, 3, 4},{0x21,0x22,0x23,0x24}};
+
     System.out.println("Encoding theTwoInts, a="+x.a+", b="+x.b);
     theTwoInts.encode(encoder, x);
 
     System.out.println("Encoding IntString, x="+y.x+", s="+y.s);
     IntString.encode(encoder, y);
+
+    System.out.println("Encoding TwoArrays");
+    for(int i = 0; i < ta.variable.length; i++) {
+	for(int j=0; j < ta.variable[0].length; j++)
+		System.out.println(ta.variable[i][j]);
+	System.out.println("---");
+    }
+    TwoArrays.encode(encoder, ta);
   }
 
 
