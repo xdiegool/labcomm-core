@@ -25,7 +25,7 @@ namespace se.lth.control.labcomm {
     /*
      * start of user defined types 
      */
-    public const int FIRST_USER_INDEX = 0x60;
+    public const int FIRST_USER_INDEX = 0x40;
 
   }
 

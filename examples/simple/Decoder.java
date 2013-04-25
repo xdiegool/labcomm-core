@@ -5,7 +5,8 @@ import java.io.InputStream;
 import se.lth.control.labcomm.LabCommDecoderChannel;
 
 public class Decoder
-  implements TwoInts.Handler, IntString.Handler, TwoArrays.Handler
+  implements theTwoInts.Handler, anotherTwoInts.Handler, IntString.Handler, TwoArrays.Handler, TwoFixedArrays.Handler
+
 {
 
   LabCommDecoderChannel decoder;
@@ -14,9 +15,11 @@ public class Decoder
     throws Exception 
   {
     decoder = new LabCommDecoderChannel(in);
-    TwoInts.register(decoder, this);
+    theTwoInts.register(decoder, this);
+    anotherTwoInts.register(decoder, this);
     IntString.register(decoder, this);
     TwoArrays.register(decoder, this);
+    TwoFixedArrays.register(decoder, this);
 
     try {
       System.out.println("Running decoder.");
@@ -26,8 +29,18 @@ public class Decoder
     }
   }
 
-  public void handle_TwoInts(TwoInts d) throws java.io.IOException {
-    System.out.println("Got TwoInts, a="+d.a+", b="+d.b);
+  public void printTwoInts(TwoInts d) throws java.io.IOException {
+    System.out.println("a="+d.a+", b="+d.b);
+  }
+
+  public void handle_theTwoInts(TwoInts d) throws java.io.IOException {
+    System.out.print("Got theTwoInts: ");
+    printTwoInts(d);
+  }
+
+  public void handle_anotherTwoInts(TwoInts d) throws java.io.IOException {
+    System.out.print("Got anotherheTwoInts: ");
+    printTwoInts(d);
   }
 
   public void handle_IntString(IntString d) throws java.io.IOException {
@@ -46,6 +59,20 @@ public class Decoder
     }
     System.out.println();
   }
+
+  public void handle_TwoFixedArrays(TwoFixedArrays d) throws java.io.IOException {
+    System.out.println("Got TwoFixedArrays:");
+    for(int i=0; i<d.a.length; i++) {
+	System.out.print(d.a[i]+" ");
+    }
+    System.out.println();
+    for(int i=0; i<d.b[0].length; i++) {
+	System.out.print(d.b[0][i]+" ");
+	System.out.print(d.b[1][i]+" ");
+    }
+    System.out.println();
+  }
+
 
   public static void main(String[] arg) throws Exception {
     Decoder example = new Decoder(

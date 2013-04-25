@@ -1,7 +1,10 @@
-sample struct {
+typedef struct {
   int a;
   int b;
 } TwoInts;
+
+sample TwoInts theTwoInts;
+sample TwoInts anotherTwoInts;
 
 sample struct {
   int x;
@@ -17,3 +20,8 @@ sample struct {
   int fixed[2];
   int variable[2,_];
 } TwoArrays;
+
+sample struct {
+  int a[2];
+  int b[2,3];
+} TwoFixedArrays;

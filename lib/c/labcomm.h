@@ -23,12 +23,13 @@ struct labcomm_decoder;
 /*
  * Signature entry
  */
-typedef struct {
+typedef struct labcomm_signature{
   int type;
   char *name;
-  int (*encoded_size)(void *);
+  int (*encoded_size)(struct labcomm_signature *, void *); // void * == encoded_sample *
   int size;
   unsigned char *signature; 
+  int cached_encoded_size; // -1 if not initialized or type is variable size
 } labcomm_signature_t;
 
 /*
@@ -56,12 +57,15 @@ enum labcomm_error {
 /* Error strings. _must_ be the same order as in enum labcomm_error */
 extern const char *labcomm_error_strings[];
 
-/* The callback prototype for error handling.\
+/* The callback prototype for error handling.
  * First parameter is the error ID.
- * The second paramters is the number of va_args that comes after this one. If noneit should be 0.
- * Optionaly other paramters can be supplied depending on what is needed for this error ID.
+ * The second paramters is the number of va_args that comes after this 
+ * one. If none it should be 0.
+ * Optionaly other paramters can be supplied depending on what is needed 
+ * for this error ID.
  */
-typedef void (* labcomm_error_handler_callback)(enum labcomm_error error_id, size_t nbr_va_args, ...); 
+typedef void (*labcomm_error_handler_callback)(enum labcomm_error error_id, 
+					       size_t nbr_va_args, ...); 
 
 /* Default error handler, prints message to stderr. 
  * Extra info about the error can be supplied as char* as VA-args. Especially user defined errors should supply a describing string. if nbr_va_args > 1 the first variable argument must be a printf format string and the possibly following arguments are passed as va_args to vprintf. 
@@ -77,8 +81,9 @@ void labcomm_register_error_handler_decoder(struct labcomm_decoder *decoder, lab
 /* Get a string describing the supplied standrad labcomm error. */
 const char *labcomm_error_get_str(enum labcomm_error error_id);
 
-typedef int (* labcomm_handle_new_datatype_callback)(struct labcomm_decoder *decoder,
-		labcomm_signature_t *sig);
+typedef int (*labcomm_handle_new_datatype_callback)(
+  struct labcomm_decoder *decoder,
+  labcomm_signature_t *sig);
 
 void labcomm_decoder_register_new_datatype_handler(struct labcomm_decoder *d,
 		labcomm_handle_new_datatype_callback on_new_datatype);
@@ -93,7 +98,8 @@ typedef enum {
   labcomm_reader_free,
   labcomm_reader_start, 
   labcomm_reader_continue, 
-  labcomm_reader_end
+  labcomm_reader_end,
+  labcomm_reader_ioctl
 } labcomm_reader_action_t;
 
 typedef struct labcomm_reader {
@@ -103,6 +109,7 @@ typedef struct labcomm_reader {
   int count;
   int pos;
   int (*read)(struct labcomm_reader *, labcomm_reader_action_t);
+  int (*ioctl)(struct labcomm_reader *, int, va_list);
   labcomm_error_handler_callback on_error;
 }  labcomm_reader_t;
 
@@ -121,12 +128,14 @@ void labcomm_decoder_free(
  */
 
 typedef enum { 
-  labcomm_writer_alloc, 
-  labcomm_writer_free,
-  labcomm_writer_start, 
-  labcomm_writer_continue, 
-  labcomm_writer_end, 
-  labcomm_writer_available,
+  labcomm_writer_alloc,              /* Allocate all neccessary data */
+  labcomm_writer_free,               /* Free all allocated data */
+  labcomm_writer_start,              /* Start writing an ordinary sample */
+  labcomm_writer_continue,           /* Buffer full during ordinary sample */
+  labcomm_writer_end,                /* End writing ordinary sample */
+  labcomm_writer_start_signature,    /* Start writing signature */
+  labcomm_writer_continue_signature, /* Buffer full during signature */
+  labcomm_writer_end_signature,      /* End writing signature */
 } labcomm_writer_action_t;
 
 typedef struct labcomm_writer {
@@ -135,14 +144,21 @@ typedef struct labcomm_writer {
   int data_size;
   int count;
   int pos;
-  int (*write)(struct labcomm_writer *, labcomm_writer_action_t);
+  int error;
+  int (*write)(struct labcomm_writer *, labcomm_writer_action_t, ...);
+  int (*ioctl)(struct labcomm_writer *, int, va_list);
   labcomm_error_handler_callback on_error;
 } labcomm_writer_t;
 
 struct labcomm_encoder *labcomm_encoder_new(
-  int (*writer)(labcomm_writer_t *, labcomm_writer_action_t),
+  int (*writer)(labcomm_writer_t *, labcomm_writer_action_t, ...),
   void *writer_context);
 void labcomm_encoder_free(
   struct labcomm_encoder *encoder);
+
+/* See labcomm_ioctl.h for predefined ioctl_action values */
+int labcomm_encoder_ioctl(struct labcomm_encoder *encoder, 
+			  int ioctl_action,
+			  ...);
 
 #endif

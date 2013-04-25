@@ -1,139 +1,216 @@
-/* labcomm_parser.c:
+/* labcomm_sig_parser.c:
  * an example parser for labcomm signatures, illustrating how to skip samples
  * based on their signature. Intended as an embryo for introducing this 
  * functionality into the lib to allow a channel to survive types with no
  * registered handler.
  */
 
+
+/* TODO, and notes about strange quirks
+ *
+ * - the return values for the accept_ functions are not really used anymore
+ *   as the parser "peeks" and calls the correct accept function instead. 
+ *   This should be refactored
+ *
+ * - The RETURN_STRINGS and where/if to allocate strings is to be decided, it
+ *   is currently not used
+ * 
+ * - TYPE_DECL is not tested (is it ever sent?)
+ * 
+ * - The dynamic allocation of the parser is not quite dynamic, the sizes are
+ *   set through the init function, and are then static.
+ *   This should be adapted when allocation is parameterized/user-definable
+ *   for the entire lib.
+ */
+      
+
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-#define DEBUG 
-#undef DEBUG_STACK
-#undef DEBUG_READ
+#include "labcomm_sig_parser.h"
 
-#undef EXIT_WHEN_RECEIVING_DATA //arrays (at least varsize not working)
-
-#define FALSE 0
-#define TRUE 1
-
-#define	USER_ID_BASE	0x00000080
-
-typedef enum{
-	TYPE_DECL = 0x00000001,
-	SAMPLE_DECL = 0x00000002,
-
-	ARRAY_DECL = 0x00000010,
-	STRUCT_DECL = 0x00000011,
-
-	TYPE_BOOLEAN  = 0x00000020,
-	TYPE_BYTE  = 0x00000021,
-	TYPE_SHORT  = 0x00000022,
-	TYPE_INTEGER  = 0x00000023,
-	TYPE_LONG  = 0x00000024,
-	TYPE_FLOAT  = 0x00000025,
-	TYPE_DOUBLE  = 0x00000026,
-	TYPE_STRING  = 0x00000027
-} labcomm_type ;
-
-void error(char *s) {
-	fprintf(stderr, "%s", s);
+static void error(char *s) {
+	fprintf(stderr, "ERROR: %s", s);
 	fprintf(stderr, "\nexiting\n");
 	exit(1);
 }
 
-#define BUF_SIZE 1024
-#define STACK_SIZE 16
-
-/* internal type: stack for the parser */
-typedef struct {
-	unsigned char* c;
-	unsigned int size;
-	unsigned int capacity;
-	unsigned int idx;
-	unsigned int* stack;
-	unsigned int top;
-} buffer;
-
 /* aux method for reading a big endian uint32 from a char* (i.e. ntohl but for explicit char*) */
-static int unpack32(unsigned char *c, unsigned int idx) {
-	unsigned int b0=(c[idx]) << 3 ; 
-	unsigned int b1=(c[idx+1]) << 2 ;
-	unsigned int b2=(c[idx+2]) << 1 ;
-	unsigned int b3=c[idx+3];
+static unsigned int unpack32(unsigned char *c, unsigned int idx) {
+       unsigned int b0=(c[idx]) << 3 ; 
+       unsigned int b1=(c[idx+1]) << 2 ;
+       unsigned int b2=(c[idx+2]) << 1 ;
+       unsigned int b3=c[idx+3];
 
-	return  b0 | b1 | b2 | b3;
+       return  b0 | b1 | b2 | b3;
 }
 
-void dumpStack(buffer *b) {
-#ifdef DEBUG_STACK
+static inline unsigned int get32(labcomm_sig_parser_t *b) {
+       unsigned int res = unpack32(b->c, b->idx);
+       b->idx+=4;
+       return res;
+}
+
+
+/* aux method for reading labcomm varint from a char* 
+   size is an out parameter: if not NULL the number of bytes read will be written here
+*/
+static int unpack_varint(unsigned char *buf, unsigned int idx, unsigned char *size) {
+        unsigned int res = 0;
+        unsigned int i=0;
+        unsigned char cont = TRUE;
+
+        do {
+                unsigned char c = buf[idx+i];
+                res |= (c & 0x7f) << 7*i;
+                cont = c & 0x80;
+                i++;
+        } while(cont);
+
+	if(size != NULL)
+		*size = i; 
+        return res;
+}
+
+void dumpValStack(labcomm_sig_parser_t *b) {
 	int i;
-	printf("=== stack: ");
+	printf("=== value stack: ");
+#ifdef DEBUG_STACK_VERBOSE
 	for(i=0; i<STACK_SIZE; i++) { //HERE BE DRAGONS
-		printf("%2.2x ", b->stack[i]);
+		printf("%2.2x ", b->val_stack[i]);
 	}
-	printf("    top==%d\n", b->top);
+#endif
+	printf("    top==%d\n", b->val_top);
+}
+void dumpPtrStack(labcomm_sig_parser_t *b) {
+	int i;
+	printf("=== pointer stack: ");
+#ifdef DEBUG_STACK_VERBOSE
+	for(i=0; i<STACK_SIZE; i++) { //HERE BE DRAGONS
+		printf("%2.2x ", b->ptr_stack[i]);
+	}
+#endif
+	printf("    top==%d\n", b->ptr_top);
+}
+
+void push_val(labcomm_sig_parser_t *b, unsigned int e) {
+	b->val_stack[b->val_top]=e;
+	b->val_top=b->val_top-1;
+	if(b->val_top<0) error("value stack overrun");
+#if defined DEBUG && !defined QUIET_STACK
+	dumpValStack(b);
 #endif
 }
-
-void push(buffer *b, unsigned int e) {
-	b->stack[b->top]=e;
-	b->top=b->top-1;
-	dumpStack(b);
+unsigned int pop_val(labcomm_sig_parser_t *b) {
+	b->val_top=b->val_top+1;
+	if(b->val_top>b->stacksize) error("value stack underrun");
+#if defined DEBUG && !defined QUIET_STACK
+	dumpValStack(b);
+#endif
+	return b->val_stack[b->val_top];
 }
-unsigned int pop(buffer *b) {
-	b->top=b->top+1;
-	return b->stack[b->top];
+void push_ptr(labcomm_sig_parser_t *b, void* e) {
+	b->ptr_stack[b->ptr_top]=e;
+	b->ptr_top=b->ptr_top-1;
+	if(b->ptr_top<0) error("pointer stack overrun");
+#ifdef DEBUG
+	dumpPtrStack(b);
+#endif
+}
+void* pop_ptr(labcomm_sig_parser_t *b) {
+	b->ptr_top=b->ptr_top+1;
+	if(b->ptr_top>b->stacksize) error("pointer stack underrun");
+#ifdef DEBUG
+	dumpPtrStack(b);
+#endif
+	return b->ptr_stack[b->ptr_top];
 }
 	
-int init_buffer(buffer *b, size_t size, size_t stacksize) {
-	b->c = malloc(size);
-	b->capacity = size;
+int labcomm_sig_parser_init(labcomm_sig_parser_t *b, size_t buffer_size, 
+                            size_t stacksize, size_t num_signatures,
+                            size_t max_name_len, size_t max_sig_len) 
+{
+	b->c = malloc(buffer_size);
+	b->capacity = buffer_size;
+	b->size = 0;
 	b->idx = 0;
 
-	b->stack = calloc(stacksize, sizeof(b->stack));
-	b->top = stacksize-1;
+	b->stacksize = stacksize;
 
-	return b->c == NULL || b->stack == NULL;
+	b->val_stack = calloc(stacksize, sizeof(b->val_stack));
+	b->val_top = stacksize-1;
+
+	b->ptr_stack = calloc(stacksize, sizeof(b->ptr_stack));
+	b->ptr_top = stacksize-1;
+
+	b->max_signatures = num_signatures;
+	b->max_name_len = max_name_len;
+	b->max_sig_len = max_sig_len;
+
+#ifdef STATIC_ALLOCATION
+	printf("warning: labcomm_sig_parser_t_init: size params ignored, using defaults from .h file \n");
+#else
+	b->sig_ts=calloc(num_signatures, sizeof(labcomm_signature_t));
+	b->signatures_length=calloc(num_signatures, sizeof(int));
+	b->signatures_name_length=calloc(num_signatures, sizeof(int));
+	b->signatures_name=calloc(num_signatures, sizeof(void *)); //HERE BE DRAGONS: add range checks
+	b->signatures=calloc(num_signatures, sizeof(void *));
+	int i;
+	for(i = 0; i<num_signatures; i++) {
+		b->signatures[i] = calloc(b->max_sig_len, sizeof(char));
+		b->signatures_name[i] = calloc(b->max_name_len, sizeof(char));
+	}
+#endif
+	return b->c == NULL || b->val_stack == NULL || b->ptr_stack == NULL;
 }
 
-int more(buffer *b) 
+int labcomm_sig_parser_read_file(labcomm_sig_parser_t *b, FILE *f) {
+        int s = fread(b->c, sizeof(char), b->capacity, f);
+        b->size = s;
+        b->idx=0;
+        return s;
+}
+
+int more(labcomm_sig_parser_t *b) 
 {
 	return b->idx < b->size;
 }
 
-unsigned char get(buffer *b) {
+unsigned char get(labcomm_sig_parser_t *b) {
 	return b->c[b->idx++];
 }
 
-unsigned char peek(buffer *b) {
+unsigned char peek(labcomm_sig_parser_t *b) {
 	return b->c[b->idx];
 }
 
-void advance(buffer *b) {
+void advance(labcomm_sig_parser_t *b) {
 	b->idx++;
 }
 
-void advancen(buffer *b, size_t n) {
+void advancen(labcomm_sig_parser_t *b, size_t n) {
 	b->idx+=n;
 }
 
-unsigned int peek32(buffer *b) {
-	return unpack32(b->c, b->idx);
+unsigned int peek_varint(labcomm_sig_parser_t *b, unsigned char *size) {
+        return unpack_varint(b->c, b->idx, size);
 }
 
-void advance32(buffer *b) {
-	b->idx+=4;
+unsigned int get_varint(labcomm_sig_parser_t *b) {
+        unsigned char size;
+        unsigned int res = peek_varint(b, &size);
+        advancen(b, size);
+        return res;
+}
+unsigned int get_varint_size(labcomm_sig_parser_t *b, unsigned char *size) {
+        unsigned int res = peek_varint(b, size);
+        advancen(b, *size);
+        return res;
 }
 
-unsigned int get32(buffer *b) {
-	unsigned int res = peek32(b);
-	advance32(b);
-	return res;
-}
-
-void getStr(buffer *b, char *dest, size_t size) {
+void getStr(labcomm_sig_parser_t *b, char *dest, size_t size) {
 	int rem = b->size - b->idx;
 	if( size > rem ) 
 		size = rem;
@@ -141,37 +218,47 @@ void getStr(buffer *b, char *dest, size_t size) {
 	b->idx += size;
 }
 
-//XXX experimental
-#define MAX_SIGNATURES 10
-#define MAX_NAME_LEN 32 
-#define MAX_SIG_LEN 128
-unsigned int signatures_length[MAX_SIGNATURES];
-unsigned char signatures_name[MAX_SIGNATURES][MAX_NAME_LEN]; //HERE BE DRAGONS: add range checks
-unsigned char signatures[MAX_SIGNATURES][MAX_SIG_LEN]; 
-
-unsigned int get_signature_len(unsigned int uid){
-	return signatures_length[uid-USER_ID_BASE];
-}
-unsigned char* get_signature_name(unsigned int uid){
-	return &signatures_name[uid-USER_ID_BASE][1];
-}
-unsigned char* get_signature(unsigned int uid){
-	return signatures[uid-USER_ID_BASE];
+labcomm_signature_t *get_sig_t(labcomm_sig_parser_t *p, unsigned int uid) 
+{
+	return &(p->sig_ts[uid-LABCOMM_USER]);
 }
 
-void dump_signature(unsigned int uid){
+unsigned int get_signature_len(labcomm_sig_parser_t *p, unsigned int uid){
+	//return signatures_length[uid-LABCOMM_USER];
+	return p->sig_ts[uid-LABCOMM_USER].size;
+}
+unsigned char* get_signature(labcomm_sig_parser_t *p, unsigned int uid){
+	//return signatures[uid-LABCOMM_USER];
+	return p->sig_ts[uid-LABCOMM_USER].signature;
+}
+
+//is this needed?
+//unsigned int get_signature_name_len(labcomm_sig_parser_t *p, unsigned int uid){
+//	return signatures_name_length[uid-LABCOMM_USER];
+//}
+
+unsigned char* get_signature_name(labcomm_sig_parser_t *p, unsigned int uid){
+	//return signatures_name[uid-LABCOMM_USER];
+	return p->sig_ts[uid-LABCOMM_USER].name;
+}
+
+void dump_signature(labcomm_sig_parser_t *p, unsigned int uid){
 	int i;
-	unsigned int len = get_signature_len(uid);
-	printf("signature for uid %x : %s (len=%d):\n", uid, get_signature_name(uid), len);
-	unsigned char* sig = get_signature(uid);
+	unsigned int len = get_signature_len(p, uid);
+	printf("signature for uid %x : %s (len=%d):\n", uid, get_signature_name(p, uid), len);
+	unsigned char* sig = get_signature(p, uid);
 	for(i=0; i<len; i++) {
 		printf("%2.2x ",sig[i]);
-		if( (i+1)%8==0 ) printf("\n");
+		if( i < len-1 && (i+1)%8==0 ) printf("\n");
 	}
 	printf("\n");
 }
 
-int labcomm_sizeof(unsigned int type)
+static inline void labcomm_sig_parser_t_set_varsize(labcomm_sig_parser_t *b)
+{
+	b->current_decl_is_varsize = TRUE;
+}
+static size_t labcomm_sizeof_primitive(unsigned int type)
 {
 	switch(type) {
 		case TYPE_BOOLEAN :
@@ -186,268 +273,362 @@ int labcomm_sizeof(unsigned int type)
 		case TYPE_DOUBLE : 
 			return 8;
 		default:
-			printf("labcomm_sizeof(%x)\n", type);
-		 	error("labcomm_sizeof should only be called for primitive types");
+			printf("labcomm_sizeof_primitive(%x)\n", type);
+		 	error("labcomm_sizeof_primitive should only be called for primitive types");
 	}
 }
 
-int accept_packet(buffer *d);
-int accept_type_decl(buffer *d);
-int accept_sample_decl(buffer *d);
-int accept_user_id(buffer *d);
-int accept_string(buffer *d);
-int accept_string_length(buffer *d);
-int accept_char(buffer *d);
-int accept_type(buffer *d);
-int accept_boolean_type(buffer *d);
-int accept_byte_type(buffer *d);
-int accept_short_type(buffer *d);
-int accept_integer_type(buffer *d);
-int accept_long_type(buffer *d);
-int accept_float_type(buffer *d);
-int accept_long_type(buffer *d);
-int accept_string_type(buffer *d);
-int accept_array_decl(buffer *d);
-int accept_number_of_indices(buffer *d);
-int accept_indices(buffer *d);
-int accept_variable_index(buffer *d);
-int accept_fixed_index(buffer *d);
-int accept_struct_decl(buffer *d);
-int accept_number_of_fields(buffer *d);
-int accept_field(buffer *d);
-int accept_sample_data(buffer *d);
-int accept_packed_sample_data(buffer *d);
+//these are inlined in do_accept_packet
+//static int accept_type_decl(labcomm_sig_parser_t *d);
+//static int accept_sample_decl(labcomm_sig_parser_t *d);
+static int accept_user_id(labcomm_sig_parser_t *d);
+static int accept_string(labcomm_sig_parser_t *d);
+static int accept_string_length(labcomm_sig_parser_t *d);
+static int accept_char(labcomm_sig_parser_t *d);
+static int accept_type(labcomm_sig_parser_t *d);
+static int accept_array_decl(labcomm_sig_parser_t *d);
+static int accept_number_of_indices(labcomm_sig_parser_t *d);
+static int accept_indices(labcomm_sig_parser_t *d);
+static int accept_variable_index(labcomm_sig_parser_t *d);
+static int accept_fixed_index(labcomm_sig_parser_t *d);
+static int accept_struct_decl(labcomm_sig_parser_t *d);
+static int accept_number_of_fields(labcomm_sig_parser_t *d);
+static int accept_field(labcomm_sig_parser_t *d);
+static int accept_sample_data(labcomm_sig_parser_t *d);
 
-int do_parse(buffer *d) {
-	unsigned int type = peek32(d) ;
-	if(type == TYPE_DECL ) {
-		advance32(d);
-		accept_user_id(d);
-		unsigned int uid = pop(d);
-		printf(", name = ");
-		accept_string(d);
-		pop(d); // ignore, for now. This should do something as
-		// char *name = (char*) pop(d);
-		// store or print name
-		// free(name)
-		printf(" : ");
-		accept_type(d);
-		unsigned int type = pop(d);
+static unsigned char labcomm_varint_sizeof(unsigned int i)
+{
+	if(i < 128) {
+		return 1;
+	} else {
+		unsigned char res = 1;
+		while (i >>= 7) ++res;
 
-		//push(d, type);
-		printf("\n");
-		return TRUE;
-	} else if (type == SAMPLE_DECL) {
-		advance32(d);
-		printf("sample_decl ");
-		accept_user_id(d);
+		return res;
+	}
+}
+
+int encoded_size_static(labcomm_signature_t *sig, void *unused)
+{
+	if(sig->cached_encoded_size == -1) {
+		error("encoded_size_static called for var_size sample or uninitialized signature");
+	}
+	return sig->cached_encoded_size;
+}
+
+/* This function probably never will be implemented, as it would be 
+   similar to skip_packed_sample_data. And if unregistered variable size 
+   samples is to be handled, the proper way is to generate and register
+   a handler. Thus, the most probable use of the encoded_size function
+   on the receiver side, is to skip unhandled samples.
+*/
+  
+int encoded_size_parse_sig(labcomm_signature_t *sig, void *sample)
+{
+	printf("Warning: encoded_size_parse_sig not implemented\n");
+	return -1;
+}
+
+static int accept_signature(labcomm_sig_parser_t *d)
+{
+	if(accept_user_id(d)) {
+		unsigned int uid = pop_val(d);
 		unsigned int nstart = d->idx;
-		unsigned int uid = pop(d);
-		printf(", name = ");
+		VERBOSE_PRINTF(", name = ");
 		accept_string(d);
 		unsigned int start = d->idx;
-		unsigned int nlen = pop(d);
+		unsigned int nlen = pop_val(d);
+#ifdef RETURN_STRINGS
+		char *str = (char *) pop_ptr(d);
+		free(str);
+#endif
+		unsigned char lenlen = labcomm_varint_sizeof(nlen);
+		VERBOSE_PRINTF("\ntype = ");
 		accept_type(d);
 		//printf(" : ");
 		//unsigned int dt = pop(d);
+		unsigned int type = pop_val(d);
+		unsigned int enc_size = pop_val(d);
 		unsigned int end = d->idx;
 		unsigned int len = end-start;
 
-		if(len <= MAX_SIG_LEN) {
-			signatures_length[uid-USER_ID_BASE] = len;
-			memcpy(signatures[uid-USER_ID_BASE], &d->c[start], len);
+		labcomm_signature_t *newsig = get_sig_t(d, uid);
+		newsig->type = type;
+		if(len <= d->max_sig_len) {
+			d->signatures_length[uid-LABCOMM_USER] = len;
+			memcpy(d->signatures[uid-LABCOMM_USER], &d->c[start], len);
+			newsig->size = len;
+			newsig->signature = d->signatures[uid-LABCOMM_USER];
 		} else {
 			error("sig longer than max length (this ought to be dynamic...)");
 		}
 
-		if(nlen < MAX_NAME_LEN) { // leave 1 byte for terminating NULL
-			signatures_name[uid-USER_ID_BASE][0] = nlen;
-			memcpy(signatures_name[uid-USER_ID_BASE], &d->c[nstart+3], nlen);
-			signatures_name[uid-USER_ID_BASE][nlen+1]=0;
+		if(nlen < d->max_name_len) { // leave 1 byte for terminating NULL
+			d->signatures_name_length[uid-LABCOMM_USER] = nlen;
+			memcpy(d->signatures_name[uid-LABCOMM_USER], &d->c[nstart+lenlen], nlen);
+			d->signatures_name[uid-LABCOMM_USER][nlen]=0;
+			newsig->name = d->signatures_name[uid-LABCOMM_USER];
 		} else {
 			error("sig name longer than max length (this ought to be dynamic...");
 		}
-		//printf("signature for uid %x: %s (start=%x,end=%x, nlen=%d,len=%d)\n", uid, get_signature_name(uid), start,end, nlen, len);
+		VERBOSE_PRINTF("signature for uid %x: %s (start=%x,end=%x, nlen=%d,len=%d)\n", uid, get_signature_name(d, uid), start,end, nlen, len);
+		INFO_PRINTF("SIG: %s\n", newsig->name);	
+		if(! d->current_decl_is_varsize) {
+			newsig->cached_encoded_size = enc_size;
+			newsig->encoded_size = encoded_size_static;
+			INFO_PRINTF(".... is static size = %d\n", enc_size);
+		} else {
+			newsig->cached_encoded_size = -1;
+			newsig->encoded_size = encoded_size_parse_sig;
+			INFO_PRINTF(".... is variable size\n");
+		}
+		return TRUE;
 	} else {
+		error("sample_decl with uid < LABCOMM_USER");	
+		return FALSE;
+	}
+}
+
+// HERE BE DRAGONS! what does the return value mean?
+int accept_packet(labcomm_sig_parser_t *d) {
+        unsigned char nbytes;
+        unsigned int type = peek_varint(d, &nbytes) ;
+	if(type == TYPE_DECL ) {
+		//XXX is this used? If so, is it correct?
+		advancen(d, nbytes);
+		d->current_decl_is_varsize = FALSE; // <-- a conveniance flag in labcomm_sig_parser_t
+		VERBOSE_PRINTF("type_decl ");
+		accept_signature(d);
+	} else if (type == SAMPLE_DECL) {
+		d->current_decl_is_varsize = FALSE; // <-- a conveniance flag in labcomm_sig_parser_t
+		advancen(d, nbytes);
+		VERBOSE_PRINTF("sample_decl ");
+		accept_signature(d);
+	} else if(type >= LABCOMM_USER) {
 #ifdef EXIT_WHEN_RECEIVING_DATA
 		printf("*** got sample data, exiting\n");
 		exit(0);
 #else
 		accept_sample_data(d);
 #endif
+	} else {
+		error("got unknown type (<LABCOMM_USER)");
+		exit(1);
 	}
 }
 
-int accept_user_id(buffer *d){
-	unsigned int uid = peek32(d);
-	if(uid >= USER_ID_BASE) {
-		advance32(d);
-		printf("uid = %x ", uid);
-		push(d, uid);
+static int accept_user_id(labcomm_sig_parser_t *d){
+        unsigned char nbytes;
+	unsigned int uid = peek_varint(d, &nbytes);
+	if(uid >= LABCOMM_USER) {
+		advancen(d, nbytes);
+		VERBOSE_PRINTF("uid = %x ", uid);
+		push_val(d, uid);
 		return TRUE;
 	} else {
 		return FALSE;
 	}
 }
 
-int accept_string(buffer *d){
-	unsigned int len = get32(d);
-	push(d, len);
+static int accept_string(labcomm_sig_parser_t *d){
+	unsigned int len = get_varint(d);
 	char *str=malloc(len);
-	getStr(d, str, len);
-	printf("%s", str);
+	getStr(d, str, len); 
+	VERBOSE_PRINTF("%s", str);
 #ifdef RETURN_STRINGS
-	push(d, str);
+	push_ptr(d, str);
 #else
 	free(str);
 #endif
+	push_val(d, len);
 	return TRUE;
 }
-// included above
-// int accept_string_length(buffer *d){
-//	unsigned int uid = get32(d);
-//	return TRUE;
-//}
-//int accept_char(buffer *d){
-//}
-
-int accept_type(buffer *d){
-	unsigned int type = peek32(d);
+/* pushes size and type id */
+static int accept_type(labcomm_sig_parser_t *d){
+	unsigned char nbytes;
+        unsigned int type = peek_varint(d, &nbytes) ;
 	switch(type) {
 		case TYPE_BOOLEAN :
-			printf("boolean");
-			advance32(d);
+			VERBOSE_PRINTF("boolean\n");
+			advancen(d, nbytes);
+			push_val(d, 1);
 			break;
 		case TYPE_BYTE :
-			printf("byte");
-			advance32(d);
+			VERBOSE_PRINTF("byte\n");
+			advancen(d, nbytes);
+			push_val(d,  1);
 			break;
 		case TYPE_SHORT :
-			printf("short");
-			advance32(d);
+			VERBOSE_PRINTF("short\n");
+			advancen(d, nbytes);
+			push_val(d,  2);
 			break;
 		case TYPE_INTEGER :
-			printf("integer");
-			advance32(d);
+			VERBOSE_PRINTF("integer\n");
+			advancen(d, nbytes);
+			push_val(d,  4);
 			break;
 		case TYPE_LONG :
-			printf("long");
-			advance32(d);
+			VERBOSE_PRINTF("long\n");
+			advancen(d, nbytes);
+			push_val(d,  8);
 			break;
 		case TYPE_FLOAT :
-			printf("float");
-			advance32(d);
+			VERBOSE_PRINTF("float\n");
+			advancen(d, nbytes);
+			push_val(d,  4);
 			break;
 		case TYPE_DOUBLE :
-			printf("double");
-			advance32(d);
+			VERBOSE_PRINTF("double\n");
+			advancen(d, nbytes);
+			push_val(d,  8);
 			break;
 		case TYPE_STRING :
-			printf("string");
-			advance32(d);
+			VERBOSE_PRINTF("string\n");
+			advancen(d, nbytes);
+			labcomm_sig_parser_t_set_varsize(d);
+			push_val(d, 0);
 			break;
 		case ARRAY_DECL :
 			accept_array_decl(d);
+			pop_val(d); // ignore element type
+			// push(d, pop(d) is a NOP --> leave size on stack
 			break;
 		case STRUCT_DECL :
 			accept_struct_decl(d);
+			// push(d, pop(d) is a NOP --> leave size on stack
 			break;
 		default :
-			printf("accept_basic_type default (type==%x) should not happen\n", type);
+			printf("accept_type default (type==%x) should not happen\n", type);
+			push_val(d, 0);
+			push_val(d, type);
 			return FALSE;
 	}
-	//push(d,type);
+	push_val(d, type);
 	return TRUE;
 }
 
-int accept_array_decl(buffer *d){
-	unsigned int tid = peek32(d);
+/* pushes size and element type */
+static int accept_array_decl(labcomm_sig_parser_t *d){
+        unsigned char nbytes;
+        unsigned int tid = peek_varint(d, &nbytes) ;
 	if(tid == ARRAY_DECL) {
-		advance32(d);
-		unsigned int nidx = get32(d);
-		printf("%d dim array", nidx);
+		advancen(d, nbytes);
+		unsigned int nidx = get_varint(d);
+		VERBOSE_PRINTF("%d dim array", nidx);
 		int i;
 		unsigned int numVar=0;
 		unsigned int size=1;
 		for(i=0; i<nidx; i++) {
-			unsigned int idx = get32(d);
+			unsigned int idx = get_varint(d);
 			if(idx == 0) {
 				numVar++;
-				printf("[_] ");
+				VERBOSE_PRINTF("[_] ");
+				labcomm_sig_parser_t_set_varsize(d);
 			} else {
-				printf("[%d] ", idx);
+				VERBOSE_PRINTF("[%d] ", idx);
 				size*=idx;
 			}
 		}
-		printf(" of ");
-		unsigned int et=accept_type(d);
-		//pop(d);
-		//push(d,tid);
+		VERBOSE_PRINTF(" of ");
+		accept_type(d);
+		unsigned int et= pop_val(d);  // type
+		unsigned int es= pop_val(d);  // (encoded) size
+#ifdef DEBUG
+		printf("accept_array_decl: et = %x\n", et);
+#endif
+		if(numVar == 0) {
+#ifdef DEBUG
+			printf("size=%d, es=%d\n", size, es);
+#endif
+			push_val(d,  (size*es));
+		} else {
+//HERE BE DRAGONS! push a (non-) size for variable size arrays?
+			push_val(d, 0);
+		}
+		push_val(d, et);
 		return TRUE;
 	} else {
 		printf("accept_array_decl: type=%x, should not happen\n",tid);
+		push_val(d, 0);
+		push_val(d, tid);
 		return FALSE;
 	}
 }
-int accept_struct_decl(buffer *d){
-	unsigned int tid = peek32(d);
+
+/* pushes size */
+static int accept_struct_decl(labcomm_sig_parser_t *d){
+	unsigned char nbytes;
+        unsigned int tid = peek_varint(d, &nbytes) ;
 	if(tid == STRUCT_DECL) {
-		advance32(d);
-		unsigned int nf = get32(d);
-		printf(", %d field struct:\n", nf);
+		advancen(d, nbytes);
+		unsigned int nf = get_varint(d);
+		VERBOSE_PRINTF("%d field struct:\n", nf);
 		int i;
 		int numVar=0;
 		int size=0;
+		unsigned int fieldsizes=0;
 		for(i=0; i<nf; i++) {
-			printf("\t");
 			accept_field(d);
+			fieldsizes += pop_val(d);
 		}
-//		push(d,tid);
+		push_val(d, fieldsizes);
 		return TRUE;
 	} else {
 		printf("accept_struct_decl: type=%x, should not happen\n",tid);
+		push_val(d, 0);
 		return FALSE;
 	}
 }
-int accept_field(buffer *d){
-	printf("field ");
+
+/* pushes field size */
+static int accept_field(labcomm_sig_parser_t *d){
+	VERBOSE_PRINTF("\tfield name: ");
 	accept_string(d);
-	pop(d); // ignore, for now
-	printf(" : ");
-	accept_type(d);
-	printf("\n");
-}
-int accept_sample_data(buffer *d){
-	accept_user_id(d);
-	unsigned int uid = pop(d);	
-	printf("sample data... %x\n", uid);
-#ifdef DEBUG
-	dump_signature(uid);
+	pop_val(d); // ignore length, for now
+#ifdef RETURN_STRINGS
+		char *str = (char *) pop_ptr(d);
+		free(str);
 #endif
-	unsigned int siglen = get_signature_len(uid);
-	unsigned char *sig = get_signature(uid);
-	skip_packed_sample_data(d, sig, siglen);
+	VERBOSE_PRINTF("\n\ttype: ");
+	accept_type(d);
+	pop_val(d); // ignore type, for now
+	// push(pop() is really a NOP , leave size on the stack when debugging done
+	VERBOSE_PRINTF("\n");
+}
+static int accept_sample_data(labcomm_sig_parser_t *d){
+	accept_user_id(d);
+	unsigned int uid = pop_val(d);	
+	printf("sample data... uid=0x%x\n", uid);
+#ifdef DEBUG
+	dump_signature(d, uid);
+#endif
+	labcomm_signature_t *sigt = get_sig_t(d, uid);
+	int encoded_size = sigt->encoded_size(sigt, NULL);
+	INFO_PRINTF("encoded_size from sig: %d\n", encoded_size);
+	labcomm_signature_t *sig = get_sig_t(d, uid);
+	skip_packed_sample_data(d, sig);
 	return TRUE;
 }
-//int accept_packed_sample_data(buffer *d){
 
-int skip_type(unsigned int,buffer*,unsigned char*,unsigned int,unsigned int*) ;
+static int skip_type(unsigned int,labcomm_sig_parser_t*,unsigned char*,unsigned int,unsigned int*) ;
 
-int skip_array(buffer *d, unsigned char *sig, unsigned int len, unsigned int *pos) {
+static int skip_array(labcomm_sig_parser_t *d, unsigned char *sig, unsigned int len, unsigned int *pos) {
 	unsigned int skip = 0;
 	unsigned int tot_nbr_elem_tmp = 1;
-	unsigned int nIdx = unpack32(sig, *pos);
-	printf("skip_array: nIdx = %d (from sig)\n", nIdx);
-	*pos +=4;
+	unsigned char nbytes;
+	unsigned int nIdx = unpack_varint(sig, *pos, &nbytes);
+	VERBOSE_PRINTF("skip_array: nIdx = %d (from sig)\n", nIdx);
+	*pos +=nbytes;
 	unsigned int idx[nIdx];
 	unsigned int nVar=0;
 
 	unsigned int i;
 
 	for(i=0; i<nIdx; i++) {
-		idx[i] = unpack32(sig, *pos);
-		*pos += 4;
-		printf("skip_array: idx[%d]=%d (from sig)\n", i, idx[i]);
+		idx[i] = unpack_varint(sig, *pos, &nbytes);
+		*pos += nbytes;
+		VERBOSE_PRINTF("skip_array: idx[%d]=%d (from sig)\n", i, idx[i]);
 		if(idx[i] == 0) {
 			nVar++;
 		} else {
@@ -456,48 +637,52 @@ int skip_array(buffer *d, unsigned char *sig, unsigned int len, unsigned int *po
 	}
 	unsigned int var[nVar];
 
+	unsigned char varSize=0; // total number of bytes required for var size fields
 	for(i=0; i<nVar; i++) {
-		var[i] = get32(d);	
-		printf("skip_array: var[%d]=%d (from sample)\n", i, var[i]);
+		var[i] = get_varint_size(d, &nbytes);	
+		varSize += nbytes;
+		VERBOSE_PRINTF("skip_array: var[%d]=%d (from sample)\n", i, var[i]);
 		tot_nbr_elem_tmp *= var[i];
 	}
 
-	unsigned int type = unpack32(sig, *pos);
-	*pos+=4;
+	unsigned int type = unpack_varint(sig, *pos, &nbytes);
+	*pos+=nbytes;
 
-	unsigned int elemSize = labcomm_sizeof(type);
+	unsigned int elemSize = labcomm_sizeof_primitive(type);
 
 	skip = elemSize * tot_nbr_elem_tmp;
 
-	printf("skip_array: skip: %d * %d = %d\n", tot_nbr_elem_tmp, elemSize ,skip);
+	VERBOSE_PRINTF("skip_array: skip: %d * %d = %d\n", tot_nbr_elem_tmp, elemSize ,skip);
 	
 	advancen(d, skip);
 
-	return skip + 4*nVar;
+	//return skip + 4*nVar;
+	return skip + varSize;
 }
 
-int skip_struct(buffer *d, unsigned char *sig, unsigned int len, unsigned int *pos) {
-	unsigned int nFields = unpack32(sig,*pos);
-	*pos += 4;
+int skip_struct(labcomm_sig_parser_t *d, unsigned char *sig, unsigned int len, unsigned int *pos) {
+	unsigned char nbytes;
+	unsigned int nFields = unpack_varint(sig,*pos, &nbytes);
+	*pos += nbytes;
 	unsigned int i;
 	unsigned int skipped=0;
-	printf("skip_struct (%d fields)\n", nFields);
+	VERBOSE_PRINTF("skip_struct (%d fields)\n", nFields);
 	for(i=0; i<nFields; i++) {
 		//skip name 
-		unsigned int namelen = unpack32(sig, *pos);
+		unsigned int namelen = unpack_varint(sig, *pos, &nbytes);
 #ifdef DEBUG
-		printf("namelen==%d",namelen);
-		char name[namelen+1];
+		VERBOSE_PRINTF("field #%d:\n----namelen==%d\n",i,namelen);
+		char name[namelen+1]; //HERE BE DRAGONS. alloca?
+		strncpy(name, sig+*pos+nbytes, namelen);
 		name[namelen]=0;
-		strncpy(name, sig+*pos+4, namelen);
-		printf(", name = %s",name);
+		VERBOSE_PRINTF("----name = %s\n",name);
 #endif
-		*pos += (4+namelen); // 32bit len + actual string
+		*pos += (nbytes+namelen); // 32bit len + actual string
 
-		unsigned int type = unpack32(sig, *pos);
-		*pos += 4;
+		unsigned int type = unpack_varint(sig, *pos, &nbytes);
+		*pos += nbytes;
 #ifdef DEBUG
-		printf(": type == %x\n", type);
+		VERBOSE_PRINTF("----type == %x\n", type);
 #endif
 		skipped += skip_type(type, d, sig, len, pos);
 	}
@@ -505,7 +690,7 @@ int skip_struct(buffer *d, unsigned char *sig, unsigned int len, unsigned int *p
 }
 #ifndef QUIET
 /* print and skip */
-int skip_type(unsigned int type, buffer *d, 
+int skip_type(unsigned int type, labcomm_sig_parser_t *d, 
 		unsigned char *sig, unsigned int len, unsigned int *pos) 
 {
 	int skipped=0;
@@ -540,14 +725,15 @@ int skip_type(unsigned int type, buffer *d,
 			skipped+=8;
 			break;
 		case TYPE_STRING :
-			{unsigned int len = get32(d);
-			//advancen(d,len);
+			{
+			unsigned char nbytes;
+			unsigned int len = get_varint_size(d, &nbytes);
 			int i;
 			printf("string [");
 			for(i=0; i<len; i++)
 				printf("%c", get(d));
 			printf("]\n");
-			skipped+=len+4;
+			skipped+=len+nbytes;
 			break;}
 		case ARRAY_DECL :
 			printf("array\n");
@@ -564,11 +750,11 @@ int skip_type(unsigned int type, buffer *d,
 	return skipped;
 }
 #else
-int skip_type(unsigned int type, buffer *d, 
+int skip_type(unsigned int type, labcomm_sig_parser_t *d, 
 		unsigned char *sig, unsigned int len, unsigned int *pos) 
 {
 	int skipped=0;
-	printf("skip_type %x\n", type);
+	VERBOSE_PRINTF("skip_type %x\n", type);
 	switch(type) {
 		case TYPE_BOOLEAN :
 		case TYPE_BYTE : 
@@ -590,9 +776,11 @@ int skip_type(unsigned int type, buffer *d,
 			skipped+=8;
 			break;
 		case TYPE_STRING :
-			{unsigned int len = get32(d);
+			{
+			unsigned char nbytes;
+			unsigned int len = get_varint_size(d, &nbytes);
 			advancen(d,len);
-			skipped+=len+4;
+			skipped+=len+nbytes;
 			break;}
 		case ARRAY_DECL :
 			skipped += skip_array(d, sig, len, pos);
@@ -608,51 +796,17 @@ int skip_type(unsigned int type, buffer *d,
 }
 #endif
 
-/* parse signature and skip the corresponding bytes in the buffer 
+/* parse signature and skip the corresponding bytes in the labcomm_sig_parser_t 
  */
-int skip_packed_sample_data(buffer *d, unsigned char *sig, unsigned int siglen) {
+int skip_packed_sample_data(labcomm_sig_parser_t *d, labcomm_signature_t *sig) {
 	unsigned int pos = 0; 		//current position in signature
 	unsigned int skipped = 0;	//skipped byte counter
-	while(pos < siglen) {
-		unsigned int type = unpack32(sig,pos);
-		pos+=4;
-		skipped += skip_type(type, d, sig, siglen, &pos);
+	while(pos < sig->size) {
+		unsigned char nbytes;
+		unsigned int type = unpack_varint(sig->signature,pos, &nbytes);
+		pos+=nbytes;
+		skipped += skip_type(type, d, sig->signature, sig->size, &pos);
 	}	
 	printf("skipped %d bytes\n", skipped);
 	return TRUE;
 }
-
-int read_file(FILE *f, buffer *b) {
-	int s = fread(b->c, sizeof(char), b->capacity, f);
-	b->size = s;
-	b->idx=0;
-	return s;
-}
-
-void test_read(buffer *buf) {
-	int r = read_file(stdin, buf);
-#ifdef DEBUG_READ
-	printf("read %d bytes:\n\n", r);
-	int i;
-	for(i=0; i<r; i++) {
-		printf("%x ", buf->c[i]);
-		if(i%8 == 7) printf("\n");
-	}
-	printf("\n");
-#endif
-}
-int main() {
-	buffer buf;
-
-	if( init_buffer(&buf, BUF_SIZE, STACK_SIZE) ) {
-		printf("failed to init buffer\n");
-		exit(1);
-	}
-	test_read(&buf);
-	do{
-		printf("------------\n");
-	} while(more(&buf) && do_parse(&buf)); 
-	printf("done\n");
-}
-
-	

@@ -1,6 +1,6 @@
 #include <errno.h>
 #include <unistd.h>
-#include "labcomm.h"
+#include "labcomm_fd_reader_writer.h"
 
 #define BUFFER_SIZE 2048
 
@@ -53,13 +53,16 @@ int labcomm_fd_reader(
       r->pos = 0;
       result = 0;
     } break;
+    case labcomm_reader_ioctl: {
+      result = -ENOTSUP;
+    }
   }
   return result;
 }
 
 int labcomm_fd_writer(
   labcomm_writer_t *w, 
-  labcomm_writer_action_t action)
+  labcomm_writer_action_t action, ...)
 {
   int result = 0;
   int *fd = w->context;
@@ -85,19 +88,19 @@ int labcomm_fd_writer(
       w->count = 0;
       w->pos = 0;
     } break;
-    case labcomm_writer_start: {
+    case labcomm_writer_start: 
+    case labcomm_writer_start_signature: {
       w->pos = 0;
     } break;
-    case labcomm_writer_continue: {
+    case labcomm_writer_continue: 
+    case labcomm_writer_continue_signature: {
       result = write(*fd, w->data, w->pos);
       w->pos = 0;
     } break;
-    case labcomm_writer_end: {
+    case labcomm_writer_end: 
+    case labcomm_writer_end_signature: {
       result = write(*fd, w->data, w->pos);
       w->pos = 0;
-    } break;
-    case labcomm_writer_available: {
-      result = w->count - w->pos; 
     } break;
   }
   return result;

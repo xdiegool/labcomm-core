@@ -1,6 +1,7 @@
 #include "labcomm_mem_writer.h"
 
-#include "stddef.h"  // For size_t.
+#include <stddef.h>  // For size_t.
+#include <stdarg.h>
 #include <errno.h>
 
 #include "labcomm.h"
@@ -26,7 +27,7 @@ static void copy_data(labcomm_writer_t *w, labcomm_mem_writer_context_t *mcontex
  * Write encoded messages to memory. w->context is assumed to be a pointer to a
  * labcomm_mem_writer_context_t structure.
  */
-int labcomm_mem_writer(labcomm_writer_t *w, labcomm_writer_action_t action)
+int labcomm_mem_writer(labcomm_writer_t *w, labcomm_writer_action_t action, ...)
 {
   int result = 0;
   // Unwrap pointers for easy access.
@@ -64,14 +65,17 @@ int labcomm_mem_writer(labcomm_writer_t *w, labcomm_writer_action_t action)
     w->count = 0;
     w->pos = 0;
    } break;
-  case labcomm_writer_start:{
+  case labcomm_writer_start:
+    case labcomm_writer_start_signature: {
 #if (ENCODED_BUFFER == 1)
     w->pos = 0;
 #elif (ENCODED_BUFFER == 2)
     w->pos = mcontext->write_pos;
 #endif
     } break;
-  case labcomm_writer_continue:{ // Encode-buffer(w->data) is full; empty/handle it. (w->pos == w->count) most likely.
+  case labcomm_writer_continue:
+  case labcomm_writer_continue_signature: { 
+    // Encode-buffer(w->data) is full; empty/handle it. (w->pos == w->count) most likely.
 #if (ENCODED_BUFFER == 1)
     copy_data(w, mcontext, mbuf);
     result = w->pos; // Assume result here should be number of bytes written.
@@ -80,8 +84,9 @@ int labcomm_mem_writer(labcomm_writer_t *w, labcomm_writer_action_t action)
     mcontext->write_pos = w->pos;
 #endif
      result = 0;
-       } break;
-  case labcomm_writer_end:{ // Nothing more to encode, handle encode-buffer(w->data).
+    } break;
+  case labcomm_writer_end:
+  case labcomm_writer_end_signature:{ // Nothing more to encode, handle encode-buffer(w->data).
 #if (ENCODED_BUFFER == 1)
     copy_data(w, mcontext, mbuf);
     result = w->pos;
@@ -91,9 +96,6 @@ int labcomm_mem_writer(labcomm_writer_t *w, labcomm_writer_action_t action)
 #endif
     result = 0;
     } break;
-  case labcomm_writer_available:{
-    result = w->count - w->pos;
-        } break;
   }
   return result;
 }

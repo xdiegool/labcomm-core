@@ -7,16 +7,20 @@ import java.io.OutputStream;
 
 public class LabCommEncoderChannel implements LabCommEncoder {
 
-  private OutputStream writer;
+  private LabCommWriter writer;
   private ByteArrayOutputStream bytes;
   private DataOutputStream data;
   private LabCommEncoderRegistry registry;
 
-  public LabCommEncoderChannel(OutputStream writer) {
+  public LabCommEncoderChannel(LabCommWriter writer) {
     this.writer = writer;
     bytes = new ByteArrayOutputStream();
     data = new DataOutputStream(bytes);
     registry = new LabCommEncoderRegistry();
+  }
+
+  public LabCommEncoderChannel(OutputStream writer) {
+    this(new WriterWrapper(writer));
   }
 
   public void register(LabCommDispatcher dispatcher) throws IOException {
@@ -37,7 +41,9 @@ public class LabCommEncoderChannel implements LabCommEncoder {
 
   public void end(Class<? extends LabCommSample> c) throws IOException {
     data.flush();
-    bytes.writeTo(writer);
+    //XXX when writer was a stream, it was probably a bit more GC efficient:
+    //bytes.writeTo(writer);
+    writer.write(bytes.toByteArray());
     bytes.reset();
   }
 
