@@ -215,6 +215,7 @@ typedef struct labcomm_encoder {
 		      labcomm_encode_typecast_t);
   void (*do_encode)(struct labcomm_encoder *encoder, 
 		    labcomm_signature_t *signature, 
+		    labcomm_encode_typecast_t encode,
 		    void *value);
   labcomm_error_handler_callback on_error;
 } labcomm_encoder_t;
@@ -227,18 +228,8 @@ void labcomm_internal_encoder_register(
 void labcomm_internal_encode(
   labcomm_encoder_t *encoder, 
   labcomm_signature_t *signature, 
+  labcomm_encode_typecast_t encode,
   void *value);
-
-void labcomm_encoder_start(
-  labcomm_encoder_t *encoder,
-  labcomm_signature_t *signature);
-
-//HERE BE DRAGONS: is the signature_t* needed here?
-void labcomm_encoder_end(
-  labcomm_encoder_t *encoder,
-  labcomm_signature_t *signature);
-
-
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 
@@ -383,7 +374,5 @@ static inline void labcomm_encode_string(labcomm_encoder_t *e,
 {
   labcomm_write_string(&e->writer, s);
 }
-
-void labcomm_encode_type_index(labcomm_encoder_t *e, labcomm_signature_t *s);
 
 #endif

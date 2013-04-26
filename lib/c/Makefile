@@ -10,7 +10,8 @@ OBJS= labcomm.o labcomm_dynamic_buffer_writer.o labcomm_fd_reader.o labcomm_fd_w
 LABCOMMC_PATH=../../compiler
 LABCOMMC_JAR=$(LABCOMMC_PATH)/labComm.jar
 
-TESTS=test_labcomm_basic_type_encoding test_labcomm test_labcomm_errors
+TESTS=test_labcomm_basic_type_encoding test_labcomm_generated_encoding test_labcomm 
+#FIXME: test_labcomm_errors
 TEST_DIR=test
 TESTDATA_DIR=$(TEST_DIR)/testdata
 TEST_GEN_DIR=$(TESTDATA_DIR)/gen
@@ -63,6 +64,15 @@ $(TEST_DIR)/%.o: $(TEST_DIR)/%.c
 $(TEST_DIR)/%: $(TEST_DIR)/%.o liblabcomm.a
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS) $(LDLIBS_TEST)
 
+$(TEST_DIR)/gen:
+	mkdir -p $@
+
+$(TEST_DIR)/gen/%.c $(TEST_DIR)/gen/%.h: $(TEST_DIR)/%.lc | $(TEST_DIR)/gen
+	java -jar $(LABCOMMC_JAR) \
+		--c=$(TEST_DIR)/gen/$*.c \
+		--h=$(TEST_DIR)/gen/$*.h \
+		$<
+
 $(TEST_GEN_DIR)/%.c $(TEST_GEN_DIR)/%.h: $(TESTDATA_DIR)/%.lc \
 					 $(LABCOMMC_JAR) | $(TEST_GEN_DIR)
 	java -jar $(LABCOMMC_JAR) \
@@ -82,11 +92,14 @@ clean:
 	$(RM) test/*.gch
 	$(RM) test/test_labcomm_errors
 	$(RM) test/testdata/gen/*.[cho]
+	$(RM) test/gen/*.[cho]
 	$(RM) $(TEST_DIR)/test_labcomm
 
 distclean: clean
 	$(RM) liblabcomm.a
 
 # Extra dependencies
+$(TEST_DIR)/test_labcomm_basic_type_encoding.o: labcomm_private.h
+$(TEST_DIR)/test_labcomm_generated_encoding.o : $(TEST_DIR)/gen/generated_encoding.h
+$(TEST_DIR)/test_labcomm_generated_encoding : $(TEST_DIR)/gen/generated_encoding.o
 $(TEST_DIR)/test_labcomm:  $(TEST_GEN_DIR)/test_sample.o
-$(TEST_DIR)/test_labcomm_private.o: labcomm_private.h

@@ -641,17 +641,7 @@ aspect C_Encoder {
     env.println(")");
     env.println("{");
     env.indent();
-    env.println("labcomm_encoder_start(e, &labcomm_signature_" + 
-		env.prefix + getName() + ");");
-    env.println("labcomm_encode_type_index(e, &labcomm_signature_" + 
-		env.prefix + getName() + ");");
-    env.println("{");
-    env.indent();
     getType().C_emitEncoder(env);
-    env.unindent();
-    env.println("}");
-    env.println("labcomm_encoder_end(e, &labcomm_signature_" + 
-		env.prefix + getName() + ");");
     env.unindent();
     env.println("}");
 
@@ -664,7 +654,9 @@ aspect C_Encoder {
     env.println("{");
     env.indent();
     env.println("labcomm_internal_encode(e, &labcomm_signature_" + 
-		env.prefix + getName() + ", v);");
+		env.prefix + getName() + 
+		", (labcomm_encode_typecast_t)encode_" + getName() +
+		", v);");
     env.unindent();
     env.println("}");
   }

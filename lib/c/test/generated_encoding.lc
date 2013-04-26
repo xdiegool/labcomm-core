@@ -1,0 +1,5 @@
+sample void V;
+sample byte B;
+sample struct {
+  int i;
+} S1;
