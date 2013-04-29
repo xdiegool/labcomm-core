@@ -203,7 +203,7 @@ static inline char *labcomm_decode_string(labcomm_decoder_t *d)
 /*
  * Semi private encoder declarations
  */
-typedef void (*labcomm_encode_typecast_t)(
+typedef int (*labcomm_encoder_function)(
   struct labcomm_encoder *,
   void *value);
 
@@ -212,10 +212,10 @@ typedef struct labcomm_encoder {
   labcomm_writer_t writer;
   void (*do_register)(struct labcomm_encoder *encoder, 
 		      labcomm_signature_t *signature,
-		      labcomm_encode_typecast_t);
-  void (*do_encode)(struct labcomm_encoder *encoder, 
+		      labcomm_encoder_function encode);
+  int (*do_encode)(struct labcomm_encoder *encoder, 
 		    labcomm_signature_t *signature, 
-		    labcomm_encode_typecast_t encode,
+		    labcomm_encoder_function encode,
 		    void *value);
   labcomm_error_handler_callback on_error;
 } labcomm_encoder_t;
@@ -223,46 +223,52 @@ typedef struct labcomm_encoder {
 void labcomm_internal_encoder_register(
   labcomm_encoder_t *encoder, 
   labcomm_signature_t *signature, 
-  labcomm_encode_typecast_t encode);
+  labcomm_encoder_function encode);
 
-void labcomm_internal_encode(
+int labcomm_internal_encode(
   labcomm_encoder_t *encoder, 
   labcomm_signature_t *signature, 
-  labcomm_encode_typecast_t encode,
+  labcomm_encoder_function encode,
   void *value);
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 
 #define LABCOMM_ENCODE(name, type)					\
-  static inline void labcomm_write_##name(labcomm_writer_t *w, type data) { \
+  static inline int labcomm_write_##name(labcomm_writer_t *w, type data) { \
     int i;								\
     for (i = sizeof(type) - 1 ; i >= 0 ; i--) {				\
       if (w->pos >= w->count) { /*buffer is full*/			\
-	w->write(w, labcomm_writer_continue);				\
+        int err;							\
+	err = w->write(w, labcomm_writer_continue);			\
+	if (err != 0) { return err; }					\
       }									\
       w->data[w->pos] = ((unsigned char*)(&data))[i];			\
       w->pos++;								\
     }									\
+    return 0;								\
   }									\
-  static inline void labcomm_encode_##name(labcomm_encoder_t *e, type data) { \
-    labcomm_write_##name(&e->writer, data);				\
+  static inline int labcomm_encode_##name(labcomm_encoder_t *e, type data) { \
+    return labcomm_write_##name(&e->writer, data);				\
   }
 
 #else
 
 #define LABCOMM_ENCODE(name, type)					\
-  static inline void labcomm_write_##name(labcomm_writer_t *w, type data) { \
+  static inline int labcomm_write_##name(labcomm_writer_t *w, type data) { \
     int i;								\
     for (i = 0 ; i < sizeof(type) ; i++) {				\
       if (w->pos >= w->count) {						\
-	w->write(w, labcomm_writer_continue);			\
+        int err;							\
+	err = w->write(w, labcomm_writer_continue);			\
+	if (err != 0) { return err; }					\
       }									\
       w->data[w->pos] = ((unsigned char*)(&data))[i];			\
       w->pos++;								\
     }									\
+    return 0;								\
   }									\
-  static inline void labcomm_encode_##name(labcomm_encoder_t *e, type data) { \
-    labcomm_write_##name(&e->writer, data);				\
+  static inline int labcomm_encode_##name(labcomm_encoder_t *e, type data) { \
+    return labcomm_write_##name(&e->writer, data);				\
   }
 
 #endif
@@ -287,7 +293,8 @@ LABCOMM_ENCODE(double, double)
  * 0b1110  - 4 bytes (0x00200000 - 0x0fffffff)
  * 0b11110 - 5 bytes (0x10000000 - 0xffffffff) [4 bits unused]
  */
-static inline void labcomm_pack32(labcomm_writer_t *w, unsigned int data)
+static inline int labcomm_write_packed32(labcomm_writer_t *w, 
+					  unsigned int data)
 {
   int n;
   unsigned char tag;
@@ -311,68 +318,86 @@ static inline void labcomm_pack32(labcomm_writer_t *w, unsigned int data)
     n = 5;
     tag = 0xf0;
   }
-  if (w->pos + n - 1 >= w->count) {	
+  /* TODO: maybe?
+    if (w->pos + n - 1 >= w->count) {	
     w->write(w, labcomm_writer_continue, n);
-  }
+    }
+  */
   switch (n) {
     case 5: { 
-      if (w->pos >= w->count) {					
-	w->write(w, labcomm_writer_continue);				
+      if (w->pos >= w->count) {	
+	int err;
+	err = w->write(w, labcomm_writer_continue);
+	if (err != 0) { return err; }
       }
       w->data[w->pos++] = tag; tag = 0;
     }
     case 4: { 
       if (w->pos >= w->count) {					
-	w->write(w, labcomm_writer_continue);				
+	int err;
+	err = w->write(w, labcomm_writer_continue);
+	if (err != 0) { return err; }
       }
       w->data[w->pos++] = tmp[0] | tag; tag = 0;
     }
     case 3: { 
       if (w->pos >= w->count) {					
-	w->write(w, labcomm_writer_continue);				
+	int err;
+	err = w->write(w, labcomm_writer_continue);
+	if (err != 0) { return err; }
       }
       w->data[w->pos++] = tmp[1] | tag; tag = 0;
     }
     case 2: { 
       if (w->pos >= w->count) {					
-	w->write(w, labcomm_writer_continue);				
+	int err;
+	err = w->write(w, labcomm_writer_continue);
+	if (err != 0) { return err; }
       }
       w->data[w->pos++] = tmp[2] | tag; tag = 0;
     }
     case 1: { 
       if (w->pos >= w->count) {					
-	w->write(w, labcomm_writer_continue);				
+	int err;
+	err = w->write(w, labcomm_writer_continue);
+	if (err != 0) { return err; }
       }
       w->data[w->pos++] = tmp[3] | tag;
     }
   }
+  return 0;
 }
 
-static inline void labcomm_encode_packed32(labcomm_encoder_t *e, unsigned int data) 
+static inline int labcomm_encode_packed32(labcomm_encoder_t *e, 
+					   unsigned int data) 
 { 
-    labcomm_pack32(&e->writer, data);				
+  return labcomm_write_packed32(&e->writer, data);				
 }
 
 
-static inline void labcomm_write_string(labcomm_writer_t *w, char *s)
+static inline int labcomm_write_string(labcomm_writer_t *w, char *s)
 {
-  int length, i; 
+  int length, i, err; 
 
   length = strlen((char*)s);
-  labcomm_pack32(w, length);
+  err = labcomm_write_packed32(w, length);
+  if (err != 0) { return err; }
   for (i = 0 ; i < length ; i++) {
     if (w->pos >= w->count) {	
-      w->write(w, labcomm_writer_continue);
+      int err;
+      err = w->write(w, labcomm_writer_continue);
+      if (err != 0) { return err; }
     }
     w->data[w->pos] = s[i];
     w->pos++;
   }
+  return 0;
 }
 
-static inline void labcomm_encode_string(labcomm_encoder_t *e, 
+static inline int labcomm_encode_string(labcomm_encoder_t *e, 
 					 char *s)
 {
-  labcomm_write_string(&e->writer, s);
+  return labcomm_write_string(&e->writer, s);
 }
 
 #endif

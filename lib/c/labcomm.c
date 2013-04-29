@@ -42,7 +42,7 @@ typedef struct labcomm_sample_entry {
   labcomm_signature_t *signature;
   labcomm_decoder_typecast_t decoder;
   labcomm_handler_typecast_t handler;
-  labcomm_encode_typecast_t encode;
+  labcomm_encoder_function encode;
   void *context;
 } labcomm_sample_entry_t;
 
@@ -224,32 +224,14 @@ static int get_encoder_index(
 #endif
 }
 
-void labcomm_encoder_start(struct labcomm_encoder *e,
-                           labcomm_signature_t *s) 
-{
-  int index = get_encoder_index(e, s);
-  e->writer.write(&e->writer, labcomm_writer_start, index);
-}
-
-void labcomm_encoder_end(struct labcomm_encoder *e, 
-                         labcomm_signature_t *s) 
-{
-  e->writer.write(&e->writer, labcomm_writer_end);
-}
-
-void labcomm_encode_type_index(labcomm_encoder_t *e, labcomm_signature_t *s)
-{
-  int index = get_encoder_index(e, s);
-  labcomm_encode_packed32(e, index);
-}
-
 void labcomm_encode_signature(struct labcomm_encoder *e,
                               labcomm_signature_t *signature) 
 {
   int i;
   e->writer.write(&e->writer, labcomm_writer_start_signature);
   labcomm_encode_packed32(e, signature->type);
-  labcomm_encode_type_index(e, signature);
+  labcomm_encode_packed32(e, get_encoder_index(e, signature));
+
   labcomm_encode_string(e, signature->name);
   for (i = 0 ; i < signature->size ; i++) {
     if (e->writer.pos >= e->writer.count) {
@@ -264,7 +246,7 @@ void labcomm_encode_signature(struct labcomm_encoder *e,
 #ifdef LABCOMM_ENCODER_LINEAR_SEARCH
 static int encoder_add_signature_by_search(struct labcomm_encoder *e,
 					   labcomm_signature_t *signature,
-					   labcomm_encode_typecast_t encode)
+					   labcomm_encoder_function encode)
 {
   int result;
   labcomm_encoder_context_t *context = e->context;
@@ -289,7 +271,7 @@ static int encoder_add_signature_by_search(struct labcomm_encoder *e,
 #ifndef LABCOMM_ENCODER_LINEAR_SEARCH
 static int encoder_add_signature_by_section(struct labcomm_encoder *e,
 					    labcomm_signature_t *s,
-					    labcomm_encode_typecast_t encode)
+					    labcomm_encoder_function encode)
 {
   int result = -ENOENT;
   
@@ -319,7 +301,7 @@ out:
 
 static int encoder_add_signature(struct labcomm_encoder *e,
 				  labcomm_signature_t *signature,
-				  labcomm_encode_typecast_t encode)
+				  labcomm_encoder_function encode)
 {
   int index = -ENOENT;
 
@@ -333,7 +315,7 @@ static int encoder_add_signature(struct labcomm_encoder *e,
 
 static void do_encoder_register(struct labcomm_encoder *e,
 				labcomm_signature_t *signature,
-				labcomm_encode_typecast_t encode)
+				labcomm_encoder_function encode)
 {
   if (signature->type == LABCOMM_SAMPLE) {
     if (get_encoder_index(e, signature) == 0) {
@@ -355,6 +337,7 @@ static void do_encoder_register(struct labcomm_encoder *e,
   }
 }
 
+/*
 static labcomm_sample_entry_t *encoder_get_sample_by_signature_address(
   labcomm_encoder_t *encoder,
   labcomm_signature_t *s)
@@ -371,32 +354,30 @@ static labcomm_sample_entry_t *encoder_get_sample_by_signature_address(
 #endif
   return result;
 }
+*/
 						    
-static void do_encode(
-  labcomm_encoder_t *encoder,
+static int do_encode(
+  labcomm_encoder_t *e,
   labcomm_signature_t *signature,
-  labcomm_encode_typecast_t encode,
+  labcomm_encoder_function encode,
   void *value)
 {
-  labcomm_sample_entry_t *sample;
-  sample = encoder_get_sample_by_signature_address(encoder, signature);
-  (void)sample;
-
-  labcomm_encoder_start(encoder, signature);
-  labcomm_encode_type_index(encoder, signature);
-  encode(encoder, value);
-  labcomm_encoder_end(encoder, signature);
-/*
-  labcomm_sample_entry_t *sample;
-
+  int result;
+  labcomm_writer_start_t lws;
   
-  sample = encoder_get_sample_by_signature_address(encoder, signature);
-  if (sample && sample->encode) {
-    sample->encode(encoder, value);
-  } else {
-    encoder->on_error(LABCOMM_ERROR_ENC_NO_REG_SIGNATURE, 2, "No registration for %s.\n", signature->name);
-  }
-*/
+  lws.encoder = e;
+  lws.index = get_encoder_index(e, signature);
+  lws.signature = signature;
+  lws.value = value;
+  result = e->writer.write(&e->writer, labcomm_writer_start, &lws);
+  if (result == -EALREADY) { result = 0; goto out; }
+  if (result != 0) { goto out; }
+  result = labcomm_encode_packed32(e, lws.index);
+  if (result != 0) { goto out; }
+  result = encode(e, value);
+out:
+  e->writer.write(&e->writer, labcomm_writer_end, &lws);
+  return result;
 }
 
 labcomm_encoder_t *labcomm_encoder_new(
@@ -435,7 +416,7 @@ labcomm_encoder_t *labcomm_encoder_new(
 void labcomm_internal_encoder_register(
   labcomm_encoder_t *e,
   labcomm_signature_t *signature,
-  labcomm_encode_typecast_t encode)
+  labcomm_encoder_function encode)
 {
   // Will segfault if e == NULL.
   if (e->do_register) {
@@ -445,17 +426,18 @@ void labcomm_internal_encoder_register(
   }
 }
 
-void labcomm_internal_encode(
+int labcomm_internal_encode(
   labcomm_encoder_t *e,
   labcomm_signature_t *signature,
-  labcomm_encode_typecast_t encode,
+  labcomm_encoder_function encode,
   void *value)
 {
   if (e->do_encode) {
-    e->do_encode(e, signature, encode, value);
+    return e->do_encode(e, signature, encode, value);
   } else {
     e->on_error(LABCOMM_ERROR_ENC_MISSING_DO_ENCODE, 0);
   }
+  return 0;
 }
 
 void labcomm_encoder_free(labcomm_encoder_t* e)

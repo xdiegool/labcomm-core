@@ -351,7 +351,7 @@ aspect C_Declarations {
     env.println("struct labcomm_encoder *e);");
     env.unindent();
 
-    env.println("void labcomm_encode_" + env.prefix + getName() + "(");
+    env.println("int labcomm_encode_" + env.prefix + getName() + "(");
     env.indent();
     env.println("struct labcomm_encoder *e,");
     env.println(env.prefix + getName() + " *v");
@@ -633,7 +633,7 @@ aspect C_Encoder {
 
   public void SampleDecl.C_emitEncoder(C_env env) {
     env = env.nestStruct("(*v)");
-    env.println("static void encode_" + getName() + "(");
+    env.println("static int encode_" + getName() + "(");
     env.indent();
     env.println("labcomm_encoder_t *e,");
     env.println(env.prefix + getName() + " *v");
@@ -641,21 +641,23 @@ aspect C_Encoder {
     env.println(")");
     env.println("{");
     env.indent();
+    env.println("int result;");
     getType().C_emitEncoder(env);
+    env.println("return result;");
     env.unindent();
     env.println("}");
 
     // Typesafe encode wrapper
-    env.println("void labcomm_encode_" + env.prefix + getName() + "(");
+    env.println("int labcomm_encode_" + env.prefix + getName() + "(");
     env.println("labcomm_encoder_t *e,");
     env.println(env.prefix + getName() + " *v");
     env.unindent();
     env.println(")");
     env.println("{");
     env.indent();
-    env.println("labcomm_internal_encode(e, &labcomm_signature_" + 
+    env.println("return labcomm_internal_encode(e, &labcomm_signature_" + 
 		env.prefix + getName() + 
-		", (labcomm_encode_typecast_t)encode_" + getName() +
+		", (labcomm_encoder_function)encode_" + getName() +
 		", v);");
     env.unindent();
     env.println("}");
@@ -668,10 +670,13 @@ aspect C_Encoder {
   }
 
   public void VoidType.C_emitEncoder(C_env env) {
+    env.println("result = 0;");
   }
 
   public void PrimType.C_emitEncoder(C_env env) {
-    env.println("labcomm_encode_" + getName() + "(e, " + env.qualid + ");");
+    env.println("result = labcomm_encode_" + getName() + 
+                "(e, " + env.qualid + ");");
+    env.println("if (result != 0) { return result; }");
   }
 
   public void UserType.C_emitEncoder(C_env env) {
@@ -748,7 +753,7 @@ aspect C_Encoder {
     env.indent();
     env.println("e,");
     env.println("&labcomm_signature_" + env.prefix + getName() + ",");
-    env.println("(labcomm_encode_typecast_t)encode_" + getName());
+    env.println("(labcomm_encoder_function)encode_" + getName());
     env.unindent();
     env.println(");");
     env.unindent();

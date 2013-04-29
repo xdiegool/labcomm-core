@@ -11,7 +11,7 @@ struct labcomm_decoder;
 /*
  * Signature entry
  */
-typedef struct labcomm_signature{
+typedef struct labcomm_signature {
   int type;
   char *name;
   int (*encoded_size)(struct labcomm_signature *, void *); // void * == encoded_sample *
@@ -115,12 +115,20 @@ void labcomm_decoder_free(
 /*
  * Encoder
  */
+typedef struct {
+  struct labcomm_encoder *encoder;
+  int index;
+  labcomm_signature_t *signature;
+  void *value;
+} labcomm_writer_start_t;
 
 typedef enum { 
   labcomm_writer_alloc,              /* (..., char *labcomm_version)
 					Allocate all neccessary data */
   labcomm_writer_free,               /* Free all allocated data */
-  labcomm_writer_start,              /* Start writing an ordinary sample */
+  labcomm_writer_start,              /* (..., labcomm_writer_start_t *s)
+					-EALREADY skips further encoding 
+					Start writing an ordinary sample */
   labcomm_writer_continue,           /* Buffer full during ordinary sample */
   labcomm_writer_end,                /* End writing ordinary sample */
   labcomm_writer_start_signature,    /* Start writing signature */

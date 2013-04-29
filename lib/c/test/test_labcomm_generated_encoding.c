@@ -115,6 +115,15 @@ void dump_encoder(labcomm_encoder_t *encoder)
   printf("\n");
 }
 
+#define EXPECT(...)							\
+  {									\
+    int expected[] = __VA_ARGS__;					\
+    labcomm_encoder_ioctl(encoder, IOCTL_WRITER_ASSERT_BYTES,		\
+			  __LINE__,					\
+			  sizeof(expected)/sizeof(expected[0]),		\
+			  expected);					\
+  }
+
 int main(void)
 {
   generated_encoding_V V;
@@ -124,39 +133,19 @@ int main(void)
 
   labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   labcomm_encoder_register_generated_encoding_V(encoder);
-  {
-    int expected[] = { 0x02, -1, 0x01, 'V', 0x11, 0x00 };
-    labcomm_encoder_ioctl(encoder, IOCTL_WRITER_ASSERT_BYTES, 
-			  __LINE__, 
-			  6, expected);
-  }
+  EXPECT({ 0x02, -1, 0x01, 'V', 0x11, 0x00 });
 
   labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   labcomm_encoder_register_generated_encoding_B(encoder);
-  {
-    int expected[] = { 0x02, -1, 0x01, 'B', 0x21 };
-    labcomm_encoder_ioctl(encoder, IOCTL_WRITER_ASSERT_BYTES, 
-			  __LINE__, 
-			  5, expected);
-  }
+  EXPECT({0x02, -1, 0x01, 'B', 0x21});
 
   labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   labcomm_encode_generated_encoding_V(encoder, &V);
-  {
-    int expected[] = { -1 };
-    labcomm_encoder_ioctl(encoder, IOCTL_WRITER_ASSERT_BYTES, 
-			  __LINE__, 
-			  1, expected);
-  }
+  EXPECT({-1});
 
   labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   labcomm_encode_generated_encoding_B(encoder, &B);
-  {
-    int expected[] = { -1, 1 };
-    labcomm_encoder_ioctl(encoder, IOCTL_WRITER_ASSERT_BYTES, 
-			  __LINE__, 
-			  2, expected);
-  }
+  EXPECT({-1, 1});
 
   return 0;
 }
