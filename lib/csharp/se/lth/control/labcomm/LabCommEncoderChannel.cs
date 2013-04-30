@@ -90,7 +90,7 @@ namespace se.lth.control.labcomm {
 
     public void encodePacked32(Int64 value) {
       Int64 tmp = value;
-
+      TODO: Correct byteorder
       while(tmp >= 0x80) {
         encodeByte( (byte) ((tmp & 0x7f) | 0x80 ) );
         tmp >>= 7;           

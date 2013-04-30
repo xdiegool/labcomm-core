@@ -89,13 +89,10 @@
 #??  +----+----+----+----+
 #  
 #   
-# type numbers and lengths do not have a fixed lenght, but are packed into sequences 
-# of 7 bit chunks, represented in bytes with the high bit meaning that more data 
-# is to come.
-#
-# The chunks are sent "little endian": each 7 bit chunk is more significant than
-# the previous. See encode_packed32 and decode_packed32 in in Codec classes below.
-
+# type numbers and lengths do not have a fixed lenght, but are packed into 
+# sequences of 7 bit chunks, represented in bytes with the high bit meaning 
+# that more data is to come.
+ 
 import struct as packer
 
 i_TYPEDEF = 0x01
@@ -580,12 +577,14 @@ class Encoder(Codec):
             decl.encode_decl(self)
             
     def encode_packed32(self, v):
-        tmp = v & 0xffffffff;
-        
-        while(tmp >= 0x80 ):
-          self.encode_byte( (tmp & 0x7f) | 0x80 ) 
-          tmp >>= 7
-        self.encode_byte(tmp & 0x7f)
+        v = v & 0xffffffff
+        tmp = [ v & 0x7f ]
+        v = v >> 7
+        while v:
+            tmp.append(v & 0x7f | 0x80)
+            v = v >> 7
+        for c in reversed(tmp):
+            self.encode_byte(c) 
 
     def encode_type(self, index):
         self.encode_packed32(index)
@@ -666,14 +665,13 @@ class Decoder(Codec):
         return result
     
     def decode_packed32(self):
-        res = 0
-        i = 0
-        cont = True
-        while (cont):
-          c = self.decode_byte()
-          res |=  (c & 0x7f) << 7*i
-          cont = (c & 0x80) != 0;
-        return res
+        result = 0
+        while True:
+            tmp = self.decode_byte()
+            result = (result << 7) | (tmp & 0x7f)
+            if (tmp & 0x80) == 0:
+                break
+        return result
 
     def decode_type_number(self):
         return self.decode_packed32()

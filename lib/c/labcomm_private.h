@@ -124,6 +124,7 @@ LABCOMM_DECODE(long, long long)
 LABCOMM_DECODE(float, float)
 LABCOMM_DECODE(double, double)
 
+#if 0
 /* 
  * Unpack a 32 bit unsigned number from a sequence bytes, where the 
  * first byte is prefixed with a variable length bit pattern that
@@ -136,7 +137,7 @@ LABCOMM_DECODE(double, double)
  * 0b1110  - 4 bytes (0x00200000 - 0x0fffffff)
  * 0b11110 - 5 bytes (0x10000000 - 0xffffffff) [4 bits unused]
  */
-static inline unsigned int labcomm_unpack32(labcomm_reader_t *r)
+static inline unsigned int labcomm_read_unpacked32(labcomm_reader_t *r)
 {
   unsigned int result = 0;
   int n, i;
@@ -171,10 +172,31 @@ static inline unsigned int labcomm_unpack32(labcomm_reader_t *r)
   }
   return result;
 }
+#endif
 
+static inline unsigned int labcomm_read_unpacked32(labcomm_reader_t *r)
+{
+  unsigned int result = 0;
+  
+  while (1) {
+    unsigned char tmp;
+
+    if (r->pos >= r->count) {	
+      r->read(r, labcomm_reader_continue);
+    }
+    tmp = r->data[r->pos];
+    r->pos++;
+    result = (result << 7) | (tmp & 0x7f);
+    if ((tmp & 0x80) == 0) { 
+      break; 
+    }
+  }
+  return result;
+}
+ 
 static inline unsigned int labcomm_decode_packed32(labcomm_decoder_t *d) 
 {
-    return labcomm_unpack32(&d->reader);
+  return labcomm_read_unpacked32(&d->reader);
 }
 
 static inline char *labcomm_read_string(labcomm_reader_t *r)
@@ -182,7 +204,7 @@ static inline char *labcomm_read_string(labcomm_reader_t *r)
   char *result;
   int length, i; 
   
-  length = labcomm_unpack32(r);
+  length = labcomm_read_unpacked32(r);
   result = malloc(length + 1);
   for (i = 0 ; i < length ; i++) {
     if (r->pos >= r->count) {	
@@ -248,7 +270,7 @@ int labcomm_internal_encode(
     return 0;								\
   }									\
   static inline int labcomm_encode_##name(labcomm_encoder_t *e, type data) { \
-    return labcomm_write_##name(&e->writer, data);				\
+    return labcomm_write_##name(&e->writer, data);			\
   }
 
 #else
@@ -268,7 +290,7 @@ int labcomm_internal_encode(
     return 0;								\
   }									\
   static inline int labcomm_encode_##name(labcomm_encoder_t *e, type data) { \
-    return labcomm_write_##name(&e->writer, data);				\
+    return labcomm_write_##name(&e->writer, data);			\
   }
 
 #endif
@@ -281,6 +303,7 @@ LABCOMM_ENCODE(long, long long)
 LABCOMM_ENCODE(float, float)
 LABCOMM_ENCODE(double, double)
 
+#if 0
 /* 
  * Pack the 32 bit unsigned number data as a sequence bytes, where the 
  * first byte is prefixed with a variable length bit pattern that
@@ -294,7 +317,7 @@ LABCOMM_ENCODE(double, double)
  * 0b11110 - 5 bytes (0x10000000 - 0xffffffff) [4 bits unused]
  */
 static inline int labcomm_write_packed32(labcomm_writer_t *w, 
-					  unsigned int data)
+					 unsigned int data)
 {
   int n;
   unsigned char tag;
@@ -367,6 +390,28 @@ static inline int labcomm_write_packed32(labcomm_writer_t *w,
   }
   return 0;
 }
+#endif
+
+static inline int labcomm_write_packed32(labcomm_writer_t *w, 
+					 unsigned int data)
+{
+  unsigned char tmp[5];
+  int i;
+  
+  for (i = 0 ; i == 0 || data ; i++, data = (data >> 7)) {
+    tmp[i] = data & 0x7f;
+  }
+  for (i = i - 1 ; i >= 0 ; i--) {
+    if (w->pos >= w->count) {					
+      int err;
+      err = w->write(w, labcomm_writer_continue);
+      if (err != 0) { return err; }
+    }
+    w->data[w->pos++] = tmp[i] | (i?0x80:0x00);
+  }
+  return 0;
+}
+
 
 static inline int labcomm_encode_packed32(labcomm_encoder_t *e, 
 					   unsigned int data) 

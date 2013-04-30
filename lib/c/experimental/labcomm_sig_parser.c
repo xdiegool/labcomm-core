@@ -57,14 +57,17 @@ static inline unsigned int get32(labcomm_sig_parser_t *b) {
 /* aux method for reading labcomm varint from a char* 
    size is an out parameter: if not NULL the number of bytes read will be written here
 */
-static int unpack_varint(unsigned char *buf, unsigned int idx, unsigned char *size) {
+static unsigned int unpack_varint(unsigned char *buf, 
+				  unsigned int idx, 
+				  unsigned char *size) 
+{
         unsigned int res = 0;
         unsigned int i=0;
         unsigned char cont = TRUE;
 
         do {
                 unsigned char c = buf[idx+i];
-                res |= (c & 0x7f) << 7*i;
+                res = (res << 7) | (c & 0x7f);
                 cont = c & 0x80;
                 i++;
         } while(cont);

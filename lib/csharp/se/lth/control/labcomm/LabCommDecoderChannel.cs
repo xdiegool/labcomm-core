@@ -163,6 +163,7 @@ namespace se.lth.control.labcomm {
     }
 
     public int decodePacked32() {
+      TODO: Correct byteorder
       Int64 res = 0;
       byte i = 0;
       bool cont = true; 

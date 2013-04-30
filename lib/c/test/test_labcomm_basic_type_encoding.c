@@ -2,6 +2,7 @@
 #include <string.h>
 #include "labcomm_private.h"
 
+static int line;
 
 int test_write(struct labcomm_writer *w, labcomm_writer_action_t a, ...)
 {
@@ -11,7 +12,7 @@ int test_write(struct labcomm_writer *w, labcomm_writer_action_t a, ...)
 
 int test_read(struct labcomm_reader *r, labcomm_reader_action_t a, ...)
 {
-  fprintf(stderr, "test_read should not be called\n");
+  fprintf(stderr, "test_read should not be called %s:%d\n", __FILE__, line);
   exit(1);
 }
 
@@ -57,9 +58,10 @@ typedef unsigned char byte;
 #define TEST_WRITE_READ(type, format, value, expect_count, expect_bytes) \
   {									\
     type decoded;							\
+    line = __LINE__;							\
     encoder.writer.pos = 0;						\
     labcomm_encode_##type(&encoder, value);				\
-    writer_assert(#type, __LINE__, expect_count, (uint8_t*)expect_bytes); \
+    writer_assert(#type, expect_count, (uint8_t*)expect_bytes);	        \
     decoder.reader.count = encoder.writer.pos;				\
     decoder.reader.pos = 0;						\
     decoded = labcomm_decode_##type(&decoder);				\
@@ -71,7 +73,6 @@ typedef unsigned char byte;
   }
 
 static void writer_assert(char *type,
-			  int line,
 			  int count,
 			  uint8_t *bytes)
 {
@@ -101,14 +102,14 @@ int main(void)
 {
   TEST_WRITE_READ(packed32, "%d", 0x0, 1, "\x00");
   TEST_WRITE_READ(packed32, "%d", 0x7f, 1, "\x7f");
-  TEST_WRITE_READ(packed32, "%d", 0x80, 2, "\x80\x80");
-  TEST_WRITE_READ(packed32, "%d", 0x3fff, 2, "\xbf\xff");
-  TEST_WRITE_READ(packed32, "%d", 0x4000, 3, "\xc0\x40\x00");
-  TEST_WRITE_READ(packed32, "%d", 0x1fffff, 3, "\xdf\xff\xff");
-  TEST_WRITE_READ(packed32, "%d", 0x200000, 4, "\xe0\x20\x00\x00");
-  TEST_WRITE_READ(packed32, "%d", 0xfffffff, 4, "\xef\xff\xff\xff");
-  TEST_WRITE_READ(packed32, "%d", 0x10000000, 5, "\xf0\x10\x00\x00\x00");
-  TEST_WRITE_READ(packed32, "%d", 0xffffffff, 5, "\xf0\xff\xff\xff\xff");
+  TEST_WRITE_READ(packed32, "%d", 0x80, 2, "\x81\x00");
+  TEST_WRITE_READ(packed32, "%d", 0x3fff, 2, "\xff\x7f");
+  TEST_WRITE_READ(packed32, "%d", 0x4000, 3, "\x81\x80\x00");
+  TEST_WRITE_READ(packed32, "%d", 0x1fffff, 3, "\xff\xff\x7f");
+  TEST_WRITE_READ(packed32, "%d", 0x200000, 4, "\x81\x80\x80\x00");
+  TEST_WRITE_READ(packed32, "%d", 0xfffffff, 4, "\xff\xff\xff\x7f");
+  TEST_WRITE_READ(packed32, "%d", 0x10000000, 5, "\x81\x80\x80\x80\x00");
+  TEST_WRITE_READ(packed32, "%d", 0xffffffff, 5, "\x8f\xff\xff\xff\x7f");
   TEST_WRITE_READ(boolean, "%d", 0, 1, "\x00");
   TEST_WRITE_READ(boolean, "%d", 1, 1, "\x01");
   TEST_WRITE_READ(byte, "%d", 0, 1, "\x00");

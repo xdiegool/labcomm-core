@@ -141,7 +141,7 @@ public class LabCommDecoderChannel implements LabCommDecoder {
 
     do {
       byte c = in.readByte();
-      res |= (c & 0x7f) << 7*i;
+      res = (res << 7) | (c & 0x7f);
       cont = (c & 0x80) != 0;
       i++;
     } while(cont);

@@ -94,13 +94,16 @@ public class LabCommEncoderChannel implements LabCommEncoder {
   }
 
   public void encodePacked32(long value) throws IOException {
-    long tmp = value;
+    byte[] tmp = new byte[5];
+    long v = value & 0xffffffff;
+    int i;
 
-    while( tmp >= 0x80 ) {
-      encodeByte( (byte) ((tmp & 0x7f) | 0x80 ) );
-      tmp >>>= 7;
+    for (i = 0 ; i == 0 || v != 0 ; i++, v = (v >> 7)) {
+      tmp[i] = (byte)(v & 0x7f);
     }
-    encodeByte( (byte) (tmp & 0x7f) );
+    for (i = i - 1 ; i >= 0 ; i--) {
+      encodeByte((byte)(tmp[i] | (i!=0?0x80:0x00)));
+    }
   }
 }
 
