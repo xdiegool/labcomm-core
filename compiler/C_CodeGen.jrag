@@ -46,7 +46,11 @@ aspect C_CodeGenEnv {
       this.qualid = qualid;
       this.lcName = lcName;
       this.rawPrefix = rawPrefix;
-      this.prefix = rawPrefix + "_";
+      if (rawPrefix.equals("")) {
+        this.prefix = rawPrefix;
+      } else {
+        this.prefix = rawPrefix + "_";
+      }
       this.indent = indent;
       this.depth = depth;
       this.printer = printer;
@@ -57,7 +61,11 @@ aspect C_CodeGenEnv {
       this.qualid = qualid;
       this.lcName = lcName;
       this.rawPrefix = rawPrefix;
-      this.prefix = rawPrefix + "_";
+      if (rawPrefix.equals("")) {
+        this.prefix = rawPrefix;
+      } else {
+        this.prefix = rawPrefix + "_";
+      }
       this.depth = 0;
       this.indent = 0;
       this.printer = new C_printer(out);
@@ -641,7 +649,7 @@ aspect C_Encoder {
     env.println(")");
     env.println("{");
     env.indent();
-    env.println("int result;");
+    env.println("int result = 0;");
     getType().C_emitEncoder(env);
     env.println("return result;");
     env.unindent();
@@ -1094,11 +1102,13 @@ aspect C_Info {
   }
 
   public void TypeDecl.C_info(C_env env) {
-    env.println("C,typedef," + getName() + "," + getName());
+    env.println("C,typedef," + env.prefix + getName() + "," + 
+                 env.prefix + getName());
   }
 
   public void SampleDecl.C_info(C_env env) {
-    env.println("C,sample," + getName() + "," + getName());
+    env.println("C,sample," + env.prefix + getName() + "," + 
+                env.prefix + getName());
   }
 
 }
