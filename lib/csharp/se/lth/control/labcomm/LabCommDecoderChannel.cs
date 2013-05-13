@@ -68,7 +68,7 @@ namespace se.lth.control.labcomm {
       } break;
       case LabComm.STRUCT: {
         int fields = decodePacked32();
-        e.encodeInt(fields);
+        e.encodePacked32(fields);
         for (int i = 0 ; i < fields ; i++) {
           e.encodeString(decodeString());
           collectFlatSignature(e);
@@ -108,10 +108,11 @@ namespace se.lth.control.labcomm {
     }
 
     private Int64 ReadInt(int length) {
-      int result = 0;
+      Int64 result = 0;
       ReadBytes(buf, length);
       for (int i = 0 ; i < length ; i++) {
 	result = (result << 8) + buf[i];
+
       }
       return result;
     }
@@ -163,16 +164,13 @@ namespace se.lth.control.labcomm {
     }
 
     public int decodePacked32() {
-      TODO: Correct byteorder
       Int64 res = 0;
-      byte i = 0;
       bool cont = true; 
 
       do {
-        byte c = decodeByte();
-	res |= (uint) ((c & 0x7f) << 7*i);
+        Int64 c = decodeByte();
+	res = (res << 7) | (c & 0x7f);
         cont = (c & 0x80) != 0;
-        i++;
       } while(cont);
 
       return (int) (res & 0xffffffff);

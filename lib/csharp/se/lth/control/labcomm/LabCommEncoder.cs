@@ -7,6 +7,7 @@ namespace se.lth.control.labcomm {
     void register(LabCommDispatcher dispatcher);
     void begin(Type c);
     void end(Type c);
+
     void encodeBoolean(bool value);
     void encodeByte(byte value);
     void encodeShort(short value);

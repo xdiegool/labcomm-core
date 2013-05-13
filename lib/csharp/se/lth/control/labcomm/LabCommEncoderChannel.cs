@@ -35,6 +35,7 @@ namespace se.lth.control.labcomm {
     public void end(Type c) {
       bytes.WriteTo(writer);
       bytes.SetLength(0);
+      writer.Flush();
     }
 
     private void WriteInt(Int64 value, int length) {
@@ -46,7 +47,7 @@ namespace se.lth.control.labcomm {
     }
 
     public void encodeBoolean(bool value) {
-      WriteInt(value ? 0 : 1, 1);
+      WriteInt(value ? 1 : 0, 1);
     }
 
     public void encodeByte(byte value) {
@@ -89,13 +90,16 @@ namespace se.lth.control.labcomm {
     }
 
     public void encodePacked32(Int64 value) {
-      Int64 tmp = value;
-      TODO: Correct byteorder
-      while(tmp >= 0x80) {
-        encodeByte( (byte) ((tmp & 0x7f) | 0x80 ) );
-        tmp >>= 7;           
+      byte[] tmp = new byte[5];
+      Int64 v = value & 0xffffffff;
+      int i;
+  
+      for (i = 0 ; i == 0 || v != 0 ; i++, v = (v >> 7)) {
+        tmp[i] = (byte)(v & 0x7f);
       }
-      encodeByte( (byte) (tmp & 0x7f) );
+      for (i = i - 1 ; i >= 0 ; i--) {
+        encodeByte((byte)(tmp[i] | (i!=0?0x80:0x00)));
+      }
     }
   }
 }
