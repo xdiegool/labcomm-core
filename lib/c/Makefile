@@ -7,8 +7,8 @@ LDFLAGS = -L.
 LDLIBS_TEST = -Tlabcomm.linkscript  -lcunit -llabcomm
 
 OBJS= labcomm.o labcomm_dynamic_buffer_writer.o labcomm_fd_reader.o labcomm_fd_writer.o labcomm_mem_reader.o labcomm_mem_writer.o
-LABCOMMC_PATH=../../compiler
-LABCOMMC_JAR=$(LABCOMMC_PATH)/labComm.jar
+LABCOMM_JAR=../../compiler/labComm.jar
+LABCOMM=java -jar $(LABCOMM_JAR) 
 
 TESTS=test_labcomm_basic_type_encoding test_labcomm_generated_encoding test_labcomm 
 #FIXME: test_labcomm_errors
@@ -33,7 +33,7 @@ endif
 
 .PHONY: all run-test clean distclean
 
-all: liblabcomm.a test/test_labcomm_errors
+all: liblabcomm.a 
 
 liblabcomm.a: $(OBJS)
 	ar -r liblabcomm.a $^
@@ -68,19 +68,19 @@ $(TEST_DIR)/gen:
 	mkdir -p $@
 
 $(TEST_DIR)/gen/%.c $(TEST_DIR)/gen/%.h: $(TEST_DIR)/%.lc | $(TEST_DIR)/gen
-	java -jar $(LABCOMMC_JAR) \
+	$(LABCOMM) \
 		--c=$(TEST_DIR)/gen/$*.c \
 		--h=$(TEST_DIR)/gen/$*.h \
 		$<
 
 $(TEST_GEN_DIR)/%.c $(TEST_GEN_DIR)/%.h: $(TESTDATA_DIR)/%.lc \
-					 $(LABCOMMC_JAR) | $(TEST_GEN_DIR)
-	java -jar $(LABCOMMC_JAR) \
+					 $(LABCOMM_JAR) | $(TEST_GEN_DIR)
+	$(LABCOMM) \
 		--c=$(patsubst %.h,%.c,$@) --h=$(patsubst %.c,%.h,$@) $<
 
-$(LABCOMMC_JAR):
+$(LABCOMM_JAR):
 	@echo "======Building LabComm compiler======"
-	cd $(LABCOMMC_PATH); ant jar
+	cd $(shell dirname $(LABCOMM_JAR)); ant jar
 	@echo "======End building LabComm compiler======"
 
 %.o: %.c %.h

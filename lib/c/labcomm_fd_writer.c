@@ -17,11 +17,13 @@ int labcomm_fd_writer(
 
   switch (action) {
     case labcomm_writer_alloc: {
+#ifndef LABCOMM_FD_OMIT_VERSION
       va_list ap;
       va_start(ap, action);
       char *version = va_arg(ap, char *);
 
       write(*fd, version, strlen(version));
+#endif
       w->data = malloc(BUFFER_SIZE);
       if (! w->data) {
         result = -ENOMEM;
@@ -33,7 +35,9 @@ int labcomm_fd_writer(
         w->count = BUFFER_SIZE;
         w->pos = 0;
       }
+#ifndef LABCOMM_FD_OMIT_VERSION
       va_end(ap);
+#endif
     } break;
     case labcomm_writer_free: {
       free(w->data);

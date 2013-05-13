@@ -16,6 +16,7 @@ int labcomm_fd_reader(
   
   switch (action) {
     case labcomm_reader_alloc: {
+#ifndef LABCOMM_FD_OMIT_VERSION
       va_list ap;
       va_start(ap, action);
       char *version = va_arg(ap, char *);
@@ -23,7 +24,7 @@ int labcomm_fd_reader(
 
       read(*fd, tmp, strlen(version));
       free(tmp);
-
+#endif
       r->data = malloc(BUFFER_SIZE);
       if (r->data) {
         r->data_size = BUFFER_SIZE;
@@ -34,7 +35,9 @@ int labcomm_fd_reader(
       }
       r->count = 0;
       r->pos = 0;
-      va_end(ap);
+#ifndef LABCOMM_FD_OMIT_VERSION
+	va_end(ap);
+#endif
     } break;
     case labcomm_reader_start: 
     case labcomm_reader_continue: {
