@@ -468,34 +468,19 @@ TYPEDEF = typedef(None, None)
 ARRAY = array(None, None)
 STRUCT = struct({})
 
-class anonymous_object(object):
-    def __init__(self):
-        self._attr = {}
-
+class anonymous_object(dict):
     def __setattr__(self, name, value):
         if name.startswith("_"):
             super(anonymous_object, self).__setattr__(name, value)
         else:
-            self._attr[name] = value
+            self[name] = value
 
     def __getattr__(self, name):
         if name.startswith("_"):
             return super(anonymous_object, self).__getattr__(name)
         else:
-            return self._attr[name]
+            return self[name]
 
-    def __getattribute__(self, name):
-        if name.startswith("_"):
-            return super(anonymous_object, self).__getattribute__(name)
-        else:
-            return self._attr[name]
-
-    def __iter__(self):
-        return self._attr.iteritems()
-
-    def __repr__(self):
-        return self._attr.__repr__()
-    
 class Codec(object):
     def __init__(self):
         self.type_to_name = {}
