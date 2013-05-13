@@ -9,6 +9,8 @@ MODULES=LabCommDispatcher \
 	LabCommEncoderChannel \
 	LabCommEncoder \
 	LabCommDecoderChannel \
+	LabCommWriter \
+	LabCommReader
 
 all: labcomm.jar
 
