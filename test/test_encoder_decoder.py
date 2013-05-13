@@ -174,7 +174,6 @@ class Test:
         for name,signature in self.signatures:
             encoder.add_decl(signature)
             pass
-        print self.signatures
         for name,signature in self.signatures:
             print "Checking", name,
             sys.stdout.flush()
@@ -191,7 +190,9 @@ class Test:
             print
             pass
         p.stdin.close()
-        print p.wait()
+        if p.wait() != 0:
+            exit(1)
+            pass
         pass
 
     def decode(self, f):
@@ -217,7 +218,6 @@ class Test:
             pass
         except EOFError:
             pass
-        print 'Done'
         pass
 
     pass
@@ -231,8 +231,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run encoding test.')
     class test_action(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
-            old = getattr(namespace, self.dest)
-            old.append(values)
+            old = list(getattr(namespace, self.dest))
+            def strip_slash(s):
+                if s.startswith('\\'):
+                    return s[1:]
+                return s
+            old.append(map(strip_slash, values))
+            setattr(namespace, self.dest, old)
     parser.add_argument('--signatures')
     parser.add_argument('--test', nargs='*', action=test_action, default=[])
 
