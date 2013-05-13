@@ -1,0 +1,9 @@
+sample void s_void;
+sample byte s_byte;
+sample short s_short;
+sample int s_int;
+sample long s_long;
+sample float s_float;
+sample double s_double;
+sample boolean s_boolean;
+sample string s_string;

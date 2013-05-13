@@ -18,3 +18,5 @@ lib/java/se/lth/control/labcomm/LabCommSample.class
 lib/java/se/lth/control/labcomm/LabCommType.class
 lib/java/se/lth/control/labcomm/LabCommWriter.class
 gen
+labcomm.dll
+labcomm.jar
