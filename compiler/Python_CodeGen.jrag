@@ -80,6 +80,12 @@ aspect Python_CodeGen {
     env.println("import labcomm");
     env.println();
     Python_genTypes(env);
+    env.println("signatures = [");
+    for (int i = 0 ; i < getNumDecl() ; i++) {
+      env.println("  ('" + getDecl(i).getName() + "', " + 
+                           getDecl(i).getName() + ".signature),");
+    }
+    env.println("]");
   }
 
 }
@@ -167,7 +173,6 @@ aspect PythonTypes {
 
   public void VoidType.Python_genSignature(Python_env env) {
     env.println("labcomm.struct([])");
-    env.unindent();
   }
 
   public void Field.Python_genSignature(Python_env env) {

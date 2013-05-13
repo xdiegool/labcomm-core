@@ -463,7 +463,7 @@ aspect CS_Class {
   }
 
   public String VariableSize.CS_emitEncoder(CS_env env, String name) {
-    env.println("e.encodeInt(" + name + ");");
+    env.println("e.encodePacked32(" + name + ");");
     return name;
   }
 
@@ -571,7 +571,7 @@ aspect CS_Class {
   }
 
   public void VariableSize.CS_emitDecoder(CS_env env) {
-    env.print("d.decodeInt()");
+    env.print("d.decodePacked32()");
   }
 
   public void StructType.CS_emitDecoder(CS_env env, String name) {
@@ -786,13 +786,13 @@ aspect CS_Info {
   }
 
   public void TypeDecl.CS_info(CS_env env, String namespace) {
-    env.print("C#,typedef," + namespace + getName() + ",");
+    env.print(";C#;typedef;" + namespace + getName() + ";");
     getType().CS_emitType(env);
     env.println();
   }
 
   public void SampleDecl.CS_info(CS_env env, String namespace) {
-    env.print("C#,sample," + namespace + getName() + ",");
+    env.print(";C#;sample;" + namespace + getName() + ";");
     getType().CS_emitType(env);
     env.println();
   }

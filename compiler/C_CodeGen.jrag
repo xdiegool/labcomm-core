@@ -1102,12 +1102,12 @@ aspect C_Info {
   }
 
   public void TypeDecl.C_info(C_env env) {
-    env.println("C,typedef," + env.prefix + getName() + "," + 
+    env.println(",C,typedef," + env.prefix + getName() + "," + 
                  env.prefix + getName());
   }
 
   public void SampleDecl.C_info(C_env env) {
-    env.println("C,sample," + env.prefix + getName() + "," + 
+    env.println(",C,sample," + env.prefix + getName() + "," + 
                 env.prefix + getName());
   }
 

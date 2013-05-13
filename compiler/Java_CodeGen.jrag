@@ -783,13 +783,13 @@ aspect Java_Info {
   }
 
   public void TypeDecl.Java_info(Java_env env) {
-    env.print("Java,typedef," + getName() + ",");
+    env.print(",Java,typedef," + getName() + ",");
     getType().Java_emitType(env);
     env.println();
   }
 
   public void SampleDecl.Java_info(Java_env env) {
-    env.print("Java,sample," + getName() + ",");
+    env.print(",Java,sample," + getName() + ",");
     getType().Java_emitType(env);
     env.println();
   }
