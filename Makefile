@@ -1,15 +1,34 @@
+SUBDIRS=compiler lib examples test
 export LABCOMM_JAR=$(shell pwd)/compiler/labComm.jar
 export LABCOMM=java -jar $(LABCOMM_JAR) 
 
-all: compiler
-	$(MAKE) -C lib 
-	$(MAKE) -C lib/c run-test
+all: $(SUBDIRS:%=make-%)
 
-.PHONY: compiler
-compiler:
+.PHONY: make-compiler
+make-compiler:
 	cd compiler ; ant jar
 
+.PHONY: make-%
+make-%:
+	$(MAKE) -C $* -e 
 
 .PHONY: test
-test:
-	$(MAKE) -C test -e
+test: $(SUBDIRS:%=test-%)
+
+.PHONY: test-compiler
+test-compiler:
+
+.PHONY: test-%
+test-%:
+	$(MAKE) -C $* -e test
+
+.PHONY: clean
+clean: $(SUBDIRS:%=clean-%)
+
+.PHONY: clean-compiler
+clean-compiler:
+	cd compiler ; ant clean
+
+.PHONY: clean-%
+clean-%:
+	$(MAKE) -C $* -e clean

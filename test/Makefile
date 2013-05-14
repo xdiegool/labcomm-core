@@ -2,7 +2,9 @@ TESTS=basic simple nested
 LABCOMM_JAR=../compiler/labComm.jar
 LABCOMM=java -jar $(LABCOMM_JAR) 
 
-all:	$(TESTS:%=test_%)
+all:	
+
+test: $(TESTS:%=test_%)
 #	PYTHONPATH=../lib/python \
 #		./test_encoder_decoder.py --labcomm="$(LABCOMM)" basic.lc
 
