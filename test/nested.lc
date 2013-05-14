@@ -1,6 +1,8 @@
-typedef int int_array_ss[1][_, 3, _][5];
-sample struct { int aa; boolean bb; int_array_ss ias; } struct_array_ss[1][_][_];
-
+sample int s_array_array_array[1][1, 1][1, 1, 1];
+sample struct { 
+  int b[1][1, 1]; 
+  int c[1][_, 1, _][_,_]; 
+} struct_array_ss[1];
 typedef int int_t;
 typedef int int_array_t[1][2][3,4];
 typedef struct { int a; } struct_t;
@@ -18,3 +20,4 @@ sample int_array_t int_array_t_s;
 sample struct_t struct_t_s;
 sample struct_array_t struct_array_t_s;
 sample struct_struct_t struct_struct_t_s;
+

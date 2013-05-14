@@ -142,7 +142,7 @@ def get_signatures(path):
     with fp as fp:
         m = imp.load_module('signatures', fp, pathname, description)
         pass
-    return m.signatures
+    return m.sample
 
 class Test:
     
@@ -250,46 +250,4 @@ if __name__ == "__main__":
     for lc in args.lc:
         run(lc, args)
         pass
-    exit(0)
-
-
-    print os.getcwd(), sys.argv
-    if not os.path.exists("gen"):
-        os.makedirs("gen")
-    if len(sys.argv) > 1:
-        files = [s[0:-3] for s in sys.argv[1:] if s.endswith('.lc')]
-    else:
-        files = [s[0:-3] for s in os.listdir(".") if s.endswith('.lc')]
-
-    for f in files:
-        cscode.test_program("gen/csharp/test_%s.cs" % f,
-                            "gen/%s.typeinfo" % f)
-
-
-    sys.path.insert(0, "../lib/python")    
-    import labcomm;
-    sys.path.insert(0, "gen/python")    
-    for f in files:
-        print f
-        h = hexwriter("gen/%s.vec" % f)
-        encoder = labcomm.Encoder(h)
-        signatures = []
-        i = __import__(f)
-        for k in dir(i):
-            v = getattr(i, k)
-            try:
-                s = v.signature
-            except:
-                s = None
-            if s:
-                signatures.append(s)
-                encoder.add_decl(s)
-        for s in signatures:
-            for e in generate(s):
-                encoder.encode(e[1], s)
-
-        h.flush()
-
-        ccode.gen(f, signatures)
-        
-        
+    pass

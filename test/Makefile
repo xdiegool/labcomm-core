@@ -1,4 +1,4 @@
-TESTS=basic simple
+TESTS=basic simple nested
 LABCOMM_JAR=../compiler/labComm.jar
 LABCOMM=java -jar $(LABCOMM_JAR) 
 
