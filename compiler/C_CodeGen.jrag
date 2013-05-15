@@ -191,8 +191,7 @@ aspect C_CodeGen {
   public void Program.C_emitH(C_env env) {
     for (int i = 0; i < getNumDecl(); i++) {
       getDecl(i).C_emitType(env);
-//      getDecl(i).C_emitSignatureDeclaration(env);
-      getDecl(i).C_emitDecoderRegisterDeclaration(env);
+      getDecl(i).C_emitDecoderDeclaration(env);
       getDecl(i).C_emitEncoderDeclaration(env);
       getDecl(i).C_emitSizeofDeclaration(env);
       env.println("");
@@ -205,8 +204,10 @@ aspect C_CodeGen {
     for (int i = 0; i < getNumDecl(); i++) {
       getDecl(i).C_emitDecoder(env);
       getDecl(i).C_emitDecoderRegisterHandler(env);
+      getDecl(i).C_emitDecoderIoctl(env);
       getDecl(i).C_emitEncoder(env);
       getDecl(i).C_emitEncoderRegisterHandler(env);
+      getDecl(i).C_emitEncoderIoctl(env);
       getDecl(i).C_emitSizeof(env);
     }
   }
@@ -330,10 +331,10 @@ aspect C_Type {
 
 aspect C_Declarations {
 
-  public void Decl.C_emitDecoderRegisterDeclaration(C_env env) {
+  public void Decl.C_emitDecoderDeclaration(C_env env) {
   }
 
-  public void SampleDecl.C_emitDecoderRegisterDeclaration(C_env env) {
+  public void SampleDecl.C_emitDecoderDeclaration(C_env env) {
     env.println("void labcomm_decoder_register_" + 
 		env.prefix + getName() + "(");
     env.indent();
@@ -345,6 +346,14 @@ aspect C_Declarations {
     env.unindent();
     env.println("),");
     env.println("void *context");
+    env.unindent();
+    env.println(");");
+
+    env.println("int labcomm_decoder_ioctl_" + env.prefix + getName() + "(");
+    env.indent();
+    env.println("struct labcomm_decoder *d,");
+    env.println("int ioctl_action,");
+    env.println("...");
     env.unindent();
     env.println(");");
   }
@@ -363,6 +372,14 @@ aspect C_Declarations {
     env.indent();
     env.println("struct labcomm_encoder *e,");
     env.println(env.prefix + getName() + " *v");
+    env.unindent();
+    env.println(");");
+
+    env.println("int labcomm_encoder_ioctl_" + env.prefix + getName() + "(");
+    env.indent();
+    env.println("struct labcomm_encoder *e,");
+    env.println("int ioctl_action,");
+    env.println("...");
     env.unindent();
     env.println(");");
   }
@@ -627,6 +644,42 @@ aspect C_Decoder {
 
 }
 
+aspect C_DecoderIoctl {
+
+  public void Decl.C_emitDecoderIoctl(C_env env) {
+    throw new Error(this.getClass().getName() + 
+		    ".C_emitDecoderIoctl(C_env env)" + 
+		    " not declared");
+  }
+
+  public void TypeDecl.C_emitDecoderIoctl(C_env env) {
+  }
+
+  public void SampleDecl.C_emitDecoderIoctl(C_env env) {
+    env.println("int labcomm_decoder_ioctl_" + env.prefix + getName() + "(");
+    env.indent();
+    env.println("struct labcomm_decoder *d,");
+    env.println("int ioctl_action,");
+    env.println("...");
+    env.unindent();
+    env.println(")");
+    env.println("{");
+    env.indent();
+    env.println("int result;");
+    env.println("va_list va;");
+    env.println("va_start(va, ioctl_action);");
+    env.println("result = labcomm_internal_decoder_ioctl(");
+    env.indent();
+    env.println("d, ioctl_action,");
+    env.println("&labcomm_signature_" + env.prefix + getName() + ", va);");
+    env.unindent();
+    env.println("va_end(va);");
+    env.println("return result;");
+    env.unindent();
+    env.println("}");
+  }
+}
+
 
 aspect C_Encoder {
 
@@ -767,7 +820,43 @@ aspect C_Encoder {
     env.unindent();
     env.println("}");
   }
- 
+
+}
+
+aspect C_EncoderIoctl {
+
+  public void Decl.C_emitEncoderIoctl(C_env env) {
+    throw new Error(this.getClass().getName() + 
+		    ".C_emitEncoderIoctl()" + 
+		    " not declared");
+  }
+
+  public void TypeDecl.C_emitEncoderIoctl(C_env env) {
+  }
+
+  public void SampleDecl.C_emitEncoderIoctl(C_env env) {
+    env.println("int labcomm_encoder_ioctl_" + env.prefix + getName() + "(");
+    env.indent();
+    env.println("struct labcomm_encoder *e,");
+    env.println("int ioctl_action,");
+    env.println("...");
+    env.unindent();
+    env.println(")");
+    env.println("{");
+    env.indent();
+    env.println("int result;");
+    env.println("va_list va;");
+    env.println("va_start(va, ioctl_action);");
+    env.println("result = labcomm_internal_encoder_ioctl(");
+    env.indent();
+    env.println("e, ioctl_action,");
+    env.println("&labcomm_signature_" + env.prefix + getName() + ", va);");
+    env.unindent();
+    env.println("va_end(va);");
+    env.println("return result;");
+    env.unindent();
+    env.println("}");
+  }
 
 }
 

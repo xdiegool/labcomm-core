@@ -78,6 +78,11 @@ void labcomm_internal_decoder_register(
   labcomm_handler_typecast_t,
   void *context);
 
+int labcomm_internal_decoder_ioctl(struct labcomm_decoder *decoder, 
+				   int ioctl_action,
+				   labcomm_signature_t *signature,
+				   va_list args);
+
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 
 #define LABCOMM_DECODE(name, type)					\
@@ -252,6 +257,11 @@ int labcomm_internal_encode(
   labcomm_signature_t *signature, 
   labcomm_encoder_function encode,
   void *value);
+
+int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder, 
+				   int ioctl_action,
+				   labcomm_signature_t *signature,
+				   va_list args);
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 

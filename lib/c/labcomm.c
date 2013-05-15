@@ -470,8 +470,21 @@ int labcomm_encoder_ioctl(struct labcomm_encoder *encoder,
     va_list va;
     
     va_start(va, action);
-    result = encoder->writer.ioctl(&encoder->writer, action, va);
+    result = encoder->writer.ioctl(&encoder->writer, action, NULL, va);
     va_end(va);
+  }
+  return result;
+}
+
+int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder, 
+				   int action,
+				   labcomm_signature_t *signature,
+                                   va_list va)
+{
+  int result = -ENOTSUP;
+  
+  if (encoder->writer.ioctl != NULL) {
+    result = encoder->writer.ioctl(&encoder->writer, action, signature, va);
   }
   return result;
 }
@@ -715,3 +728,33 @@ void labcomm_decoder_free(labcomm_decoder_t* d)
   free(d->context);
   free(d);
 }
+
+int labcomm_decoder_ioctl(struct labcomm_decoder *decoder, 
+			  int action,
+			  ...)
+{
+  int result = -ENOTSUP;
+  
+  if (decoder->reader.ioctl != NULL) {
+    va_list va;
+    
+    va_start(va, action);
+    result = decoder->reader.ioctl(&decoder->reader, action, NULL, va);
+    va_end(va);
+  }
+  return result;
+}
+
+int labcomm_internal_decoder_ioctl(struct labcomm_decoder *decoder, 
+				   int action,
+				   labcomm_signature_t *signature,
+                                   va_list va)
+{
+  int result = -ENOTSUP;
+  
+  if (decoder->reader.ioctl != NULL) {
+    result = decoder->reader.ioctl(&decoder->reader, action, NULL, va);
+  }
+  return result;
+}
+

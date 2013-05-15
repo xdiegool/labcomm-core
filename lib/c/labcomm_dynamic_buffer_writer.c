@@ -5,7 +5,10 @@
 #include "labcomm_dynamic_buffer_writer.h"
 
 static int labcomm_dynamic_buffer_writer_ioctl(
-  struct labcomm_writer *w, int action, va_list arg)
+  struct labcomm_writer *w, 
+  int action, 
+  labcomm_signature_t *signature,
+  va_list arg)
 {
   int result = -ENOTSUP;
   switch (action) {

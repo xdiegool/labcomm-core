@@ -98,7 +98,7 @@ typedef struct labcomm_reader {
   int count;
   int pos;
   int (*read)(struct labcomm_reader *, labcomm_reader_action_t, ...);
-  int (*ioctl)(struct labcomm_reader *, int, va_list);
+  int (*ioctl)(struct labcomm_reader *, int, labcomm_signature_t *, va_list);
   labcomm_error_handler_callback on_error;
 }  labcomm_reader_t;
 
@@ -111,6 +111,11 @@ void labcomm_decoder_run(
   struct labcomm_decoder *decoder);
 void labcomm_decoder_free(
   struct labcomm_decoder *decoder);
+
+/* See labcomm_ioctl.h for predefined ioctl_action values */
+int labcomm_decoder_ioctl(struct labcomm_decoder *decoder, 
+			  int ioctl_action,
+			  ...);
 
 /*
  * Encoder
@@ -144,7 +149,7 @@ typedef struct labcomm_writer {
   int pos;
   int error;
   int (*write)(struct labcomm_writer *, labcomm_writer_action_t, ...);
-  int (*ioctl)(struct labcomm_writer *, int, va_list);
+  int (*ioctl)(struct labcomm_writer *, int, labcomm_signature_t *, va_list);
   labcomm_error_handler_callback on_error;
 } labcomm_writer_t;
 

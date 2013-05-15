@@ -23,7 +23,10 @@ int test_read(struct labcomm_reader *r, labcomm_reader_action_t a, ...)
 static unsigned char buffer[128];
 
 static int buffer_writer_ioctl(
-  struct labcomm_writer *w, int action, va_list arg)
+  struct labcomm_writer *w, 
+  int action, 
+  labcomm_signature_t *signature,
+  va_list arg)
 {
   int result = -ENOTSUP;
   switch (action) {
