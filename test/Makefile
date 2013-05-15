@@ -25,21 +25,22 @@ test_%: gen/%/signatures.py \
 		--test mono gen/$*/cs_relay.exe /dev/stdin /dev/stdout \
 		--test java \\-cp gen/$*:../lib/java/labcomm.jar java_relay \
 			    /dev/stdin /dev/stdout
-.PRECIOUS: gen/%/
-gen/%/:
-	mkdir -p $@
+.PRECIOUS: gen/%/.dir
+gen/%/.dir:
+	mkdir -p gen/$*
+	touch $@
 
 .PRECIOUS: gen/%/typeinfo
-gen/%/typeinfo:	%.lc Makefile | gen/%/
+gen/%/typeinfo:	%.lc Makefile | gen/%/.dir
 	$(LABCOMM) --typeinfo=$@ $<
 
 .PRECIOUS: gen/%/signatures.py
-gen/%/signatures.py: %.lc Makefile | gen/%/
+gen/%/signatures.py: %.lc Makefile | gen/%/.dir
 	$(LABCOMM) --python=$@ $<
 
 # C relay test rules
 .PRECIOUS: gen/%/c_code.h gen/%/c_code.c
-gen/%/c_code.h gen/%/c_code.c: %.lc Makefile | gen/%/
+gen/%/c_code.h gen/%/c_code.c: %.lc Makefile | gen/%/.dir
 	$(LABCOMM) --c=gen/$*/c_code.c --h=gen/$*/c_code.h $<
 
 .PRECIOUS: gen/%/c_relay.c
@@ -58,7 +59,7 @@ gen/%/c_relay: gen/%/c_relay.c gen/%/c_code.c Makefile
 
 # C# relay test rules
 .PRECIOUS: gen/%/cs_code.cs
-gen/%/cs_code.cs: %.lc Makefile | gen/%/
+gen/%/cs_code.cs: %.lc Makefile | gen/%/.dir
 	$(LABCOMM) --cs=$@ $<
 
 .PRECIOUS: gen/%/cs_relay.cs
@@ -76,7 +77,7 @@ gen/%/cs_relay.exe: gen/%/cs_relay.cs gen/%/cs_code.cs \
 
 # Java relay test rules
 .PRECIOUS: gen/%/java_code
-gen/%/java_code: %.lc | gen/%/
+gen/%/java_code: %.lc | gen/%/.dir
 	mkdir -p $@
 	$(LABCOMM) --java=$@ $<
 
