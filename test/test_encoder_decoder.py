@@ -12,40 +12,6 @@ import subprocess
 import sys
 import threading
 
-class hexwriter(object):
-    def __init__(self, outfile):
-        self.pos = 0
-        self.ascii = ''
-        self.outfile = outfile
-
-    def write(self, data):
-        for c in data:
-            if ' ' <= c and c <= '}':
-                self.ascii += c
-            else:
-                self.ascii += '.'
-            sys.stdout.write("%2.2x " % ord(c))
-            self.pos += 1
-            if self.pos >= 15:
-                sys.stdout.write("%s\n" % self.ascii)
-                self.pos = 0
-                self.ascii = ""
-        #self.outfile.write(data)
-        
-    def mark(self):
-        self.flush()
-        pass
-
-    def flush(self):
-        for i in range(self.pos, 15):
-            sys.stdout.write("   ")
-        sys.stdout.write("%s\n" % self.ascii)
-        self.pos = 0
-        self.ascii = ""
-        if self.outfile:
-            self.outfile.flush()
-
-
 def generate(decl):
     if decl.__class__ == labcomm.sample:
         result = []
@@ -162,6 +128,9 @@ class Test:
         decoder = threading.Thread(target=self.decode, args=(p.stdout,))
         decoder.start()
         class Writer:
+            def start(self, encoder, version):
+                encoder.encode_string(version)
+                pass
             def write(self, data):
                 p.stdin.write(data)
                 pass
@@ -169,7 +138,6 @@ class Test:
                 p.stdin.flush()
                 pass
             pass
-        h = hexwriter(p.stdin)
         encoder = labcomm.Encoder(Writer())
         for name,signature in self.signatures:
             encoder.add_decl(signature)
@@ -197,6 +165,12 @@ class Test:
 
     def decode(self, f):
         class Reader:
+            def start(self, decoder, version):
+                other_version = decoder.decode_string()
+                if version != other_version:
+                    raise Exception("LabComm version mismatch %s != %s" %
+                                    (version, other_version))
+                pass
             def read(self, count):
                 result = f.read(count)
                 if len(result) == 0:

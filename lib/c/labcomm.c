@@ -34,7 +34,7 @@
 #include "labcomm_ioctl.h"
 #include "labcomm_dynamic_buffer_writer.h"
 
-#define LABCOMM_VERSION "\x0bLabComm2013"
+#define LABCOMM_VERSION "LabComm2013"
 
 typedef struct labcomm_sample_entry {
   struct labcomm_sample_entry *next;

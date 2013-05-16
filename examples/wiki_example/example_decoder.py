@@ -6,6 +6,14 @@ import sys
 class FileReader:
     def __init__(self, name):
         self.f = open(name)
+        pass
+
+    def start(self, decoder, version):
+        other_version = decoder.decode_string()
+        if version != other_version:
+            raise Exception("LabComm version mismatch %s != %s" %
+                            (version, other_version))
+        pass
 
     def read(self, count):
         s = self.f.read(count)

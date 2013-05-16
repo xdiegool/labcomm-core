@@ -3,16 +3,15 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include "labcomm_private.h"
 #include "labcomm_fd_writer.h"
 
 #define BUFFER_SIZE 2048
 
+static int fd_flush(struct labcomm_writer *w);
+
 static int fd_alloc(struct labcomm_writer *w, char *version)
 {
-#ifndef LABCOMM_FD_OMIT_VERSION
-  int *fd = w->context;
-  write(*fd, version, strlen(version));
-#endif
   w->data = malloc(BUFFER_SIZE);
   if (! w->data) {
     w->error = -ENOMEM;
@@ -23,6 +22,8 @@ static int fd_alloc(struct labcomm_writer *w, char *version)
     w->data_size = BUFFER_SIZE;
     w->count = BUFFER_SIZE;
     w->pos = 0;
+    labcomm_write_string(w, version);
+    fd_flush(w);
   }
 
   return w->error;

@@ -13,6 +13,12 @@ public class LabCommDecoderChannel implements LabCommDecoder {
   public LabCommDecoderChannel(InputStream in) throws IOException {
     this.in = new DataInputStream(in);
     registry = new LabCommDecoderRegistry();
+    String version = decodeString();
+    if (! version.equals(LabComm.VERSION)) {
+      throw new IOException("LabComm version mismatch " +
+			    version + " != " + LabComm.VERSION);
+    }
+    System.err.println(LabComm.VERSION);
   }
 
   public void runOne() throws Exception {
@@ -25,7 +31,7 @@ public class LabCommDecoderChannel implements LabCommDecoder {
 	  int index = decodePacked32();
 	  String name = decodeString();
 	  ByteArrayOutputStream signature = new ByteArrayOutputStream();
-	  collectFlatSignature(new LabCommEncoderChannel(signature));
+	  collectFlatSignature(new LabCommEncoderChannel(signature, false));
 	  registry.add(index, name, signature.toByteArray());
 	} break;
 	default: {

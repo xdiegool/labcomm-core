@@ -13,6 +13,11 @@ namespace se.lth.control.labcomm {
 
     public LabCommDecoderChannel(Stream stream) {
       this.stream = stream;
+      String version = decodeString();
+      if (version != LabComm.VERSION) {
+	throw new IOException("LabComm version mismatch " +
+			      version + " != " + LabComm.VERSION);
+      }
     }
 
     public void runOne() {
@@ -25,7 +30,7 @@ namespace se.lth.control.labcomm {
           int index = decodePacked32();
           String name = decodeString();
 	  MemoryStream signature = new MemoryStream();
-	  collectFlatSignature(new LabCommEncoderChannel(signature));
+	  collectFlatSignature(new LabCommEncoderChannel(signature, false));
 	  registry.add(index, name, signature.ToArray());
         } break;
         default: {
@@ -156,7 +161,6 @@ namespace se.lth.control.labcomm {
     }
 
     public String decodeString() {
-      //int length = (int)ReadInt(4);
       int length = decodePacked32();
       byte[] buf = new byte[length];
       ReadBytes(buf, length);

@@ -12,8 +12,14 @@ namespace se.lth.control.labcomm {
     private LabCommEncoderRegistry registry = new LabCommEncoderRegistry();
     byte[] buf = new byte[8];
 
-    public LabCommEncoderChannel(Stream writer) {
+    public LabCommEncoderChannel(Stream writer, bool emitVersion) {
       this.writer = writer;
+      if (emitVersion) {
+	encodeString(LabComm.VERSION);
+      }
+    }
+
+    public LabCommEncoderChannel(Stream writer) : this(writer, true) {
     }
 
     public void register(LabCommDispatcher dispatcher) {

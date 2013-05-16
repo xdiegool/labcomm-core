@@ -2,7 +2,7 @@ TESTS=basic simple nested
 LABCOMM_JAR=../compiler/labComm.jar
 LABCOMM=java -jar $(LABCOMM_JAR) 
 
-CFLAGS=-O3 -Wall -Werror
+CFLAGS=-O3 -g -Wall -Werror
 
 all:	
 
@@ -52,7 +52,6 @@ gen/%/c_relay.c: gen/%/typeinfo relay_gen_c.py Makefile
 .PRECIOUS: gen/%/c_relay
 gen/%/c_relay: gen/%/c_relay.c gen/%/c_code.c Makefile
 	$(CC) $(CFLAGS) -o $@ $< -I../lib/c -I. \
-		-DLABCOMM_FD_OMIT_VERSION \
 		-DLABCOMM_ENCODER_LINEAR_SEARCH \
 		gen/$*/c_code.c \
 		../lib/c/labcomm.c \

@@ -12,15 +12,28 @@ public class LabCommEncoderChannel implements LabCommEncoder {
   private DataOutputStream data;
   private LabCommEncoderRegistry registry;
 
-  public LabCommEncoderChannel(LabCommWriter writer) {
+  public LabCommEncoderChannel(LabCommWriter writer, 
+			       boolean emitVersion) throws IOException {
     this.writer = writer;
     bytes = new ByteArrayOutputStream();
     data = new DataOutputStream(bytes);
     registry = new LabCommEncoderRegistry();
+    if (emitVersion) {
+      encodeString(LabComm.VERSION);
+    }
   }
 
-  public LabCommEncoderChannel(OutputStream writer) {
-    this(new WriterWrapper(writer));
+  public LabCommEncoderChannel(LabCommWriter writer) throws IOException {
+    this(writer, true);
+  }
+
+  public LabCommEncoderChannel(OutputStream writer, 
+			       boolean emitVersion) throws IOException {
+    this(new WriterWrapper(writer), emitVersion);
+  }
+
+  public LabCommEncoderChannel(OutputStream writer) throws IOException {
+    this(new WriterWrapper(writer), true);
   }
 
   public void register(LabCommDispatcher dispatcher) throws IOException {

@@ -2,31 +2,33 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include "labcomm_private.h"
 #include "labcomm_fd_reader.h"
 
 #define BUFFER_SIZE 2048
 
 static int fd_alloc(struct labcomm_reader *r, char *version)
 {
-  int result;
-#ifndef LABCOMM_FD_OMIT_VERSION
-  int *fd = r->context;
-  char *tmp = strdup(version);
+  int result = 0;
   
-  read(*fd, tmp, strlen(version));
-  free(tmp);
-#endif
-  r->data = malloc(BUFFER_SIZE);
-  if (r->data) {
-    r->data_size = BUFFER_SIZE;
-    result = r->data_size;
-  } else {
-    r->data_size = 0;
-    result = -ENOMEM;
-  }
   r->count = 0;
   r->pos = 0;
+  r->data = malloc(BUFFER_SIZE);
+  if (! r->data) {
+    r->data_size = 0;
+    result = -ENOMEM;
+  } else {
+    char *tmp;
 
+    r->data_size = BUFFER_SIZE;
+    tmp = labcomm_read_string(r);
+    if (strcmp(tmp, version) != 0) {
+      result = -EINVAL;
+    } else {
+      result = r->data_size;
+    }
+    free(tmp);
+  }
   return result;
 }
 
@@ -43,7 +45,7 @@ static int fd_free(struct labcomm_reader *r)
 
 static int fd_fill(struct labcomm_reader *r)
 {
-  int result;
+  int result = 0;
   int *fd = r->context;
 
   if (r->pos < r->count) {

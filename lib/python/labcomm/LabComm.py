@@ -95,6 +95,8 @@
  
 import struct as packer
 
+VERSION = "LabComm2013"
+
 i_TYPEDEF = 0x01
 i_SAMPLE  = 0x02
 
@@ -537,6 +539,7 @@ class Encoder(Codec):
     def __init__(self, writer):
         super(Encoder, self).__init__()
         self.writer = writer
+        self.writer.start(self, VERSION)
 
     def pack(self, format, *args):
         self.writer.write(packer.pack(format, *args))
@@ -609,6 +612,7 @@ class Decoder(Codec):
     def __init__(self, reader):
         super(Decoder, self).__init__()
         self.reader = reader
+        self.reader.start(self, VERSION)
         
     def unpack(self, format):
         size = packer.calcsize(format)
