@@ -9,11 +9,13 @@ java -jar ../../compiler/labComm.jar \
   example.lc
 
 # Compile executables
+(cd ../../lib/c; make liblabcomm.a)
+
 gcc -o example_encoder -I ../../lib/c/ \
 	example_encoder.c \
- 	example.c \
-	../../lib/c/labcomm.c \
-	../../lib/c//labcomm_fd_reader_writer.c
+        example.c \
+	../../lib/c/liblabcomm.a 
+
 javac -cp ../../lib/java:. *.java
 
 # Run through all executables (c->java->Python)

@@ -20,3 +20,8 @@ lib/java/se/lth/control/labcomm/LabCommWriter.class
 gen
 labcomm.dll
 labcomm.jar
+example.c
+example.h
+example.py
+examples/wiki_example/example.encoded
+example.encoded
