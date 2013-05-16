@@ -1,4 +1,4 @@
-SUBDIRS=compiler lib examples test
+SUBDIRS=compiler lib test examples
 export LABCOMM_JAR=$(shell pwd)/compiler/labComm.jar
 export LABCOMM=java -jar $(LABCOMM_JAR) 
 

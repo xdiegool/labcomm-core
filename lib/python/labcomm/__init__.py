@@ -1,5 +1,8 @@
 import labcomm.LabComm
     
+from labcomm.StreamReader import StreamReader
+from labcomm.StreamWriter import StreamWriter
+
 Decoder = labcomm.LabComm.Decoder
 Encoder = labcomm.LabComm.Encoder
 

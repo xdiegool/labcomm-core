@@ -127,18 +127,7 @@ class Test:
         self.next = threading.Semaphore(0)
         decoder = threading.Thread(target=self.decode, args=(p.stdout,))
         decoder.start()
-        class Writer:
-            def start(self, encoder, version):
-                encoder.encode_string(version)
-                pass
-            def write(self, data):
-                p.stdin.write(data)
-                pass
-            def mark(self):
-                p.stdin.flush()
-                pass
-            pass
-        encoder = labcomm.Encoder(Writer())
+        encoder = labcomm.Encoder(labcomm.StreamWriter(p.stdin))
         for name,signature in self.signatures:
             encoder.add_decl(signature)
             pass
@@ -164,22 +153,7 @@ class Test:
         pass
 
     def decode(self, f):
-        class Reader:
-            def start(self, decoder, version):
-                other_version = decoder.decode_string()
-                if version != other_version:
-                    raise Exception("LabComm version mismatch %s != %s" %
-                                    (version, other_version))
-                pass
-            def read(self, count):
-                result = f.read(count)
-                if len(result) == 0:
-                    raise EOFError()
-                return result
-            def mark(self, value, decl):
-                pass
-            pass
-        decoder = labcomm.Decoder(Reader())
+        decoder = labcomm.Decoder(labcomm.StreamReader(f))
         try:
             while True:
                 value,decl = decoder.decode()
