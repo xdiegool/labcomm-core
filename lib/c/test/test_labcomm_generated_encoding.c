@@ -132,7 +132,8 @@ int main(void)
   generated_encoding_V V;
   generated_encoding_B B = 1;
 
-  labcomm_encoder_t *encoder = labcomm_encoder_new(buffer_writer, buffer);
+  labcomm_encoder_t *encoder = labcomm_encoder_new(buffer_writer, buffer,
+						   NULL, NULL);
 
   labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   labcomm_encoder_register_generated_encoding_V(encoder);

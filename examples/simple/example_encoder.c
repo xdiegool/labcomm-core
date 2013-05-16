@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
   char *filename = argv[1];
   printf("C encoder writing to %s\n", filename);
   fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC, 0644);
-  encoder = labcomm_encoder_new(labcomm_fd_writer, &fd);
+  encoder = labcomm_encoder_new(labcomm_fd_writer, &fd, NULL, NULL);
   labcomm_encoder_register_simple_theTwoInts(encoder);
   labcomm_encoder_register_simple_anotherTwoInts(encoder);
   labcomm_encoder_register_simple_IntString(encoder);

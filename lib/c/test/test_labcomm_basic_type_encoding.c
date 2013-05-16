@@ -17,6 +17,7 @@ static labcomm_encoder_t encoder = {
     .action = { NULL, NULL, NULL, NULL, NULL, NULL },
     .on_error = NULL,
   },
+  .lock = { NULL, NULL },
   .do_register = NULL,
   .do_encode = NULL,
   .on_error = NULL,
@@ -33,6 +34,7 @@ static labcomm_decoder_t decoder = {
     .action = { NULL, NULL, NULL, NULL, NULL, NULL },
     .on_error = NULL,
   },
+  .lock = { NULL, NULL },
   .do_register = NULL,
   .on_error = NULL,
 };

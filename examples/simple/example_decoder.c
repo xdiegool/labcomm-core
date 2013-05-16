@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
   char *filename = argv[1];
   printf("C decoder reading from %s\n", filename);
   fd = open(filename, O_RDONLY);
-  decoder = labcomm_decoder_new(labcomm_fd_reader, &fd);
+  decoder = labcomm_decoder_new(labcomm_fd_reader, &fd, NULL, NULL);
   if (!decoder) { 
     printf("Failed to allocate decoder %s:%d\n", __FUNCTION__, __LINE__);
     return 1;

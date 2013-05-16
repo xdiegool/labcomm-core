@@ -57,6 +57,10 @@ typedef void (*labcomm_decoder_typecast_t)(
 typedef struct labcomm_decoder {
   void *context;
   labcomm_reader_t reader;
+  struct {
+    void *context;
+    const struct labcomm_lock_action *action;
+  } lock;
   void (*do_register)(struct labcomm_decoder *, 
 		      labcomm_signature_t *, 
 		      labcomm_decoder_typecast_t,
@@ -187,6 +191,10 @@ typedef int (*labcomm_encoder_function)(
 typedef struct labcomm_encoder {
   void *context;
   labcomm_writer_t writer;
+  struct {
+    void *context;
+    const struct labcomm_lock_action *action;
+  } lock;
   void (*do_register)(struct labcomm_encoder *encoder, 
 		      labcomm_signature_t *signature,
 		      labcomm_encoder_function encode);

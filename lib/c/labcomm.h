@@ -76,6 +76,18 @@ typedef int (*labcomm_handle_new_datatype_callback)(
 void labcomm_decoder_register_new_datatype_handler(struct labcomm_decoder *d,
 		labcomm_handle_new_datatype_callback on_new_datatype);
 
+/*
+ * Locking support (optional)
+ */
+
+struct labcomm_lock_action {
+  int (*alloc)(void *context);
+  int (*free)(void *context);
+  int (*read_lock)(void *context);
+  int (*read_unlock)(void *context);
+  int (*write_lock)(void *context);
+  int (*write_unlock)(void *context);
+};
 
 /*
  * Decoder
@@ -84,12 +96,12 @@ void labcomm_decoder_register_new_datatype_handler(struct labcomm_decoder *d,
 struct labcomm_reader;
 
 struct labcomm_reader_action {
-  int (*alloc)(struct labcomm_reader *, char *labcomm_version);
-  int (*free)(struct labcomm_reader *);
-  int (*start)(struct labcomm_reader *);
-  int (*end)(struct labcomm_reader *);
-  int (*fill)(struct labcomm_reader *); 
-  int (*ioctl)(struct labcomm_reader *, int, labcomm_signature_t *, va_list);
+  int (*alloc)(struct labcomm_reader *r, char *labcomm_version);
+  int (*free)(struct labcomm_reader *r);
+  int (*start)(struct labcomm_reader *r);
+  int (*end)(struct labcomm_reader *r);
+  int (*fill)(struct labcomm_reader *r); 
+  int (*ioctl)(struct labcomm_reader *r, int, labcomm_signature_t *, va_list);
 };
 
 typedef struct labcomm_reader {
@@ -104,8 +116,10 @@ typedef struct labcomm_reader {
 }  labcomm_reader_t;
 
 struct labcomm_decoder *labcomm_decoder_new(
-  const struct labcomm_reader_action action,
-  void *reader_context);
+  const struct labcomm_reader_action reader,
+  void *reader_context,
+  const struct labcomm_lock_action *lock,
+  void *lock_context);
 int labcomm_decoder_decode_one(
   struct labcomm_decoder *decoder);
 void labcomm_decoder_run(
@@ -148,8 +162,10 @@ typedef struct labcomm_writer {
 } labcomm_writer_t;
 
 struct labcomm_encoder *labcomm_encoder_new(
-  const struct labcomm_writer_action action,
-  void *writer_context);
+  const struct labcomm_writer_action writer,
+  void *writer_context,
+  const struct labcomm_lock_action *lock,
+  void *lock_context);
 void labcomm_encoder_free(
   struct labcomm_encoder *encoder);
 

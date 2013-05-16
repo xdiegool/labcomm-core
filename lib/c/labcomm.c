@@ -381,8 +381,10 @@ no_end:
 }
 
 labcomm_encoder_t *labcomm_encoder_new(
-  const struct labcomm_writer_action action,
-  void *writer_context)
+  const struct labcomm_writer_action writer,
+  void *writer_context,
+  const struct labcomm_lock_action *lock,
+  void *lock_context)
 {
   labcomm_encoder_t *result = malloc(sizeof(labcomm_encoder_t));
   if (result) {
@@ -396,13 +398,15 @@ labcomm_encoder_t *labcomm_encoder_new(
     context->by_section = NULL;
 #endif
     result->context = context;
-    result->writer.context = writer_context;
     result->writer.data = 0;
     result->writer.data_size = 0;
     result->writer.count = 0;
     result->writer.pos = 0;
     result->writer.error = 0;
-    result->writer.action = action;
+    result->writer.action = writer;
+    result->writer.context = writer_context;
+    result->lock.action = lock;
+    result->lock.context = lock_context;
     result->writer.on_error = on_error_fprintf;
     result->do_register = do_encoder_register;
     result->do_encode = do_encode;
@@ -584,7 +588,7 @@ static int do_decode_one(labcomm_decoder_t *d)
 	/* TODO: should the labcomm_dynamic_buffer_writer be 
 	   a permanent part of labcomm_decoder? */
 	labcomm_encoder_t *e = labcomm_encoder_new(
-	  labcomm_dynamic_buffer_writer, NULL);
+	  labcomm_dynamic_buffer_writer, NULL, NULL, NULL);
 	labcomm_signature_t signature;
 	labcomm_sample_entry_t *entry = NULL;
 	int index, err;
@@ -650,8 +654,10 @@ static int do_decode_one(labcomm_decoder_t *d)
 }
 
 labcomm_decoder_t *labcomm_decoder_new(
-  const struct labcomm_reader_action action,
-  void *reader_context)
+  const struct labcomm_reader_action reader,
+  void *reader_context,
+  const struct labcomm_lock_action *lock,
+  void *lock_context)
 {
   labcomm_decoder_t *result = malloc(sizeof(labcomm_decoder_t));
   if (result) {
@@ -659,13 +665,15 @@ labcomm_decoder_t *labcomm_decoder_new(
       (labcomm_decoder_context_t*)malloc(sizeof(labcomm_decoder_context_t));
     context->sample = 0;
     result->context = context;
-    result->reader.context = reader_context;
     result->reader.data = 0;
     result->reader.data_size = 0;
     result->reader.count = 0;
     result->reader.pos = 0;
-    result->reader.action = action;
+    result->reader.action = reader;
+    result->reader.context = reader_context;
     result->reader.on_error = on_error_fprintf;
+    result->lock.action = lock;
+    result->lock.context = lock_context;
     result->do_register = do_decoder_register;
     result->do_decode_one = do_decode_one;
     result->on_error = on_error_fprintf;
