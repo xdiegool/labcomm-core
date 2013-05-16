@@ -127,7 +127,7 @@ LABCOMM_DECODE(long, long long)
 LABCOMM_DECODE(float, float)
 LABCOMM_DECODE(double, double)
 
-static inline unsigned int labcomm_read_unpacked32(labcomm_reader_t *r)
+static inline unsigned int labcomm_read_packed32(labcomm_reader_t *r)
 {
   unsigned int result = 0;
   
@@ -149,7 +149,7 @@ static inline unsigned int labcomm_read_unpacked32(labcomm_reader_t *r)
  
 static inline unsigned int labcomm_decode_packed32(labcomm_decoder_t *d) 
 {
-  return labcomm_read_unpacked32(&d->reader);
+  return labcomm_read_packed32(&d->reader);
 }
 
 static inline char *labcomm_read_string(labcomm_reader_t *r)
@@ -157,7 +157,7 @@ static inline char *labcomm_read_string(labcomm_reader_t *r)
   char *result;
   int length, i; 
   
-  length = labcomm_read_unpacked32(r);
+  length = labcomm_read_packed32(r);
   result = malloc(length + 1);
   for (i = 0 ; i < length ; i++) {
     if (r->pos >= r->count) {	

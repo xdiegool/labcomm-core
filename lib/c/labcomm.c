@@ -224,17 +224,17 @@ static int get_encoder_index(
 #endif
 }
 
-void labcomm_encode_signature(struct labcomm_encoder *e,
-                              labcomm_signature_t *signature) 
+static void labcomm_encode_signature(struct labcomm_encoder *e,
+				     labcomm_signature_t *signature) 
 {
   int i, index;
 
   index = get_encoder_index(e, signature);
   e->writer.action.start(&e->writer, e, index, signature, NULL);
-  labcomm_encode_packed32(e, signature->type);
-  labcomm_encode_packed32(e, index);
+  labcomm_write_packed32(&e->writer, signature->type);
+  labcomm_write_packed32(&e->writer, index);
 
-  labcomm_encode_string(e, signature->name);
+  labcomm_write_string(&e->writer, signature->name);
   for (i = 0 ; i < signature->size ; i++) {
     if (e->writer.pos >= e->writer.count) {
       e->writer.action.flush(&e->writer);
@@ -406,7 +406,7 @@ int labcomm_internal_encode(
   result = e->writer.action.start(&e->writer, e, index, signature, value);
   if (result == -EALREADY) { result = 0; goto no_end; }
   if (result != 0) { goto out; }
-  result = labcomm_encode_packed32(e, index);
+  result = labcomm_write_packed32(&e->writer, index);
   if (result != 0) { goto out; }
   result = encode(e, value);
 out:
@@ -469,36 +469,32 @@ static void collect_flat_signature(
   labcomm_decoder_t *decoder,
   labcomm_encoder_t *signature_writer)
 {
-  //int type = labcomm_decode_int(decoder); 
-  int type = labcomm_decode_packed32(decoder); 
-//  printf("%s: type=%x\n", __FUNCTION__, type);
+  int type = labcomm_read_packed32(&decoder->reader); 
   if (type >= LABCOMM_USER) {
     decoder->on_error(LABCOMM_ERROR_UNIMPLEMENTED_FUNC, 3,
 			"Implement %s ... (1) for type 0x%x\n", __FUNCTION__, type);
   } else {
-    //labcomm_encode_int(signature_writer, type); 
-    labcomm_encode_packed32(signature_writer, type); 
+    labcomm_write_packed32(&signature_writer->writer, type); 
     switch (type) {
       case LABCOMM_ARRAY: {
 	int dimensions, i;
 
-	dimensions = labcomm_decode_packed32(decoder); //labcomm_decode_int(decoder); //unpack32
-	labcomm_encode_packed32(signature_writer, dimensions); //pack32
+	dimensions = labcomm_read_packed32(&decoder->reader);
+	labcomm_write_packed32(&signature_writer->writer, dimensions);
 	for (i = 0 ; i < dimensions ; i++) {
-	  int n = labcomm_decode_packed32(decoder); //labcomm_decode_int(decoder);
-	  labcomm_encode_packed32(signature_writer, n); // labcomm_encode_int(signature_writer, n);
+	  int n = labcomm_read_packed32(&decoder->reader);
+	  labcomm_write_packed32(&signature_writer->writer, n);
 	}
 	collect_flat_signature(decoder, signature_writer);
       } break;
       case LABCOMM_STRUCT: {
 	int fields, i;
-	//fields = labcomm_decode_int(decoder); 
-	//labcomm_encode_int(signature_writer, fields); 
-	fields = labcomm_decode_packed32(decoder); 
-	labcomm_encode_packed32(signature_writer, fields); 
+
+	fields = labcomm_read_packed32(&decoder->reader); 
+	labcomm_write_packed32(&signature_writer->writer, fields); 
 	for (i = 0 ; i < fields ; i++) {
-	  char *name = labcomm_decode_string(decoder);
-	  labcomm_encode_string(signature_writer, name);
+	  char *name = labcomm_read_string(&decoder->reader);
+	  labcomm_write_string(&signature_writer->writer, name);
 	  free(name);
 	  collect_flat_signature(decoder, signature_writer);
 	}
@@ -580,9 +576,7 @@ int labcomm_decoder_decode_one(labcomm_decoder_t *d)
     if (result > 0) {
       labcomm_decoder_context_t *context = d->context;
 
-//      printf("do_decode_one: result = %x\n", result);
-      result = labcomm_decode_packed32(d);
-//      printf("do_decode_one: result(2) = %x\n", result);
+      result = labcomm_read_packed32(&d->reader);
       if (result == LABCOMM_TYPEDEF || result == LABCOMM_SAMPLE) {
 	/* TODO: should the labcomm_dynamic_buffer_writer be 
 	   a permanent part of labcomm_decoder? */
@@ -592,12 +586,10 @@ int labcomm_decoder_decode_one(labcomm_decoder_t *d)
 	labcomm_sample_entry_t *entry = NULL;
 	int index, err;
 
-	index = labcomm_decode_packed32(d); //int
-	signature.name = labcomm_decode_string(d);
+	index = labcomm_read_packed32(&d->reader); //int
+	signature.name = labcomm_read_string(&d->reader);
 	signature.type = result;
 	e->writer.action.start(&e->writer, NULL, 0, NULL, NULL);
-	/* printf("do_decode_one: result = %x, index = %x, name=%s\n", 
-	   result, index, signature.name); */
 	collect_flat_signature(d, e);
 	e->writer.action.end(&e->writer);
 	err = labcomm_encoder_ioctl(e, LABCOMM_IOCTL_WRITER_GET_BYTES_WRITTEN,
