@@ -91,19 +91,29 @@ typedef enum {
   labcomm_reader_ioctl
 } labcomm_reader_action_t;
 
+struct labcomm_reader;
+
+struct labcomm_reader_action {
+  int (*alloc)(struct labcomm_reader *, char *labcomm_version);
+  int (*free)(struct labcomm_reader *);
+  int (*start)(struct labcomm_reader *);
+  int (*fill)(struct labcomm_reader *); 
+  int (*end)(struct labcomm_reader *);
+  int (*ioctl)(struct labcomm_reader *, int, labcomm_signature_t *, va_list);
+};
+
 typedef struct labcomm_reader {
   void *context;
   unsigned char *data;
   int data_size;
   int count;
   int pos;
-  int (*read)(struct labcomm_reader *, labcomm_reader_action_t, ...);
-  int (*ioctl)(struct labcomm_reader *, int, labcomm_signature_t *, va_list);
+  struct labcomm_reader_action action;
   labcomm_error_handler_callback on_error;
 }  labcomm_reader_t;
 
 struct labcomm_decoder *labcomm_decoder_new(
-  int (*reader)(labcomm_reader_t *, labcomm_reader_action_t, ...),
+  const struct labcomm_reader_action action,
   void *reader_context);
 int labcomm_decoder_decode_one(
   struct labcomm_decoder *decoder);

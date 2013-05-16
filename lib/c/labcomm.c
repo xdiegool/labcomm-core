@@ -573,7 +573,7 @@ static int do_decode_one(labcomm_decoder_t *d)
   int result;
 
   do {
-    result = d->reader.read(&d->reader, labcomm_reader_start);
+    result = d->reader.action.start(&d->reader);
     if (result > 0) {
       labcomm_decoder_context_t *context = d->context;
 
@@ -642,7 +642,7 @@ static int do_decode_one(labcomm_decoder_t *d)
 	}
       }
     }
-    d->reader.read(&d->reader, labcomm_reader_end);
+    d->reader.action.end(&d->reader);
     /* TODO: should we really loop, or is it OK to
        return after a typedef/sample */
   } while (result > 0 && result < LABCOMM_USER);
@@ -650,7 +650,7 @@ static int do_decode_one(labcomm_decoder_t *d)
 }
 
 labcomm_decoder_t *labcomm_decoder_new(
-  int (*reader)(labcomm_reader_t *, labcomm_reader_action_t, ...),
+  const struct labcomm_reader_action action,
   void *reader_context)
 {
   labcomm_decoder_t *result = malloc(sizeof(labcomm_decoder_t));
@@ -664,14 +664,13 @@ labcomm_decoder_t *labcomm_decoder_new(
     result->reader.data_size = 0;
     result->reader.count = 0;
     result->reader.pos = 0;
-    result->reader.read = reader;
-    result->reader.ioctl = NULL;
+    result->reader.action = action;
     result->reader.on_error = on_error_fprintf;
     result->do_register = do_decoder_register;
     result->do_decode_one = do_decode_one;
     result->on_error = on_error_fprintf;
     result->on_new_datatype = on_new_datatype;
-    result->reader.read(&result->reader, labcomm_reader_alloc, LABCOMM_VERSION);
+    result->reader.action.alloc(&result->reader, LABCOMM_VERSION);
   }
   return result;
 }
@@ -714,7 +713,7 @@ void labcomm_decoder_run(labcomm_decoder_t *d)
 
 void labcomm_decoder_free(labcomm_decoder_t* d)
 {
-  d->reader.read(&d->reader, labcomm_reader_free);
+  d->reader.action.free(&d->reader);
   labcomm_decoder_context_t *context = (labcomm_decoder_context_t *) d->context;
   labcomm_sample_entry_t *entry = context->sample;
   labcomm_sample_entry_t *entry_next;
@@ -735,11 +734,11 @@ int labcomm_decoder_ioctl(struct labcomm_decoder *decoder,
 {
   int result = -ENOTSUP;
   
-  if (decoder->reader.ioctl != NULL) {
+  if (decoder->reader.action.ioctl != NULL) {
     va_list va;
     
     va_start(va, action);
-    result = decoder->reader.ioctl(&decoder->reader, action, NULL, va);
+    result = decoder->reader.action.ioctl(&decoder->reader, action, NULL, va);
     va_end(va);
   }
   return result;
@@ -752,8 +751,8 @@ int labcomm_internal_decoder_ioctl(struct labcomm_decoder *decoder,
 {
   int result = -ENOTSUP;
   
-  if (decoder->reader.ioctl != NULL) {
-    result = decoder->reader.ioctl(&decoder->reader, action, NULL, va);
+  if (decoder->reader.action.ioctl != NULL) {
+    result = decoder->reader.action.ioctl(&decoder->reader, action, NULL, va);
   }
   return result;
 }

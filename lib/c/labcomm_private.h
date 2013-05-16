@@ -90,7 +90,7 @@ int labcomm_internal_decoder_ioctl(struct labcomm_decoder *decoder,
     type result; int i;							\
     for (i = sizeof(type) - 1 ; i >= 0 ; i--) {				\
       if (r->pos >= r->count) {						\
-	r->read(r, labcomm_reader_continue);				\
+	r->action.fill(r);						\
       }									\
       ((unsigned char*)(&result))[i] = r->data[r->pos];			\
       r->pos++;								\
@@ -108,7 +108,7 @@ int labcomm_internal_decoder_ioctl(struct labcomm_decoder *decoder,
     type result; int i;							\
     for (i = 0 ; i < sizeof(type) ; i++) {				\
       if (r->pos >= r->count) {						\
-	r->read(r, labcomm_reader_continue);				\
+	r->action.fill(r);						\
       }									\
       ((unsigned char*)(&result))[i] = r->data[r->pos];			\
       r->pos++;								\
@@ -129,56 +129,6 @@ LABCOMM_DECODE(long, long long)
 LABCOMM_DECODE(float, float)
 LABCOMM_DECODE(double, double)
 
-#if 0
-/* 
- * Unpack a 32 bit unsigned number from a sequence bytes, where the 
- * first byte is prefixed with a variable length bit pattern that
- * indicates the number of bytes used for encoding. The encoding
- * is inspired by the UTF-8 encoding.
- *
- * 0b0     - 1 byte  (0x00000000 - 0x0000007f)
- * 0b10    - 2 bytes (0x00000080 - 0x00003fff)
- * 0b110   - 3 bytes (0x00004000 - 0x001fffff)
- * 0b1110  - 4 bytes (0x00200000 - 0x0fffffff)
- * 0b11110 - 5 bytes (0x10000000 - 0xffffffff) [4 bits unused]
- */
-static inline unsigned int labcomm_read_unpacked32(labcomm_reader_t *r)
-{
-  unsigned int result = 0;
-  int n, i;
-  unsigned char tag;
-
-  if (r->pos >= r->count) {	
-    r->read(r, labcomm_reader_continue);
-  }
-  tag = r->data[r->pos];
-  r->pos++;
-  if (tag < 0x80) {
-    n = 1;
-    result = tag;
-  } else if (tag < 0xc0) {
-    n = 2;
-    result = tag & 0x3f;
-  } else if (tag < 0xe0) {
-    n = 3;
-    result = tag & 0x1f;
-  } else if (tag < 0xf0) {
-    n = 4;
-    result = tag & 0x0f;
-  } else {
-    n = 5;
-  }
-  for (i = 1 ; i < n ; i++) {
-    if (r->pos >= r->count) {	
-      r->read(r, labcomm_reader_continue);
-    }
-    result = (result << 8) | r->data[r->pos];
-    r->pos++;
-  }
-  return result;
-}
-#endif
-
 static inline unsigned int labcomm_read_unpacked32(labcomm_reader_t *r)
 {
   unsigned int result = 0;
@@ -187,7 +137,7 @@ static inline unsigned int labcomm_read_unpacked32(labcomm_reader_t *r)
     unsigned char tmp;
 
     if (r->pos >= r->count) {	
-      r->read(r, labcomm_reader_continue);
+      r->action.fill(r);
     }
     tmp = r->data[r->pos];
     r->pos++;
@@ -213,7 +163,7 @@ static inline char *labcomm_read_string(labcomm_reader_t *r)
   result = malloc(length + 1);
   for (i = 0 ; i < length ; i++) {
     if (r->pos >= r->count) {	
-      r->read(r, labcomm_reader_continue);
+      r->action.fill(r);
     }
     result[i] = r->data[r->pos];
     r->pos++;

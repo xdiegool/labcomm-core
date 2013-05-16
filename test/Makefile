@@ -2,6 +2,8 @@ TESTS=basic simple nested
 LABCOMM_JAR=../compiler/labComm.jar
 LABCOMM=java -jar $(LABCOMM_JAR) 
 
+CFLAGS=-O3 -Wall -Werror
+
 all:	
 
 test: $(TESTS:%=test_%)

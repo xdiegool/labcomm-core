@@ -11,12 +11,6 @@ int test_write(struct labcomm_writer *w, labcomm_writer_action_t a, ...)
   exit(1);
 }
 
-int test_read(struct labcomm_reader *r, labcomm_reader_action_t a, ...)
-{
-  fprintf(stderr, "test_read should not be called\n");
-  exit(1);
-}
-
 #define IOCTL_WRITER_ASSERT_BYTES 4096
 #define IOCTL_WRITER_RESET 4097
 
