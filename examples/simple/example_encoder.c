@@ -8,7 +8,6 @@
 int main(int argc, char *argv[]) {
   int fd;
   struct labcomm_encoder *encoder;
-  int i, j;
 
   char *filename = argv[1];
   printf("C encoder writing to %s\n", filename);
@@ -65,4 +64,5 @@ int main(int argc, char *argv[]) {
   labcomm_encoder_register_simple_TwoFixedArrays(encoder);
   labcomm_encode_simple_TwoFixedArrays(encoder, &tfa);
 
+  return 0;
 }
