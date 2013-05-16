@@ -20,7 +20,7 @@ test_%: gen/%/signatures.py \
 	gen/%/java_code 
 	PYTHONPATH=../lib/python ./test_encoder_decoder.py \
 		--signatures=gen/$*/signatures.py \
-		--test /bin/tee gen/$*/testdata \
+		--test tee gen/$*/testdata \
 		--test gen/$*/c_relay /dev/stdin /dev/stdout \
 		--test mono gen/$*/cs_relay.exe /dev/stdin /dev/stdout \
 		--test java \\-cp gen/$*:../lib/java/labcomm.jar java_relay \
