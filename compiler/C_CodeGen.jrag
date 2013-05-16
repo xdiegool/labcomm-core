@@ -161,6 +161,7 @@ aspect C_CodeGen {
     env.println("");
 
     // Include
+    env.println("#include <stdint.h>");
     env.println("#include \"labcomm.h\"");
     for (int i = 0 ; i < includes.size() ; i++) {
       env.println("#include \"" + includes.get(i) + "\"");
@@ -260,11 +261,14 @@ aspect C_Type {
 
   public void PrimType.C_emitType(C_env env, String name) {
     switch (getToken()) {
-      case LABCOMM_BOOLEAN: { env.print("unsigned char"); } break;
-      case LABCOMM_BYTE: { env.print("unsigned char"); } break;
+      case LABCOMM_BOOLEAN: { env.print("uint8_t"); } break;
+      case LABCOMM_BYTE: { env.print("uint8_t"); } break;
+      case LABCOMM_SHORT: { env.print("int16_t"); } break;
+      case LABCOMM_INT: { env.print("int32_t"); } break;
+      case LABCOMM_LONG: { env.print("int64_t"); } break;
+      case LABCOMM_FLOAT: { env.print("float"); } break;
+      case LABCOMM_DOUBLE: { env.print("double"); } break;
       case LABCOMM_STRING: { env.print("char*"); } break;
-      case LABCOMM_LONG: { env.print("long long"); } break;
-      default: { env.print(getName()); } break;
     }
     env.print(" " + name);
   }
