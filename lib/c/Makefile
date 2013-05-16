@@ -6,13 +6,14 @@ CFLAGS = -g -Wall -Werror -O3  -I. -Itest -DLABCOMM_ENCODER_LINEAR_SEARCH
 LDFLAGS = -L.
 LDLIBS_TEST = -Tlabcomm.linkscript  -lcunit -llabcomm
 
-OBJS= labcomm.o labcomm_dynamic_buffer_writer.o labcomm_fd_reader.o labcomm_fd_writer.o labcomm_mem_reader.o labcomm_mem_writer.o
+OBJS= labcomm.o labcomm_dynamic_buffer_writer.o labcomm_fd_reader.o labcomm_fd_writer.o 
+#FIXME: labcomm_mem_reader.o labcomm_mem_writer.o
 LABCOMM_JAR=../../compiler/labComm.jar
 LABCOMM=java -jar $(LABCOMM_JAR) 
 
 TESTS=test_labcomm_basic_type_encoding test_labcomm_generated_encoding 
-#test_labcomm 
-#FIXME: test_labcomm_errors
+#
+#FIXME: test_labcomm test_labcomm_errors
 TEST_DIR=test
 TESTDATA_DIR=$(TEST_DIR)/testdata
 TEST_GEN_DIR=$(TESTDATA_DIR)/gen

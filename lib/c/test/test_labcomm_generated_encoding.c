@@ -5,18 +5,49 @@
 #include "labcomm_private.h"
 #include "test/gen/generated_encoding.h"
 
-int test_write(struct labcomm_writer *w, labcomm_writer_action_t a, ...)
-{
-  fprintf(stderr, "test_write should not be called\n");
-  exit(1);
-}
-
 #define IOCTL_WRITER_ASSERT_BYTES 4096
 #define IOCTL_WRITER_RESET 4097
 
 static unsigned char buffer[128];
 
-static int buffer_writer_ioctl(
+static int buf_writer_alloc(struct labcomm_writer *w, char *labcomm_version)
+{
+  w->data_size = sizeof(buffer);
+  w->count = w->data_size;
+  w->data = buffer;
+  w->pos = 0;
+  
+  return 0;
+}
+
+static int buf_writer_free(struct labcomm_writer *w)
+{
+  return 0;
+}
+
+static int buf_writer_start(struct labcomm_writer *w,
+			    struct labcomm_encoder *encoder,
+			    int index,
+			    labcomm_signature_t *signature,
+			    void *value)
+{
+  return 0;
+}
+
+static int buf_writer_end(struct labcomm_writer *w)
+{
+  return 0;
+}
+
+static int buf_writer_flush(struct labcomm_writer *w)
+{
+  fprintf(stderr, "Should not come here %s:%d\n", __FILE__, __LINE__);
+  exit(1);
+  
+  return 0;
+}
+
+static int buf_writer_ioctl(
   struct labcomm_writer *w, 
   int action, 
   labcomm_signature_t *signature,
@@ -68,39 +99,14 @@ static int buffer_writer_ioctl(
   return result;
 }
 
-static int buffer_writer(
-  labcomm_writer_t *w, 
-  labcomm_writer_action_t action,
-  ...)
-{
-  switch (action) {
-    case labcomm_writer_alloc: {
-      w->data_size = sizeof(buffer);
-      w->count = w->data_size;
-      w->data = buffer;
-      w->pos = 0;
-      w->ioctl = buffer_writer_ioctl;
-    } break;
-    case labcomm_writer_start: 
-    case labcomm_writer_start_signature: {
-    } break;
-    case labcomm_writer_continue: 
-    case labcomm_writer_continue_signature: {
-      fprintf(stderr, "Should not come here %s:%d\n", __FILE__, __LINE__);
-      exit(1);
-    } break;
-    case labcomm_writer_end: 
-    case labcomm_writer_end_signature: {
-    } break;
-    case labcomm_writer_free: {
-      w->data = 0;
-      w->data_size = 0;
-      w->count = 0;
-      w->pos = 0;
-    } break;
-  }
-  return w->error;
-}
+const struct labcomm_writer_action buffer_writer = {
+  .alloc = buf_writer_alloc,
+  .free = buf_writer_free,
+  .start = buf_writer_start,
+  .end = buf_writer_end,
+  .flush = buf_writer_flush,
+  .ioctl = buf_writer_ioctl
+};
 
 void dump_encoder(labcomm_encoder_t *encoder)
 {

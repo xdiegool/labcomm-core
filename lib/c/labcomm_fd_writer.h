@@ -3,10 +3,7 @@
 
 #include "labcomm.h"
 
-extern int labcomm_fd_writer(
-  labcomm_writer_t *writer, 
-  labcomm_writer_action_t action,
-  ...);
+extern const struct labcomm_writer_action labcomm_fd_writer;
 
 #endif
 

@@ -221,7 +221,7 @@ int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder,
     for (i = sizeof(type) - 1 ; i >= 0 ; i--) {				\
       if (w->pos >= w->count) { /*buffer is full*/			\
         int err;							\
-	err = w->write(w, labcomm_writer_continue);			\
+	err = w->action.flush(w);					\
 	if (err != 0) { return err; }					\
       }									\
       w->data[w->pos] = ((unsigned char*)(&data))[i];			\
@@ -241,7 +241,7 @@ int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder,
     for (i = 0 ; i < sizeof(type) ; i++) {				\
       if (w->pos >= w->count) {						\
         int err;							\
-	err = w->write(w, labcomm_writer_continue);			\
+	err = w->action.flush(w);					\
 	if (err != 0) { return err; }					\
       }									\
       w->data[w->pos] = ((unsigned char*)(&data))[i];			\
@@ -263,95 +263,6 @@ LABCOMM_ENCODE(long, long long)
 LABCOMM_ENCODE(float, float)
 LABCOMM_ENCODE(double, double)
 
-#if 0
-/* 
- * Pack the 32 bit unsigned number data as a sequence bytes, where the 
- * first byte is prefixed with a variable length bit pattern that
- * indicates the number of bytes used for encoding. The encoding
- * is inspired by the UTF-8 encoding.
- *
- * 0b0     - 1 byte  (0x00000000 - 0x0000007f)
- * 0b10    - 2 bytes (0x00000080 - 0x00003fff)
- * 0b110   - 3 bytes (0x00004000 - 0x001fffff)
- * 0b1110  - 4 bytes (0x00200000 - 0x0fffffff)
- * 0b11110 - 5 bytes (0x10000000 - 0xffffffff) [4 bits unused]
- */
-static inline int labcomm_write_packed32(labcomm_writer_t *w, 
-					 unsigned int data)
-{
-  int n;
-  unsigned char tag;
-  unsigned char tmp[4] = { (data >> 24) & 0xff, 
-			   (data >> 16) & 0xff, 
-			   (data >>  8) & 0xff, 
-			   (data      ) & 0xff }; 
-  if (data < 0x80) {
-    n = 1;
-    tag = 0x00;
-  } else if (data < 0x4000) { 
-    n = 2;
-    tag = 0x80;
-  } else if (data < 0x200000) { 
-    n = 3;
-    tag = 0xc0;
-  } else if (data < 0x10000000) { 
-    n = 4;
-    tag = 0xe0;
-  } else  {
-    n = 5;
-    tag = 0xf0;
-  }
-  /* TODO: maybe?
-    if (w->pos + n - 1 >= w->count) {	
-    w->write(w, labcomm_writer_continue, n);
-    }
-  */
-  switch (n) {
-    case 5: { 
-      if (w->pos >= w->count) {	
-	int err;
-	err = w->write(w, labcomm_writer_continue);
-	if (err != 0) { return err; }
-      }
-      w->data[w->pos++] = tag; tag = 0;
-    }
-    case 4: { 
-      if (w->pos >= w->count) {					
-	int err;
-	err = w->write(w, labcomm_writer_continue);
-	if (err != 0) { return err; }
-      }
-      w->data[w->pos++] = tmp[0] | tag; tag = 0;
-    }
-    case 3: { 
-      if (w->pos >= w->count) {					
-	int err;
-	err = w->write(w, labcomm_writer_continue);
-	if (err != 0) { return err; }
-      }
-      w->data[w->pos++] = tmp[1] | tag; tag = 0;
-    }
-    case 2: { 
-      if (w->pos >= w->count) {					
-	int err;
-	err = w->write(w, labcomm_writer_continue);
-	if (err != 0) { return err; }
-      }
-      w->data[w->pos++] = tmp[2] | tag; tag = 0;
-    }
-    case 1: { 
-      if (w->pos >= w->count) {					
-	int err;
-	err = w->write(w, labcomm_writer_continue);
-	if (err != 0) { return err; }
-      }
-      w->data[w->pos++] = tmp[3] | tag;
-    }
-  }
-  return 0;
-}
-#endif
-
 static inline int labcomm_write_packed32(labcomm_writer_t *w, 
 					 unsigned int data)
 {
@@ -364,7 +275,7 @@ static inline int labcomm_write_packed32(labcomm_writer_t *w,
   for (i = i - 1 ; i >= 0 ; i--) {
     if (w->pos >= w->count) {					
       int err;
-      err = w->write(w, labcomm_writer_continue);
+      err = w->action.flush(w);
       if (err != 0) { return err; }
     }
     w->data[w->pos++] = tmp[i] | (i?0x80:0x00);
@@ -390,7 +301,7 @@ static inline int labcomm_write_string(labcomm_writer_t *w, char *s)
   for (i = 0 ; i < length ; i++) {
     if (w->pos >= w->count) {	
       int err;
-      err = w->write(w, labcomm_writer_continue);
+      err = w->action.flush(w);
       if (err != 0) { return err; }
     }
     w->data[w->pos] = s[i];

@@ -81,24 +81,14 @@ void labcomm_decoder_register_new_datatype_handler(struct labcomm_decoder *d,
  * Decoder
  */
 
-typedef enum { 
-  labcomm_reader_alloc,     /* (..., char *labcomm_version)
-			       Allocate all neccessary data */
-  labcomm_reader_free,
-  labcomm_reader_start, 
-  labcomm_reader_continue, 
-  labcomm_reader_end,
-  labcomm_reader_ioctl
-} labcomm_reader_action_t;
-
 struct labcomm_reader;
 
 struct labcomm_reader_action {
   int (*alloc)(struct labcomm_reader *, char *labcomm_version);
   int (*free)(struct labcomm_reader *);
   int (*start)(struct labcomm_reader *);
-  int (*fill)(struct labcomm_reader *); 
   int (*end)(struct labcomm_reader *);
+  int (*fill)(struct labcomm_reader *); 
   int (*ioctl)(struct labcomm_reader *, int, labcomm_signature_t *, va_list);
 };
 
@@ -108,6 +98,7 @@ typedef struct labcomm_reader {
   int data_size;
   int count;
   int pos;
+  int error;
   struct labcomm_reader_action action;
   labcomm_error_handler_callback on_error;
 }  labcomm_reader_t;
@@ -130,26 +121,20 @@ int labcomm_decoder_ioctl(struct labcomm_decoder *decoder,
 /*
  * Encoder
  */
-typedef struct {
-  struct labcomm_encoder *encoder;
-  int index;
-  labcomm_signature_t *signature;
-  void *value;
-} labcomm_writer_start_t;
+struct labcomm_writer;
 
-typedef enum { 
-  labcomm_writer_alloc,              /* (..., char *labcomm_version)
-					Allocate all neccessary data */
-  labcomm_writer_free,               /* Free all allocated data */
-  labcomm_writer_start,              /* (..., labcomm_writer_start_t *s)
-					-EALREADY skips further encoding 
-					Start writing an ordinary sample */
-  labcomm_writer_continue,           /* Buffer full during ordinary sample */
-  labcomm_writer_end,                /* End writing ordinary sample */
-  labcomm_writer_start_signature,    /* Start writing signature */
-  labcomm_writer_continue_signature, /* Buffer full during signature */
-  labcomm_writer_end_signature,      /* End writing signature */
-} labcomm_writer_action_t;
+struct labcomm_writer_action {
+  int (*alloc)(struct labcomm_writer *w, char *labcomm_version);
+  int (*free)(struct labcomm_writer *w);
+  int (*start)(struct labcomm_writer *w,
+	       struct labcomm_encoder *encoder,
+	       int index,
+	       labcomm_signature_t *signature,
+	       void *value);
+  int (*end)(struct labcomm_writer *w);
+  int (*flush)(struct labcomm_writer *w); 
+  int (*ioctl)(struct labcomm_writer *w, int, labcomm_signature_t *, va_list);
+};
 
 typedef struct labcomm_writer {
   void *context;
@@ -158,13 +143,12 @@ typedef struct labcomm_writer {
   int count;
   int pos;
   int error;
-  int (*write)(struct labcomm_writer *, labcomm_writer_action_t, ...);
-  int (*ioctl)(struct labcomm_writer *, int, labcomm_signature_t *, va_list);
+  struct labcomm_writer_action action;
   labcomm_error_handler_callback on_error;
 } labcomm_writer_t;
 
 struct labcomm_encoder *labcomm_encoder_new(
-  int (*writer)(labcomm_writer_t *, labcomm_writer_action_t, ...),
+  const struct labcomm_writer_action action,
   void *writer_context);
 void labcomm_encoder_free(
   struct labcomm_encoder *encoder);

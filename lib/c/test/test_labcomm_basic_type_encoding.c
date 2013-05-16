@@ -4,18 +4,6 @@
 
 static int line;
 
-int test_write(struct labcomm_writer *w, labcomm_writer_action_t a, ...)
-{
-  fprintf(stderr, "test_write should not be called\n");
-  exit(1);
-}
-
-int test_read(struct labcomm_reader *r, labcomm_reader_action_t a, ...)
-{
-  fprintf(stderr, "test_read should not be called %s:%d\n", __FILE__, line);
-  exit(1);
-}
-
 static unsigned char buffer[128];
 static labcomm_encoder_t encoder = {
   .context = NULL,
@@ -26,8 +14,7 @@ static labcomm_encoder_t encoder = {
     .count = sizeof(buffer),
     .pos = 0,
     .error = 0,
-    .write = test_write,
-    .ioctl = NULL,
+    .action = { NULL, NULL, NULL, NULL, NULL, NULL },
     .on_error = NULL,
   },
   .do_register = NULL,

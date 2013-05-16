@@ -34,7 +34,7 @@
 #include "labcomm_ioctl.h"
 #include "labcomm_dynamic_buffer_writer.h"
 
-#define LABCOMM_VERSION "LabComm2013"
+#define LABCOMM_VERSION "\x0bLabComm2013"
 
 typedef struct labcomm_sample_entry {
   struct labcomm_sample_entry *next;
@@ -227,20 +227,22 @@ static int get_encoder_index(
 void labcomm_encode_signature(struct labcomm_encoder *e,
                               labcomm_signature_t *signature) 
 {
-  int i;
-  e->writer.write(&e->writer, labcomm_writer_start_signature);
+  int i, index;
+
+  index = get_encoder_index(e, signature);
+  e->writer.action.start(&e->writer, e, index, signature, NULL);
   labcomm_encode_packed32(e, signature->type);
-  labcomm_encode_packed32(e, get_encoder_index(e, signature));
+  labcomm_encode_packed32(e, index);
 
   labcomm_encode_string(e, signature->name);
   for (i = 0 ; i < signature->size ; i++) {
     if (e->writer.pos >= e->writer.count) {
-      e->writer.write(&e->writer, labcomm_writer_continue);
+      e->writer.action.flush(&e->writer);
     }
     e->writer.data[e->writer.pos] = signature->signature[i];
     e->writer.pos++;
   }
-  e->writer.write(&e->writer, labcomm_writer_end_signature);
+  e->writer.action.end(&e->writer);
 }
 
 #ifdef LABCOMM_ENCODER_LINEAR_SEARCH
@@ -363,25 +365,23 @@ static int do_encode(
   void *value)
 {
   int result;
-  labcomm_writer_start_t lws;
-  
-  lws.encoder = e;
-  lws.index = get_encoder_index(e, signature);
-  lws.signature = signature;
-  lws.value = value;
-  result = e->writer.write(&e->writer, labcomm_writer_start, &lws);
-  if (result == -EALREADY) { result = 0; goto out; }
+  int index;
+
+  index = get_encoder_index(e, signature);
+  result = e->writer.action.start(&e->writer, e, index, signature, value);
+  if (result == -EALREADY) { result = 0; goto no_end; }
   if (result != 0) { goto out; }
-  result = labcomm_encode_packed32(e, lws.index);
+  result = labcomm_encode_packed32(e, index);
   if (result != 0) { goto out; }
   result = encode(e, value);
 out:
-  e->writer.write(&e->writer, labcomm_writer_end, &lws);
+  e->writer.action.end(&e->writer);
+no_end:
   return result;
 }
 
 labcomm_encoder_t *labcomm_encoder_new(
-  int (*writer)(labcomm_writer_t *, labcomm_writer_action_t, ...),
+  const struct labcomm_writer_action action,
   void *writer_context)
 {
   labcomm_encoder_t *result = malloc(sizeof(labcomm_encoder_t));
@@ -402,13 +402,12 @@ labcomm_encoder_t *labcomm_encoder_new(
     result->writer.count = 0;
     result->writer.pos = 0;
     result->writer.error = 0;
-    result->writer.write = writer;
-    result->writer.ioctl = NULL;
+    result->writer.action = action;
     result->writer.on_error = on_error_fprintf;
     result->do_register = do_encoder_register;
     result->do_encode = do_encode;
     result->on_error = on_error_fprintf;
-    result->writer.write(&result->writer, labcomm_writer_alloc);
+    result->writer.action.alloc(&result->writer, LABCOMM_VERSION);
   }
   return result;
 }
@@ -442,7 +441,7 @@ int labcomm_internal_encode(
 
 void labcomm_encoder_free(labcomm_encoder_t* e)
 {
-  e->writer.write(&e->writer, labcomm_writer_free);
+  e->writer.action.free(&e->writer);
   labcomm_encoder_context_t *context = (labcomm_encoder_context_t *) e->context;
 
 #ifdef LABCOMM_ENCODER_LINEAR_SEARCH
@@ -466,11 +465,11 @@ int labcomm_encoder_ioctl(struct labcomm_encoder *encoder,
 {
   int result = -ENOTSUP;
   
-  if (encoder->writer.ioctl != NULL) {
+  if (encoder->writer.action.ioctl != NULL) {
     va_list va;
     
     va_start(va, action);
-    result = encoder->writer.ioctl(&encoder->writer, action, NULL, va);
+    result = encoder->writer.action.ioctl(&encoder->writer, action, NULL, va);
     va_end(va);
   }
   return result;
@@ -483,8 +482,9 @@ int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder,
 {
   int result = -ENOTSUP;
   
-  if (encoder->writer.ioctl != NULL) {
-    result = encoder->writer.ioctl(&encoder->writer, action, signature, va);
+  if (encoder->writer.action.ioctl != NULL) {
+    result = encoder->writer.action.ioctl(&encoder->writer, action, 
+					  signature, va);
   }
   return result;
 }
@@ -584,7 +584,7 @@ static int do_decode_one(labcomm_decoder_t *d)
 	/* TODO: should the labcomm_dynamic_buffer_writer be 
 	   a permanent part of labcomm_decoder? */
 	labcomm_encoder_t *e = labcomm_encoder_new(
-	  labcomm_dynamic_buffer_writer, 0);
+	  labcomm_dynamic_buffer_writer, NULL);
 	labcomm_signature_t signature;
 	labcomm_sample_entry_t *entry = NULL;
 	int index, err;
@@ -592,11 +592,11 @@ static int do_decode_one(labcomm_decoder_t *d)
 	index = labcomm_decode_packed32(d); //int
 	signature.name = labcomm_decode_string(d);
 	signature.type = result;
-	e->writer.write(&e->writer, labcomm_writer_start);
+	e->writer.action.start(&e->writer, NULL, 0, NULL, NULL);
 	/* printf("do_decode_one: result = %x, index = %x, name=%s\n", 
 	   result, index, signature.name); */
 	collect_flat_signature(d, e);
-	e->writer.write(&e->writer, labcomm_writer_end);
+	e->writer.action.end(&e->writer);
 	err = labcomm_encoder_ioctl(e, LABCOMM_IOCTL_WRITER_GET_BYTES_WRITTEN,
 				    &signature.size);
 	if (err < 0) {

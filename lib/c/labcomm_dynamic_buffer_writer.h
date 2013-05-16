@@ -3,9 +3,6 @@
 
 #include "labcomm.h"
 
-extern int labcomm_dynamic_buffer_writer(
-  labcomm_writer_t *writer, 
-  labcomm_writer_action_t action,
-  ...);
+extern const struct labcomm_writer_action labcomm_dynamic_buffer_writer;
 
 #endif

@@ -4,11 +4,78 @@
 #include "labcomm_ioctl.h"
 #include "labcomm_dynamic_buffer_writer.h"
 
-static int labcomm_dynamic_buffer_writer_ioctl(
-  struct labcomm_writer *w, 
-  int action, 
-  labcomm_signature_t *signature,
-  va_list arg)
+static int dyn_alloc(struct labcomm_writer *w, char *labcomm_version)
+{
+  w->data_size = 1000;
+  w->count = w->data_size;
+  w->data = malloc(w->data_size);
+  if (w->data == NULL) {
+    w->error = -ENOMEM;
+  }
+  w->pos = 0;
+
+  return w->error;
+}
+
+static int dyn_free(struct labcomm_writer *w)
+{
+  free(w->data);
+  w->data = 0;
+  w->data_size = 0;
+  w->count = 0;
+  w->pos = 0;
+
+  return 0;
+}
+
+static int dyn_start(struct labcomm_writer *w,
+		     struct labcomm_encoder *encoder,
+		     int index,
+		     labcomm_signature_t *signature,
+		     void *value)
+{
+  void *tmp;
+
+  w->data_size = 1000;
+  w->count = w->data_size;
+  tmp = realloc(w->data, w->data_size);
+  if (tmp != NULL) {
+    w->data = tmp;
+    w->error = 0;
+  } else {
+    w->error = -ENOMEM;
+  }
+  w->pos = 0;
+
+  return w->error;
+}
+
+static int dyn_end(struct labcomm_writer *w)
+{
+  return 0;
+}
+
+static int dyn_flush(struct labcomm_writer *w)
+{
+  void *tmp;
+
+  w->data_size += 1000;
+  w->count = w->data_size;
+  tmp = realloc(w->data, w->data_size);
+  if (tmp != NULL) {
+    w->data = tmp;
+    w->error = 0;
+  } else {
+    w->error = -ENOMEM;
+  }
+
+  return w->error; 
+}
+
+static int dyn_ioctl(struct labcomm_writer *w, 
+		     int action, 
+		     labcomm_signature_t *signature,
+		     va_list arg)
 {
   int result = -ENOTSUP;
   switch (action) {
@@ -26,59 +93,11 @@ static int labcomm_dynamic_buffer_writer_ioctl(
   return result;
 }
 
-int labcomm_dynamic_buffer_writer(
-  labcomm_writer_t *w,
-  labcomm_writer_action_t action,
-  ...)
-{
-  switch (action) {
-    case labcomm_writer_alloc: {
-      w->data_size = 1000;
-      w->count = w->data_size;
-      w->data = malloc(w->data_size);
-      if (w->data == NULL) {
-	w->error = -ENOMEM;
-      }
-      w->pos = 0;
-      w->ioctl = labcomm_dynamic_buffer_writer_ioctl;
-    } break;
-    case labcomm_writer_start: 
-    case labcomm_writer_start_signature: {
-      void *tmp;
-      w->data_size = 1000;
-      w->count = w->data_size;
-      tmp = realloc(w->data, w->data_size);
-      if (tmp != NULL) {
-	w->data = tmp;
-	w->error = 0;
-      } else {
-	w->error = -ENOMEM;
-      }
-      w->pos = 0;
-    } break;
-    case labcomm_writer_continue: 
-    case labcomm_writer_continue_signature: {
-      void *tmp;
-      w->data_size += 1000;
-      w->count = w->data_size;
-      tmp = realloc(w->data, w->data_size);
-      if (tmp != NULL) {
-	w->data = tmp;
-      } else {
-	w->error = -ENOMEM;
-      }
-    } break;
-    case labcomm_writer_end: 
-    case labcomm_writer_end_signature: {
-    } break;
-    case labcomm_writer_free: {
-      free(w->data);
-      w->data = 0;
-      w->data_size = 0;
-      w->count = 0;
-      w->pos = 0;
-    } break;
-  }
-  return w->error;
-}
-
+const struct labcomm_writer_action labcomm_dynamic_buffer_writer = {
+  .alloc = dyn_alloc,
+  .free = dyn_free,
+  .start = dyn_start,
+  .end = dyn_end,
+  .flush = dyn_flush,
+  .ioctl = dyn_ioctl
+};
