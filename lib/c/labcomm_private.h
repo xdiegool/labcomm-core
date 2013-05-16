@@ -61,12 +61,6 @@ typedef struct labcomm_decoder {
     void *context;
     const struct labcomm_lock_action *action;
   } lock;
-  void (*do_register)(struct labcomm_decoder *, 
-		      labcomm_signature_t *, 
-		      labcomm_decoder_typecast_t,
-		      labcomm_handler_typecast_t,
-		      void *context);
-  int (*do_decode_one)(struct labcomm_decoder *decoder);
   labcomm_error_handler_callback on_error;
   labcomm_handle_new_datatype_callback on_new_datatype;
 } labcomm_decoder_t;
@@ -195,13 +189,6 @@ typedef struct labcomm_encoder {
     void *context;
     const struct labcomm_lock_action *action;
   } lock;
-  void (*do_register)(struct labcomm_encoder *encoder, 
-		      labcomm_signature_t *signature,
-		      labcomm_encoder_function encode);
-  int (*do_encode)(struct labcomm_encoder *encoder, 
-		    labcomm_signature_t *signature, 
-		    labcomm_encoder_function encode,
-		    void *value);
   labcomm_error_handler_callback on_error;
 } labcomm_encoder_t;
 

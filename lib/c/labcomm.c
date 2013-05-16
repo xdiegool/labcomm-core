@@ -315,30 +315,6 @@ static int encoder_add_signature(struct labcomm_encoder *e,
   return index;
 }
 
-static void do_encoder_register(struct labcomm_encoder *e,
-				labcomm_signature_t *signature,
-				labcomm_encoder_function encode)
-{
-  if (signature->type == LABCOMM_SAMPLE) {
-    if (get_encoder_index(e, signature) == 0) {
-      int index = encoder_add_signature(e, signature, encode);
-      
-      if (index > 0) {
-	struct labcomm_ioctl_register_signature ioctl_data;
-	int err;
-	
-	ioctl_data.index = index;
-	ioctl_data.signature = signature;	
-	err = labcomm_encoder_ioctl(e, LABCOMM_IOCTL_REGISTER_SIGNATURE,
-				    &ioctl_data);
-	if (err != 0) {
-	  labcomm_encode_signature(e, signature);
-	}
-      }
-    }
-  }
-}
-
 /*
 static labcomm_sample_entry_t *encoder_get_sample_by_signature_address(
   labcomm_encoder_t *encoder,
@@ -358,28 +334,6 @@ static labcomm_sample_entry_t *encoder_get_sample_by_signature_address(
 }
 */
 						    
-static int do_encode(
-  labcomm_encoder_t *e,
-  labcomm_signature_t *signature,
-  labcomm_encoder_function encode,
-  void *value)
-{
-  int result;
-  int index;
-
-  index = get_encoder_index(e, signature);
-  result = e->writer.action.start(&e->writer, e, index, signature, value);
-  if (result == -EALREADY) { result = 0; goto no_end; }
-  if (result != 0) { goto out; }
-  result = labcomm_encode_packed32(e, index);
-  if (result != 0) { goto out; }
-  result = encode(e, value);
-out:
-  e->writer.action.end(&e->writer);
-no_end:
-  return result;
-}
-
 labcomm_encoder_t *labcomm_encoder_new(
   const struct labcomm_writer_action writer,
   void *writer_context,
@@ -408,8 +362,6 @@ labcomm_encoder_t *labcomm_encoder_new(
     result->lock.action = lock;
     result->lock.context = lock_context;
     result->writer.on_error = on_error_fprintf;
-    result->do_register = do_encoder_register;
-    result->do_encode = do_encode;
     result->on_error = on_error_fprintf;
     result->writer.action.alloc(&result->writer, LABCOMM_VERSION);
   }
@@ -421,11 +373,23 @@ void labcomm_internal_encoder_register(
   labcomm_signature_t *signature,
   labcomm_encoder_function encode)
 {
-  // Will segfault if e == NULL.
-  if (e->do_register) {
-    e->do_register(e, signature, encode);
-  } else {
-    e->on_error(LABCOMM_ERROR_ENC_MISSING_DO_REG, 0);
+  if (signature->type == LABCOMM_SAMPLE) {
+    if (get_encoder_index(e, signature) == 0) {
+      int index = encoder_add_signature(e, signature, encode);
+      
+      if (index > 0) {
+	struct labcomm_ioctl_register_signature ioctl_data;
+	int err;
+	
+	ioctl_data.index = index;
+	ioctl_data.signature = signature;	
+	err = labcomm_encoder_ioctl(e, LABCOMM_IOCTL_REGISTER_SIGNATURE,
+				    &ioctl_data);
+	if (err != 0) {
+	  labcomm_encode_signature(e, signature);
+	}
+      }
+    }
   }
 }
 
@@ -435,12 +399,20 @@ int labcomm_internal_encode(
   labcomm_encoder_function encode,
   void *value)
 {
-  if (e->do_encode) {
-    return e->do_encode(e, signature, encode, value);
-  } else {
-    e->on_error(LABCOMM_ERROR_ENC_MISSING_DO_ENCODE, 0);
-  }
-  return 0;
+  int result;
+  int index;
+
+  index = get_encoder_index(e, signature);
+  result = e->writer.action.start(&e->writer, e, index, signature, value);
+  if (result == -EALREADY) { result = 0; goto no_end; }
+  if (result != 0) { goto out; }
+  result = labcomm_encode_packed32(e, index);
+  if (result != 0) { goto out; }
+  result = encode(e, value);
+out:
+  e->writer.action.end(&e->writer);
+no_end:
+  return result;
 }
 
 void labcomm_encoder_free(labcomm_encoder_t* e)
@@ -548,15 +520,42 @@ static void collect_flat_signature(
   }
 }
 
-static void do_decoder_register(
-  labcomm_decoder_t *decoder,
+labcomm_decoder_t *labcomm_decoder_new(
+  const struct labcomm_reader_action reader,
+  void *reader_context,
+  const struct labcomm_lock_action *lock,
+  void *lock_context)
+{
+  labcomm_decoder_t *result = malloc(sizeof(labcomm_decoder_t));
+  if (result) {
+    labcomm_decoder_context_t *context =
+      (labcomm_decoder_context_t*)malloc(sizeof(labcomm_decoder_context_t));
+    context->sample = 0;
+    result->context = context;
+    result->reader.data = 0;
+    result->reader.data_size = 0;
+    result->reader.count = 0;
+    result->reader.pos = 0;
+    result->reader.action = reader;
+    result->reader.context = reader_context;
+    result->reader.on_error = on_error_fprintf;
+    result->lock.action = lock;
+    result->lock.context = lock_context;
+    result->on_error = on_error_fprintf;
+    result->on_new_datatype = on_new_datatype;
+    result->reader.action.alloc(&result->reader, LABCOMM_VERSION);
+  }
+  return result;
+}
+
+void labcomm_internal_decoder_register(
+  labcomm_decoder_t *d,
   labcomm_signature_t *signature,
   labcomm_decoder_typecast_t type_decoder,
   labcomm_handler_typecast_t handler,
   void *handler_context)
 {
-
-  labcomm_decoder_context_t *context = decoder->context;
+  labcomm_decoder_context_t *context = d->context;
   labcomm_sample_entry_t *sample;
   sample = get_sample_by_signature_address(context->sample,
 					   signature);
@@ -572,7 +571,7 @@ static void do_decoder_register(
   sample->context = handler_context;
 }
 
-static int do_decode_one(labcomm_decoder_t *d)
+int labcomm_decoder_decode_one(labcomm_decoder_t *d)
 {
   int result;
 
@@ -650,66 +649,6 @@ static int do_decode_one(labcomm_decoder_t *d)
     /* TODO: should we really loop, or is it OK to
        return after a typedef/sample */
   } while (result > 0 && result < LABCOMM_USER);
-  return result;
-}
-
-labcomm_decoder_t *labcomm_decoder_new(
-  const struct labcomm_reader_action reader,
-  void *reader_context,
-  const struct labcomm_lock_action *lock,
-  void *lock_context)
-{
-  labcomm_decoder_t *result = malloc(sizeof(labcomm_decoder_t));
-  if (result) {
-    labcomm_decoder_context_t *context =
-      (labcomm_decoder_context_t*)malloc(sizeof(labcomm_decoder_context_t));
-    context->sample = 0;
-    result->context = context;
-    result->reader.data = 0;
-    result->reader.data_size = 0;
-    result->reader.count = 0;
-    result->reader.pos = 0;
-    result->reader.action = reader;
-    result->reader.context = reader_context;
-    result->reader.on_error = on_error_fprintf;
-    result->lock.action = lock;
-    result->lock.context = lock_context;
-    result->do_register = do_decoder_register;
-    result->do_decode_one = do_decode_one;
-    result->on_error = on_error_fprintf;
-    result->on_new_datatype = on_new_datatype;
-    result->reader.action.alloc(&result->reader, LABCOMM_VERSION);
-  }
-  return result;
-}
-
-void labcomm_internal_decoder_register(
-  labcomm_decoder_t *d,
-  labcomm_signature_t *signature,
-  labcomm_decoder_typecast_t type_decoder,
-  labcomm_handler_typecast_t handler,
-  void *handler_context)
-{
-  // Will segfault if d == NULL
-  if (d->do_register) {
-    d->do_register(d, signature, type_decoder, handler, handler_context);
-  } else {
-    d->on_error(LABCOMM_ERROR_DEC_MISSING_DO_REG, 0);
-  }
-}
-
-int labcomm_decoder_decode_one(labcomm_decoder_t *d)
-{
-  int result = -1;
-  // Will segfault if decoder == NULL.
-  if (d->do_decode_one)
-  {
-    result = d->do_decode_one(d);
-  }
-  else
-  {
-    d->on_error(LABCOMM_ERROR_DEC_MISSING_DO_DECODE_ONE, 0);
-  }
   return result;
 }
 

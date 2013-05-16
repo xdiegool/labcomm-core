@@ -7,14 +7,12 @@ java -jar ../../compiler/labComm.jar --java=gen --c=gen/simple.c --h=gen/simple.
 javac -cp ../../lib/java:. gen/*.java Encoder.java Decoder.java
 
 gcc -Wall -Werror -I . -I ../../lib/c \
-    -DLABCOMM_FD_OMIT_VERSION \
     -DLABCOMM_ENCODER_LINEAR_SEARCH \
      gen/simple.c  ../../lib/c/labcomm.c \
     ../../lib/c/labcomm_dynamic_buffer_writer.c \
     ../../lib/c/labcomm_fd_writer.c \
     -o example_encoder example_encoder.c 
 gcc -Wall -Werror -I . -I ../../lib/c \
-    -DLABCOMM_FD_OMIT_VERSION \
     -DLABCOMM_ENCODER_LINEAR_SEARCH \
      gen/simple.c  ../../lib/c/labcomm.c \
     ../../lib/c/labcomm_dynamic_buffer_writer.c \
