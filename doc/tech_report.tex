@@ -144,13 +144,50 @@ only arrays of arrays.
   sample user_type another_user_type_instance;
 \end{verbatim}
 
-\section{User actions}
+\section{The LabComm system}
 
-User actions (similar to ioctl()) allowing the application or a higher level
+The LabComm system consists of a compiler for generating code from the data
+descriptions, and libraries providing LabComm communication facilities in,
+currently, C, Java, Python, and C#.
+
+\subsection{The LabComm compiler}
+
+\subsection{The LabComm library}
+
+The LabComm libraries contain functionality for the end-to-end transmission
+of samples. They are divided into two layers, where the upper layer implements
+the general encoding and decoding of samples, and the lower one deals with 
+the transmission of the encoded byte stream on a particular transport layer.
+
+Thus, the LabComm communication stack looks like this:
+\begin{verbatim}
+    _______________________
+    |     Application     |
+    +---------------------+
+    | encoder  | decoder  |    to/from labcomm encoded byte stream
+    +----------+----------+
+    | writer   | reader   |    transmit byte stream over particular transport
+    +----------+----------+
+    | transport layer / OS|
+    +---------------------+
+\end{verbatim}
+
+\subsubsection{LabComm actions}
+
+(similar to ioctl()) 
+The encoder/writer and decoder/reader interfaces consist of a set of actions
+
+One example of this is that there is a a separate writer action for
+transmitting signatures, allowing the writer to treat a signature differently
+from encoded samples, e.g., to allow handshaking during channel setup.
+
+User actions allow the application or a higher level
 protocol to communicate with the underlying transport layer through the LabComm
-encoder A special case of this is a specific action informing the underlying
-transport that a signature is being sent (to allow handshaking)
+encoder. 
 
+One example is reliable communication, which is controlled from the application
+but needs to be implemented for each transport at at the reader/writer level.
+(Or not, e.g., TCP)
 
 \section{LabComm is not...}
 
