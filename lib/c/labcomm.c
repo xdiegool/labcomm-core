@@ -472,6 +472,22 @@ int labcomm_encoder_ioctl(struct labcomm_encoder *encoder,
   return result;
 }
 
+static int labcomm_writer_ioctl(struct labcomm_writer *writer,
+				int action,
+				...)
+{
+  int result = -ENOTSUP;
+  
+  if (writer->action.ioctl != NULL) {
+    va_list va;
+    
+    va_start(va, action);
+    result = writer->action.ioctl(writer, action, NULL, va);
+    va_end(va);
+  }
+  return result;
+}
+
 int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder, 
 				   int action,
 				   struct labcomm_signature *signature,
@@ -488,36 +504,36 @@ int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder,
 
 static void collect_flat_signature(
   struct labcomm_decoder *decoder,
-  struct labcomm_encoder *signature_writer)
+  struct labcomm_writer *writer)
 {
   int type = labcomm_read_packed32(&decoder->reader); 
   if (type >= LABCOMM_USER) {
     decoder->on_error(LABCOMM_ERROR_UNIMPLEMENTED_FUNC, 3,
 			"Implement %s ... (1) for type 0x%x\n", __FUNCTION__, type);
   } else {
-    labcomm_write_packed32(&signature_writer->writer, type); 
+    labcomm_write_packed32(writer, type); 
     switch (type) {
       case LABCOMM_ARRAY: {
 	int dimensions, i;
 
 	dimensions = labcomm_read_packed32(&decoder->reader);
-	labcomm_write_packed32(&signature_writer->writer, dimensions);
+	labcomm_write_packed32(writer, dimensions);
 	for (i = 0 ; i < dimensions ; i++) {
 	  int n = labcomm_read_packed32(&decoder->reader);
-	  labcomm_write_packed32(&signature_writer->writer, n);
+	  labcomm_write_packed32(writer, n);
 	}
-	collect_flat_signature(decoder, signature_writer);
+	collect_flat_signature(decoder, writer);
       } break;
       case LABCOMM_STRUCT: {
 	int fields, i;
 
 	fields = labcomm_read_packed32(&decoder->reader); 
-	labcomm_write_packed32(&signature_writer->writer, fields); 
+	labcomm_write_packed32(writer, fields); 
 	for (i = 0 ; i < fields ; i++) {
 	  char *name = labcomm_read_string(&decoder->reader);
-	  labcomm_write_string(&signature_writer->writer, name);
+	  labcomm_write_string(writer, name);
 	  free(name);
-	  collect_flat_signature(decoder, signature_writer);
+	  collect_flat_signature(decoder, writer);
 	}
       } break;
       case LABCOMM_BOOLEAN:
@@ -601,26 +617,37 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
       if (result == LABCOMM_TYPEDEF || result == LABCOMM_SAMPLE) {
 	/* TODO: should the labcomm_dynamic_buffer_writer be 
 	   a permanent part of labcomm_decoder? */
-	struct labcomm_encoder *e = labcomm_encoder_new(
-	  labcomm_dynamic_buffer_writer, NULL, NULL, NULL);
+	struct labcomm_writer writer = {
+	  .context = NULL,
+	  .data = NULL,
+	  .data_size = 0,
+	  .count = 0,
+	  .pos = 0,
+	  .error = 0,
+	  .action = labcomm_dynamic_buffer_writer,
+	  .on_error = NULL
+	};
 	struct labcomm_signature signature;
 	struct labcomm_sample_entry *entry = NULL;
 	int index, err;
 
+	writer.action.alloc(&writer, "");
+	writer.action.start(&writer, NULL, 0, NULL, NULL);
 	index = labcomm_read_packed32(&d->reader); //int
 	signature.name = labcomm_read_string(&d->reader);
 	signature.type = result;
-	e->writer.action.start(&e->writer, NULL, 0, NULL, NULL);
-	collect_flat_signature(d, e);
-	e->writer.action.end(&e->writer);
-	err = labcomm_encoder_ioctl(e, LABCOMM_IOCTL_WRITER_GET_BYTES_WRITTEN,
-				    &signature.size);
+	collect_flat_signature(d, &writer);
+	writer.action.end(&writer);
+	err = labcomm_writer_ioctl(&writer, 
+				   LABCOMM_IOCTL_WRITER_GET_BYTES_WRITTEN,
+				   &signature.size);
 	if (err < 0) {
 	  printf("Failed to get size: %s\n", strerror(-err));
 	  goto free_signature_name;
 	}
-	err = labcomm_encoder_ioctl(e, LABCOMM_IOCTL_WRITER_GET_BYTE_POINTER,
-				    &signature.signature);
+	err = labcomm_writer_ioctl(&writer, 
+				   LABCOMM_IOCTL_WRITER_GET_BYTE_POINTER,
+				   &signature.signature);
 	if (err < 0) {
 	  printf("Failed to get pointer: %s\n", strerror(-err));
 	  goto free_signature_name;
@@ -639,7 +666,7 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
 	}
       free_signature_name:
 	free(signature.name);
-	labcomm_encoder_free(e);
+	writer.action.free(&writer);
 	if (!entry) {
 	  // No handler for found type, bail out (after cleanup)
 	  result = -ENOENT;
