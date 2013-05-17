@@ -60,6 +60,16 @@ int main(int argc, char *argv[]) {
 
   simple_TwoFixedArrays tfa;
 
+  tfa.a.a[0] = 41;
+  tfa.a.a[1] = 42;
+
+  tfa.b.a[0][0] = 51;
+  tfa.b.a[0][1] = 52;
+  tfa.b.a[0][2] = 53;
+  tfa.b.a[1][0] = 61;
+  tfa.b.a[1][1] = 62;
+  tfa.b.a[1][2] = 63;
+
   printf("Encoding TwoFixedArrays...\n");
   labcomm_encoder_register_simple_TwoFixedArrays(encoder);
   labcomm_encode_simple_TwoFixedArrays(encoder, &tfa);
