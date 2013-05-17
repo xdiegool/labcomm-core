@@ -36,6 +36,27 @@
 
 #define LABCOMM_VERSION "LabComm2013"
 
+struct labcomm_decoder {
+  void *context;
+  struct labcomm_reader reader;
+  struct {
+    void *context;
+    const struct labcomm_lock_action *action;
+  } lock;
+  labcomm_error_handler_callback on_error;
+  labcomm_handle_new_datatype_callback on_new_datatype;
+};
+
+struct labcomm_encoder {
+  void *context;
+  struct labcomm_writer writer;
+  struct {
+    void *context;
+    const struct labcomm_lock_action *action;
+  } lock;
+  labcomm_error_handler_callback on_error;
+};
+
 struct labcomm_sample_entry {
   struct labcomm_sample_entry *next;
   int index;
@@ -408,7 +429,7 @@ int labcomm_internal_encode(
   if (result != 0) { goto out; }
   result = labcomm_write_packed32(&e->writer, index);
   if (result != 0) { goto out; }
-  result = encode(e, value);
+  result = encode(&e->writer, value);
 out:
   e->writer.action.end(&e->writer);
 no_end:
@@ -633,7 +654,7 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
           d->on_error(LABCOMM_ERROR_DEC_TYPE_NOT_FOUND, 3, "%s(): type not found (id=0x%x)\n", __FUNCTION__, result);
 	  result = -ENOENT;
 	} else {
-	  entry->decoder(d, entry->handler, entry->context);
+	  entry->decoder(&d->reader, entry->handler, entry->context);
 	}
       }
     }

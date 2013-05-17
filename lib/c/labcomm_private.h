@@ -50,20 +50,9 @@
 typedef void (*labcomm_handler_function)(void *value, void *context);
 
 typedef void (*labcomm_decoder_function)(
-  struct labcomm_decoder *d,
+  struct labcomm_reader *r,
   labcomm_handler_function handler,
   void *context);
-
-struct labcomm_decoder {
-  void *context;
-  struct labcomm_reader reader;
-  struct {
-    void *context;
-    const struct labcomm_lock_action *action;
-  } lock;
-  labcomm_error_handler_callback on_error;
-  labcomm_handle_new_datatype_callback on_new_datatype;
-};
 
 /*
  * Non typesafe registration function to be called from
@@ -94,9 +83,6 @@ int labcomm_internal_decoder_ioctl(struct labcomm_decoder *decoder,
       r->pos++;								\
     }									\
     return result;							\
-  }									\
-  static inline type labcomm_decode_##name(struct labcomm_decoder *d) {	\
-    return labcomm_read_##name(&d->reader);				\
   }
 
 #else
@@ -112,9 +98,6 @@ int labcomm_internal_decoder_ioctl(struct labcomm_decoder *decoder,
       r->pos++;								\
     }									\
     return result;							\
-  }									\
-  static inline type labcomm_decode_##name(struct labcomm_decoder *d) {	\
-    return labcomm_read_##name(&d->reader);				\
   }
 
 #endif
@@ -147,11 +130,6 @@ static inline unsigned int labcomm_read_packed32(struct labcomm_reader *r)
   return result;
 }
  
-static inline unsigned int labcomm_decode_packed32(struct labcomm_decoder *d) 
-{
-  return labcomm_read_packed32(&d->reader);
-}
-
 static inline char *labcomm_read_string(struct labcomm_reader *r)
 {
   char *result;
@@ -170,27 +148,12 @@ static inline char *labcomm_read_string(struct labcomm_reader *r)
   return result;
 }
 
-static inline char *labcomm_decode_string(struct labcomm_decoder *d)
-{
-  return labcomm_read_string(&d->reader);
-}
-
 /*
  * Semi private encoder declarations
  */
 typedef int (*labcomm_encoder_function)(
-  struct labcomm_encoder *,
+  struct labcomm_writer *,
   void *value);
-
-struct labcomm_encoder {
-  void *context;
-  struct labcomm_writer writer;
-  struct {
-    void *context;
-    const struct labcomm_lock_action *action;
-  } lock;
-  labcomm_error_handler_callback on_error;
-};
 
 void labcomm_internal_encoder_register(
   struct labcomm_encoder *encoder, 
@@ -223,9 +186,6 @@ int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder,
       w->pos++;								\
     }									\
     return 0;								\
-  }									\
-  static inline int labcomm_encode_##name(struct labcomm_encoder *e, type data) { \
-    return labcomm_write_##name(&e->writer, data);			\
   }
 
 #else
@@ -243,9 +203,6 @@ int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder,
       w->pos++;								\
     }									\
     return 0;								\
-  }									\
-  static inline int labcomm_encode_##name(struct labcomm_encoder *e, type data) { \
-    return labcomm_write_##name(&e->writer, data);			\
   }
 
 #endif
@@ -278,14 +235,6 @@ static inline int labcomm_write_packed32(struct labcomm_writer *w,
   return 0;
 }
 
-
-static inline int labcomm_encode_packed32(struct labcomm_encoder *e, 
-					   unsigned int data) 
-{ 
-  return labcomm_write_packed32(&e->writer, data);				
-}
-
-
 static inline int labcomm_write_string(struct labcomm_writer *w, char *s)
 {
   int length, i, err; 
@@ -303,12 +252,6 @@ static inline int labcomm_write_string(struct labcomm_writer *w, char *s)
     w->pos++;
   }
   return 0;
-}
-
-static inline int labcomm_encode_string(struct labcomm_encoder *e, 
-					char *s)
-{
-  return labcomm_write_string(&e->writer, s);
 }
 
 #endif

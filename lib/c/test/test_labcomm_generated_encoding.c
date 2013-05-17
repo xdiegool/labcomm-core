@@ -9,9 +9,11 @@
 #define IOCTL_WRITER_RESET 4097
 
 static unsigned char buffer[128];
+struct labcomm_writer *writer;
 
 static int buf_writer_alloc(struct labcomm_writer *w, char *labcomm_version)
 {
+  writer = w; /* Hack */
   w->data_size = sizeof(buffer);
   w->count = w->data_size;
   w->data = buffer;
@@ -112,8 +114,8 @@ void dump_encoder(struct labcomm_encoder *encoder)
 {
   int i;
   
-  for (i = 0 ; i < encoder->writer.pos ; i++) {
-    printf("%2.2x ", encoder->writer.data[i]);
+  for (i = 0 ; i < writer->pos ; i++) {
+    printf("%2.2x ", writer->data[i]);
   }
   printf("\n");
 }

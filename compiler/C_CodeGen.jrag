@@ -443,7 +443,7 @@ aspect C_Decoder {
     env = env.nestStruct("v");
     env.println("static void decode_" + getName() + "(");
     env.indent();
-    env.println("struct labcomm_decoder *d,");
+    env.println("struct labcomm_reader *r,");
     env.println("void (*handle)(");
     env.indent();
     env.println(env.prefix + getName() + " *v,");
@@ -479,7 +479,7 @@ aspect C_Decoder {
   }
 
   public void PrimType.C_emitDecoder(C_env env) {
-    env.println(env.qualid + " = labcomm_decode_" + getName() + "(d);");
+    env.println(env.qualid + " = labcomm_read_" + getName() + "(r);");
   }
 
   public void UserType.C_emitDecoder(C_env env) {
@@ -525,8 +525,7 @@ aspect C_Decoder {
   }
 
   public void VariableSize.C_emitDecoderDecodeLimit(C_env env, int i) {
-    //env.println(env.qualid + ".n_" + i + " = labcomm_decode_int(d);");
-    env.println(env.qualid + ".n_" + i + " = labcomm_decode_packed32(d);");
+    env.println(env.qualid + ".n_" + i + " = labcomm_read_packed32(r);");
   }
 
   public void ArrayType.C_emitDecoderDecodeLimit(C_env env) {
@@ -700,7 +699,7 @@ aspect C_Encoder {
     env = env.nestStruct("(*v)");
     env.println("static int encode_" + getName() + "(");
     env.indent();
-    env.println("struct labcomm_encoder *e,");
+    env.println("struct labcomm_writer *w,");
     env.println(env.prefix + getName() + " *v");
     env.unindent();
     env.println(")");
@@ -739,8 +738,8 @@ aspect C_Encoder {
   }
 
   public void PrimType.C_emitEncoder(C_env env) {
-    env.println("result = labcomm_encode_" + getName() + 
-                "(e, " + env.qualid + ");");
+    env.println("result = labcomm_write_" + getName() + 
+                "(w, " + env.qualid + ");");
     env.println("if (result != 0) { return result; }");
   }
 
@@ -786,8 +785,7 @@ aspect C_Encoder {
   }
 
   public void VariableSize.C_emitEncoderEncodeLimit(C_env env, int i) {
-    //env.println("labcomm_encode_int(e, " + env.qualid + ".n_" + i + ");");
-    env.println("labcomm_encode_packed32(e, " + env.qualid + ".n_" + i + ");");
+    env.println("labcomm_write_packed32(w, " + env.qualid + ".n_" + i + ");");
   }
 
   public void ArrayType.C_emitEncoderEncodeLimit(C_env env) {

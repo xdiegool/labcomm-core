@@ -6,34 +6,25 @@
 static int line;
 
 static unsigned char buffer[128];
-static struct labcomm_encoder encoder = {
+
+static struct labcomm_writer writer =  {
   .context = NULL,
-  .writer =  {
-    .context = NULL,
-    .data = buffer,
-    .data_size = sizeof(buffer),
-    .count = sizeof(buffer),
-    .pos = 0,
-    .error = 0,
-    .action = { NULL, NULL, NULL, NULL, NULL, NULL },
-    .on_error = NULL,
-  },
-  .lock = { NULL, NULL },
+  .data = buffer,
+  .data_size = sizeof(buffer),
+  .count = sizeof(buffer),
+  .pos = 0,
+  .error = 0,
+  .action = { NULL, NULL, NULL, NULL, NULL, NULL },
   .on_error = NULL,
 };
 
-static struct labcomm_decoder decoder = {
+static struct labcomm_reader reader =  {
   .context = NULL,
-  .reader =  {
-    .context = NULL,
-    .data = buffer,
-    .data_size = sizeof(buffer),
-    .count = 0,
-    .pos = 0,
-    .action = { NULL, NULL, NULL, NULL, NULL, NULL },
-    .on_error = NULL,
-  },
-  .lock = { NULL, NULL },
+  .data = buffer,
+  .data_size = sizeof(buffer),
+  .count = 0,
+  .pos = 0,
+  .action = { NULL, NULL, NULL, NULL, NULL, NULL },
   .on_error = NULL,
 };
 
@@ -43,15 +34,15 @@ typedef uint32_t packed32;
   {									\
     type decoded;							\
     line = __LINE__;							\
-    encoder.writer.pos = 0;						\
-    labcomm_encode_##ltype(&encoder, value);				\
-    writer_assert(#ltype, expect_count, (uint8_t*)expect_bytes);	        \
-    decoder.reader.count = encoder.writer.pos;				\
-    decoder.reader.pos = 0;						\
-    decoded = labcomm_decode_##ltype(&decoder);				\
+    writer.pos = 0;							\
+    labcomm_write_##ltype(&writer, value);				\
+    writer_assert(#ltype, expect_count, (uint8_t*)expect_bytes);	\
+    reader.count = writer.pos;						\
+    reader.pos = 0;							\
+    decoded = labcomm_read_##ltype(&reader);				\
     if (decoded != value) {						\
-      fprintf(stderr, "Decode error" format " != " format " @%s:%d \n", value, decoded, \
-	      __FILE__, __LINE__);					\
+      fprintf(stderr, "Decode error" format " != " format " @%s:%d \n", \
+	      value, decoded, __FILE__, __LINE__);					\
       exit(1);								\
     }									\
   }
@@ -60,18 +51,18 @@ static void writer_assert(char *type,
 			  int count,
 			  uint8_t *bytes)
 {
-  if (encoder.writer.pos != count) {
+  if (writer.pos != count) {
     fprintf(stderr, 
 	    "Wrong number of bytes written for '%s' (%d != %d) @%s:%d\n",
-	   type, encoder.writer.pos, count, __FILE__, line);
+	    type, writer.pos, count, __FILE__, line);
     exit(1);
   }
-  if (memcmp(encoder.writer.data, bytes, count) != 0) {
+  if (memcmp(writer.data, bytes, count) != 0) {
     int i;
 
     fprintf(stderr, "Wrong bytes written for '%s' ( ", type);
     for (i = 0 ; i < count ; i++) {
-      fprintf(stderr, "%2.2x ", encoder.writer.data[i]);
+      fprintf(stderr, "%2.2x ", writer.data[i]);
     }
     fprintf(stderr, "!= ");
     for (i = 0 ; i < count ; i++) {
