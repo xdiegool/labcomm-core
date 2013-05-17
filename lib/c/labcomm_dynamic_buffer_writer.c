@@ -31,7 +31,7 @@ static int dyn_free(struct labcomm_writer *w)
 static int dyn_start(struct labcomm_writer *w,
 		     struct labcomm_encoder *encoder,
 		     int index,
-		     labcomm_signature_t *signature,
+		     struct labcomm_signature *signature,
 		     void *value)
 {
   void *tmp;
@@ -74,7 +74,7 @@ static int dyn_flush(struct labcomm_writer *w)
 
 static int dyn_ioctl(struct labcomm_writer *w, 
 		     int action, 
-		     labcomm_signature_t *signature,
+		     struct labcomm_signature *signature,
 		     va_list arg)
 {
   int result = -ENOTSUP;

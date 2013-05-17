@@ -443,7 +443,7 @@ aspect C_Decoder {
     env = env.nestStruct("v");
     env.println("static void decode_" + getName() + "(");
     env.indent();
-    env.println("labcomm_decoder_t *d,");
+    env.println("struct labcomm_decoder *d,");
     env.println("void (*handle)(");
     env.indent();
     env.println(env.prefix + getName() + " *v,");
@@ -637,8 +637,8 @@ aspect C_Decoder {
     env.indent();
     env.println("d,");
     env.println("&labcomm_signature_" + env.prefix + getName() + ",");
-    env.println("(labcomm_decoder_typecast_t)decode_" + getName() + ",");
-    env.println("(labcomm_handler_typecast_t)handler,");
+    env.println("(labcomm_decoder_function)decode_" + getName() + ",");
+    env.println("(labcomm_handler_function)handler,");
     env.println("context");
     env.unindent();
     env.println(");");
@@ -700,7 +700,7 @@ aspect C_Encoder {
     env = env.nestStruct("(*v)");
     env.println("static int encode_" + getName() + "(");
     env.indent();
-    env.println("labcomm_encoder_t *e,");
+    env.println("struct labcomm_encoder *e,");
     env.println(env.prefix + getName() + " *v");
     env.unindent();
     env.println(")");
@@ -714,7 +714,7 @@ aspect C_Encoder {
 
     // Typesafe encode wrapper
     env.println("int labcomm_encode_" + env.prefix + getName() + "(");
-    env.println("labcomm_encoder_t *e,");
+    env.println("struct labcomm_encoder *e,");
     env.println(env.prefix + getName() + " *v");
     env.unindent();
     env.println(")");
@@ -905,7 +905,7 @@ aspect C_Signature {
 		env.prefix + getName() + ") = {");
     env.indent();
     env.println("LABCOMM_SAMPLE, \"" + getName() + "\",");
-    env.println("(int (*)(labcomm_signature_t *, void *))labcomm_sizeof_" + 
+    env.println("(int (*)(struct labcomm_signature *, void *))labcomm_sizeof_" + 
 		env.prefix + getName() + ",");
     env.println("sizeof(signature_bytes_" + getName() + "),");
     env.println("signature_bytes_"+ getName());
@@ -1003,7 +1003,7 @@ aspect C_Sizeof {
 
   public void SampleDecl.C_emitSizeofDeclaration(C_env env) {
     env.println("extern int labcomm_sizeof_" + env.prefix + getName() +
-		"(labcomm_signature_t *sig, " + env.prefix + getName() + " *v);");
+		"(struct labcomm_signature *sig, " + env.prefix + getName() + " *v);");
   }
 
   public int Decl.C_fixedSizeof() {
@@ -1064,7 +1064,7 @@ aspect C_Sizeof {
   public void SampleDecl.C_emitSizeof(C_env env) {
     env = env.nestStruct("(*v)");
     env.println("int labcomm_sizeof_" + env.prefix + getName() +
-		"(labcomm_signature_t *sig, " + env.prefix + getName() + " *v)");
+		"(struct labcomm_signature *sig, " + env.prefix + getName() + " *v)");
     env.println("{");
     env.indent();
     if (C_isDynamic()) {

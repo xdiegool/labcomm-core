@@ -43,7 +43,7 @@ static int fd_free(struct labcomm_writer *w)
 static int fd_start(struct labcomm_writer *w,
 		    struct labcomm_encoder *encoder,
 		    int index,
-		    labcomm_signature_t *signature,
+		    struct labcomm_signature *signature,
 		    void *value)
 {
   w->pos = 0;

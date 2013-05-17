@@ -11,14 +11,14 @@ struct labcomm_decoder;
 /*
  * Signature entry
  */
-typedef struct labcomm_signature {
+struct labcomm_signature {
   int type;
   char *name;
   int (*encoded_size)(struct labcomm_signature *, void *); // void * == encoded_sample *
   int size;
   unsigned char *signature; 
   int cached_encoded_size; // -1 if not initialized or type is variable size
-} labcomm_signature_t;
+};
 
 /*
  * Error handling.
@@ -71,7 +71,7 @@ const char *labcomm_error_get_str(enum labcomm_error error_id);
 
 typedef int (*labcomm_handle_new_datatype_callback)(
   struct labcomm_decoder *decoder,
-  labcomm_signature_t *sig);
+  struct labcomm_signature *sig);
 
 void labcomm_decoder_register_new_datatype_handler(struct labcomm_decoder *d,
 		labcomm_handle_new_datatype_callback on_new_datatype);
@@ -101,10 +101,10 @@ struct labcomm_reader_action {
   int (*start)(struct labcomm_reader *r);
   int (*end)(struct labcomm_reader *r);
   int (*fill)(struct labcomm_reader *r); 
-  int (*ioctl)(struct labcomm_reader *r, int, labcomm_signature_t *, va_list);
+  int (*ioctl)(struct labcomm_reader *r, int, struct labcomm_signature *, va_list);
 };
 
-typedef struct labcomm_reader {
+struct labcomm_reader {
   void *context;
   unsigned char *data;
   int data_size;
@@ -113,7 +113,7 @@ typedef struct labcomm_reader {
   int error;
   struct labcomm_reader_action action;
   labcomm_error_handler_callback on_error;
-}  labcomm_reader_t;
+};
 
 struct labcomm_decoder *labcomm_decoder_new(
   const struct labcomm_reader_action reader,
@@ -142,15 +142,16 @@ struct labcomm_writer_action {
   int (*free)(struct labcomm_writer *w);
   int (*start)(struct labcomm_writer *w,
 	       struct labcomm_encoder *encoder,
-	       int index,
-	       labcomm_signature_t *signature,
+	       int index, struct labcomm_signature *signature,
 	       void *value);
   int (*end)(struct labcomm_writer *w);
   int (*flush)(struct labcomm_writer *w); 
-  int (*ioctl)(struct labcomm_writer *w, int, labcomm_signature_t *, va_list);
+  int (*ioctl)(struct labcomm_writer *w, 
+	       int index, struct labcomm_signature *, 
+	       va_list);
 };
 
-typedef struct labcomm_writer {
+struct labcomm_writer {
   void *context;
   unsigned char *data;
   int data_size;
@@ -159,7 +160,7 @@ typedef struct labcomm_writer {
   int error;
   struct labcomm_writer_action action;
   labcomm_error_handler_callback on_error;
-} labcomm_writer_t;
+};
 
 struct labcomm_encoder *labcomm_encoder_new(
   const struct labcomm_writer_action writer,

@@ -28,7 +28,7 @@ static int buf_writer_free(struct labcomm_writer *w)
 static int buf_writer_start(struct labcomm_writer *w,
 			    struct labcomm_encoder *encoder,
 			    int index,
-			    labcomm_signature_t *signature,
+			    struct labcomm_signature *signature,
 			    void *value)
 {
   return 0;
@@ -50,7 +50,7 @@ static int buf_writer_flush(struct labcomm_writer *w)
 static int buf_writer_ioctl(
   struct labcomm_writer *w, 
   int action, 
-  labcomm_signature_t *signature,
+  struct labcomm_signature *signature,
   va_list arg)
 {
   int result = -ENOTSUP;
@@ -108,7 +108,7 @@ const struct labcomm_writer_action buffer_writer = {
   .ioctl = buf_writer_ioctl
 };
 
-void dump_encoder(labcomm_encoder_t *encoder)
+void dump_encoder(struct labcomm_encoder *encoder)
 {
   int i;
   
@@ -132,7 +132,7 @@ int main(void)
   generated_encoding_V V;
   generated_encoding_B B = 1;
 
-  labcomm_encoder_t *encoder = labcomm_encoder_new(buffer_writer, buffer,
+  struct labcomm_encoder *encoder = labcomm_encoder_new(buffer_writer, buffer,
 						   NULL, NULL);
 
   labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);

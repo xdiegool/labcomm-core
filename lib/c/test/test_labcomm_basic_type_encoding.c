@@ -6,7 +6,7 @@
 static int line;
 
 static unsigned char buffer[128];
-static labcomm_encoder_t encoder = {
+static struct labcomm_encoder encoder = {
   .context = NULL,
   .writer =  {
     .context = NULL,
@@ -22,7 +22,7 @@ static labcomm_encoder_t encoder = {
   .on_error = NULL,
 };
 
-static labcomm_decoder_t decoder = {
+static struct labcomm_decoder decoder = {
   .context = NULL,
   .reader =  {
     .context = NULL,

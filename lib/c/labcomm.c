@@ -36,33 +36,33 @@
 
 #define LABCOMM_VERSION "LabComm2013"
 
-typedef struct labcomm_sample_entry {
+struct labcomm_sample_entry {
   struct labcomm_sample_entry *next;
   int index;
-  labcomm_signature_t *signature;
-  labcomm_decoder_typecast_t decoder;
-  labcomm_handler_typecast_t handler;
+  struct labcomm_signature *signature;
+  labcomm_decoder_function decoder;
+  labcomm_handler_function handler;
   labcomm_encoder_function encode;
   void *context;
-} labcomm_sample_entry_t;
+};
 
 #ifndef LABCOMM_ENCODER_LINEAR_SEARCH
-extern  labcomm_signature_t labcomm_first_signature;
-extern  labcomm_signature_t labcomm_last_signature;
+extern  struct labcomm_signature labcomm_first_signature;
+extern  struct labcomm_signature labcomm_last_signature;
 #endif
 
-typedef struct labcomm_encoder_context {
+struct labcomm_encoder_context {
 #ifdef LABCOMM_ENCODER_LINEAR_SEARCH
-  labcomm_sample_entry_t *sample;
+  struct labcomm_sample_entry *sample;
   int index;
 #else
-  labcomm_sample_entry_t *by_section;
+  struct labcomm_sample_entry *by_section;
 #endif
-} labcomm_encoder_context_t;
+};
 
-typedef struct labcomm_decoder_context {
-  labcomm_sample_entry_t *sample;
-} labcomm_decoder_context_t;
+struct labcomm_decoder_context {
+  struct labcomm_sample_entry *sample;
+};
 
 void labcomm_register_error_handler_encoder(struct labcomm_encoder *encoder, labcomm_error_handler_callback callback)
 {
@@ -109,7 +109,7 @@ void labcomm_decoder_register_new_datatype_handler(struct labcomm_decoder *d, la
 	d->on_new_datatype = on_new_datatype;
 }
 
-int on_new_datatype(labcomm_decoder_t *d, labcomm_signature_t *sig)
+int on_new_datatype(struct labcomm_decoder *d, struct labcomm_signature *sig)
 {
 	  d->on_error(LABCOMM_ERROR_DEC_UNKNOWN_DATATYPE, 4, "%s(): unknown datatype '%s'\n", __FUNCTION__, sig->name);
 	  return 0;
@@ -141,22 +141,22 @@ void on_error_fprintf(enum labcomm_error error_id, size_t nbr_va_args, ...)
 }
 
 
-static labcomm_sample_entry_t *get_sample_by_signature_address(
-  labcomm_sample_entry_t *head,
-  labcomm_signature_t *signature)
+static struct labcomm_sample_entry *get_sample_by_signature_address(
+  struct labcomm_sample_entry *head,
+  struct labcomm_signature *signature)
 {
-  labcomm_sample_entry_t *p;
+  struct labcomm_sample_entry *p;
   for (p = head ; p && p->signature != signature ; p = p->next) {
 
   }
   return p;
 }
 
-static labcomm_sample_entry_t *get_sample_by_signature_value(
-  labcomm_sample_entry_t *head,
-  labcomm_signature_t *signature)
+static struct labcomm_sample_entry *get_sample_by_signature_value(
+  struct labcomm_sample_entry *head,
+  struct labcomm_signature *signature)
 {
-  labcomm_sample_entry_t *p;
+  struct labcomm_sample_entry *p;
   for (p = head ; p ; p = p->next) {
     if (p->signature->type == signature->type &&
 	p->signature->size == signature->size &&
@@ -169,11 +169,11 @@ static labcomm_sample_entry_t *get_sample_by_signature_value(
   return p;
 }
 
-static labcomm_sample_entry_t *get_sample_by_index(
-  labcomm_sample_entry_t *head,
+static struct labcomm_sample_entry *get_sample_by_index(
+  struct labcomm_sample_entry *head,
   int index)
 {
-  labcomm_sample_entry_t *p;
+  struct labcomm_sample_entry *p;
   for (p = head ; p && p->index != index ; p = p->next) {
   }
   return p;
@@ -182,12 +182,12 @@ static labcomm_sample_entry_t *get_sample_by_index(
 #ifdef LABCOMM_ENCODER_LINEAR_SEARCH
 
 static int get_encoder_index_by_search(
-  labcomm_encoder_t *e,
-  labcomm_signature_t *s)
+  struct labcomm_encoder *e,
+  struct labcomm_signature *s)
 {
   int result = 0;
-  labcomm_encoder_context_t *context = e->context;
-  labcomm_sample_entry_t *sample = context->sample;
+  struct labcomm_encoder_context *context = e->context;
+  struct labcomm_sample_entry *sample = context->sample;
   while (sample) {
     if (sample->signature == s) { break; }
     sample = sample->next;
@@ -201,8 +201,8 @@ static int get_encoder_index_by_search(
 #else
 
 static int get_encoder_index_by_section(
-  labcomm_encoder_t *e,
-  labcomm_signature_t *s)
+  struct labcomm_encoder *e,
+  struct labcomm_signature *s)
 {
   int result = -ENOENT;
   if (&labcomm_first_signature <= s && s <= &labcomm_last_signature) {
@@ -214,8 +214,8 @@ static int get_encoder_index_by_section(
 
 #endif
 static int get_encoder_index(
-  labcomm_encoder_t *e,
-  labcomm_signature_t *s)
+  struct labcomm_encoder *e,
+  struct labcomm_signature *s)
 {
 #ifdef LABCOMM_ENCODER_LINEAR_SEARCH
   return get_encoder_index_by_search(e, s);
@@ -225,7 +225,7 @@ static int get_encoder_index(
 }
 
 static void labcomm_encode_signature(struct labcomm_encoder *e,
-				     labcomm_signature_t *signature) 
+				     struct labcomm_signature *signature) 
 {
   int i, index;
 
@@ -247,14 +247,14 @@ static void labcomm_encode_signature(struct labcomm_encoder *e,
 
 #ifdef LABCOMM_ENCODER_LINEAR_SEARCH
 static int encoder_add_signature_by_search(struct labcomm_encoder *e,
-					   labcomm_signature_t *signature,
+					   struct labcomm_signature *signature,
 					   labcomm_encoder_function encode)
 {
   int result;
-  labcomm_encoder_context_t *context = e->context;
-  labcomm_sample_entry_t *sample;
+  struct labcomm_encoder_context *context = e->context;
+  struct labcomm_sample_entry *sample;
 
-  sample = (labcomm_sample_entry_t*)malloc(sizeof(labcomm_sample_entry_t));
+  sample = (struct labcomm_sample_entry *)malloc(sizeof(*sample));
   if (sample == NULL) {
     result = -ENOMEM;
   } else {
@@ -272,14 +272,14 @@ static int encoder_add_signature_by_search(struct labcomm_encoder *e,
 
 #ifndef LABCOMM_ENCODER_LINEAR_SEARCH
 static int encoder_add_signature_by_section(struct labcomm_encoder *e,
-					    labcomm_signature_t *s,
+					    struct labcomm_signature *s,
 					    labcomm_encoder_function encode)
 {
   int result = -ENOENT;
   
   if (&labcomm_first_signature <= s && s <= &labcomm_last_signature) {
     /* Signature is in right linker section */
-    labcomm_encoder_context_t *context = e->context;
+    struct labcomm_encoder_context *context = e->context;
     int index = s - &labcomm_first_signature;
 
     if (context->by_section == NULL) {
@@ -302,7 +302,7 @@ out:
 #endif
 
 static int encoder_add_signature(struct labcomm_encoder *e,
-				  labcomm_signature_t *signature,
+				  struct labcomm_signature *signature,
 				  labcomm_encoder_function encode)
 {
   int index = -ENOENT;
@@ -316,12 +316,12 @@ static int encoder_add_signature(struct labcomm_encoder *e,
 }
 
 /*
-static labcomm_sample_entry_t *encoder_get_sample_by_signature_address(
-  labcomm_encoder_t *encoder,
-  labcomm_signature_t *s)
+static struct labcomm_sample_entry *encoder_get_sample_by_signature_address(
+  struct labcomm_encoder *encoder,
+  struct labcomm_signature *s)
 {
-  labcomm_sample_entry_t *result = NULL;
-  labcomm_encoder_context_t *context = encoder->context;
+  struct labcomm_sample_entry *result = NULL;
+  struct labcomm_encoder_context *context = encoder->context;
   
 #ifndef LABCOMM_ENCODER_LINEAR_SEARCH
   if (&labcomm_first_signature <= s && s <= &labcomm_last_signature) {
@@ -334,17 +334,17 @@ static labcomm_sample_entry_t *encoder_get_sample_by_signature_address(
 }
 */
 						    
-labcomm_encoder_t *labcomm_encoder_new(
+struct labcomm_encoder *labcomm_encoder_new(
   const struct labcomm_writer_action writer,
   void *writer_context,
   const struct labcomm_lock_action *lock,
   void *lock_context)
 {
-  labcomm_encoder_t *result = malloc(sizeof(labcomm_encoder_t));
+  struct labcomm_encoder *result = malloc(sizeof(*result));
   if (result) {
-    labcomm_encoder_context_t *context;
+    struct labcomm_encoder_context *context;
 
-    context = malloc(sizeof(labcomm_encoder_context_t));
+    context = malloc(sizeof(*context));
 #ifdef LABCOMM_ENCODER_LINEAR_SEARCH
     context->sample = NULL;
     context->index = LABCOMM_USER;
@@ -369,8 +369,8 @@ labcomm_encoder_t *labcomm_encoder_new(
 }
 
 void labcomm_internal_encoder_register(
-  labcomm_encoder_t *e,
-  labcomm_signature_t *signature,
+  struct labcomm_encoder *e,
+  struct labcomm_signature *signature,
   labcomm_encoder_function encode)
 {
   if (signature->type == LABCOMM_SAMPLE) {
@@ -394,8 +394,8 @@ void labcomm_internal_encoder_register(
 }
 
 int labcomm_internal_encode(
-  labcomm_encoder_t *e,
-  labcomm_signature_t *signature,
+  struct labcomm_encoder *e,
+  struct labcomm_signature *signature,
   labcomm_encoder_function encode,
   void *value)
 {
@@ -415,14 +415,14 @@ no_end:
   return result;
 }
 
-void labcomm_encoder_free(labcomm_encoder_t* e)
+void labcomm_encoder_free(struct labcomm_encoder* e)
 {
   e->writer.action.free(&e->writer);
-  labcomm_encoder_context_t *context = (labcomm_encoder_context_t *) e->context;
+  struct labcomm_encoder_context *context = (struct labcomm_encoder_context *) e->context;
 
 #ifdef LABCOMM_ENCODER_LINEAR_SEARCH
-  labcomm_sample_entry_t *entry = context->sample;
-  labcomm_sample_entry_t *entry_next;
+  struct labcomm_sample_entry *entry = context->sample;
+  struct labcomm_sample_entry *entry_next;
   while (entry != NULL) {
     entry_next = entry->next;
     free(entry);
@@ -453,7 +453,7 @@ int labcomm_encoder_ioctl(struct labcomm_encoder *encoder,
 
 int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder, 
 				   int action,
-				   labcomm_signature_t *signature,
+				   struct labcomm_signature *signature,
                                    va_list va)
 {
   int result = -ENOTSUP;
@@ -466,8 +466,8 @@ int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder,
 }
 
 static void collect_flat_signature(
-  labcomm_decoder_t *decoder,
-  labcomm_encoder_t *signature_writer)
+  struct labcomm_decoder *decoder,
+  struct labcomm_encoder *signature_writer)
 {
   int type = labcomm_read_packed32(&decoder->reader); 
   if (type >= LABCOMM_USER) {
@@ -516,16 +516,16 @@ static void collect_flat_signature(
   }
 }
 
-labcomm_decoder_t *labcomm_decoder_new(
+struct labcomm_decoder *labcomm_decoder_new(
   const struct labcomm_reader_action reader,
   void *reader_context,
   const struct labcomm_lock_action *lock,
   void *lock_context)
 {
-  labcomm_decoder_t *result = malloc(sizeof(labcomm_decoder_t));
+  struct labcomm_decoder *result = malloc(sizeof(*result));
   if (result) {
-    labcomm_decoder_context_t *context =
-      (labcomm_decoder_context_t*)malloc(sizeof(labcomm_decoder_context_t));
+    struct labcomm_decoder_context *context =
+      (struct labcomm_decoder_context *)malloc(sizeof(*context));
     context->sample = 0;
     result->context = context;
     result->reader.data = 0;
@@ -545,18 +545,18 @@ labcomm_decoder_t *labcomm_decoder_new(
 }
 
 void labcomm_internal_decoder_register(
-  labcomm_decoder_t *d,
-  labcomm_signature_t *signature,
-  labcomm_decoder_typecast_t type_decoder,
-  labcomm_handler_typecast_t handler,
+  struct labcomm_decoder *d,
+  struct labcomm_signature *signature,
+  labcomm_decoder_function type_decoder,
+  labcomm_handler_function handler,
   void *handler_context)
 {
-  labcomm_decoder_context_t *context = d->context;
-  labcomm_sample_entry_t *sample;
+  struct labcomm_decoder_context *context = d->context;
+  struct labcomm_sample_entry *sample;
   sample = get_sample_by_signature_address(context->sample,
 					   signature);
   if (!sample) {
-    sample = (labcomm_sample_entry_t*)malloc(sizeof(labcomm_sample_entry_t));
+    sample = (struct labcomm_sample_entry *)malloc(sizeof(*sample));
     sample->next = context->sample;
     context->sample = sample;
     sample->index = 0;
@@ -567,23 +567,23 @@ void labcomm_internal_decoder_register(
   sample->context = handler_context;
 }
 
-int labcomm_decoder_decode_one(labcomm_decoder_t *d)
+int labcomm_decoder_decode_one(struct labcomm_decoder *d)
 {
   int result;
 
   do {
     result = d->reader.action.start(&d->reader);
     if (result > 0) {
-      labcomm_decoder_context_t *context = d->context;
+      struct labcomm_decoder_context *context = d->context;
 
       result = labcomm_read_packed32(&d->reader);
       if (result == LABCOMM_TYPEDEF || result == LABCOMM_SAMPLE) {
 	/* TODO: should the labcomm_dynamic_buffer_writer be 
 	   a permanent part of labcomm_decoder? */
-	labcomm_encoder_t *e = labcomm_encoder_new(
+	struct labcomm_encoder *e = labcomm_encoder_new(
 	  labcomm_dynamic_buffer_writer, NULL, NULL, NULL);
-	labcomm_signature_t signature;
-	labcomm_sample_entry_t *entry = NULL;
+	struct labcomm_signature signature;
+	struct labcomm_sample_entry *entry = NULL;
 	int index, err;
 
 	index = labcomm_read_packed32(&d->reader); //int
@@ -624,7 +624,7 @@ int labcomm_decoder_decode_one(labcomm_decoder_t *d)
 	  result = -ENOENT;
 	}
       } else {
-	labcomm_sample_entry_t *entry;
+	struct labcomm_sample_entry *entry;
 
 	entry = get_sample_by_index(context->sample, result);
 	if (!entry) {
@@ -644,18 +644,18 @@ int labcomm_decoder_decode_one(labcomm_decoder_t *d)
   return result;
 }
 
-void labcomm_decoder_run(labcomm_decoder_t *d)
+void labcomm_decoder_run(struct labcomm_decoder *d)
 {
   while (labcomm_decoder_decode_one(d) > 0) {
   }
 }
 
-void labcomm_decoder_free(labcomm_decoder_t* d)
+void labcomm_decoder_free(struct labcomm_decoder* d)
 {
   d->reader.action.free(&d->reader);
-  labcomm_decoder_context_t *context = (labcomm_decoder_context_t *) d->context;
-  labcomm_sample_entry_t *entry = context->sample;
-  labcomm_sample_entry_t *entry_next;
+  struct labcomm_decoder_context *context = (struct labcomm_decoder_context *) d->context;
+  struct labcomm_sample_entry *entry = context->sample;
+  struct labcomm_sample_entry *entry_next;
 
   while (entry != NULL) {
     entry_next = entry->next;
@@ -685,7 +685,7 @@ int labcomm_decoder_ioctl(struct labcomm_decoder *decoder,
 
 int labcomm_internal_decoder_ioctl(struct labcomm_decoder *decoder, 
 				   int action,
-				   labcomm_signature_t *signature,
+				   struct labcomm_signature *signature,
                                    va_list va)
 {
   int result = -ENOTSUP;

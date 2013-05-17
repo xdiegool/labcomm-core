@@ -2,7 +2,7 @@
 
 struct labcomm_ioctl_register_signature {
   int index;
-  labcomm_signature_t *signature;
+  struct labcomm_signature *signature;
 };
 
 #define LABCOMM_IOCTL_REGISTER_SIGNATURE         0x0001
