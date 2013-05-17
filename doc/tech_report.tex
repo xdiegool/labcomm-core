@@ -253,6 +253,35 @@ way of supporting the common cases is to include run-time checks for overflow in
 and decoders.
 
 \appendix
+\section{The LabComm language}
+\label{sec:LanguageGrammar}
+
+\subsection{Abstract syntax}
+\begin{verbatim}
+Program ::= Decl*;
+
+abstract Decl ::= Type <Name:String>;
+TypeDecl : Decl;
+SampleDecl : Decl;
+
+Field ::= Type <Name:String>;
+
+abstract Type;
+VoidType          : Type;
+PrimType          : Type ::= <Name:String> <Token:int>;
+UserType          : Type ::= <Name:String>;
+StructType        : Type ::= Field*;
+ParseArrayType    : Type ::= Type Dim*;
+abstract ArrayType : Type ::= Type Exp*;
+VariableArrayType : ArrayType;
+FixedArrayType    : ArrayType;
+
+Dim ::= Exp*;
+
+abstract Exp;
+IntegerLiteral : Exp ::= <Value:String>;
+VariableSize : Exp;
+\end{verbatim}
 
 \section{The LabComm protocol}
 \label{sec:ProtocolGrammar}
