@@ -148,10 +148,15 @@ only arrays of arrays.
 
 The LabComm system consists of a compiler for generating code from the data
 descriptions, and libraries providing LabComm communication facilities in,
-currently, C, Java, Python, and C#.
+currently, C, Java, Python, and C\#.
+
 
 \subsection{The LabComm compiler}
 
+The LabComm compiler generates code for the declared samples, including marshalling and
+demarshalling code, in the supported target languages.
+
+The compiler itself is implemented in Java using the JastAdd~\cite{jastadd} compiler compiler.
 \subsection{The LabComm library}
 
 The LabComm libraries contain functionality for the end-to-end transmission
@@ -276,6 +281,24 @@ Running \verb+./example_encoder one two+, will yield the following result in exa
 00000068
 \end{verbatim}
 
+i.e.,
+\begin{verbatim}
+<sample_decl> <user_id: 0x40> <string: <len: 11> <"log_message"> 
+  <struct_decl: 
+    <number_of_fields: 2>
+    <string: <len: 8> <"sequence"> <type: <integer_type>>
+    <string: <len: 4> <"line">> <type: <array_decl 
+      <number_indices: 1> <variable_index> 
+      <type: <struct_decl: 
+        <number_of_fields:2>
+        <string: <len: 4> <"last">> <type: <boolean_type>> 
+        <string: <len: 4> <"data">> <type: <string_type>>
+      >>
+   >
+>
+<sample_decl> <user_id: 0x41>
+   ...
+\end{verbatim}
 
 \section{Ideas/Discussion}:
 
@@ -327,7 +350,7 @@ VariableSize : Exp;
 <packet> := ( <type_decl> | <sample_decl> | <sample_data> )*
 <type_decl> := 0x01 ''(packed)'' <user_id> <string> <type>
 <sample_decl> := 0x02 ''(packed)''<user_id> <string> <type>
-<user_id> := 0x60..0xffffffff  ''(packed)''
+<user_id> := 0x40..0xffffffff  ''(packed)''
 <string> := <string_length> <char>*
 <string_length> := 0x00..0xffffffff  ''(packed)''
 <char> := any UTF-8 char
