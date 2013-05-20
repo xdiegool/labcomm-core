@@ -54,6 +54,28 @@ typedef void (*labcomm_decoder_function)(
   labcomm_handler_function handler,
   void *context);
 
+struct labcomm_reader_action {
+  int (*alloc)(struct labcomm_reader *r, char *labcomm_version);
+  int (*free)(struct labcomm_reader *r);
+  int (*start)(struct labcomm_reader *r);
+  int (*end)(struct labcomm_reader *r);
+  int (*fill)(struct labcomm_reader *r); 
+  int (*ioctl)(struct labcomm_reader *r, int, struct labcomm_signature *, va_list);
+};
+
+struct labcomm_reader {
+  const struct labcomm_reader_action *action;
+  void *context;
+  unsigned char *data;
+  int data_size;
+  int count;
+  int pos;
+  int error;
+  labcomm_error_handler_callback on_error;
+};
+
+
+
 /*
  * Non typesafe registration function to be called from
  * generated labcomm_decoder_register_* functions.
@@ -77,7 +99,7 @@ int labcomm_internal_decoder_ioctl(struct labcomm_decoder *decoder,
     type result; int i;							\
     for (i = sizeof(type) - 1 ; i >= 0 ; i--) {				\
       if (r->pos >= r->count) {						\
-	r->action.fill(r);						\
+	r->action->fill(r);						\
       }									\
       ((unsigned char*)(&result))[i] = r->data[r->pos];			\
       r->pos++;								\
@@ -92,7 +114,7 @@ int labcomm_internal_decoder_ioctl(struct labcomm_decoder *decoder,
     type result; int i;							\
     for (i = 0 ; i < sizeof(type) ; i++) {				\
       if (r->pos >= r->count) {						\
-	r->action.fill(r);						\
+	r->action->fill(r);						\
       }									\
       ((unsigned char*)(&result))[i] = r->data[r->pos];			\
       r->pos++;								\
@@ -118,7 +140,7 @@ static inline unsigned int labcomm_read_packed32(struct labcomm_reader *r)
     unsigned char tmp;
 
     if (r->pos >= r->count) {	
-      r->action.fill(r);
+      r->action->fill(r);
     }
     tmp = r->data[r->pos];
     r->pos++;
@@ -139,7 +161,7 @@ static inline char *labcomm_read_string(struct labcomm_reader *r)
   result = malloc(length + 1);
   for (i = 0 ; i < length ; i++) {
     if (r->pos >= r->count) {	
-      r->action.fill(r);
+      r->action->fill(r);
     }
     result[i] = r->data[r->pos];
     r->pos++;
@@ -155,6 +177,33 @@ typedef int (*labcomm_encoder_function)(
   struct labcomm_writer *,
   void *value);
 
+struct labcomm_writer;
+
+struct labcomm_writer_action {
+  int (*alloc)(struct labcomm_writer *w, char *labcomm_version);
+  int (*free)(struct labcomm_writer *w);
+  int (*start)(struct labcomm_writer *w,
+	       struct labcomm_encoder *encoder,
+	       int index, struct labcomm_signature *signature,
+	       void *value);
+  int (*end)(struct labcomm_writer *w);
+  int (*flush)(struct labcomm_writer *w); 
+  int (*ioctl)(struct labcomm_writer *w, 
+	       int index, struct labcomm_signature *, 
+	       va_list);
+};
+
+struct labcomm_writer {
+  const struct labcomm_writer_action *action;
+  void *context;
+  unsigned char *data;
+  int data_size;
+  int count;
+  int pos;
+  int error;
+  labcomm_error_handler_callback on_error;
+};
+
 void labcomm_internal_encoder_register(
   struct labcomm_encoder *encoder, 
   struct labcomm_signature *signature, 
@@ -165,6 +214,7 @@ int labcomm_internal_encode(
   struct labcomm_signature *signature, 
   labcomm_encoder_function encode,
   void *value);
+
 
 int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder, 
 				   int ioctl_action,
@@ -179,7 +229,7 @@ int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder,
     for (i = sizeof(type) - 1 ; i >= 0 ; i--) {				\
       if (w->pos >= w->count) { /*buffer is full*/			\
         int err;							\
-	err = w->action.flush(w);					\
+	err = w->action->flush(w);					\
 	if (err != 0) { return err; }					\
       }									\
       w->data[w->pos] = ((unsigned char*)(&data))[i];			\
@@ -196,7 +246,7 @@ int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder,
     for (i = 0 ; i < sizeof(type) ; i++) {				\
       if (w->pos >= w->count) {						\
         int err;							\
-	err = w->action.flush(w);					\
+	err = w->action->flush(w);					\
 	if (err != 0) { return err; }					\
       }									\
       w->data[w->pos] = ((unsigned char*)(&data))[i];			\
@@ -227,7 +277,7 @@ static inline int labcomm_write_packed32(struct labcomm_writer *w,
   for (i = i - 1 ; i >= 0 ; i--) {
     if (w->pos >= w->count) {					
       int err;
-      err = w->action.flush(w);
+      err = w->action->flush(w);
       if (err != 0) { return err; }
     }
     w->data[w->pos++] = tmp[i] | (i?0x80:0x00);
@@ -245,7 +295,7 @@ static inline int labcomm_write_string(struct labcomm_writer *w, char *s)
   for (i = 0 ; i < length ; i++) {
     if (w->pos >= w->count) {	
       int err;
-      err = w->action.flush(w);
+      err = w->action->flush(w);
       if (err != 0) { return err; }
     }
     w->data[w->pos] = s[i];

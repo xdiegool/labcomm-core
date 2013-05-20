@@ -3,7 +3,7 @@
 
 #include "labcomm.h"
 
-extern const struct labcomm_reader_action labcomm_fd_reader;
+struct labcomm_reader *labcomm_fd_reader_new(int fd, int close_fd_on_free);
 
 #endif
 

@@ -1,6 +1,8 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include "labcomm.h"
+#include "labcomm_private.h"
 #include "labcomm_ioctl.h"
 #include "labcomm_dynamic_buffer_writer.h"
 
@@ -93,7 +95,7 @@ static int dyn_ioctl(struct labcomm_writer *w,
   return result;
 }
 
-const struct labcomm_writer_action labcomm_dynamic_buffer_writer = {
+static const struct labcomm_writer_action action = {
   .alloc = dyn_alloc,
   .free = dyn_free,
   .start = dyn_start,
@@ -101,3 +103,18 @@ const struct labcomm_writer_action labcomm_dynamic_buffer_writer = {
   .flush = dyn_flush,
   .ioctl = dyn_ioctl
 };
+const struct labcomm_writer_action *labcomm_dynamic_buffer_writer_action = 
+  &action;
+
+struct labcomm_writer *labcomm_dynamic_buffer_writer_new()
+{
+  struct labcomm_writer *result;
+
+  result = malloc(sizeof(*result));
+  if (result != NULL) {
+    result->context = NULL;
+    result->action = &action;
+  }
+  return result;
+}
+

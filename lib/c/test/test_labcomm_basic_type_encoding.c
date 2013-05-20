@@ -14,7 +14,7 @@ static struct labcomm_writer writer =  {
   .count = sizeof(buffer),
   .pos = 0,
   .error = 0,
-  .action = { NULL, NULL, NULL, NULL, NULL, NULL },
+  .action = NULL,
   .on_error = NULL,
 };
 
@@ -24,7 +24,7 @@ static struct labcomm_reader reader =  {
   .data_size = sizeof(buffer),
   .count = 0,
   .pos = 0,
-  .action = { NULL, NULL, NULL, NULL, NULL, NULL },
+  .action = NULL,
   .on_error = NULL,
 };
 

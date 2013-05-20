@@ -50,8 +50,8 @@ if __name__ == '__main__':
       |  if (in < 0) { return 1; }
       |  out = open(argv[2], O_WRONLY);
       |  if (out < 0) { return 1; }
-      |  e = labcomm_encoder_new(labcomm_fd_writer, &out, NULL, NULL);
-      |  d = labcomm_decoder_new(labcomm_fd_reader, &in, NULL, NULL);
+      |  e = labcomm_encoder_new(labcomm_fd_writer_new(out, 1), NULL, NULL);
+      |  d = labcomm_decoder_new(labcomm_fd_reader_new(in, 1), NULL, NULL);
     """))
     for func,arg in sample:
         result.extend(split_match('^[^|]*\|(.*)$', """

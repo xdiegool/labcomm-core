@@ -101,13 +101,24 @@ static int buf_writer_ioctl(
   return result;
 }
 
-const struct labcomm_writer_action buffer_writer = {
+const struct labcomm_writer_action writer_action = {
   .alloc = buf_writer_alloc,
   .free = buf_writer_free,
   .start = buf_writer_start,
   .end = buf_writer_end,
   .flush = buf_writer_flush,
   .ioctl = buf_writer_ioctl
+};
+
+static struct labcomm_writer buffer_writer = {
+  .context = NULL,
+  .data = buffer,
+  .data_size = sizeof(buffer),
+  .count = sizeof(buffer),
+  .pos = 0,
+  .error = 0,
+  .action = &writer_action,
+  .on_error = NULL,
 };
 
 void dump_encoder(struct labcomm_encoder *encoder)
@@ -134,8 +145,8 @@ int main(void)
   generated_encoding_V V;
   generated_encoding_B B = 1;
 
-  struct labcomm_encoder *encoder = labcomm_encoder_new(buffer_writer, buffer,
-						   NULL, NULL);
+  struct labcomm_encoder *encoder = labcomm_encoder_new(&buffer_writer, 
+							NULL, NULL);
 
   labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   labcomm_encoder_register_generated_encoding_V(encoder);

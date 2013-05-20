@@ -92,32 +92,10 @@ struct labcomm_lock_action {
 /*
  * Decoder
  */
-
 struct labcomm_reader;
 
-struct labcomm_reader_action {
-  int (*alloc)(struct labcomm_reader *r, char *labcomm_version);
-  int (*free)(struct labcomm_reader *r);
-  int (*start)(struct labcomm_reader *r);
-  int (*end)(struct labcomm_reader *r);
-  int (*fill)(struct labcomm_reader *r); 
-  int (*ioctl)(struct labcomm_reader *r, int, struct labcomm_signature *, va_list);
-};
-
-struct labcomm_reader {
-  void *context;
-  unsigned char *data;
-  int data_size;
-  int count;
-  int pos;
-  int error;
-  struct labcomm_reader_action action;
-  labcomm_error_handler_callback on_error;
-};
-
 struct labcomm_decoder *labcomm_decoder_new(
-  const struct labcomm_reader_action reader,
-  void *reader_context,
+  struct labcomm_reader *reader,
   const struct labcomm_lock_action *lock,
   void *lock_context);
 int labcomm_decoder_decode_one(
@@ -137,34 +115,8 @@ int labcomm_decoder_ioctl(struct labcomm_decoder *decoder,
  */
 struct labcomm_writer;
 
-struct labcomm_writer_action {
-  int (*alloc)(struct labcomm_writer *w, char *labcomm_version);
-  int (*free)(struct labcomm_writer *w);
-  int (*start)(struct labcomm_writer *w,
-	       struct labcomm_encoder *encoder,
-	       int index, struct labcomm_signature *signature,
-	       void *value);
-  int (*end)(struct labcomm_writer *w);
-  int (*flush)(struct labcomm_writer *w); 
-  int (*ioctl)(struct labcomm_writer *w, 
-	       int index, struct labcomm_signature *, 
-	       va_list);
-};
-
-struct labcomm_writer {
-  void *context;
-  unsigned char *data;
-  int data_size;
-  int count;
-  int pos;
-  int error;
-  struct labcomm_writer_action action;
-  labcomm_error_handler_callback on_error;
-};
-
 struct labcomm_encoder *labcomm_encoder_new(
-  const struct labcomm_writer_action writer,
-  void *writer_context,
+  struct labcomm_writer *writer,
   const struct labcomm_lock_action *lock,
   void *lock_context);
 void labcomm_encoder_free(
