@@ -3,6 +3,7 @@
 
 #include <stdarg.h>
 #include <unistd.h>
+#include <labcomm_error.h>
 
 /* Forward declaration */
 struct labcomm_encoder;
@@ -23,27 +24,6 @@ struct labcomm_signature {
 /*
  * Error handling.
  */
-
-/* Error IDs */
-enum labcomm_error {
-  LABCOMM_ERROR_ENUM_BEGIN_GUARD,	// _must_ be the first enum element. labcomm_error_get_str() depends on this.
-  LABCOMM_ERROR_ENC_NO_REG_SIGNATURE, 	
-  LABCOMM_ERROR_ENC_MISSING_DO_REG,
-  LABCOMM_ERROR_ENC_MISSING_DO_ENCODE,
-  LABCOMM_ERROR_ENC_BUF_FULL,
-  LABCOMM_ERROR_DEC_MISSING_DO_REG,
-  LABCOMM_ERROR_DEC_MISSING_DO_DECODE_ONE,
-  LABCOMM_ERROR_DEC_UNKNOWN_DATATYPE,
-  LABCOMM_ERROR_DEC_INDEX_MISMATCH,
-  LABCOMM_ERROR_DEC_TYPE_NOT_FOUND,
-  LABCOMM_ERROR_UNIMPLEMENTED_FUNC,
-  LABCOMM_ERROR_MEMORY,
-  LABCOMM_ERROR_USER_DEF,			
-  LABCOMM_ERROR_ENUM_END_GUARD		// _must_ be the last enum element. labcomm_error_get_str() depends on this.
-};
-
-/* Error strings. _must_ be the same order as in enum labcomm_error */
-extern const char *labcomm_error_strings[];
 
 /* The callback prototype for error handling.
  * First parameter is the error ID.
@@ -79,6 +59,7 @@ void labcomm_decoder_register_new_datatype_handler(struct labcomm_decoder *d,
 /*
  * Locking support (optional)
  */
+struct labcomm_lock;
 
 struct labcomm_lock_action {
   int (*alloc)(void *context);

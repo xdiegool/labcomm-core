@@ -71,7 +71,6 @@ struct labcomm_reader {
   int count;
   int pos;
   int error;
-  labcomm_error_handler_callback on_error;
 };
 
 
@@ -201,7 +200,6 @@ struct labcomm_writer {
   int count;
   int pos;
   int error;
-  labcomm_error_handler_callback on_error;
 };
 
 void labcomm_internal_encoder_register(

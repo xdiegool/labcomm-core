@@ -118,7 +118,6 @@ static struct labcomm_writer buffer_writer = {
   .pos = 0,
   .error = 0,
   .action = &writer_action,
-  .on_error = NULL,
 };
 
 void dump_encoder(struct labcomm_encoder *encoder)

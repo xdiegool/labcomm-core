@@ -88,39 +88,28 @@ struct labcomm_decoder_context {
 void labcomm_register_error_handler_encoder(struct labcomm_encoder *encoder, labcomm_error_handler_callback callback)
 {
  encoder->on_error = callback; 
- encoder->writer->on_error = callback; 
 }
 
 void labcomm_register_error_handler_decoder(struct labcomm_decoder *decoder, labcomm_error_handler_callback callback)
 {
  decoder->on_error = callback; 
- decoder->reader->on_error = callback; 
 }
 
-/* Error strings. _must_ be the same order as in enum labcomm_error */
-const char *labcomm_error_strings[] = { 
-  "Enum begin guard. DO NO use this as an error.",
-  "Encoder has no registration for this signature.",
-  "Encoder is missing do_register",
-  "Encoder is missing do_encode",
-  "The labcomm buffer is full and it.",
-  "Decoder is missing do_register",
-  "Decoder is missing do_decode_one",
-  "Decoder: Unknown datatype",
-  "Decoder: index mismatch",
-  "Decoder: type not found",
-  "This function is not yet implemented.",
-  "User defined error.",
-  "Could not allocate memory.",
-  "Enum end guard. DO NO use this as an error."
+static const char *labcomm_error_string[] = { 
+#define LABCOMM_ERROR(name, description) description ,
+#include "labcomm_error.h"
+#undef LABCOMM_ERROR
 };
+static const int labcomm_error_string_count = (sizeof(labcomm_error_string) / 
+					       sizeof(labcomm_error_string[0]));
+
 
 const char *labcomm_error_get_str(enum labcomm_error error_id)
 {
   const char *error_str = NULL;
   // Check if this is a known error ID.
-  if (error_id >= LABCOMM_ERROR_ENUM_BEGIN_GUARD && error_id <= LABCOMM_ERROR_ENUM_END_GUARD) {
-    error_str = labcomm_error_strings[error_id];
+  if (0 <= error_id && error_id < labcomm_error_string_count) {
+    error_str = labcomm_error_string[error_id];
   }
   return error_str;
 }
@@ -380,7 +369,6 @@ struct labcomm_encoder *labcomm_encoder_new(
     result->writer->error = 0;
     result->lock.action = lock;
     result->lock.context = lock_context;
-    result->writer->on_error = on_error_fprintf;
     result->on_error = on_error_fprintf;
     result->writer->action->alloc(result->writer, LABCOMM_VERSION);
   }
@@ -567,7 +555,6 @@ struct labcomm_decoder *labcomm_decoder_new(
     result->reader->data_size = 0;
     result->reader->count = 0;
     result->reader->pos = 0;
-    result->reader->on_error = on_error_fprintf;
     result->lock.action = lock;
     result->lock.context = lock_context;
     result->on_error = on_error_fprintf;
@@ -620,7 +607,6 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
 	.pos = 0,
 	.error = 0,
 	.action = labcomm_dynamic_buffer_writer_action,
-	.on_error = NULL
       };
       struct labcomm_signature signature;
       struct labcomm_sample_entry *entry = NULL;

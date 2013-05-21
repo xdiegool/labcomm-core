@@ -15,7 +15,6 @@ static struct labcomm_writer writer =  {
   .pos = 0,
   .error = 0,
   .action = NULL,
-  .on_error = NULL,
 };
 
 static struct labcomm_reader reader =  {
@@ -25,7 +24,6 @@ static struct labcomm_reader reader =  {
   .count = 0,
   .pos = 0,
   .action = NULL,
-  .on_error = NULL,
 };
 
 typedef uint32_t packed32;
