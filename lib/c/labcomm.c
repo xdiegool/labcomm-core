@@ -446,15 +446,23 @@ int labcomm_encoder_ioctl(struct labcomm_encoder *encoder,
                            int action,
                            ...)
 {
-  int result = -ENOTSUP;
-  
-  if (encoder->writer->action->ioctl != NULL) {
-    va_list va;
+  int result;
+  va_list va;
     
-    va_start(va, action);
-    result = encoder->writer->action->ioctl(encoder->writer, action, NULL, va);
-    va_end(va);
+  if (encoder->writer->action->ioctl == NULL) {
+    result = -ENOTSUP;
+    goto out;
   }
+  if (LABCOMM_IOC_SIG(action) != LABCOMM_IOC_NOSIG) {
+    result = -EINVAL;
+    goto out;
+  }
+    
+  va_start(va, action);
+  result = encoder->writer->action->ioctl(encoder->writer, action, NULL, va);
+  va_end(va);
+
+out:
   return result;
 }
 
@@ -462,15 +470,22 @@ static int labcomm_writer_ioctl(struct labcomm_writer *writer,
 				int action,
 				...)
 {
-  int result = -ENOTSUP;
-  
-  if (writer->action->ioctl != NULL) {
-    va_list va;
-    
-    va_start(va, action);
-    result = writer->action->ioctl(writer, action, NULL, va);
-    va_end(va);
+  int result;
+  va_list va;
+
+  if (writer->action->ioctl == NULL) {
+    result = -ENOTSUP;
+    goto out;
   }
+  if (LABCOMM_IOC_SIG(action) != LABCOMM_IOC_NOSIG) {
+    result = -EINVAL;
+    goto out;
+  }
+  
+  va_start(va, action);
+  result = writer->action->ioctl(writer, action, NULL, va);
+  va_end(va);
+out:
   return result;
 }
 
