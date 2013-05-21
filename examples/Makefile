@@ -1,6 +1,6 @@
 all:
 	echo To be done...
-
+	$(MAKE) -C twoway e 	
 test:
 	echo More to be done...
 	cd simple ; sh compile.sh && sh run.sh
