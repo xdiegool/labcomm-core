@@ -45,6 +45,12 @@
   struct labcomm_signature name __attribute__((section("labcomm")))
 
 /*
+ * Semi private lock declarations
+ */
+struct labcomm_lock {
+};
+
+/*
  * Semi private decoder declarations
  */
 typedef void (*labcomm_handler_function)(void *value, void *context);

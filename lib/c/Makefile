@@ -1,12 +1,15 @@
 ## Macros
 
-# Use LLVM clang if it's found.
-CC = $(shell hash clang 2>/dev/null && echo clang || echo gcc)
-CFLAGS = -g -Wall -Werror -O3  -I. -Itest -DLABCOMM_ENCODER_LINEAR_SEARCH
-LDFLAGS = -L.
-LDLIBS_TEST = -Tlabcomm.linkscript  -lcunit -llabcomm
+CC=gcc
+CFLAGS=-g -Wall -Werror -O3  -I. -Itest -DLABCOMM_ENCODER_LINEAR_SEARCH
+LDFLAGS=-L.
+#LDLIBS_TEST=-Tlabcomm.linkscript  -lcunit -llabcomm
+LDLIBS_TEST=-lcunit -llabcomm
 
-OBJS= labcomm.o labcomm_dynamic_buffer_writer.o labcomm_fd_reader.o labcomm_fd_writer.o 
+OBJS= labcomm.o \
+      labcomm_dynamic_buffer_writer.o labcomm_fd_reader.o labcomm_fd_writer.o \
+      labcomm_pthread_mutex_lock.o
+
 #FIXME: labcomm_mem_reader.o labcomm_mem_writer.o
 LABCOMM_JAR=../../compiler/labComm.jar
 LABCOMM=java -jar $(LABCOMM_JAR) 
@@ -35,11 +38,13 @@ endif
 
 .PHONY: all run-test clean distclean
 
-all: liblabcomm.a 
+all: liblabcomm.a liblabcomm.so.1 
 
 liblabcomm.a: $(OBJS)
 	ar -r liblabcomm.a $^
 
+liblabcomm.so.1: $(OBJS:%.o=%.pic.o)
+	gcc -shared -Wl,-soname,$@ -o $@ $^ -lc
 
 labcomm.o : labcomm.c labcomm.h  labcomm_private.h
 
@@ -85,6 +90,9 @@ $(LABCOMM_JAR):
 	cd $(shell dirname $(LABCOMM_JAR)); ant jar
 	@echo "======End building LabComm compiler======"
 
+%.pic.o:	%.c
+	$(CC) -fPIC $(CFLAGS) -c -o $@ $<
+
 %.o: %.c %.h
 
 clean:
@@ -98,6 +106,7 @@ clean:
 	$(RM) $(TEST_DIR)/test_labcomm
 
 distclean: clean
+	$(RM) liblabcomm.so.1
 	$(RM) liblabcomm.a
 
 # Extra dependencies
