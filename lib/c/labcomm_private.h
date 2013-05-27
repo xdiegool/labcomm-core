@@ -42,7 +42,7 @@
  *
  */
 #define LABCOMM_DECLARE_SIGNATURE(name) \
-  struct labcomm_signature name __attribute__((section("labcomm")))
+  struct labcomm_signature __attribute__((section("labcomm"))) name 
 
 /*
  * Semi private lock declarations

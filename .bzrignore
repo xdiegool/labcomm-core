@@ -32,3 +32,4 @@ examples/simple/example_encoder
 lib/c/test/test_labcomm_basic_type_encoding
 lib/c/test/test_labcomm_generated_encoding
 lib/java/se/lth/control/labcomm/WriterWrapper.class
+lib/c/liblabcomm.so.1
