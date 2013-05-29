@@ -39,10 +39,7 @@
 struct labcomm_decoder {
   void *context;
   struct labcomm_reader *reader;
-  struct {
-    void *context;
-    const struct labcomm_lock_action *action;
-  } lock;
+  struct labcomm_lock *lock;
   labcomm_error_handler_callback on_error;
   labcomm_handle_new_datatype_callback on_new_datatype;
 };
@@ -50,10 +47,7 @@ struct labcomm_decoder {
 struct labcomm_encoder {
   void *context;
   struct labcomm_writer *writer;
-  struct {
-    void *context;
-    const struct labcomm_lock_action *action;
-  } lock;
+  struct labcomm_lock *lock;
   labcomm_error_handler_callback on_error;
 };
 
@@ -240,19 +234,20 @@ static void labcomm_encode_signature(struct labcomm_encoder *e,
   int i, index;
 
   index = get_encoder_index(e, signature);
-  e->writer->action->start(e->writer, e, index, signature, NULL);
+  e->writer->action->start(e->writer, e->writer->context, 
+			   e, index, signature, NULL);
   labcomm_write_packed32(e->writer, signature->type);
   labcomm_write_packed32(e->writer, index);
 
   labcomm_write_string(e->writer, signature->name);
   for (i = 0 ; i < signature->size ; i++) {
     if (e->writer->pos >= e->writer->count) {
-      e->writer->action->flush(e->writer);
+      e->writer->action->flush(e->writer, e->writer->context);
     }
     e->writer->data[e->writer->pos] = signature->signature[i];
     e->writer->pos++;
   }
-  e->writer->action->end(e->writer);
+  e->writer->action->end(e->writer, e->writer->context);
 }
 
 #ifdef LABCOMM_ENCODER_LINEAR_SEARCH
@@ -346,8 +341,7 @@ static struct labcomm_sample_entry *encoder_get_sample_by_signature_address(
 						    
 struct labcomm_encoder *labcomm_encoder_new(
   struct labcomm_writer *writer,
-  const struct labcomm_lock_action *lock,
-  void *lock_context)
+  struct labcomm_lock *lock)
 {
   struct labcomm_encoder *result = malloc(sizeof(*result));
   if (result) {
@@ -367,10 +361,10 @@ struct labcomm_encoder *labcomm_encoder_new(
     result->writer->count = 0;
     result->writer->pos = 0;
     result->writer->error = 0;
-    result->lock.action = lock;
-    result->lock.context = lock_context;
+    result->lock = lock;
     result->on_error = on_error_fprintf;
-    result->writer->action->alloc(result->writer, LABCOMM_VERSION);
+    result->writer->action->alloc(result->writer,result->writer->context,
+				  LABCOMM_VERSION);
   }
   return result;
 }
@@ -410,23 +404,25 @@ int labcomm_internal_encode(
   int index;
 
   index = get_encoder_index(e, signature);
-  result = e->writer->action->start(e->writer, e, index, signature, value);
+  result = e->writer->action->start(e->writer, e->writer->context, 
+				    e, index, signature, value);
   if (result == -EALREADY) { result = 0; goto no_end; }
   if (result != 0) { goto out; }
   result = labcomm_write_packed32(e->writer, index);
   if (result != 0) { goto out; }
   result = encode(e->writer, value);
 out:
-  e->writer->action->end(e->writer);
+  e->writer->action->end(e->writer, e->writer->context);
 no_end:
   return result;
 }
 
 void labcomm_encoder_free(struct labcomm_encoder* e)
 {
-  e->writer->action->free(e->writer);
-  struct labcomm_encoder_context *context = (struct labcomm_encoder_context *) e->context;
+  struct labcomm_encoder_context *context;
 
+  context = (struct labcomm_encoder_context *) e->context;
+  e->writer->action->free(e->writer, e->writer->context);
 #ifdef LABCOMM_ENCODER_LINEAR_SEARCH
   struct labcomm_sample_entry *entry = context->sample;
   struct labcomm_sample_entry *entry_next;
@@ -459,7 +455,9 @@ int labcomm_encoder_ioctl(struct labcomm_encoder *encoder,
   }
     
   va_start(va, action);
-  result = encoder->writer->action->ioctl(encoder->writer, action, NULL, va);
+  result = encoder->writer->action->ioctl(encoder->writer, 
+					  encoder->writer->context,
+					  action, NULL, va);
   va_end(va);
 
 out:
@@ -483,7 +481,7 @@ static int labcomm_writer_ioctl(struct labcomm_writer *writer,
   }
   
   va_start(va, action);
-  result = writer->action->ioctl(writer, action, NULL, va);
+  result = writer->action->ioctl(writer, writer->context, action, NULL, va);
   va_end(va);
 out:
   return result;
@@ -497,8 +495,9 @@ int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder,
   int result = -ENOTSUP;
   
   if (encoder->writer->action->ioctl != NULL) {
-    result = encoder->writer->action->ioctl(encoder->writer, action, 
-					    signature, va);
+    result = encoder->writer->action->ioctl(encoder->writer, 
+					    encoder->writer->context, 
+					    action, signature, va);
   }
   return result;
 }
@@ -556,8 +555,7 @@ static void collect_flat_signature(
 
 struct labcomm_decoder *labcomm_decoder_new(
   struct labcomm_reader *reader,
-  const struct labcomm_lock_action *lock,
-  void *lock_context)
+  struct labcomm_lock *lock)
 {
   struct labcomm_decoder *result = malloc(sizeof(*result));
   if (result) {
@@ -570,11 +568,11 @@ struct labcomm_decoder *labcomm_decoder_new(
     result->reader->data_size = 0;
     result->reader->count = 0;
     result->reader->pos = 0;
-    result->lock.action = lock;
-    result->lock.context = lock_context;
+    result->lock = lock;
     result->on_error = on_error_fprintf;
     result->on_new_datatype = on_new_datatype;
-    result->reader->action->alloc(result->reader, LABCOMM_VERSION);
+    result->reader->action->alloc(result->reader, result->reader->context,
+				  LABCOMM_VERSION);
   }
   return result;
 }
@@ -606,7 +604,7 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
 {
   int result;
 
-  result = d->reader->action->start(d->reader);
+  result = d->reader->action->start(d->reader, d->reader->context);
   if (result > 0) {
     struct labcomm_decoder_context *context = d->context;
     
@@ -627,13 +625,13 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
       struct labcomm_sample_entry *entry = NULL;
       int index, err;
       
-      writer.action->alloc(&writer, "");
-      writer.action->start(&writer, NULL, 0, NULL, NULL);
+      writer.action->alloc(&writer, writer.context, "");
+      writer.action->start(&writer, writer.context, NULL, 0, NULL, NULL);
       index = labcomm_read_packed32(d->reader); //int
       signature.name = labcomm_read_string(d->reader);
       signature.type = result;
       collect_flat_signature(d, &writer);
-      writer.action->end(&writer);
+      writer.action->end(&writer, writer.context);
       err = labcomm_writer_ioctl(&writer, 
 				 LABCOMM_IOCTL_WRITER_GET_BYTES_WRITTEN,
 				 &signature.size);
@@ -662,7 +660,7 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
       }
     free_signature_name:
       free(signature.name);
-      writer.action->free(&writer);
+      writer.action->free(&writer, writer.context);
       if (!entry) {
 	// No handler for found type, bail out (after cleanup)
 	result = -ENOENT;
@@ -681,7 +679,7 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
       }
     }
   }
-  d->reader->action->end(d->reader);
+  d->reader->action->end(d->reader, d->reader->context);
   return result;
 }
 
@@ -693,11 +691,11 @@ void labcomm_decoder_run(struct labcomm_decoder *d)
 
 void labcomm_decoder_free(struct labcomm_decoder* d)
 {
-  d->reader->action->free(d->reader);
   struct labcomm_decoder_context *context = (struct labcomm_decoder_context *) d->context;
   struct labcomm_sample_entry *entry = context->sample;
   struct labcomm_sample_entry *entry_next;
 
+  d->reader->action->free(d->reader, d->reader->context);
   while (entry != NULL) {
     entry_next = entry->next;
     free(entry);
@@ -718,7 +716,9 @@ int labcomm_decoder_ioctl(struct labcomm_decoder *decoder,
     va_list va;
     
     va_start(va, action);
-    result = decoder->reader->action->ioctl(decoder->reader, action, NULL, va);
+    result = decoder->reader->action->ioctl(decoder->reader, 
+					    decoder->reader->context,
+					    action, NULL, va);
     va_end(va);
   }
   return result;
@@ -732,7 +732,9 @@ int labcomm_internal_decoder_ioctl(struct labcomm_decoder *decoder,
   int result = -ENOTSUP;
   
   if (decoder->reader->action->ioctl != NULL) {
-    result = decoder->reader->action->ioctl(decoder->reader, action, NULL, va);
+    result = decoder->reader->action->ioctl(decoder->reader, 
+					    decoder->reader->context,
+					    action, NULL, va);
   }
   return result;
 }

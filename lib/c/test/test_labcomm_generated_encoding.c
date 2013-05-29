@@ -11,7 +11,8 @@
 static unsigned char buffer[128];
 struct labcomm_writer *writer;
 
-static int buf_writer_alloc(struct labcomm_writer *w, char *labcomm_version)
+static int buf_writer_alloc(struct labcomm_writer *w, void *context,
+			    char *labcomm_version)
 {
   writer = w; /* Hack */
   w->data_size = sizeof(buffer);
@@ -22,12 +23,12 @@ static int buf_writer_alloc(struct labcomm_writer *w, char *labcomm_version)
   return 0;
 }
 
-static int buf_writer_free(struct labcomm_writer *w)
+static int buf_writer_free(struct labcomm_writer *w, void *context)
 {
   return 0;
 }
 
-static int buf_writer_start(struct labcomm_writer *w,
+static int buf_writer_start(struct labcomm_writer *w, void *context,
 			    struct labcomm_encoder *encoder,
 			    int index,
 			    struct labcomm_signature *signature,
@@ -36,12 +37,12 @@ static int buf_writer_start(struct labcomm_writer *w,
   return 0;
 }
 
-static int buf_writer_end(struct labcomm_writer *w)
+static int buf_writer_end(struct labcomm_writer *w, void *context)
 {
   return 0;
 }
 
-static int buf_writer_flush(struct labcomm_writer *w)
+static int buf_writer_flush(struct labcomm_writer *w, void *context)
 {
   fprintf(stderr, "Should not come here %s:%d\n", __FILE__, __LINE__);
   exit(1);
@@ -50,7 +51,7 @@ static int buf_writer_flush(struct labcomm_writer *w)
 }
 
 static int buf_writer_ioctl(
-  struct labcomm_writer *w, 
+  struct labcomm_writer *w, void *context,
   int action, 
   struct labcomm_signature *signature,
   va_list arg)
@@ -145,7 +146,7 @@ int main(void)
   generated_encoding_B B = 1;
 
   struct labcomm_encoder *encoder = labcomm_encoder_new(&buffer_writer, 
-							NULL, NULL);
+							NULL);
 
   labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   labcomm_encoder_register_generated_encoding_V(encoder);

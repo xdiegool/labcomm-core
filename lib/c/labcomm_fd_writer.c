@@ -14,9 +14,9 @@ struct labcomm_fd_writer {
   int close_fd_on_free;
 };
 
-static int fd_flush(struct labcomm_writer *w);
+static int fd_flush(struct labcomm_writer *w, void *context);
 
-static int fd_alloc(struct labcomm_writer *w, char *version)
+static int fd_alloc(struct labcomm_writer *w, void *context, char *version)
 {
   w->data = malloc(BUFFER_SIZE);
   if (! w->data) {
@@ -30,16 +30,16 @@ static int fd_alloc(struct labcomm_writer *w, char *version)
     w->pos = 0;
     if (version && version[0]) {
       labcomm_write_string(w, version);
-      fd_flush(w);
+      fd_flush(w, context);
     }
   }
 
   return w->error;
 }
 
-static int fd_free(struct labcomm_writer *w)
+static int fd_free(struct labcomm_writer *w, void *context)
 {
-  struct labcomm_fd_writer *context = w->context;
+  struct labcomm_fd_writer *fd_context = context;
 
   free(w->data);
   w->data = 0;
@@ -47,13 +47,13 @@ static int fd_free(struct labcomm_writer *w)
   w->count = 0;
   w->pos = 0;
 
-  if (context->close_fd_on_free) {
-    close(context->fd);
+  if (fd_context->close_fd_on_free) {
+    close(fd_context->fd);
   }
   return 0;
 }
 
-static int fd_start(struct labcomm_writer *w,
+static int fd_start(struct labcomm_writer *w, void *context,
 		    struct labcomm_encoder *encoder,
 		    int index,
 		    struct labcomm_signature *signature,
@@ -64,12 +64,20 @@ static int fd_start(struct labcomm_writer *w,
   return w->error;
 }
 
-static int fd_flush(struct labcomm_writer *w)
+static int fd_flush(struct labcomm_writer *w, void *context)
 {
-  struct labcomm_fd_writer *context = w->context;
-  int err;
-
-  err = write(context->fd, w->data, w->pos);
+  struct labcomm_fd_writer *fd_context = context;
+  int start, err;
+  
+  start = 0;
+  err = 0;
+  while (start < w->pos) {
+    err = write(fd_context->fd, &w->data[start], w->pos - start);
+    if (err <= 0) {
+      break;
+    }
+    start = start + err;
+  }
   if (err < 0) {
     w->error = -errno;
   } else if (err == 0) {

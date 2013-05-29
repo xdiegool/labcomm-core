@@ -13,7 +13,7 @@ struct labcomm_fd_reader {
   int close_fd_on_free;
 };
 
-static int fd_alloc(struct labcomm_reader *r, char *version)
+static int fd_alloc(struct labcomm_reader *r, void *context, char *version)
 {
   int result = 0;
   
@@ -42,9 +42,9 @@ static int fd_alloc(struct labcomm_reader *r, char *version)
   return result;
 }
 
-static int fd_free(struct labcomm_reader *r)
+static int fd_free(struct labcomm_reader *r, void *context)
 {
-  struct labcomm_fd_reader *context = r->context;
+  struct labcomm_fd_reader *fd_context = context;
 
   free(r->data);
   r->data = 0;
@@ -52,18 +52,18 @@ static int fd_free(struct labcomm_reader *r)
   r->count = 0;
   r->pos = 0;
 
-  if (context->close_fd_on_free) {
-    close(context->fd);
+  if (fd_context->close_fd_on_free) {
+    close(fd_context->fd);
   }
-  free(context);
+  free(fd_context);
 
   return 0;
 }
 
-static int fd_fill(struct labcomm_reader *r)
+static int fd_fill(struct labcomm_reader *r, void *context)
 {
   int result = 0;
-  struct labcomm_fd_reader *context = r->context;
+  struct labcomm_fd_reader *fd_context = context;
 
   if (r->pos < r->count) {
     result = r->count - r->pos;
@@ -71,7 +71,7 @@ static int fd_fill(struct labcomm_reader *r)
     int err;
     
     r->pos = 0;
-    err = read(context->fd, r->data, r->data_size);
+    err = read(fd_context->fd, r->data, r->data_size);
     if (err <= 0) {
       r->count = 0;
       result = -EPIPE;
@@ -83,12 +83,18 @@ static int fd_fill(struct labcomm_reader *r)
   return result;
 }
 
-static int fd_start(struct labcomm_reader *r)
+static int fd_start(struct labcomm_reader *r, void *context)
 {
-  return fd_fill(r);
+  int available;
+
+  available = r->count - r->pos;
+  if (available == 0) {
+    available = fd_fill(r, context);
+  }
+  return available;
 }
 
-static int fd_end(struct labcomm_reader *r)
+static int fd_end(struct labcomm_reader *r, void *context)
 {
   return 0;
 }

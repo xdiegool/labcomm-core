@@ -6,7 +6,8 @@
 #include "labcomm_ioctl.h"
 #include "labcomm_dynamic_buffer_writer.h"
 
-static int dyn_alloc(struct labcomm_writer *w, char *labcomm_version)
+static int dyn_alloc(struct labcomm_writer *w, void *context,
+		     char *labcomm_version)
 {
   w->data_size = 1000;
   w->count = w->data_size;
@@ -19,7 +20,7 @@ static int dyn_alloc(struct labcomm_writer *w, char *labcomm_version)
   return w->error;
 }
 
-static int dyn_free(struct labcomm_writer *w)
+static int dyn_free(struct labcomm_writer *w, void *context)
 {
   free(w->data);
   w->data = 0;
@@ -30,7 +31,7 @@ static int dyn_free(struct labcomm_writer *w)
   return 0;
 }
 
-static int dyn_start(struct labcomm_writer *w,
+static int dyn_start(struct labcomm_writer *w, void *context,
 		     struct labcomm_encoder *encoder,
 		     int index,
 		     struct labcomm_signature *signature,
@@ -52,12 +53,12 @@ static int dyn_start(struct labcomm_writer *w,
   return w->error;
 }
 
-static int dyn_end(struct labcomm_writer *w)
+static int dyn_end(struct labcomm_writer *w, void *context)
 {
   return 0;
 }
 
-static int dyn_flush(struct labcomm_writer *w)
+static int dyn_flush(struct labcomm_writer *w, void *context)
 {
   void *tmp;
 
@@ -74,7 +75,7 @@ static int dyn_flush(struct labcomm_writer *w)
   return w->error; 
 }
 
-static int dyn_ioctl(struct labcomm_writer *w, 
+static int dyn_ioctl(struct labcomm_writer *w, void *context, 
 		     int action, 
 		     struct labcomm_signature *signature,
 		     va_list arg)

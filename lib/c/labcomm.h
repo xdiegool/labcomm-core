@@ -61,15 +61,6 @@ void labcomm_decoder_register_new_datatype_handler(struct labcomm_decoder *d,
  */
 struct labcomm_lock;
 
-struct labcomm_lock_action {
-  int (*alloc)(void *context);
-  int (*free)(void *context);
-  int (*read_lock)(void *context);
-  int (*read_unlock)(void *context);
-  int (*write_lock)(void *context);
-  int (*write_unlock)(void *context);
-};
-
 /*
  * Decoder
  */
@@ -77,8 +68,7 @@ struct labcomm_reader;
 
 struct labcomm_decoder *labcomm_decoder_new(
   struct labcomm_reader *reader,
-  const struct labcomm_lock_action *lock,
-  void *lock_context);
+  struct labcomm_lock *lock);
 int labcomm_decoder_decode_one(
   struct labcomm_decoder *decoder);
 void labcomm_decoder_run(
@@ -98,8 +88,7 @@ struct labcomm_writer;
 
 struct labcomm_encoder *labcomm_encoder_new(
   struct labcomm_writer *writer,
-  const struct labcomm_lock_action *lock,
-  void *lock_context);
+  struct labcomm_lock *lock);
 void labcomm_encoder_free(
   struct labcomm_encoder *encoder);
 

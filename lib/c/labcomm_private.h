@@ -47,7 +47,17 @@
 /*
  * Semi private lock declarations
  */
+struct labcomm_lock_action {
+  int (*alloc)(void *context);
+  int (*free)(void *context);
+  int (*read_lock)(void *context);
+  int (*read_unlock)(void *context);
+  int (*write_lock)(void *context);
+  int (*write_unlock)(void *context);
+};
+
 struct labcomm_lock {
+  const struct labcomm_lock_action action;
 };
 
 /*
@@ -61,12 +71,13 @@ typedef void (*labcomm_decoder_function)(
   void *context);
 
 struct labcomm_reader_action {
-  int (*alloc)(struct labcomm_reader *r, char *labcomm_version);
-  int (*free)(struct labcomm_reader *r);
-  int (*start)(struct labcomm_reader *r);
-  int (*end)(struct labcomm_reader *r);
-  int (*fill)(struct labcomm_reader *r); 
-  int (*ioctl)(struct labcomm_reader *r, int, struct labcomm_signature *, va_list);
+  int (*alloc)(struct labcomm_reader *r, void *context, char *labcomm_version);
+  int (*free)(struct labcomm_reader *r, void *context);
+  int (*start)(struct labcomm_reader *r, void *context);
+  int (*end)(struct labcomm_reader *r, void *context);
+  int (*fill)(struct labcomm_reader *r, void *context); 
+  int (*ioctl)(struct labcomm_reader *r, void *context,
+	       int action, struct labcomm_signature *signature, va_list args);
 };
 
 struct labcomm_reader {
@@ -104,7 +115,7 @@ int labcomm_internal_decoder_ioctl(struct labcomm_decoder *decoder,
     type result; int i;							\
     for (i = sizeof(type) - 1 ; i >= 0 ; i--) {				\
       if (r->pos >= r->count) {						\
-	r->action->fill(r);						\
+	r->action->fill(r, r->context);					\
       }									\
       ((unsigned char*)(&result))[i] = r->data[r->pos];			\
       r->pos++;								\
@@ -119,7 +130,7 @@ int labcomm_internal_decoder_ioctl(struct labcomm_decoder *decoder,
     type result; int i;							\
     for (i = 0 ; i < sizeof(type) ; i++) {				\
       if (r->pos >= r->count) {						\
-	r->action->fill(r);						\
+	r->action->fill(r, r->context);					\
       }									\
       ((unsigned char*)(&result))[i] = r->data[r->pos];			\
       r->pos++;								\
@@ -145,7 +156,7 @@ static inline unsigned int labcomm_read_packed32(struct labcomm_reader *r)
     unsigned char tmp;
 
     if (r->pos >= r->count) {	
-      r->action->fill(r);
+      r->action->fill(r, r->context);
     }
     tmp = r->data[r->pos];
     r->pos++;
@@ -166,7 +177,7 @@ static inline char *labcomm_read_string(struct labcomm_reader *r)
   result = malloc(length + 1);
   for (i = 0 ; i < length ; i++) {
     if (r->pos >= r->count) {	
-      r->action->fill(r);
+      r->action->fill(r, r->context);
     }
     result[i] = r->data[r->pos];
     r->pos++;
@@ -185,15 +196,15 @@ typedef int (*labcomm_encoder_function)(
 struct labcomm_writer;
 
 struct labcomm_writer_action {
-  int (*alloc)(struct labcomm_writer *w, char *labcomm_version);
-  int (*free)(struct labcomm_writer *w);
-  int (*start)(struct labcomm_writer *w,
+  int (*alloc)(struct labcomm_writer *w, void *context, char *labcomm_version);
+  int (*free)(struct labcomm_writer *w, void *context);
+  int (*start)(struct labcomm_writer *w, void *context,
 	       struct labcomm_encoder *encoder,
 	       int index, struct labcomm_signature *signature,
 	       void *value);
-  int (*end)(struct labcomm_writer *w);
-  int (*flush)(struct labcomm_writer *w); 
-  int (*ioctl)(struct labcomm_writer *w, 
+  int (*end)(struct labcomm_writer *w, void *context);
+  int (*flush)(struct labcomm_writer *w, void *context); 
+  int (*ioctl)(struct labcomm_writer *w, void *context, 
 	       int index, struct labcomm_signature *, 
 	       va_list);
 };
@@ -233,7 +244,7 @@ int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder,
     for (i = sizeof(type) - 1 ; i >= 0 ; i--) {				\
       if (w->pos >= w->count) { /*buffer is full*/			\
         int err;							\
-	err = w->action->flush(w);					\
+	err = w->action->flush(w, w->context);				\
 	if (err != 0) { return err; }					\
       }									\
       w->data[w->pos] = ((unsigned char*)(&data))[i];			\
@@ -250,7 +261,7 @@ int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder,
     for (i = 0 ; i < sizeof(type) ; i++) {				\
       if (w->pos >= w->count) {						\
         int err;							\
-	err = w->action->flush(w);					\
+	err = w->action->flush(w, w->context);					\
 	if (err != 0) { return err; }					\
       }									\
       w->data[w->pos] = ((unsigned char*)(&data))[i];			\
@@ -281,7 +292,7 @@ static inline int labcomm_write_packed32(struct labcomm_writer *w,
   for (i = i - 1 ; i >= 0 ; i--) {
     if (w->pos >= w->count) {					
       int err;
-      err = w->action->flush(w);
+      err = w->action->flush(w, w->context);
       if (err != 0) { return err; }
     }
     w->data[w->pos++] = tmp[i] | (i?0x80:0x00);
@@ -299,7 +310,7 @@ static inline int labcomm_write_string(struct labcomm_writer *w, char *s)
   for (i = 0 ; i < length ; i++) {
     if (w->pos >= w->count) {	
       int err;
-      err = w->action->flush(w);
+      err = w->action->flush(w, w->context);
       if (err != 0) { return err; }
     }
     w->data[w->pos] = s[i];
