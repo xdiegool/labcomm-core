@@ -364,7 +364,7 @@ struct labcomm_encoder *labcomm_encoder_new(
     result->lock = lock;
     result->on_error = on_error_fprintf;
     result->writer->action->alloc(result->writer,result->writer->context,
-				  LABCOMM_VERSION);
+				  result, LABCOMM_VERSION);
   }
   return result;
 }
@@ -572,7 +572,7 @@ struct labcomm_decoder *labcomm_decoder_new(
     result->on_error = on_error_fprintf;
     result->on_new_datatype = on_new_datatype;
     result->reader->action->alloc(result->reader, result->reader->context,
-				  LABCOMM_VERSION);
+				  result, LABCOMM_VERSION);
   }
   return result;
 }
@@ -625,7 +625,7 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
       struct labcomm_sample_entry *entry = NULL;
       int index, err;
       
-      writer.action->alloc(&writer, writer.context, "");
+      writer.action->alloc(&writer, writer.context, NULL, "");
       writer.action->start(&writer, writer.context, NULL, 0, NULL, NULL);
       index = labcomm_read_packed32(d->reader); //int
       signature.name = labcomm_read_string(d->reader);

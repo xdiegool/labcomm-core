@@ -16,7 +16,9 @@ struct labcomm_fd_writer {
 
 static int fd_flush(struct labcomm_writer *w, void *context);
 
-static int fd_alloc(struct labcomm_writer *w, void *context, char *version)
+static int fd_alloc(struct labcomm_writer *w, void *context, 
+		    struct labcomm_encoder *encoder,
+		    char *version)
 {
   w->data = malloc(BUFFER_SIZE);
   if (! w->data) {

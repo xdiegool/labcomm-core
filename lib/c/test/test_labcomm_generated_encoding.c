@@ -12,6 +12,7 @@ static unsigned char buffer[128];
 struct labcomm_writer *writer;
 
 static int buf_writer_alloc(struct labcomm_writer *w, void *context,
+			    struct labcomm_encoder *encoder,
 			    char *labcomm_version)
 {
   writer = w; /* Hack */

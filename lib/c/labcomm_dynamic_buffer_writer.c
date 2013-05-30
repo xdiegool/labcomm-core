@@ -7,6 +7,7 @@
 #include "labcomm_dynamic_buffer_writer.h"
 
 static int dyn_alloc(struct labcomm_writer *w, void *context,
+		     struct labcomm_encoder *encoder,
 		     char *labcomm_version)
 {
   w->data_size = 1000;

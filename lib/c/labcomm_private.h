@@ -71,7 +71,8 @@ typedef void (*labcomm_decoder_function)(
   void *context);
 
 struct labcomm_reader_action {
-  int (*alloc)(struct labcomm_reader *r, void *context, char *labcomm_version);
+  int (*alloc)(struct labcomm_reader *r, void *context, 
+	       struct labcomm_decoder *decoder, char *labcomm_version);
   int (*free)(struct labcomm_reader *r, void *context);
   int (*start)(struct labcomm_reader *r, void *context);
   int (*end)(struct labcomm_reader *r, void *context);
@@ -196,7 +197,8 @@ typedef int (*labcomm_encoder_function)(
 struct labcomm_writer;
 
 struct labcomm_writer_action {
-  int (*alloc)(struct labcomm_writer *w, void *context, char *labcomm_version);
+  int (*alloc)(struct labcomm_writer *w, void *context, 
+	       struct labcomm_encoder *encoder, char *labcomm_version);
   int (*free)(struct labcomm_writer *w, void *context);
   int (*start)(struct labcomm_writer *w, void *context,
 	       struct labcomm_encoder *encoder,

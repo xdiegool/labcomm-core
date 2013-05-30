@@ -13,7 +13,9 @@ struct labcomm_fd_reader {
   int close_fd_on_free;
 };
 
-static int fd_alloc(struct labcomm_reader *r, void *context, char *version)
+static int fd_alloc(struct labcomm_reader *r, void *context, 
+		    struct labcomm_decoder *decoder,
+		    char *version)
 {
   int result = 0;
   
