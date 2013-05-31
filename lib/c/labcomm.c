@@ -568,6 +568,7 @@ struct labcomm_decoder *labcomm_decoder_new(
     result->reader->data_size = 0;
     result->reader->count = 0;
     result->reader->pos = 0;
+    result->reader->error = 0;
     result->lock = lock;
     result->on_error = on_error_fprintf;
     result->on_new_datatype = on_new_datatype;

@@ -6,5 +6,5 @@ test:
 	echo More to be done...
 	cd simple ; sh compile.sh && sh run.sh
 
-clean:
+clean distclean:
 	echo To be done...

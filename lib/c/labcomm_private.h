@@ -158,6 +158,9 @@ static inline unsigned int labcomm_read_packed32(struct labcomm_reader *r)
 
     if (r->pos >= r->count) {	
       r->action->fill(r, r->context);
+      if (r->error != 0) {
+	goto out;
+      }
     }
     tmp = r->data[r->pos];
     r->pos++;
@@ -166,6 +169,7 @@ static inline unsigned int labcomm_read_packed32(struct labcomm_reader *r)
       break; 
     }
   }
+out:
   return result;
 }
  

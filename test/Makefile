@@ -10,8 +10,8 @@ test: $(TESTS:%=test_%)
 #	PYTHONPATH=../lib/python \
 #		./test_encoder_decoder.py --labcomm="$(LABCOMM)" basic.lc
 
-.PHONY: clean
-clean:
+.PHONY: clean distclean
+clean distclean:
 	rm -rf gen
 
 .PHONY: test_%

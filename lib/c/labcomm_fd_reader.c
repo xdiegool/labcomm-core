@@ -76,6 +76,7 @@ static int fd_fill(struct labcomm_reader *r, void *context)
     err = read(fd_context->fd, r->data, r->data_size);
     if (err <= 0) {
       r->count = 0;
+      r->error = -EPIPE;
       result = -EPIPE;
     } else {
       r->count = err;

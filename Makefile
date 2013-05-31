@@ -32,3 +32,14 @@ clean-compiler:
 .PHONY: clean-%
 clean-%:
 	$(MAKE) -C $* -e clean
+
+.PHONY: distclean
+distclean: $(SUBDIRS:%=distclean-%)
+
+.PHONY: distclean-compiler
+distclean-compiler:
+	cd compiler ; ant clean
+
+.PHONY: distclean-%
+distclean-%:
+	$(MAKE) -C $* -e distclean
