@@ -1,2 +1,5 @@
-/*INPUT(liblabcomm.so.1 -ltinfo)*/
-INPUT(liblabcomm.a)
+INPUT(liblabcomm.so.1 -ltinfo)
+/* Hack to get a link error with (hopefully) useful information if not linked
+   with -Tlabcomm.linkscript */
+"You need to link with '-Tlabcomm.linkscript'"+=1;
+/*INPUT(liblabcomm.a)*/

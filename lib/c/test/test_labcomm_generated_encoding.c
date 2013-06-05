@@ -150,9 +150,11 @@ int main(void)
 
   labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   labcomm_encoder_register_generated_encoding_V(encoder);
+  labcomm_encoder_register_generated_encoding_V(encoder);
   EXPECT({ 0x02, -1, 0x01, 'V', 0x11, 0x00 });
 
   labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
+  labcomm_encoder_register_generated_encoding_B(encoder);
   labcomm_encoder_register_generated_encoding_B(encoder);
   EXPECT({0x02, -1, 0x01, 'B', 0x21});
 

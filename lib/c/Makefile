@@ -1,10 +1,11 @@
 ## Macros
 
 CC=gcc
-CFLAGS=-g -Wall -Werror -O3  -I. -Itest -DLABCOMM_ENCODER_LINEAR_SEARCH
+#CFLAGS=-g -Wall -Werror -O3  -I. -Itest -DLABCOMM_ENCODER_LINEAR_SEARCH
+CFLAGS=-g -Wall -Werror -O3  -I. -Itest 
 LDFLAGS=-L.
 #LDLIBS_TEST=-Tlabcomm.linkscript  -lcunit -llabcomm
-LDLIBS_TEST=-lcunit -llabcomm
+LDLIBS_TEST=-lcunit -llabcomm -Tlabcomm.linkscript
 
 OBJS= labcomm.o \
       labcomm_dynamic_buffer_writer.o labcomm_fd_reader.o labcomm_fd_writer.o \

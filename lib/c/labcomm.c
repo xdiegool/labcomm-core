@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdarg.h>
+#include <stddef.h>
 
 #include "labcomm.h"
 #include "labcomm_private.h"
@@ -49,6 +50,7 @@ struct labcomm_encoder {
   struct labcomm_writer *writer;
   struct labcomm_lock *lock;
   labcomm_error_handler_callback on_error;
+  LABCOMM_SIGNATURE_ARRAY_DEF(registered, int);
 };
 
 struct labcomm_sample_entry {
@@ -204,14 +206,13 @@ static int get_encoder_index_by_search(
 
 #else
 
-static int get_encoder_index_by_section(
-  struct labcomm_encoder *e,
+static int get_local_index(
   struct labcomm_signature *s)
 {
   int result = -ENOENT;
-  if (&labcomm_first_signature <= s && s <= &labcomm_last_signature) {
-    //fprintf(stderr, "%d\n", (int)(s - &labcomm_start));
-    result = s - &labcomm_first_signature + LABCOMM_USER;
+
+  if (&labcomm_first_signature <= s && s < &labcomm_last_signature) {
+    result = (int)(s - &labcomm_first_signature) + LABCOMM_USER;
   }
   return result;
 }
@@ -224,7 +225,7 @@ static int get_encoder_index(
 #ifdef LABCOMM_ENCODER_LINEAR_SEARCH
   return get_encoder_index_by_search(e, s);
 #else
-  return get_encoder_index_by_section(e, s);
+  return get_local_index(s);
 #endif
 }
 
@@ -275,51 +276,6 @@ static int encoder_add_signature_by_search(struct labcomm_encoder *e,
 }
 #endif
 
-#ifndef LABCOMM_ENCODER_LINEAR_SEARCH
-static int encoder_add_signature_by_section(struct labcomm_encoder *e,
-					    struct labcomm_signature *s,
-					    labcomm_encoder_function encode)
-{
-  int result = -ENOENT;
-  
-  if (&labcomm_first_signature <= s && s <= &labcomm_last_signature) {
-    /* Signature is in right linker section */
-    struct labcomm_encoder_context *context = e->context;
-    int index = s - &labcomm_first_signature;
-
-    if (context->by_section == NULL) {
-      int n = &labcomm_last_signature - &labcomm_first_signature;
-      context->by_section = malloc(n * sizeof(context->by_section[0]));
-    }
-    if (context->by_section == NULL) {
-      result = -ENOMEM;
-      goto out;
-    }
-    context->by_section[index].next = NULL;
-    context->by_section[index].index = index + LABCOMM_USER;
-    context->by_section[index].signature = s;
-    context->by_section[index].encode = encode;
-    result = context->by_section[index].index;
-  }
-out:
-  return result;
-}
-#endif
-
-static int encoder_add_signature(struct labcomm_encoder *e,
-				  struct labcomm_signature *signature,
-				  labcomm_encoder_function encode)
-{
-  int index = -ENOENT;
-
-#ifdef LABCOMM_ENCODER_LINEAR_SEARCH
-  index = encoder_add_signature_by_search(e, signature, encode);
-#else
-  index = encoder_add_signature_by_section(e, signature, encode);
-#endif
-  return index;
-}
-
 /*
 static struct labcomm_sample_entry *encoder_get_sample_by_signature_address(
   struct labcomm_encoder *encoder,
@@ -363,6 +319,7 @@ struct labcomm_encoder *labcomm_encoder_new(
     result->writer->error = 0;
     result->lock = lock;
     result->on_error = on_error_fprintf;
+    LABCOMM_SIGNATURE_ARRAY_INIT(result->registered, int);
     result->writer->action->alloc(result->writer,result->writer->context,
 				  result, LABCOMM_VERSION);
   }
@@ -375,13 +332,14 @@ void labcomm_internal_encoder_register(
   labcomm_encoder_function encode)
 {
   if (signature->type == LABCOMM_SAMPLE) {
-    if (get_encoder_index(e, signature) == 0) {
-      int index = encoder_add_signature(e, signature, encode);
-      
-      if (index > 0) {
+    int index = get_local_index(signature);
+    if (index > 0) {
+      int *registered = LABCOMM_SIGNATURE_ARRAY_REF(e->registered, int, index);
+      if (! *registered) {
 	struct labcomm_ioctl_register_signature ioctl_data;
 	int err;
-	
+
+	*registered = 1;	
 	ioctl_data.index = index;
 	ioctl_data.signature = signature;	
 	err = labcomm_encoder_ioctl(e, LABCOMM_IOCTL_REGISTER_SIGNATURE,

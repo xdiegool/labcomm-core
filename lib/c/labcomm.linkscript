@@ -1,3 +1,7 @@
+/* Hack to get a link error with (hopefully) useful information if not linked
+   with -Tlabcomm.linkscript */
+"You need to link with '-Tlabcomm.linkscript'"=0;
+
 SECTIONS { 
   labcomm : {
     labcomm_first_signature = ABSOLUTE(.) ;
