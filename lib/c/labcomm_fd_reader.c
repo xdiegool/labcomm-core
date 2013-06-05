@@ -102,13 +102,22 @@ static int fd_end(struct labcomm_reader *r, void *context)
   return 0;
 }
 
+static int fd_ioctl(struct labcomm_reader *r, void *context,
+		    int signature_index, 
+		    struct labcomm_signature *signature, 
+		    int action, va_list args)
+{
+  return -ENOTSUP;
+}
+
+
 static const struct labcomm_reader_action action = {
   .alloc = fd_alloc,
   .free = fd_free,
   .start = fd_start,
   .fill = fd_fill,
   .end = fd_end,
-  .ioctl = NULL
+  .ioctl = fd_ioctl
 };
 
 struct labcomm_reader *labcomm_fd_reader_new(int fd, int close_fd_on_free)

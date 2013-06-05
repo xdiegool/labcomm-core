@@ -673,8 +673,8 @@ aspect C_DecoderIoctl {
     env.println("va_start(va, ioctl_action);");
     env.println("result = labcomm_internal_decoder_ioctl(");
     env.indent();
-    env.println("d, ioctl_action,");
-    env.println("&labcomm_signature_" + env.prefix + getName() + ", va);");
+    env.println("d, &labcomm_signature_" + env.prefix + getName() + ", ");
+    env.println("ioctl_action, va);");
     env.unindent();
     env.println("va_end(va);");
     env.println("return result;");
@@ -851,8 +851,8 @@ aspect C_EncoderIoctl {
     env.println("va_start(va, ioctl_action);");
     env.println("result = labcomm_internal_encoder_ioctl(");
     env.indent();
-    env.println("e, ioctl_action,");
-    env.println("&labcomm_signature_" + env.prefix + getName() + ", va);");
+    env.println("e, &labcomm_signature_" + env.prefix + getName() + ", ");
+    env.println("ioctl_action, va);");
     env.unindent();
     env.println("va_end(va);");
     env.println("return result;");

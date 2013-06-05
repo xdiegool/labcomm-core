@@ -457,7 +457,7 @@ int labcomm_encoder_ioctl(struct labcomm_encoder *encoder,
   va_start(va, action);
   result = encoder->writer->action->ioctl(encoder->writer, 
 					  encoder->writer->context,
-					  action, NULL, va);
+					  0, NULL, action, va);
   va_end(va);
 
 out:
@@ -481,23 +481,23 @@ static int labcomm_writer_ioctl(struct labcomm_writer *writer,
   }
   
   va_start(va, action);
-  result = writer->action->ioctl(writer, writer->context, action, NULL, va);
+  result = writer->action->ioctl(writer, writer->context, 
+				 0, NULL, action, va);
   va_end(va);
 out:
   return result;
 }
 
 int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder, 
-				   int action,
 				   struct labcomm_signature *signature,
-                                   va_list va)
+				   int action, va_list va)
 {
   int result = -ENOTSUP;
   
   if (encoder->writer->action->ioctl != NULL) {
     result = encoder->writer->action->ioctl(encoder->writer, 
 					    encoder->writer->context, 
-					    action, signature, va);
+					    -1, signature, action, va);
   }
   return result;
 }
@@ -572,8 +572,6 @@ struct labcomm_decoder *labcomm_decoder_new(
     result->lock = lock;
     result->on_error = on_error_fprintf;
     result->on_new_datatype = on_new_datatype;
-    result->reader->action->alloc(result->reader, result->reader->context,
-				  result, LABCOMM_VERSION);
   }
   return result;
 }
@@ -604,7 +602,14 @@ void labcomm_internal_decoder_register(
 int labcomm_decoder_decode_one(struct labcomm_decoder *d)
 {
   int result;
-
+  
+  if (d->reader->data == NULL) {
+    result = d->reader->action->alloc(d->reader, d->reader->context,
+				      d, LABCOMM_VERSION);
+    if (result <= 0) {
+      goto out;
+    }
+  }
   result = d->reader->action->start(d->reader, d->reader->context);
   if (result > 0) {
     struct labcomm_decoder_context *context = d->context;
@@ -681,6 +686,7 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
     }
   }
   d->reader->action->end(d->reader, d->reader->context);
+out:
   return result;
 }
 
@@ -719,24 +725,56 @@ int labcomm_decoder_ioctl(struct labcomm_decoder *decoder,
     va_start(va, action);
     result = decoder->reader->action->ioctl(decoder->reader, 
 					    decoder->reader->context,
-					    action, NULL, va);
+					    0, NULL, action, va);
     va_end(va);
   }
   return result;
 }
 
 int labcomm_internal_decoder_ioctl(struct labcomm_decoder *decoder, 
-				   int action,
 				   struct labcomm_signature *signature,
-                                   va_list va)
+				   int action, va_list va)
 {
   int result = -ENOTSUP;
   
   if (decoder->reader->action->ioctl != NULL) {
     result = decoder->reader->action->ioctl(decoder->reader, 
 					    decoder->reader->context,
-					    action, NULL, va);
+					    -1, signature, action, va);
   }
   return result;
 }
 
+void *labcomm_signature_array_ref(int *first, int *last, void **data,
+				  int size, int index)
+{
+  if (*first == 0 && *last == 0) {
+    *first = index;
+    *last = index + 1;
+    *data = malloc(size);
+    if (*data) { 
+      memset(*data, 0, size); 
+    }
+  } else if (index < *first || *last <= index) {
+    void *old_data = *data;
+    int old_first = *first;
+    int old_last = *last;
+    int n;
+    *first = (index<old_first)?index:old_first;
+    *last = (old_last<=index)?index+1:old_last;
+    n = (*last - *first);
+    *data = malloc(n * size);
+    if (*data) {
+      memset(*data, 0, n * size);
+      memcpy(*data + (old_first - *first) * size, 
+	     old_data, 
+	     (old_last - old_first) * size);
+    }
+    free(old_data);
+  }
+  if (*data) {
+    return *data + (index - *first) * size;
+  } else {
+    return NULL;
+  }
+}

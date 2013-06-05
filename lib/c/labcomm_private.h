@@ -78,7 +78,8 @@ struct labcomm_reader_action {
   int (*end)(struct labcomm_reader *r, void *context);
   int (*fill)(struct labcomm_reader *r, void *context); 
   int (*ioctl)(struct labcomm_reader *r, void *context,
-	       int action, struct labcomm_signature *signature, va_list args);
+	       int signature_index, struct labcomm_signature *signature, 
+	       int ioctl_action, va_list args);
 };
 
 struct labcomm_reader {
@@ -105,9 +106,8 @@ void labcomm_internal_decoder_register(
   void *context);
 
 int labcomm_internal_decoder_ioctl(struct labcomm_decoder *decoder, 
-				   int ioctl_action,
 				   struct labcomm_signature *signature,
-				   va_list args);
+				   int ioctl_action, va_list args);
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 
@@ -211,8 +211,8 @@ struct labcomm_writer_action {
   int (*end)(struct labcomm_writer *w, void *context);
   int (*flush)(struct labcomm_writer *w, void *context); 
   int (*ioctl)(struct labcomm_writer *w, void *context, 
-	       int index, struct labcomm_signature *, 
-	       va_list);
+	       int signature_index, struct labcomm_signature *signature, 
+	       int ioctl_action, va_list args);
 };
 
 struct labcomm_writer {
@@ -238,9 +238,8 @@ int labcomm_internal_encode(
 
 
 int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder, 
-				   int ioctl_action,
 				   struct labcomm_signature *signature,
-				   va_list args);
+				   int ioctl_action, va_list args);
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 
@@ -324,5 +323,37 @@ static inline int labcomm_write_string(struct labcomm_writer *w, char *s)
   }
   return 0;
 }
+
+/*
+ * Macros for handling arrays indexed by signature index
+ */
+
+#define LABCOMM_SIGNATURE_ARRAY_DEF(name, kind)	\
+  struct {					\
+    int first;					\
+    int last;					\
+    kind *data;					\
+  } name
+
+#define LABCOMM_SIGNATURE_ARRAY_DEF_INIT(name, kind)		\
+  LABCOMM_SIGNATURE_ARRAY_DEF(name, kind) = { 0, 0, NULL }
+
+#define LABCOMM_SIGNATURE_ARRAY_INIT(name, kind)		\
+  name.first = 0; name.last = 0; name.data = NULL;		\
+  name.data = (kind *)name.data; /* typechecking no-op */
+
+#define LABCOMM_SIGNATURE_ARRAY_FREE(name, kind)		\
+  if (name.data) { free(name.data); }				\
+  name.data = (kind *)NULL; /* typechecking */
+
+#define LABCOMM_SIGNATURE_ARRAY_REF(name, kind, index)			\
+  (name.data = (kind *)name.data, /* typechecking no-op */		\
+   (kind *)(labcomm_signature_array_ref(&name.first, &name.last,	\
+					(void **)&name.data,		\
+					sizeof(kind), index)))
+
+void *labcomm_signature_array_ref(int *first, int *last, void **data,
+				  int size, int index);
+
 
 #endif

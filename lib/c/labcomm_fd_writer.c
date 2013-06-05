@@ -90,13 +90,20 @@ static int fd_flush(struct labcomm_writer *w, void *context)
   return w->error;
 }
 
+static int fd_ioctl(struct labcomm_writer *w, void *context, 
+		    int signature_index, struct labcomm_signature *signature, 
+		    int action, va_list args)
+{
+  return -ENOTSUP;
+}
+
 static const struct labcomm_writer_action action = {
   .alloc = fd_alloc,
   .free = fd_free,
   .start = fd_start,
   .end = fd_flush,
   .flush = fd_flush,
-  .ioctl = NULL
+  .ioctl = fd_ioctl
 };
 
 struct labcomm_writer *labcomm_fd_writer_new(int fd, int close_fd_on_free)

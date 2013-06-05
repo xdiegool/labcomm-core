@@ -53,9 +53,8 @@ static int buf_writer_flush(struct labcomm_writer *w, void *context)
 
 static int buf_writer_ioctl(
   struct labcomm_writer *w, void *context,
-  int action, 
-  struct labcomm_signature *signature,
-  va_list arg)
+  int signature_index, struct labcomm_signature *signature,
+  int action, va_list arg)
 {
   int result = -ENOTSUP;
   switch (action) {
