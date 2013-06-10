@@ -51,12 +51,9 @@ gen/%/c_relay.c: gen/%/typeinfo relay_gen_c.py Makefile
 
 .PRECIOUS: gen/%/c_relay
 gen/%/c_relay: gen/%/c_relay.c gen/%/c_code.c Makefile
-	$(CC) $(CFLAGS) -o $@ $< -I../lib/c -I. \
-		-DLABCOMM_ENCODER_LINEAR_SEARCH \
+	$(CC) $(CFLAGS) -o $@ $< -I../lib/c -I. -L..//lib/c \
 		gen/$*/c_code.c \
-		../lib/c/labcomm.c \
-		../lib/c/labcomm_fd_*.c \
-		../lib/c/labcomm_dynamic_buffer_writer.c 
+		-llabcomm -Tlabcomm.linkscript
 
 # C# relay test rules
 .PRECIOUS: gen/%/cs_code.cs

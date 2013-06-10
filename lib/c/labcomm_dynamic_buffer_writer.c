@@ -79,7 +79,7 @@ static int dyn_flush(struct labcomm_writer *w, void *context)
 static int dyn_ioctl(struct labcomm_writer *w, void *context, 
 		     int signature_index,
 		     struct labcomm_signature *signature,
-		     int action, va_list arg)
+		     uint32_t action, va_list arg)
 {
   int result = -ENOTSUP;
   switch (action) {

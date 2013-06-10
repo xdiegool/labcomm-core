@@ -6,6 +6,10 @@ CFLAGS=-O3 -g -Wall -Werror -I../../lib/c -I. -lpthread
 
 all: $(TARGETS:%=gen/%)
 
+test: all
+	LD_LIBRARY_PATH=../../lib/c ./gen/server 2000 &
+	LD_LIBRARY_PATH=../../lib/c ./gen/client localhost 2000 
+
 gen/.dir:
 	mkdir -p $@
 
@@ -20,11 +24,13 @@ gen/%.o: %.c | gen/.dir
 gen/%.c gen/%.h: %.lc | gen/.dir
 	$(LABCOMM) --c=gen/$*.c --h=gen/$*.h $<
 
-gen/client: client.c gen/types.o gen/decimating.o gen/decimating_messages.o
-	$(CC) -o $@ $(CFLAGS) $^ -lpthread -L../../lib/c -llabcomm
+gen/client: client.c 
+	$(CC) -o $@ $(CFLAGS) $^ -lpthread \
+		-L../../lib/c -llabcomm -Tlabcomm.linkscript
 
-gen/server: server.c gen/types.o gen/decimating.o gen/decimating_messages.o
-	$(CC) -o $@ $(CFLAGS) $^ -lpthread -L../../lib/c -llabcomm
+gen/server: server.c gen/types.o gen/decimating.o
+	$(CC) -o $@ $(CFLAGS) $^ -lpthread \
+		-L../../lib/c -llabcomm -Tlabcomm.linkscript
 
 .PHONY: clean
 clean:
@@ -34,4 +40,7 @@ gen/decimating.o: decimating.h
 gen/decimating.o: gen/decimating_messages.h
 gen/client.o: decimating.h
 gen/client.o: gen/types.h
+gen/client: gen/decimating.o 
 gen/client: gen/decimating_messages.o
+gen/client: gen/types.o
+gen/server: gen/decimating_messages.o

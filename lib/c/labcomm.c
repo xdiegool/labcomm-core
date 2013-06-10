@@ -43,6 +43,8 @@ struct labcomm_decoder {
   struct labcomm_lock *lock;
   labcomm_error_handler_callback on_error;
   labcomm_handle_new_datatype_callback on_new_datatype;
+  LABCOMM_SIGNATURE_ARRAY_DEF(local_to_remote, int);
+  LABCOMM_SIGNATURE_ARRAY_DEF(remote_to_local, int);
 };
 
 struct labcomm_encoder {
@@ -117,7 +119,7 @@ void labcomm_decoder_register_new_datatype_handler(struct labcomm_decoder *d, la
 
 int on_new_datatype(struct labcomm_decoder *d, struct labcomm_signature *sig)
 {
-	  d->on_error(LABCOMM_ERROR_DEC_UNKNOWN_DATATYPE, 4, "%s(): unknown datatype '%s'\n", __FUNCTION__, sig->name);
+  d->on_error(LABCOMM_ERROR_DEC_UNKNOWN_DATATYPE, 4, "%s(): unknown datatype '%s'\n", __FUNCTION__, sig->name);
 	  return 0;
 }
 
@@ -381,6 +383,8 @@ void labcomm_encoder_free(struct labcomm_encoder* e)
 
   context = (struct labcomm_encoder_context *) e->context;
   e->writer->action->free(e->writer, e->writer->context);
+  LABCOMM_SIGNATURE_ARRAY_FREE(e->registered, int);
+
 #ifdef LABCOMM_ENCODER_LINEAR_SEARCH
   struct labcomm_sample_entry *entry = context->sample;
   struct labcomm_sample_entry *entry_next;
@@ -397,8 +401,8 @@ void labcomm_encoder_free(struct labcomm_encoder* e)
 }
 
 int labcomm_encoder_ioctl(struct labcomm_encoder *encoder, 
-                           int action,
-                           ...)
+			  uint32_t action,
+			  ...)
 {
   int result;
   va_list va;
@@ -423,7 +427,7 @@ out:
 }
 
 static int labcomm_writer_ioctl(struct labcomm_writer *writer,
-				int action,
+				uint32_t action,
 				...)
 {
   int result;
@@ -448,7 +452,7 @@ out:
 
 int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder, 
 				   struct labcomm_signature *signature,
-				   int action, va_list va)
+				   uint32_t action, va_list va)
 {
   int result = -ENOTSUP;
   
@@ -530,6 +534,8 @@ struct labcomm_decoder *labcomm_decoder_new(
     result->lock = lock;
     result->on_error = on_error_fprintf;
     result->on_new_datatype = on_new_datatype;
+    LABCOMM_SIGNATURE_ARRAY_INIT(result->local_to_remote, int);
+    LABCOMM_SIGNATURE_ARRAY_INIT(result->remote_to_local, int);
   }
   return result;
 }
@@ -619,8 +625,17 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
 		    "%s(): index mismatch '%s' (id=0x%x != 0x%x)\n", 
 		    __FUNCTION__, signature.name, entry->index, index);
       } else {
+	int local_index;
+	int *local_to_remote, *remote_to_local;
 	// TODO unnessesary, since entry->index == index in above if statement
 	entry->index = index;
+	local_index = get_local_index(entry->signature);
+	local_to_remote = LABCOMM_SIGNATURE_ARRAY_REF(d->local_to_remote, int,
+						      local_index);
+	remote_to_local = LABCOMM_SIGNATURE_ARRAY_REF(d->remote_to_local, int,
+						      index);
+	*local_to_remote = index;
+	*remote_to_local = local_index;
       }
     free_signature_name:
       free(signature.name);
@@ -636,7 +651,8 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
       if (!entry) {
 	// printf("Error: %s: type not found (id=0x%x)\n",
 	//__FUNCTION__, result);
-	d->on_error(LABCOMM_ERROR_DEC_TYPE_NOT_FOUND, 3, "%s(): type not found (id=0x%x)\n", __FUNCTION__, result);
+	d->on_error(LABCOMM_ERROR_DEC_TYPE_NOT_FOUND, 3, 
+		    "%s(): type not found (id=0x%x)\n", __FUNCTION__, result);
 	result = -ENOENT;
       } else {
 	entry->decoder(d->reader, entry->handler, entry->context);
@@ -661,6 +677,8 @@ void labcomm_decoder_free(struct labcomm_decoder* d)
   struct labcomm_sample_entry *entry_next;
 
   d->reader->action->free(d->reader, d->reader->context);
+  LABCOMM_SIGNATURE_ARRAY_FREE(d->local_to_remote, int);
+  LABCOMM_SIGNATURE_ARRAY_FREE(d->remote_to_local, int);
   while (entry != NULL) {
     entry_next = entry->next;
     free(entry);
@@ -672,36 +690,56 @@ void labcomm_decoder_free(struct labcomm_decoder* d)
 }
 
 int labcomm_decoder_ioctl(struct labcomm_decoder *decoder, 
-			  int action,
+			  uint32_t action,
 			  ...)
 {
-  int result = -ENOTSUP;
-  
-  if (decoder->reader->action->ioctl != NULL) {
-    va_list va;
+  int result;  
+  va_list va;
     
-    va_start(va, action);
-    result = decoder->reader->action->ioctl(decoder->reader, 
-					    decoder->reader->context,
-					    0, NULL, action, va);
-    va_end(va);
-  }
+  va_start(va, action);
+  result = decoder->reader->action->ioctl(decoder->reader, 
+					  decoder->reader->context,
+					  0, NULL, action, va);
+  va_end(va);
   return result;
 }
 
 int labcomm_internal_decoder_ioctl(struct labcomm_decoder *decoder, 
 				   struct labcomm_signature *signature,
-				   int action, va_list va)
+				   uint32_t action, va_list va)
 {
-  int result = -ENOTSUP;
-  
-  if (decoder->reader->action->ioctl != NULL) {
+  int result;
+  int local_index, *remote_index;
+
+  local_index = get_local_index(signature);
+  remote_index = LABCOMM_SIGNATURE_ARRAY_REF(decoder->local_to_remote, int,
+					     local_index);
+  if (*remote_index == 0) {
+    result = -EAGAIN;
+  } else {
     result = decoder->reader->action->ioctl(decoder->reader, 
 					    decoder->reader->context,
-					    -1, signature, action, va);
+					    *remote_index, signature, 
+					    action, va);
   }
   return result;
 }
+
+#if 0
+static void dump(void *p, int size, int first, int last)
+{
+  int i, j;
+
+  printf("%d %d (%p): ", first, last, p);
+  for (i = first ; i < last ; i++) {
+    for (j = 0 ; j < size ; j++) {
+      printf("%2.2d", ((char*)p)[(i-first)*size + j]);
+    }
+    printf(" ");
+  }
+  printf("\n");
+}
+#endif
 
 void *labcomm_signature_array_ref(int *first, int *last, void **data,
 				  int size, int index)
@@ -728,9 +766,11 @@ void *labcomm_signature_array_ref(int *first, int *last, void **data,
 	     old_data, 
 	     (old_last - old_first) * size);
     }
+//    dump(old_data, size, old_first, old_last);
     free(old_data);
   }
   if (*data) {
+//    dump(*data, size, *first, *last);
     return *data + (index - *first) * size;
   } else {
     return NULL;

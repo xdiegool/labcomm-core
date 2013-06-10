@@ -105,7 +105,7 @@ static int fd_end(struct labcomm_reader *r, void *context)
 static int fd_ioctl(struct labcomm_reader *r, void *context,
 		    int signature_index, 
 		    struct labcomm_signature *signature, 
-		    int action, va_list args)
+		    uint32_t action, va_list args)
 {
   return -ENOTSUP;
 }

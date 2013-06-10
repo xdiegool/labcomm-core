@@ -92,7 +92,7 @@ static int fd_flush(struct labcomm_writer *w, void *context)
 
 static int fd_ioctl(struct labcomm_writer *w, void *context, 
 		    int signature_index, struct labcomm_signature *signature, 
-		    int action, va_list args)
+		    uint32_t action, va_list args)
 {
   return -ENOTSUP;
 }

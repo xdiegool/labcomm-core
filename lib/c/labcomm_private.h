@@ -79,7 +79,7 @@ struct labcomm_reader_action {
   int (*fill)(struct labcomm_reader *r, void *context); 
   int (*ioctl)(struct labcomm_reader *r, void *context,
 	       int signature_index, struct labcomm_signature *signature, 
-	       int ioctl_action, va_list args);
+	       uint32_t ioctl_action, va_list args);
 };
 
 struct labcomm_reader {
@@ -107,7 +107,7 @@ void labcomm_internal_decoder_register(
 
 int labcomm_internal_decoder_ioctl(struct labcomm_decoder *decoder, 
 				   struct labcomm_signature *signature,
-				   int ioctl_action, va_list args);
+				   uint32_t ioctl_action, va_list args);
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 
@@ -212,7 +212,7 @@ struct labcomm_writer_action {
   int (*flush)(struct labcomm_writer *w, void *context); 
   int (*ioctl)(struct labcomm_writer *w, void *context, 
 	       int signature_index, struct labcomm_signature *signature, 
-	       int ioctl_action, va_list args);
+	       uint32_t ioctl_action, va_list args);
 };
 
 struct labcomm_writer {
@@ -239,7 +239,7 @@ int labcomm_internal_encode(
 
 int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder, 
 				   struct labcomm_signature *signature,
-				   int ioctl_action, va_list args);
+				   uint32_t ioctl_action, va_list args);
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 

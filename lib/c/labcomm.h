@@ -2,6 +2,7 @@
 #define _LABCOMM_H_
 
 #include <stdarg.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <labcomm_error.h>
 
@@ -78,7 +79,7 @@ void labcomm_decoder_free(
 
 /* See labcomm_ioctl.h for predefined ioctl_action values */
 int labcomm_decoder_ioctl(struct labcomm_decoder *decoder, 
-			  int ioctl_action,
+			  uint32_t ioctl_action,
 			  ...);
 
 /*
@@ -94,7 +95,7 @@ void labcomm_encoder_free(
 
 /* See labcomm_ioctl.h for predefined ioctl_action values */
 int labcomm_encoder_ioctl(struct labcomm_encoder *encoder, 
-			  int ioctl_action,
+			  uint32_t ioctl_action,
 			  ...);
 
 #endif

@@ -1,4 +1,4 @@
 sample struct {
   int decimation;
-  byte signature[_];
+  int signature_index;
 } set_decimation;
