@@ -1,4 +1,4 @@
-INPUT(liblabcomm.so.1 -ltinfo)
+INPUT(liblabcomm.so.1)
 /* Hack to get a link error with (hopefully) useful information if not linked
    with -Tlabcomm.linkscript */
 "You need to link with '-Tlabcomm.linkscript'"+=1;
