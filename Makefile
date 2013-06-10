@@ -10,7 +10,7 @@ make-compiler:
 
 .PHONY: make-%
 make-%:
-	$(MAKE) -C $* -e 
+	LD_LIBRARY_PATH=`pwd`/lib/c $(MAKE) -C $* -e 
 
 .PHONY: test
 test: $(SUBDIRS:%=test-%)
@@ -20,7 +20,7 @@ test-compiler:
 
 .PHONY: test-%
 test-%:
-	$(MAKE) -C $* -e test
+	LD_LIBRARY_PATH=`pwd`/lib/c $(MAKE) -C $* -e test
 
 .PHONY: clean
 clean: $(SUBDIRS:%=clean-%)
