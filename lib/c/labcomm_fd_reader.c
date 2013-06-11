@@ -1,3 +1,24 @@
+/*
+  labcomm_fd_reader.c -- LabComm reader for Unix file descriptors.
+
+  Copyright 2006-2013 Anders Blomdell <anders.blomdell@control.lth.se>
+
+  This file is part of LabComm.
+
+  LabComm is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  LabComm is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -9,11 +30,13 @@
 
 struct labcomm_fd_reader {
   struct labcomm_reader reader;
+  struct labcomm_reader_action_context action_context;
   int fd;
   int close_fd_on_free;
 };
 
-static int fd_alloc(struct labcomm_reader *r, void *context, 
+static int fd_alloc(struct labcomm_reader *r,
+		    struct labcomm_reader_action_context *action_context, 
 		    struct labcomm_decoder *decoder,
 		    char *version)
 {
@@ -44,9 +67,10 @@ static int fd_alloc(struct labcomm_reader *r, void *context,
   return result;
 }
 
-static int fd_free(struct labcomm_reader *r, void *context)
+static int fd_free(struct labcomm_reader *r, 
+		   struct labcomm_reader_action_context *action_context)
 {
-  struct labcomm_fd_reader *fd_context = context;
+  struct labcomm_fd_reader *fd_context = action_context->context;
 
   free(r->data);
   r->data = 0;
@@ -62,10 +86,11 @@ static int fd_free(struct labcomm_reader *r, void *context)
   return 0;
 }
 
-static int fd_fill(struct labcomm_reader *r, void *context)
+static int fd_fill(struct labcomm_reader *r, 
+		   struct labcomm_reader_action_context *action_context)
 {
   int result = 0;
-  struct labcomm_fd_reader *fd_context = context;
+  struct labcomm_fd_reader *fd_context = action_context->context;
 
   if (r->pos < r->count) {
     result = r->count - r->pos;
@@ -86,23 +111,26 @@ static int fd_fill(struct labcomm_reader *r, void *context)
   return result;
 }
 
-static int fd_start(struct labcomm_reader *r, void *context)
+static int fd_start(struct labcomm_reader *r,
+		    struct labcomm_reader_action_context *action_context)
 {
   int available;
 
   available = r->count - r->pos;
   if (available == 0) {
-    available = fd_fill(r, context);
+    available = fd_fill(r, action_context);
   }
   return available;
 }
 
-static int fd_end(struct labcomm_reader *r, void *context)
+static int fd_end(struct labcomm_reader *r, 
+		  struct labcomm_reader_action_context *action_context)
 {
   return 0;
 }
 
-static int fd_ioctl(struct labcomm_reader *r, void *context,
+static int fd_ioctl(struct labcomm_reader *r, 
+		    struct labcomm_reader_action_context *action_context,
 		    int signature_index, 
 		    struct labcomm_signature *signature, 
 		    uint32_t action, va_list args)
@@ -128,10 +156,12 @@ struct labcomm_reader *labcomm_fd_reader_new(int fd, int close_fd_on_free)
   if (result == NULL) {
     return NULL;
   } else {
+    result->reader.action_context = &result->action_context;
+    result->action_context.next = NULL;
+    result->action_context.action = &action;
+    result->action_context.context = result;
     result->fd = fd;
     result->close_fd_on_free = close_fd_on_free;
-    result->reader.context = result;
-    result->reader.action = &action;
     return &result->reader;
   }
 }

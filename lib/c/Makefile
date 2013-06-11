@@ -112,7 +112,9 @@ distclean: clean
 
 # Extra dependencies
 $(TEST_DIR)/test_labcomm_basic_type_encoding.o: labcomm_private.h
-$(TEST_DIR)/test_labcomm_generated_encoding.o : $(TEST_DIR)/gen/generated_encoding.h
+
+$(TEST_DIR)/test_labcomm_generated_encoding.o: labcomm_private.h
+$(TEST_DIR)/test_labcomm_generated_encoding.o: $(TEST_DIR)/gen/generated_encoding.h
 $(TEST_DIR)/test_labcomm_generated_encoding : $(TEST_DIR)/gen/generated_encoding.o
 $(TEST_DIR)/test_labcomm:  $(TEST_GEN_DIR)/test_sample.o
 labcomm_fd_reader.o: labcomm_private.h

@@ -1,3 +1,24 @@
+/*
+  labcomm_fd_writer.c -- LabComm writer for Unix file descriptors.
+
+  Copyright 2006-2013 Anders Blomdell <anders.blomdell@control.lth.se>
+
+  This file is part of LabComm.
+
+  LabComm is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  LabComm is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
@@ -10,13 +31,16 @@
 
 struct labcomm_fd_writer {
   struct labcomm_writer writer;
+  struct labcomm_writer_action_context action_context;
   int fd;
   int close_fd_on_free;
 };
 
-static int fd_flush(struct labcomm_writer *w, void *context);
+static int fd_flush(struct labcomm_writer *w, 
+		    struct labcomm_writer_action_context *action_context);
 
-static int fd_alloc(struct labcomm_writer *w, void *context, 
+static int fd_alloc(struct labcomm_writer *w, 
+		    struct labcomm_writer_action_context *action_context, 
 		    struct labcomm_encoder *encoder,
 		    char *version)
 {
@@ -32,16 +56,17 @@ static int fd_alloc(struct labcomm_writer *w, void *context,
     w->pos = 0;
     if (version && version[0]) {
       labcomm_write_string(w, version);
-      fd_flush(w, context);
+      fd_flush(w, action_context);
     }
   }
 
   return w->error;
 }
 
-static int fd_free(struct labcomm_writer *w, void *context)
+static int fd_free(struct labcomm_writer *w, 
+		   struct labcomm_writer_action_context *action_context)
 {
-  struct labcomm_fd_writer *fd_context = context;
+  struct labcomm_fd_writer *fd_context = action_context->context;
 
   free(w->data);
   w->data = 0;
@@ -55,7 +80,8 @@ static int fd_free(struct labcomm_writer *w, void *context)
   return 0;
 }
 
-static int fd_start(struct labcomm_writer *w, void *context,
+static int fd_start(struct labcomm_writer *w, 
+		    struct labcomm_writer_action_context *action_context,
 		    struct labcomm_encoder *encoder,
 		    int index,
 		    struct labcomm_signature *signature,
@@ -66,9 +92,10 @@ static int fd_start(struct labcomm_writer *w, void *context,
   return w->error;
 }
 
-static int fd_flush(struct labcomm_writer *w, void *context)
+static int fd_flush(struct labcomm_writer *w, 
+		    struct labcomm_writer_action_context *action_context)
 {
-  struct labcomm_fd_writer *fd_context = context;
+  struct labcomm_fd_writer *fd_context = action_context->context;
   int start, err;
   
   start = 0;
@@ -90,7 +117,8 @@ static int fd_flush(struct labcomm_writer *w, void *context)
   return w->error;
 }
 
-static int fd_ioctl(struct labcomm_writer *w, void *context, 
+static int fd_ioctl(struct labcomm_writer *w, 
+		    struct labcomm_writer_action_context *action_context, 
 		    int signature_index, struct labcomm_signature *signature, 
 		    uint32_t action, va_list args)
 {
@@ -114,10 +142,12 @@ struct labcomm_writer *labcomm_fd_writer_new(int fd, int close_fd_on_free)
   if (result == NULL) {
     return NULL;
   } else {
+    result->writer.action_context = &result->action_context;
+    result->action_context.next = NULL;
+    result->action_context.action = &action;
+    result->action_context.context = result;
     result->fd = fd;
     result->close_fd_on_free = close_fd_on_free;
-    result->writer.context = result;
-    result->writer.action = &action;
     return &result->writer;
   }
 }

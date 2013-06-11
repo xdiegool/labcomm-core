@@ -1,3 +1,24 @@
+/*
+  labcomm_dynamic_buffer_writer.c -- LabComm dynamic memory writer.
+
+  Copyright 2006-2013 Anders Blomdell <anders.blomdell@control.lth.se>
+
+  This file is part of LabComm.
+
+  LabComm is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  LabComm is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include <errno.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -6,7 +27,8 @@
 #include "labcomm_ioctl.h"
 #include "labcomm_dynamic_buffer_writer.h"
 
-static int dyn_alloc(struct labcomm_writer *w, void *context,
+static int dyn_alloc(struct labcomm_writer *w, 
+		     struct labcomm_writer_action_context *action_context,
 		     struct labcomm_encoder *encoder,
 		     char *labcomm_version)
 {
@@ -21,18 +43,22 @@ static int dyn_alloc(struct labcomm_writer *w, void *context,
   return w->error;
 }
 
-static int dyn_free(struct labcomm_writer *w, void *context)
+static int dyn_free(struct labcomm_writer *w, 
+		    struct labcomm_writer_action_context *action_context)
 {
   free(w->data);
   w->data = 0;
   w->data_size = 0;
   w->count = 0;
   w->pos = 0;
-
+  if (action_context->context) {
+    free(action_context->context);
+  }
   return 0;
 }
 
-static int dyn_start(struct labcomm_writer *w, void *context,
+static int dyn_start(struct labcomm_writer *w, 
+		     struct labcomm_writer_action_context *action_context,
 		     struct labcomm_encoder *encoder,
 		     int index,
 		     struct labcomm_signature *signature,
@@ -54,12 +80,14 @@ static int dyn_start(struct labcomm_writer *w, void *context,
   return w->error;
 }
 
-static int dyn_end(struct labcomm_writer *w, void *context)
+static int dyn_end(struct labcomm_writer *w, 
+		   struct labcomm_writer_action_context *action_context)
 {
   return 0;
 }
 
-static int dyn_flush(struct labcomm_writer *w, void *context)
+static int dyn_flush(struct labcomm_writer *w, 
+		     struct labcomm_writer_action_context *action_context)
 {
   void *tmp;
 
@@ -76,7 +104,8 @@ static int dyn_flush(struct labcomm_writer *w, void *context)
   return w->error; 
 }
 
-static int dyn_ioctl(struct labcomm_writer *w, void *context, 
+static int dyn_ioctl(struct labcomm_writer *w, 
+		     struct labcomm_writer_action_context *action_context, 
 		     int signature_index,
 		     struct labcomm_signature *signature,
 		     uint32_t action, va_list arg)
@@ -110,13 +139,19 @@ const struct labcomm_writer_action *labcomm_dynamic_buffer_writer_action =
 
 struct labcomm_writer *labcomm_dynamic_buffer_writer_new()
 {
-  struct labcomm_writer *result;
+  struct result {
+    struct labcomm_writer writer;
+    struct labcomm_writer_action_context action_context;
+  } *result;
 
   result = malloc(sizeof(*result));
   if (result != NULL) {
-    result->context = NULL;
-    result->action = &action;
+    result->action_context.next = NULL;
+    result->action_context.context = result;
+    result->action_context.action = &action;
+    result->writer.action_context = &result->action_context;
+    return &result->writer;
   }
-  return result;
+  return NULL;
 }
 

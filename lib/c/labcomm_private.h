@@ -1,3 +1,25 @@
+/*
+  labcomm_private.h -- semi private declarations for handling encoding and 
+                       decoding of labcomm samples.
+
+  Copyright 2006-2013 Anders Blomdell <anders.blomdell@control.lth.se>
+
+  This file is part of LabComm.
+
+  LabComm is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  LabComm is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifndef _LABCOMM_PRIVATE_H_
 #define _LABCOMM_PRIVATE_H_
 
@@ -70,21 +92,34 @@ typedef void (*labcomm_decoder_function)(
   labcomm_handler_function handler,
   void *context);
 
+struct labcomm_reader_action_context;
+
 struct labcomm_reader_action {
-  int (*alloc)(struct labcomm_reader *r, void *context, 
+  int (*alloc)(struct labcomm_reader *r, 
+	       struct labcomm_reader_action_context *action_context, 
 	       struct labcomm_decoder *decoder, char *labcomm_version);
-  int (*free)(struct labcomm_reader *r, void *context);
-  int (*start)(struct labcomm_reader *r, void *context);
-  int (*end)(struct labcomm_reader *r, void *context);
-  int (*fill)(struct labcomm_reader *r, void *context); 
-  int (*ioctl)(struct labcomm_reader *r, void *context,
+  int (*free)(struct labcomm_reader *r, 
+	      struct labcomm_reader_action_context *action_context);
+  int (*start)(struct labcomm_reader *r, 
+	       struct labcomm_reader_action_context *action_context);
+  int (*end)(struct labcomm_reader *r, 
+	     struct labcomm_reader_action_context *action_context);
+  int (*fill)(struct labcomm_reader *r, 
+	      struct labcomm_reader_action_context *action_context);
+  int (*ioctl)(struct labcomm_reader *r, 
+	       struct labcomm_reader_action_context *action_context,
 	       int signature_index, struct labcomm_signature *signature, 
 	       uint32_t ioctl_action, va_list args);
 };
 
-struct labcomm_reader {
+struct labcomm_reader_action_context {
+  struct labcomm_reader_action_context *next;
   const struct labcomm_reader_action *action;
-  void *context;
+  void *context;  
+};
+
+struct labcomm_reader {
+  struct labcomm_reader_action_context *action_context;
   unsigned char *data;
   int data_size;
   int count;
@@ -92,7 +127,23 @@ struct labcomm_reader {
   int error;
 };
 
-
+int labcomm_reader_alloc(struct labcomm_reader *r, 
+			 struct labcomm_reader_action_context *action_context, 
+			 struct labcomm_decoder *decoder, 
+			 char *labcomm_version);
+int labcomm_reader_free(struct labcomm_reader *r, 
+			struct labcomm_reader_action_context *action_context);
+int labcomm_reader_start(struct labcomm_reader *r, 
+			 struct labcomm_reader_action_context *action_context);
+int labcomm_reader_end(struct labcomm_reader *r, 
+		       struct labcomm_reader_action_context *action_context);
+int labcomm_reader_fill(struct labcomm_reader *r, 
+			struct labcomm_reader_action_context *action_context);
+int labcomm_reader_ioctl(struct labcomm_reader *r, 
+			 struct labcomm_reader_action_context *action_context,
+			 int signature_index, 
+			 struct labcomm_signature *signature, 
+			 uint32_t ioctl_action, va_list args);
 
 /*
  * Non typesafe registration function to be called from
@@ -116,7 +167,7 @@ int labcomm_internal_decoder_ioctl(struct labcomm_decoder *decoder,
     type result; int i;							\
     for (i = sizeof(type) - 1 ; i >= 0 ; i--) {				\
       if (r->pos >= r->count) {						\
-	r->action->fill(r, r->context);					\
+	labcomm_reader_fill(r, r->action_context);			\
       }									\
       ((unsigned char*)(&result))[i] = r->data[r->pos];			\
       r->pos++;								\
@@ -131,7 +182,7 @@ int labcomm_internal_decoder_ioctl(struct labcomm_decoder *decoder,
     type result; int i;							\
     for (i = 0 ; i < sizeof(type) ; i++) {				\
       if (r->pos >= r->count) {						\
-	r->action->fill(r, r->context);					\
+	labcomm_reader_fille(r, r->action_context);			\
       }									\
       ((unsigned char*)(&result))[i] = r->data[r->pos];			\
       r->pos++;								\
@@ -157,7 +208,7 @@ static inline unsigned int labcomm_read_packed32(struct labcomm_reader *r)
     unsigned char tmp;
 
     if (r->pos >= r->count) {	
-      r->action->fill(r, r->context);
+      labcomm_reader_fill(r, r->action_context);
       if (r->error != 0) {
 	goto out;
       }
@@ -182,7 +233,7 @@ static inline char *labcomm_read_string(struct labcomm_reader *r)
   result = malloc(length + 1);
   for (i = 0 ; i < length ; i++) {
     if (r->pos >= r->count) {	
-      r->action->fill(r, r->context);
+      labcomm_reader_fill(r, r->action_context);
     }
     result[i] = r->data[r->pos];
     r->pos++;
@@ -197,33 +248,64 @@ static inline char *labcomm_read_string(struct labcomm_reader *r)
 typedef int (*labcomm_encoder_function)(
   struct labcomm_writer *,
   void *value);
-
-struct labcomm_writer;
+struct labcomm_writer_action_context;
 
 struct labcomm_writer_action {
-  int (*alloc)(struct labcomm_writer *w, void *context, 
+  int (*alloc)(struct labcomm_writer *w, 
+	       struct labcomm_writer_action_context *action_context, 
 	       struct labcomm_encoder *encoder, char *labcomm_version);
-  int (*free)(struct labcomm_writer *w, void *context);
-  int (*start)(struct labcomm_writer *w, void *context,
+  int (*free)(struct labcomm_writer *w, 
+	      struct labcomm_writer_action_context *action_context);
+  int (*start)(struct labcomm_writer *w, 
+	       struct labcomm_writer_action_context *action_context,
 	       struct labcomm_encoder *encoder,
 	       int index, struct labcomm_signature *signature,
 	       void *value);
-  int (*end)(struct labcomm_writer *w, void *context);
-  int (*flush)(struct labcomm_writer *w, void *context); 
-  int (*ioctl)(struct labcomm_writer *w, void *context, 
+  int (*end)(struct labcomm_writer *w, 
+	     struct labcomm_writer_action_context *action_context);
+  int (*flush)(struct labcomm_writer *w, 
+	       struct labcomm_writer_action_context *action_context); 
+  int (*ioctl)(struct labcomm_writer *w, 
+	       struct labcomm_writer_action_context *action_context, 
 	       int signature_index, struct labcomm_signature *signature, 
 	       uint32_t ioctl_action, va_list args);
 };
 
-struct labcomm_writer {
+struct labcomm_writer_action_context {
+  struct labcomm_writer_action_context *next;
   const struct labcomm_writer_action *action;
-  void *context;
+  void *context;  
+};
+
+struct labcomm_writer {
+  struct labcomm_writer_action_context *action_context;
   unsigned char *data;
   int data_size;
   int count;
   int pos;
   int error;
 };
+
+int labcomm_writer_alloc(struct labcomm_writer *w, 
+			 struct labcomm_writer_action_context *action_context, 
+			 struct labcomm_encoder *encoder, 
+			 char *labcomm_version);
+int labcomm_writer_free(struct labcomm_writer *w, 
+			struct labcomm_writer_action_context *action_context);
+int labcomm_writer_start(struct labcomm_writer *w, 
+			 struct labcomm_writer_action_context *action_context,
+			 struct labcomm_encoder *encoder,
+			 int index, struct labcomm_signature *signature,
+			 void *value);
+int labcomm_writer_end(struct labcomm_writer *w, 
+		       struct labcomm_writer_action_context *action_context);
+int labcomm_writer_flush(struct labcomm_writer *w, 
+			 struct labcomm_writer_action_context *action_context); 
+int labcomm_writer_ioctl(struct labcomm_writer *w, 
+			 struct labcomm_writer_action_context *action_context, 
+			 int signature_index, 
+			 struct labcomm_signature *signature, 
+			 uint32_t ioctl_action, va_list args);
 
 void labcomm_internal_encoder_register(
   struct labcomm_encoder *encoder, 
@@ -249,7 +331,7 @@ int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder,
     for (i = sizeof(type) - 1 ; i >= 0 ; i--) {				\
       if (w->pos >= w->count) { /*buffer is full*/			\
         int err;							\
-	err = w->action->flush(w, w->context);				\
+	err = labcomm_writer_flush(w, w->action_context);		\
 	if (err != 0) { return err; }					\
       }									\
       w->data[w->pos] = ((unsigned char*)(&data))[i];			\
@@ -266,7 +348,7 @@ int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder,
     for (i = 0 ; i < sizeof(type) ; i++) {				\
       if (w->pos >= w->count) {						\
         int err;							\
-	err = w->action->flush(w, w->context);					\
+	err = labcomm_writer_flush(w, w->action_context);		\
 	if (err != 0) { return err; }					\
       }									\
       w->data[w->pos] = ((unsigned char*)(&data))[i];			\
@@ -297,7 +379,7 @@ static inline int labcomm_write_packed32(struct labcomm_writer *w,
   for (i = i - 1 ; i >= 0 ; i--) {
     if (w->pos >= w->count) {					
       int err;
-      err = w->action->flush(w, w->context);
+      err = labcomm_writer_flush(w, w->action_context);	
       if (err != 0) { return err; }
     }
     w->data[w->pos++] = tmp[i] | (i?0x80:0x00);
@@ -315,7 +397,7 @@ static inline int labcomm_write_string(struct labcomm_writer *w, char *s)
   for (i = 0 ; i < length ; i++) {
     if (w->pos >= w->count) {	
       int err;
-      err = w->action->flush(w, w->context);
+      err = labcomm_writer_flush(w, w->action_context);	
       if (err != 0) { return err; }
     }
     w->data[w->pos] = s[i];

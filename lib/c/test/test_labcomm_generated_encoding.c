@@ -1,3 +1,24 @@
+/*
+  test_labcomm_generated_encoding.c -- LabComm tests of generated encoding
+
+  Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
+
+  This file is part of LabComm.
+
+  LabComm is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  LabComm is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include <stdint.h>
 #include <string.h>
 #include <errno.h>
@@ -11,9 +32,11 @@
 static unsigned char buffer[128];
 struct labcomm_writer *writer;
 
-static int buf_writer_alloc(struct labcomm_writer *w, void *context,
-			    struct labcomm_encoder *encoder,
-			    char *labcomm_version)
+static int buf_writer_alloc(
+  struct labcomm_writer *w, 
+  struct labcomm_writer_action_context *action_context,
+  struct labcomm_encoder *encoder,
+  char *labcomm_version)
 {
   writer = w; /* Hack */
   w->data_size = sizeof(buffer);
@@ -24,26 +47,34 @@ static int buf_writer_alloc(struct labcomm_writer *w, void *context,
   return 0;
 }
 
-static int buf_writer_free(struct labcomm_writer *w, void *context)
+static int buf_writer_free(
+  struct labcomm_writer *w, 
+  struct labcomm_writer_action_context *action_context)
 {
   return 0;
 }
 
-static int buf_writer_start(struct labcomm_writer *w, void *context,
-			    struct labcomm_encoder *encoder,
-			    int index,
-			    struct labcomm_signature *signature,
-			    void *value)
+static int buf_writer_start(
+  struct labcomm_writer *w,
+  struct labcomm_writer_action_context *action_context,
+  struct labcomm_encoder *encoder,
+  int index,
+  struct labcomm_signature *signature,
+  void *value)
 {
   return 0;
 }
 
-static int buf_writer_end(struct labcomm_writer *w, void *context)
+static int buf_writer_end(
+  struct labcomm_writer *w, 
+  struct labcomm_writer_action_context *action_context)
 {
   return 0;
 }
 
-static int buf_writer_flush(struct labcomm_writer *w, void *context)
+static int buf_writer_flush(
+  struct labcomm_writer *w, 
+  struct labcomm_writer_action_context *action_context)
 {
   fprintf(stderr, "Should not come here %s:%d\n", __FILE__, __LINE__);
   exit(1);
@@ -52,7 +83,8 @@ static int buf_writer_flush(struct labcomm_writer *w, void *context)
 }
 
 static int buf_writer_ioctl(
-  struct labcomm_writer *w, void *context,
+  struct labcomm_writer *w, 
+  struct labcomm_writer_action_context *action_context,
   int signature_index, struct labcomm_signature *signature,
   uint32_t action, va_list arg)
 {
@@ -111,14 +143,18 @@ const struct labcomm_writer_action writer_action = {
   .ioctl = buf_writer_ioctl
 };
 
+static struct labcomm_writer_action_context action_context = {
+  .next = NULL,
+  .action = &writer_action,
+  .context = NULL
+}; 
 static struct labcomm_writer buffer_writer = {
-  .context = NULL,
+  .action_context = &action_context,
   .data = buffer,
   .data_size = sizeof(buffer),
   .count = sizeof(buffer),
   .pos = 0,
   .error = 0,
-  .action = &writer_action,
 };
 
 void dump_encoder(struct labcomm_encoder *encoder)
