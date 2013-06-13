@@ -45,7 +45,7 @@ liblabcomm.a: $(OBJS)
 	ar -r liblabcomm.a $^
 
 liblabcomm.so.1: $(OBJS:%.o=%.pic.o)
-	gcc -shared -Wl,-soname,$@ -o $@ $^ -lc
+	gcc -shared -Wl,-soname,$@ -o $@ $^ -lc -lrt
 
 labcomm.o : labcomm.c labcomm.h  labcomm_private.h
 

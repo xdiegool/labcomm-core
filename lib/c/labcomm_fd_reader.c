@@ -112,15 +112,11 @@ static int fd_fill(struct labcomm_reader *r,
 }
 
 static int fd_start(struct labcomm_reader *r,
-		    struct labcomm_reader_action_context *action_context)
+		    struct labcomm_reader_action_context *action_context,
+		    int index, struct labcomm_signature *signature,
+		    void *value)
 {
-  int available;
-
-  available = r->count - r->pos;
-  if (available == 0) {
-    available = fd_fill(r, action_context);
-  }
-  return available;
+  return 0;
 }
 
 static int fd_end(struct labcomm_reader *r, 

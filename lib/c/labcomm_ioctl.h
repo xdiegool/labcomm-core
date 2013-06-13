@@ -81,16 +81,9 @@
 #define LABCOMM_IOSWN(type,nr,nargs)					\
   LABCOMM_IOC(LABCOMM_IOC_USESIG,LABCOMM_IOC_WRITE,type,nr,nargs)
 
-struct labcomm_ioctl_register_signature {
-  int index;
-  struct labcomm_signature *signature;
-};
-
-#define LABCOMM_IOCTL_REGISTER_SIGNATURE \
-  LABCOMM_IOW(0,1,struct labcomm_ioctl_register_signature)
 #define LABCOMM_IOCTL_WRITER_GET_BYTES_WRITTEN \
-  LABCOMM_IOR(0,2,int)
+  LABCOMM_IOR(0,1,int)
 #define LABCOMM_IOCTL_WRITER_GET_BYTE_POINTER \
-  LABCOMM_IOR(0,3,void*)
+  LABCOMM_IOR(0,2,void*)
 
 #endif

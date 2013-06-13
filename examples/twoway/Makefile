@@ -28,7 +28,7 @@ gen/client: client.c
 	$(CC) -o $@ $(CFLAGS) $^ -lpthread \
 		-L../../lib/c -llabcomm -Tlabcomm.linkscript
 
-gen/server: server.c gen/types.o gen/decimating.o
+gen/server: server.c 
 	$(CC) -o $@ $(CFLAGS) $^ -lpthread \
 		-L../../lib/c -llabcomm -Tlabcomm.linkscript
 
@@ -38,9 +38,17 @@ clean:
 
 gen/decimating.o: decimating.h
 gen/decimating.o: gen/decimating_messages.h
+gen/introspecting.o: introspecting.h
+gen/introspecting.o: gen/introspecting_messages.h
 gen/client.o: decimating.h
 gen/client.o: gen/types.h
+gen/client: gen/types.o
 gen/client: gen/decimating.o 
 gen/client: gen/decimating_messages.o
-gen/client: gen/types.o
+gen/client: gen/introspecting.o
+gen/client: gen/introspecting_messages.o
+gen/server: gen/types.o
+gen/server: gen/decimating.o
 gen/server: gen/decimating_messages.o
+gen/server: gen/introspecting.o
+gen/server: gen/introspecting_messages.o

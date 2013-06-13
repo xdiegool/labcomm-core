@@ -1,3 +1,24 @@
+/*
+  client.c -- LabComm example of using stacked readers/writers.
+
+  Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
+
+  This file is part of LabComm.
+
+  LabComm is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  LabComm is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include <arpa/inet.h>
 #include <linux/tcp.h>
 #include <netdb.h>
@@ -14,6 +35,7 @@
 #include <labcomm_fd_writer.h>
 #include <labcomm_pthread_mutex_lock.h>
 #include "decimating.h"
+#include "introspecting.h"
 #include "gen/types.h"
 
 static void handle_Sum(int32_t *value, void *context)
@@ -47,6 +69,7 @@ int main(int argc, char *argv[])
   struct sockaddr_in to;
   int nodelay;
   struct decimating *decimating;
+  struct introspecting *introspecting;
   char *hostname;
   int port;
   struct labcomm_lock *lock;
@@ -94,10 +117,18 @@ int main(int argc, char *argv[])
 			      labcomm_fd_writer_new(fd, 0),
 			      lock);
   if (decimating == NULL) {
+    /* Warning: might leak reader and writer at this point */
     goto out;
   }
-  decoder = labcomm_decoder_new(decimating->reader, lock);
-  encoder = labcomm_encoder_new(decimating->writer, lock);
+  introspecting = introspecting_new(decimating->reader,
+				    decimating->writer,
+				    lock);
+  if (introspecting == NULL) {
+    /* Warning: might leak reader and writer at this point */
+    goto out;
+  }
+  decoder = labcomm_decoder_new(introspecting->reader, lock);
+  encoder = labcomm_encoder_new(introspecting->writer, lock);
   pthread_t rdt;
   
   labcomm_decoder_register_types_Sum(decoder, handle_Sum, NULL);

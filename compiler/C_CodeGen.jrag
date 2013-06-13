@@ -339,7 +339,7 @@ aspect C_Declarations {
   }
 
   public void SampleDecl.C_emitDecoderDeclaration(C_env env) {
-    env.println("void labcomm_decoder_register_" + 
+    env.println("int labcomm_decoder_register_" + 
 		env.prefix + getName() + "(");
     env.indent();
     env.println("struct labcomm_decoder *d,");
@@ -366,7 +366,7 @@ aspect C_Declarations {
   }
 
   public void SampleDecl.C_emitEncoderDeclaration(C_env env) {
-    env.println("void labcomm_encoder_register_" + 
+    env.println("int labcomm_encoder_register_" + 
 		env.prefix + getName() + "(");
     env.indent();
     env.println("struct labcomm_encoder *e);");
@@ -617,7 +617,7 @@ aspect C_Decoder {
   }
 
   public void SampleDecl.C_emitDecoderRegisterHandler(C_env env) {
-    env.println("void labcomm_decoder_register_" + 
+    env.println("int labcomm_decoder_register_" + 
 		env.prefix + getName() + "(");
     env.indent();
     env.println("struct labcomm_decoder *d,");
@@ -632,7 +632,7 @@ aspect C_Decoder {
     env.println(")");
     env.println("{");
     env.indent();
-    env.println("labcomm_internal_decoder_register(");
+    env.println("return labcomm_internal_decoder_register(");
     env.indent();
     env.println("d,");
     env.println("&labcomm_signature_" + env.prefix + getName() + ",");
@@ -804,7 +804,7 @@ aspect C_Encoder {
   }
 
   public void SampleDecl.C_emitEncoderRegisterHandler(C_env env) {
-    env.println("void labcomm_encoder_register_" + 
+    env.println("int labcomm_encoder_register_" + 
 		env.prefix + getName() + "(");
     env.indent();
     env.println("struct labcomm_encoder *e");
@@ -812,7 +812,7 @@ aspect C_Encoder {
     env.println(")");
     env.println("{");
     env.indent();
-    env.println("labcomm_internal_encoder_register(");
+    env.println("return labcomm_internal_encoder_register(");
     env.indent();
     env.println("e,");
     env.println("&labcomm_signature_" + env.prefix + getName() + ",");

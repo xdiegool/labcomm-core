@@ -29,10 +29,9 @@
 
 struct decimating_private {
   struct decimating decimating;
+  struct labcomm_lock *lock;
   struct labcomm_encoder *encoder;
   int encoder_initialized;
-  struct labcomm_decoder *decoder;
-  int decoder_initialized;
   struct labcomm_reader_action_context reader_action_context;
   struct labcomm_writer_action_context writer_action_context;
   LABCOMM_SIGNATURE_ARRAY_DEF(decimation, 
@@ -62,26 +61,17 @@ static int wrap_reader_alloc(
   struct labcomm_decoder *decoder,
   char *labcomm_version)
 {
-  struct decimating_private *decimating = action_context->context;
+  int result;
 
+  struct decimating_private *decimating = action_context->context;
+  
+  fprintf(stderr, "%s %s\n", __FILE__, __FUNCTION__);
   /* Stash away decoder for later use */
-  decimating->decoder = decoder;
-  return labcomm_reader_alloc(r, action_context->next, 
-			      decoder, labcomm_version);
-}
-
-static int wrap_reader_start(
-  struct labcomm_reader *r, 
-  struct labcomm_reader_action_context *action_context)
-{
-  struct decimating_private *decimating = action_context->context;
-
-  if (! decimating->decoder_initialized) {
-    decimating->decoder_initialized = 1;
-    labcomm_decoder_register_decimating_messages_set_decimation(
-      decimating->decoder, set_decimation, decimating);
-  }
-  return labcomm_reader_start(r, action_context->next);
+  result = labcomm_reader_alloc(r, action_context->next, 
+				decoder, labcomm_version);
+  labcomm_decoder_register_decimating_messages_set_decimation(
+    decoder, set_decimation, decimating);
+  return result;
 }
 
 static int wrap_reader_ioctl(
@@ -113,40 +103,47 @@ static int wrap_reader_ioctl(
 struct labcomm_reader_action decimating_reader_action = {
   .alloc = wrap_reader_alloc,
   .free = NULL,
-  .start = wrap_reader_start,
+  .start = NULL,
   .end = NULL,
   .fill = NULL,
   .ioctl = wrap_reader_ioctl
 };
 
+static void register_signatures(struct labcomm_encoder *encoder,
+				void *context)
+{
+  labcomm_encoder_register_decimating_messages_set_decimation(
+    encoder);
+}
+
 static int wrap_writer_alloc(
   struct labcomm_writer *w, 
   struct labcomm_writer_action_context *action_context, 
-  struct labcomm_encoder *encoder, char *labcomm_version)
+  struct labcomm_encoder *encoder, char *labcomm_version,
+  labcomm_encoder_enqueue enqueue)
 {
+  int result;
   struct decimating_private *decimating = action_context->context;
 
+  fprintf(stderr, "%s %s\n", __FILE__, __FUNCTION__);
   /* Stash away encoder for later use */
   decimating->encoder = encoder;
-  return labcomm_writer_alloc(w, action_context->next,
-			      encoder, labcomm_version);
+  result = labcomm_writer_alloc(w, action_context->next,
+				encoder, labcomm_version, enqueue);
+  enqueue(encoder, register_signatures, NULL);
+
+  return result;
 }
 
 static int wrap_writer_start(
   struct labcomm_writer *w, 
   struct labcomm_writer_action_context *action_context, 
-  struct labcomm_encoder *encoder,
   int index, struct labcomm_signature *signature,
   void *value)
 {
   struct decimating_private *decimating = action_context->context;
   struct decimation *decimation;
 
-  if (! decimating->encoder_initialized) {
-    decimating->encoder_initialized = 1;
-    labcomm_encoder_register_decimating_messages_set_decimation(
-      decimating->encoder);
-  }
   decimation = LABCOMM_SIGNATURE_ARRAY_REF(decimating->decimation, 
 					   struct decimation, index);
   decimation->current++;
@@ -155,7 +152,7 @@ static int wrap_writer_start(
   } else {
     decimation->current = 0;
     return labcomm_writer_start(w, action_context->next,
-				encoder, index, signature, value);
+				index, signature, value);
   }
 }
 
@@ -196,10 +193,9 @@ extern struct decimating *decimating_new(
   result->decimating.writer = writer;
 
   /* Init other fields */
+  result->lock = lock;
   result->encoder = NULL;
   result->encoder_initialized = 0;
-  result->decoder = NULL;
-  result->decoder_initialized = 0;
   LABCOMM_SIGNATURE_ARRAY_INIT(result->decimation, struct decimation);
 
   goto out_ok;

@@ -42,7 +42,8 @@ static int fd_flush(struct labcomm_writer *w,
 static int fd_alloc(struct labcomm_writer *w, 
 		    struct labcomm_writer_action_context *action_context, 
 		    struct labcomm_encoder *encoder,
-		    char *version)
+		    char *version,
+		    labcomm_encoder_enqueue enqueue)
 {
   w->data = malloc(BUFFER_SIZE);
   if (! w->data) {
@@ -82,7 +83,6 @@ static int fd_free(struct labcomm_writer *w,
 
 static int fd_start(struct labcomm_writer *w, 
 		    struct labcomm_writer_action_context *action_context,
-		    struct labcomm_encoder *encoder,
 		    int index,
 		    struct labcomm_signature *signature,
 		    void *value)

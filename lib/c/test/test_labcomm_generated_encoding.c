@@ -36,7 +36,8 @@ static int buf_writer_alloc(
   struct labcomm_writer *w, 
   struct labcomm_writer_action_context *action_context,
   struct labcomm_encoder *encoder,
-  char *labcomm_version)
+  char *labcomm_version,
+  labcomm_encoder_enqueue enqueue)
 {
   writer = w; /* Hack */
   w->data_size = sizeof(buffer);
@@ -57,7 +58,6 @@ static int buf_writer_free(
 static int buf_writer_start(
   struct labcomm_writer *w,
   struct labcomm_writer_action_context *action_context,
-  struct labcomm_encoder *encoder,
   int index,
   struct labcomm_signature *signature,
   void *value)

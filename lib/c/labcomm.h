@@ -84,6 +84,12 @@ void labcomm_decoder_register_new_datatype_handler(struct labcomm_decoder *d,
  */
 struct labcomm_lock;
 
+int labcomm_lock_free(struct labcomm_lock *lock);
+int labcomm_lock_lock(struct labcomm_lock *lock);
+int labcomm_lock_unlock(struct labcomm_lock *lock);
+int labcomm_lock_wait(struct labcomm_lock *lock, useconds_t usec);
+int labcomm_lock_notify_all(struct labcomm_lock *lock);
+
 /*
  * Decoder
  */
