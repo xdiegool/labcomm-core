@@ -1,0 +1,5 @@
+sample struct {
+  int index;
+  string name;
+  byte signature[_];
+} handles_signature;
