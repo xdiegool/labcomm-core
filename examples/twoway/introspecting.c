@@ -33,6 +33,7 @@ struct introspecting_private {
   int encoder_initialized;
   struct labcomm_decoder *decoder;
   int decoder_initialized;
+  struct labcomm_lock *lock;
   struct labcomm_reader_action_context reader_action_context;
   struct labcomm_writer_action_context writer_action_context;
   LABCOMM_SIGNATURE_ARRAY_DEF(introspection, 
