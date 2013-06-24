@@ -431,7 +431,7 @@ class struct:
                 decl.encode(encoder, obj[name])
         else:
             for (name, decl) in self.field:
-                decl.encode(encoder, obj.__getattribute__(name))
+                decl.encode(encoder, getattr(obj, name))
 
     def decode_decl(self, decoder):
         n_field = decoder.decode_packed32()
