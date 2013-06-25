@@ -5,6 +5,7 @@
 
 struct labcomm_pthread_mutex_lock {
   struct labcomm_lock lock;
+  
   pthread_mutex_t mutex;
   pthread_cond_t cond;
 };
@@ -12,10 +13,11 @@ struct labcomm_pthread_mutex_lock {
 int do_free(struct labcomm_lock *l)
 {
   struct labcomm_pthread_mutex_lock *lock = l->context;
-  
+  struct labcomm_memory *memory = l->memory; 
+ 
   pthread_cond_destroy(&lock->cond);
   pthread_mutex_destroy(&lock->mutex);
-  free(lock);
+  labcomm_memory_free(memory, 0, lock);
   return 0;
 }
 
@@ -80,12 +82,13 @@ static struct labcomm_lock_action action = {
   .notify = do_notify
 };
 
-struct labcomm_lock *labcomm_pthread_mutex_lock_new()
+struct labcomm_lock *labcomm_pthread_mutex_lock_new(
+  struct labcomm_memory *memory)
 {
   struct labcomm_lock *result = NULL;
   struct labcomm_pthread_mutex_lock *lock;
 
-  lock = malloc(sizeof(*lock));
+  lock = labcomm_memory_alloc(memory, 0, sizeof(*lock));
   if (lock == NULL) {
     goto out;
   }
@@ -95,6 +98,7 @@ struct labcomm_lock *labcomm_pthread_mutex_lock_new()
   if (pthread_cond_init(&lock->cond, NULL) != 0) {
     goto destroy_mutex;
   }
+  lock->lock.memory = memory;
   lock->lock.action = &action;
   lock->lock.context = lock;
   result = &lock->lock;
@@ -102,7 +106,7 @@ struct labcomm_lock *labcomm_pthread_mutex_lock_new()
 destroy_mutex:
   pthread_mutex_destroy(&lock->mutex);
 free_lock:
-  free(lock);
+  labcomm_memory_free(memory, 0, lock);
 out:
   return result;
 

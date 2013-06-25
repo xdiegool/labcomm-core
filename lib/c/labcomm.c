@@ -43,6 +43,7 @@ struct labcomm_decoder {
   void *context;
   struct labcomm_reader *reader;
   struct labcomm_lock *lock;
+  struct labcomm_memory *memory;
   labcomm_error_handler_callback on_error;
   labcomm_handle_new_datatype_callback on_new_datatype;
   LABCOMM_SIGNATURE_ARRAY_DEF(local_to_remote, int);
@@ -53,6 +54,7 @@ struct labcomm_encoder {
   void *context;
   struct labcomm_writer *writer;
   struct labcomm_lock *lock;
+  struct labcomm_memory *memory;
   struct labcomm_encoder *is_deferred;
   int busy;
   int waiting;
@@ -347,13 +349,16 @@ static int get_encoder_index(
 
 struct labcomm_encoder *labcomm_encoder_new(
   struct labcomm_writer *writer,
-  struct labcomm_lock *lock)
+  struct labcomm_lock *lock,
+  struct labcomm_memory *memory)
 {
-  struct labcomm_encoder *result = malloc(sizeof(*result));
+  struct labcomm_encoder *result;
+
+  result = labcomm_memory_alloc(memory, 0, sizeof(*result));
   if (result) {
     struct labcomm_encoder_context *context;
 
-    context = malloc(sizeof(*context));
+    context = labcomm_memory_alloc(memory, 0, sizeof(*context));
 #ifdef LABCOMM_ENCODER_LINEAR_SEARCH
     context->sample = NULL;
     context->index = LABCOMM_USER;
@@ -362,12 +367,14 @@ struct labcomm_encoder *labcomm_encoder_new(
 #endif
     result->context = context;
     result->writer = writer;
+    result->writer->encoder = result;
     result->writer->data = NULL;
     result->writer->data_size = 0;
     result->writer->count = 0;
     result->writer->pos = 0;
     result->writer->error = 0;
     result->lock = lock;
+    result->memory = memory;
     result->is_deferred = NULL;
     result->busy = 0;
     result->waiting = 0;
@@ -386,8 +393,7 @@ static int encoder_enqueue_action(
   int result;
   struct encoder_alloc_action *element, **next;
 
-  fprintf(stderr, "%s %p\n", __FUNCTION__, action);
-  element = malloc(sizeof(*action));
+  element = labcomm_memory_alloc(encoder->memory, 0, sizeof(*action));
   if (element == NULL) {
     result = -ENOMEM;
     goto out;
@@ -427,11 +433,10 @@ static struct labcomm_encoder *enter_encoder(struct labcomm_encoder *e)
 	while (p) {
 	  struct encoder_alloc_action *tmp;
 
-	  fprintf(stderr, "RUN %p", p->action);
 	  p->action(&deferred, p->context);
 	  tmp = p;
 	  p = p->next;
-	  free(tmp);
+	  labcomm_memory_free(e->memory, 1, tmp);
 	}
       }
     }
@@ -464,7 +469,8 @@ int labcomm_internal_encoder_register(
   index = get_encoder_index(e, signature);
   if (signature->type == LABCOMM_SAMPLE) {
     if (index > 0) {
-      int *registered = LABCOMM_SIGNATURE_ARRAY_REF(e->registered, int, index);
+      int *registered = LABCOMM_SIGNATURE_ARRAY_REF(e->memory, e->registered, 
+						    int, index);
       if (! *registered) {
 	int err;
 	
@@ -473,6 +479,8 @@ int labcomm_internal_encoder_register(
 				   index, signature, NULL);
 	if (err == -EALREADY) {
 	  result = 0;
+	} else if (err != 0) {
+	  result = err;
 	} else if (err == 0) {
 	  int i;
 
@@ -525,24 +533,25 @@ no_end:
 void labcomm_encoder_free(struct labcomm_encoder* e)
 {
   struct labcomm_encoder_context *context;
+  struct labcomm_memory * memory = e->memory;
 
   context = (struct labcomm_encoder_context *) e->context;
   labcomm_writer_free(e->writer, e->writer->action_context);
-  LABCOMM_SIGNATURE_ARRAY_FREE(e->registered, int);
+  LABCOMM_SIGNATURE_ARRAY_FREE(e->memory, e->registered, int);
 
 #ifdef LABCOMM_ENCODER_LINEAR_SEARCH
   struct labcomm_sample_entry *entry = context->sample;
   struct labcomm_sample_entry *entry_next;
   while (entry != NULL) {
     entry_next = entry->next;
-    free(entry);
+    labcomm_memory_free(memory, 0, entry);
     entry = entry_next;
   }
 #else
-  free(context->by_section);
+  labcomm_memory_free(memory, 0, context->by_section);
 #endif
-  free(e->context);
-  free(e);
+  labcomm_memory_free(memory, 0, e->context);
+  labcomm_memory_free(memory, 0, e);
 }
 
 int labcomm_encoder_ioctl(struct labcomm_encoder *encoder, 
@@ -629,7 +638,7 @@ static void collect_flat_signature(
 	for (i = 0 ; i < fields ; i++) {
 	  char *name = labcomm_read_string(decoder->reader);
 	  labcomm_write_string(writer, name);
-	  free(name);
+	  labcomm_memory_free(decoder->memory, 1, name);
 	  collect_flat_signature(decoder, writer);
 	}
       } break;
@@ -652,21 +661,27 @@ static void collect_flat_signature(
 
 struct labcomm_decoder *labcomm_decoder_new(
   struct labcomm_reader *reader,
-  struct labcomm_lock *lock)
+  struct labcomm_lock *lock,
+  struct labcomm_memory *memory)
 {
-  struct labcomm_decoder *result = malloc(sizeof(*result));
+  struct labcomm_decoder *result;
+
+  result = labcomm_memory_alloc(memory, 0, sizeof(*result));
   if (result) {
-    struct labcomm_decoder_context *context =
-      (struct labcomm_decoder_context *)malloc(sizeof(*context));
+    struct labcomm_decoder_context *context;
+
+    context = labcomm_memory_alloc(memory, 0, sizeof(*context));
     context->sample = 0;
     result->context = context;
     result->reader = reader;
+    result->reader->decoder = result;
     result->reader->data = 0;
     result->reader->data_size = 0;
     result->reader->count = 0;
     result->reader->pos = 0;
     result->reader->error = 0;
     result->lock = lock;
+    result->memory = memory;
     result->on_error = on_error_fprintf;
     result->on_new_datatype = on_new_datatype;
     LABCOMM_SIGNATURE_ARRAY_INIT(result->local_to_remote, int);
@@ -683,20 +698,29 @@ int labcomm_internal_decoder_register(
   void *handler_context)
 {
   struct labcomm_decoder_context *context = d->context;
-  struct labcomm_sample_entry *sample;
-  sample = get_sample_by_signature_address(context->sample,
-					   signature);
-  if (!sample) {
-    sample = (struct labcomm_sample_entry *)malloc(sizeof(*sample));
-    sample->next = context->sample;
-    context->sample = sample;
-    sample->index = 0;
-    sample->signature = signature;
-  }
-  sample->decoder = type_decoder;
-  sample->handler = handler;
-  sample->context = handler_context;
+  int index;
+  
+  index = get_local_index(signature);
+  if (index >= 0) {
+    struct labcomm_sample_entry *sample;
 
+    labcomm_reader_start(d->reader, d->reader->action_context,
+			 index, signature,
+			 NULL);
+    labcomm_reader_end(d->reader, d->reader->action_context);
+    sample = get_sample_by_signature_address(context->sample,
+					     signature);
+    if (!sample) {
+      sample = labcomm_memory_alloc(d->memory, 0, sizeof(*sample));
+      sample->next = context->sample;
+      context->sample = sample;
+      sample->index = 0;
+      sample->signature = signature;
+    }
+    sample->decoder = type_decoder;
+    sample->handler = handler;
+    sample->context = handler_context;
+  }
   return 0;
 }
 
@@ -714,6 +738,7 @@ static int decode_typedef_or_sample(struct labcomm_decoder *d, int kind)
   };
   struct labcomm_writer writer = {
     .action_context = &action_context,
+    .memory = d->memory,
     .data = NULL,
     .data_size = 0,
     .count = 0,
@@ -749,7 +774,6 @@ static int decode_typedef_or_sample(struct labcomm_decoder *d, int kind)
   }
   entry = get_sample_by_signature_value(context->sample, &signature);
   if (! entry) {
-    fprintf(stderr, "%d %s\n", remote_index, signature.name);
     /* Unknown datatype, bail out */
     d->on_new_datatype(d, &signature);
     result = -ENOENT;
@@ -764,20 +788,18 @@ static int decode_typedef_or_sample(struct labcomm_decoder *d, int kind)
     // TODO unnessesary, since entry->index == index in above if statement
     entry->index = remote_index;
     local_index = get_local_index(entry->signature);
-    local_to_remote = LABCOMM_SIGNATURE_ARRAY_REF(d->local_to_remote, int,
+    local_to_remote = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
+						  d->local_to_remote, int,
 						  local_index);
     *local_to_remote = remote_index;
-    remote_to_local = LABCOMM_SIGNATURE_ARRAY_REF(d->remote_to_local, int,
+    remote_to_local = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
+						  d->remote_to_local, int,
 						  remote_index);
     *remote_to_local = local_index;
     result = remote_index;
-    labcomm_reader_start(d->reader, d->reader->action_context,
-			 entry->index, entry->signature,
-			 NULL);
-    labcomm_reader_end(d->reader, d->reader->action_context);
   }
 free_signature_name:
-  free(signature.name);
+  labcomm_memory_free(d->memory, 0, signature.name);
   labcomm_writer_free(&writer, writer.action_context);
   if (!entry) {
     // No handler for found type, bail out (after cleanup)
@@ -856,18 +878,19 @@ void labcomm_decoder_free(struct labcomm_decoder* d)
   struct labcomm_decoder_context *context = (struct labcomm_decoder_context *) d->context;
   struct labcomm_sample_entry *entry = context->sample;
   struct labcomm_sample_entry *entry_next;
+  struct labcomm_memory *memory = d->memory;
 
   labcomm_reader_free(d->reader, d->reader->action_context);
-  LABCOMM_SIGNATURE_ARRAY_FREE(d->local_to_remote, int);
-  LABCOMM_SIGNATURE_ARRAY_FREE(d->remote_to_local, int);
+  LABCOMM_SIGNATURE_ARRAY_FREE(memory, d->local_to_remote, int);
+  LABCOMM_SIGNATURE_ARRAY_FREE(memory, d->remote_to_local, int);
   while (entry != NULL) {
     entry_next = entry->next;
-    free(entry);
+    labcomm_memory_free(memory, 0, entry);
     entry = entry_next;
   }
 
-  free(d->context);
-  free(d);
+  labcomm_memory_free(memory, 0, d->context);
+  labcomm_memory_free(memory, 0, d);
 }
 
 int labcomm_decoder_ioctl(struct labcomm_decoder *decoder, 
@@ -893,7 +916,8 @@ int labcomm_internal_decoder_ioctl(struct labcomm_decoder *decoder,
   int local_index, *remote_index;
 
   local_index = get_local_index(signature);
-  remote_index = LABCOMM_SIGNATURE_ARRAY_REF(decoder->local_to_remote, int,
+  remote_index = LABCOMM_SIGNATURE_ARRAY_REF(decoder->memory,
+					     decoder->local_to_remote, int,
 					     local_index);
   if (*remote_index == 0) {
     result = -EAGAIN;
@@ -922,13 +946,14 @@ static void dump(void *p, int size, int first, int last)
 }
 #endif
 
-void *labcomm_signature_array_ref(int *first, int *last, void **data,
+void *labcomm_signature_array_ref(struct labcomm_memory *memory,
+				  int *first, int *last, void **data,
 				  int size, int index)
 {
   if (*first == 0 && *last == 0) {
     *first = index;
     *last = index + 1;
-    *data = malloc(size);
+    *data = labcomm_memory_alloc(memory, 0, size);
     if (*data) { 
       memset(*data, 0, size); 
     }
@@ -940,7 +965,7 @@ void *labcomm_signature_array_ref(int *first, int *last, void **data,
     *first = (index<old_first)?index:old_first;
     *last = (old_last<=index)?index+1:old_last;
     n = (*last - *first);
-    *data = malloc(n * size);
+    *data = labcomm_memory_alloc(memory, 0, n * size);
     if (*data) {
       memset(*data, 0, n * size);
       memcpy(*data + (old_first - *first) * size, 
@@ -948,7 +973,7 @@ void *labcomm_signature_array_ref(int *first, int *last, void **data,
 	     (old_last - old_first) * size);
     }
 //    dump(old_data, size, old_first, old_last);
-    free(old_data);
+    labcomm_memory_free(memory, 0, old_data);
   }
   if (*data) {
 //    dump(*data, size, *first, *last);

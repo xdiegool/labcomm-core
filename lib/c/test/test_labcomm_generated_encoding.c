@@ -20,9 +20,9 @@
 */
 
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "labcomm_private.h"
 #include "labcomm_private.h"
 #include "test/gen/generated_encoding.h"
 
@@ -182,7 +182,8 @@ int main(void)
   generated_encoding_B B = 1;
 
   struct labcomm_encoder *encoder = labcomm_encoder_new(&buffer_writer, 
-							NULL);
+							NULL,
+							labcomm_default_memory);
 
   labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   labcomm_encoder_register_generated_encoding_V(encoder);

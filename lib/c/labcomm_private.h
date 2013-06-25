@@ -31,7 +31,7 @@
 #endif
 
 #include <stdint.h>
-#include <stdlib.h>
+//#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include "labcomm.h"
@@ -82,6 +82,19 @@ struct labcomm_lock_action {
 
 struct labcomm_lock {
   const struct labcomm_lock_action *action;
+  struct labcomm_memory *memory;
+  void *context;
+};
+
+/*
+ * Semi private dynamic memory declarations
+ */
+
+struct labcomm_memory {
+  void *(*alloc)(struct labcomm_memory *m, int lifetime, size_t size);
+  void *(*realloc)(struct labcomm_memory *m, int lifetime, 
+		   void *ptr, size_t size);
+  void (*free)(struct labcomm_memory *m, int lifetime, void *ptr);
   void *context;
 };
 
@@ -144,6 +157,9 @@ struct labcomm_reader_action_context {
 
 struct labcomm_reader {
   struct labcomm_reader_action_context *action_context;
+  struct labcomm_memory *memory;
+  /* The following fields are initialized by labcomm_decoder_new */
+  struct labcomm_decoder *decoder;
   unsigned char *data;
   int data_size;
   int count;
@@ -255,7 +271,7 @@ static inline char *labcomm_read_string(struct labcomm_reader *r)
   int length, i; 
   
   length = labcomm_read_packed32(r);
-  result = malloc(length + 1);
+  result = labcomm_memory_alloc(r->memory, 1, length + 1);
   for (i = 0 ; i < length ; i++) {
     if (r->pos >= r->count) {	
       labcomm_reader_fill(r, r->action_context);
@@ -318,6 +334,9 @@ struct labcomm_writer_action_context {
 
 struct labcomm_writer {
   struct labcomm_writer_action_context *action_context;
+  struct labcomm_memory *memory;
+  /* The following fields are initialized by labcomm_encoder_new */
+  struct labcomm_encoder *encoder;
   unsigned char *data;
   int data_size;
   int count;
@@ -461,18 +480,29 @@ static inline int labcomm_write_string(struct labcomm_writer *w, char *s)
   name.first = 0; name.last = 0; name.data = NULL;		\
   name.data = (kind *)name.data; /* typechecking no-op */
 
-#define LABCOMM_SIGNATURE_ARRAY_FREE(name, kind)		\
-  if (name.data) { free(name.data); }				\
+#define LABCOMM_SIGNATURE_ARRAY_FREE(memory, name, kind)	\
+  if (name.data) { labcomm_memory_free(memory, 0, name.data); }	\
   name.data = (kind *)NULL; /* typechecking */
 
-#define LABCOMM_SIGNATURE_ARRAY_REF(name, kind, index)			\
+void *labcomm_signature_array_ref(struct labcomm_memory * memory,
+				  int *first, int *last, void **data,
+				  int size, int index);
+/*
+ * NB: the pointer returned by LABCOMM_SIGNATURE_ARRAY_REF might be
+ *     rendered invalid by a subsequent call to LABCOMM_SIGNATURE_ARRAY_REF
+ *     on the same SIGNATURE_ARRAY, so make sure not to use the result if 
+ *     any other code might have made a call to LABCOMM_SIGNATURE_ARRAY_REF
+ *     on the same SIGNATURE_ARRAY.
+ */
+#define LABCOMM_SIGNATURE_ARRAY_REF(memory, name, kind, index)		\
   (name.data = (kind *)name.data, /* typechecking no-op */		\
-   (kind *)(labcomm_signature_array_ref(&name.first, &name.last,	\
+   (kind *)(labcomm_signature_array_ref(memory,				\
+					&name.first, &name.last,	\
 					(void **)&name.data,		\
 					sizeof(kind), index)))
 
-void *labcomm_signature_array_ref(int *first, int *last, void **data,
-				  int size, int index);
-
+#define LABCOMM_SIGNATURE_ARRAY_FOREACH(name, kind, var)		\
+  for (name.data = (kind *)name.data, /* typechecking no-op */		\
+       var = name.first ; var < name.last ; var++)
 
 #endif

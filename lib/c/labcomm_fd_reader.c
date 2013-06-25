@@ -44,7 +44,7 @@ static int fd_alloc(struct labcomm_reader *r,
   
   r->count = 0;
   r->pos = 0;
-  r->data = malloc(BUFFER_SIZE);
+  r->data = labcomm_memory_alloc(r->memory, 0, BUFFER_SIZE);
   if (! r->data) {
     r->data_size = 0;
     result = -ENOMEM;
@@ -61,7 +61,7 @@ static int fd_alloc(struct labcomm_reader *r,
       } else {
 	result = r->data_size;
       }
-      free(tmp);
+      labcomm_memory_free(r->memory, 1, tmp);
     }
   }
   return result;
@@ -70,18 +70,19 @@ static int fd_alloc(struct labcomm_reader *r,
 static int fd_free(struct labcomm_reader *r, 
 		   struct labcomm_reader_action_context *action_context)
 {
-  struct labcomm_fd_reader *fd_context = action_context->context;
+  struct labcomm_fd_reader *fd_reader = action_context->context;
+  struct labcomm_memory *memory = r->memory;
 
-  free(r->data);
+  labcomm_memory_free(memory, 0, r->data);
   r->data = 0;
   r->data_size = 0;
   r->count = 0;
   r->pos = 0;
 
-  if (fd_context->close_fd_on_free) {
-    close(fd_context->fd);
+  if (fd_reader->close_fd_on_free) {
+    close(fd_reader->fd);
   }
-  free(fd_context);
+  labcomm_memory_free(memory, 0, fd_reader);
 
   return 0;
 }
@@ -90,7 +91,7 @@ static int fd_fill(struct labcomm_reader *r,
 		   struct labcomm_reader_action_context *action_context)
 {
   int result = 0;
-  struct labcomm_fd_reader *fd_context = action_context->context;
+  struct labcomm_fd_reader *fd_reader = action_context->context;
 
   if (r->pos < r->count) {
     result = r->count - r->pos;
@@ -98,7 +99,7 @@ static int fd_fill(struct labcomm_reader *r,
     int err;
     
     r->pos = 0;
-    err = read(fd_context->fd, r->data, r->data_size);
+    err = read(fd_reader->fd, r->data, r->data_size);
     if (err <= 0) {
       r->count = 0;
       r->error = -EPIPE;
@@ -111,51 +112,29 @@ static int fd_fill(struct labcomm_reader *r,
   return result;
 }
 
-static int fd_start(struct labcomm_reader *r,
-		    struct labcomm_reader_action_context *action_context,
-		    int index, struct labcomm_signature *signature,
-		    void *value)
-{
-  return 0;
-}
-
-static int fd_end(struct labcomm_reader *r, 
-		  struct labcomm_reader_action_context *action_context)
-{
-  return 0;
-}
-
-static int fd_ioctl(struct labcomm_reader *r, 
-		    struct labcomm_reader_action_context *action_context,
-		    int signature_index, 
-		    struct labcomm_signature *signature, 
-		    uint32_t action, va_list args)
-{
-  return -ENOTSUP;
-}
-
-
 static const struct labcomm_reader_action action = {
   .alloc = fd_alloc,
   .free = fd_free,
-  .start = fd_start,
+  .start = NULL,
   .fill = fd_fill,
-  .end = fd_end,
-  .ioctl = fd_ioctl
+  .end = NULL,
+  .ioctl = NULL
 };
 
-struct labcomm_reader *labcomm_fd_reader_new(int fd, int close_fd_on_free)
+struct labcomm_reader *labcomm_fd_reader_new(struct labcomm_memory *memory,
+					     int fd, int close_fd_on_free)
 {
   struct labcomm_fd_reader *result;
 
-  result = malloc(sizeof(*result));
+  result = labcomm_memory_alloc(memory, 0, sizeof(*result));
   if (result == NULL) {
     return NULL;
   } else {
-    result->reader.action_context = &result->action_context;
     result->action_context.next = NULL;
     result->action_context.action = &action;
     result->action_context.context = result;
+    result->reader.action_context = &result->action_context;
+    result->reader.memory = memory;
     result->fd = fd;
     result->close_fd_on_free = close_fd_on_free;
     return &result->reader;

@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <string.h>
+#include <stdlib.h>
 #include "labcomm_private.h"
 
 static int line;

@@ -42,11 +42,11 @@ gen/introspecting.o: introspecting.h
 gen/introspecting.o: gen/introspecting_messages.h
 gen/client.o: decimating.h
 gen/client.o: gen/types.h
-gen/client: gen/types.o
 gen/client: gen/decimating.o 
 gen/client: gen/decimating_messages.o
 gen/client: gen/introspecting.o
 gen/client: gen/introspecting_messages.o
+gen/client: gen/types.o
 gen/server: gen/types.o
 gen/server: gen/decimating.o
 gen/server: gen/decimating_messages.o

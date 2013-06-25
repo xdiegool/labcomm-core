@@ -8,6 +8,7 @@ LDFLAGS=-L.
 LDLIBS_TEST=-lcunit -llabcomm -Tlabcomm.linkscript
 
 OBJS= labcomm.o \
+      labcomm_memory.o labcomm_default_memory.o \
       labcomm_dynamic_buffer_writer.o labcomm_fd_reader.o labcomm_fd_writer.o \
       labcomm_pthread_mutex_lock.o
 

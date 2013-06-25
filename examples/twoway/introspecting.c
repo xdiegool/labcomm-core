@@ -27,19 +27,28 @@
 #include "introspecting.h"
 #include "gen/introspecting_messages.h"
 
+enum status {unknown, unhandled, unregistered, registered};
 struct introspecting_private {
   struct introspecting introspecting;
+  struct labcomm_lock *lock;
+  struct labcomm_memory *memory;
+
   struct labcomm_encoder *encoder;
   int encoder_initialized;
   struct labcomm_decoder *decoder;
   int decoder_initialized;
-  struct labcomm_lock *lock;
   struct labcomm_reader_action_context reader_action_context;
   struct labcomm_writer_action_context writer_action_context;
-  LABCOMM_SIGNATURE_ARRAY_DEF(introspection, 
-			      struct introspection {
-				int has_got_response;
-				int has_handler;
+  LABCOMM_SIGNATURE_ARRAY_DEF(remote, 
+			      struct remote {
+				char *name;
+				int size;
+				uint8_t *signature;
+			      });
+  LABCOMM_SIGNATURE_ARRAY_DEF(local, 
+			      struct local {
+				enum status status;
+				struct labcomm_signature *signature;
 			      });
 };
 
@@ -48,16 +57,37 @@ static void handles_signature(
   void * context)
 {
   fprintf(stderr, "### %s %x %s\n", __FUNCTION__, value->index, value->name);
-/*
   struct introspecting_private *introspecting = context;
-  struct introspection *introspection;
+  struct remote *remote;
 
-  introspection = LABCOMM_SIGNATURE_ARRAY_REF(introspecting->introspection, 
-					      struct introspection, 
-					      value->index);
+  remote = LABCOMM_SIGNATURE_ARRAY_REF(introspecting->memory,
+				       introspecting->remote, 
+				       struct remote, 
+				       value->index);
+  remote->name = strdup(value->name);
+  remote->signature = malloc(value->signature.n_0);
+  if (remote->signature) {
+    int i;
 
-  introspection->has_handler = value->has_handler;
-*/
+    memcpy(remote->signature, value->signature.a, value->signature.n_0);
+    remote->size = value->signature.n_0;
+    LABCOMM_SIGNATURE_ARRAY_FOREACH(introspecting->local, struct local, i) {
+      struct local *l;
+      
+      l = LABCOMM_SIGNATURE_ARRAY_REF(introspecting->memory,
+				      introspecting->local, struct local, i);
+      if (l->signature && 
+	  l->status == unhandled &&
+	  l->signature->name && 
+	  strcmp(remote->name, l->signature->name) == 0 &&
+	  remote->size == l->signature->size &&
+	  memcmp(l->signature->signature, remote->signature, 
+		 l->signature->size) == 0) {
+	fprintf(stderr, "OK %s %x %x\n", __FUNCTION__, value->index, i);
+	l->status = unregistered;
+      }
+    }
+  }
 }
 
 static int wrap_reader_alloc(
@@ -87,10 +117,19 @@ static int wrap_reader_start(
   void *value)
 {
   struct introspecting_private *introspecting = action_context->context;
-
-  if (value == NULL && introspecting->decoder_initialized) {
+  int result;
+  
+  result = labcomm_reader_start(r, action_context->next, index,
+				signature, value);  
+  if (value == NULL) {
     introspecting_messages_handles_signature handles_signature;
 
+    labcomm_lock_acquire(introspecting->lock);
+    while (introspecting->encoder == NULL) {
+      /* Wait for the encoder to become functional */
+      labcomm_lock_wait(introspecting->lock, 1000000);
+    }
+    labcomm_lock_release(introspecting->lock);
     handles_signature.index = index;
     handles_signature.name = signature->name;
     handles_signature.signature.n_0 = signature->size;
@@ -98,7 +137,7 @@ static int wrap_reader_start(
     labcomm_encode_introspecting_messages_handles_signature(
       introspecting->encoder, &handles_signature);
   }
-  return labcomm_reader_start(r, action_context->next, index, signature, value);
+  return result;
 }
 
  void encode_handles_signature(
@@ -146,7 +185,10 @@ static int wrap_writer_alloc(
 
   fprintf(stderr, "%s %s\n", __FILE__, __FUNCTION__);
   /* Stash away encoder for later use */
+  labcomm_lock_acquire(introspecting->lock);
   introspecting->encoder = encoder;
+  labcomm_lock_notify(introspecting->lock);
+  labcomm_lock_release(introspecting->lock);
   result = labcomm_writer_alloc(w, action_context->next,
 				encoder, labcomm_version, enqueue);
   enqueue(encoder, register_signatures, NULL);
@@ -159,9 +201,39 @@ static int wrap_writer_start(
   int index, struct labcomm_signature *signature,
   void *value)
 {
-//  struct introspecting_private *introspecting = action_context->context;
+  struct introspecting_private *introspecting = action_context->context;
+  struct local *local;
 
-  fprintf(stderr, "%s %p\n", __FUNCTION__, value);
+  fprintf(stderr, "%s %x %s\n", __FUNCTION__, index, signature->name);
+  local = LABCOMM_SIGNATURE_ARRAY_REF(introspecting->memory,
+				      introspecting->local, 
+				      struct local, 
+				      index);
+  if (local->signature == NULL) {
+    local->signature = signature;
+  }
+  if (local->status == unknown) {
+    int i;
+    int found = 0;
+
+    LABCOMM_SIGNATURE_ARRAY_FOREACH(introspecting->remote, struct remote, i) {
+      struct remote *r;
+      
+      r = LABCOMM_SIGNATURE_ARRAY_REF(introspecting->memory,
+				      introspecting->remote, struct remote, i);
+      if (r->name && 
+	  strcmp(signature->name, r->name) == 0 &&
+	  r->size == signature->size &&
+	  memcmp(signature->signature, r->signature, signature->size) == 0) {
+	fprintf(stderr, "OK %s %x %x\n", __FUNCTION__, index, i);
+	found = i;
+      }
+    }
+    if (found == 0) {
+      local->status = unhandled;
+    }
+    fprintf(stderr, "Found: %d\n", found);
+  }
   return labcomm_writer_start(w, action_context->next, index, signature, value);
 }
 
@@ -177,7 +249,8 @@ struct labcomm_writer_action introspecting_writer_action = {
 extern struct introspecting *introspecting_new(
   struct labcomm_reader *reader,
   struct labcomm_writer *writer,
-  struct labcomm_lock *lock)
+  struct labcomm_lock *lock,
+  struct labcomm_memory *memory)
 {
   struct introspecting_private *result;
 
@@ -202,12 +275,14 @@ extern struct introspecting *introspecting_new(
   result->introspecting.writer = writer;
 
   /* Init other fields */
+  result->lock = lock;
+  result->memory = memory;
   result->encoder = NULL;
   result->encoder_initialized = 0;
   result->decoder = NULL;
   result->decoder_initialized = 0;
-  result->lock = lock;
-  LABCOMM_SIGNATURE_ARRAY_INIT(result->introspection, struct introspection);
+  LABCOMM_SIGNATURE_ARRAY_INIT(result->remote, struct remote);
+  LABCOMM_SIGNATURE_ARRAY_INIT(result->local, struct local);
 
   goto out_ok;
 

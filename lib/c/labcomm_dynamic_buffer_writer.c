@@ -35,7 +35,7 @@ static int dyn_alloc(struct labcomm_writer *w,
 {
   w->data_size = 1000;
   w->count = w->data_size;
-  w->data = malloc(w->data_size);
+  w->data = labcomm_memory_alloc(w->memory, 1, w->data_size);
   if (w->data == NULL) {
     w->error = -ENOMEM;
   }
@@ -47,14 +47,12 @@ static int dyn_alloc(struct labcomm_writer *w,
 static int dyn_free(struct labcomm_writer *w, 
 		    struct labcomm_writer_action_context *action_context)
 {
-  free(w->data);
+  labcomm_memory_free(w->memory, 1, w->data);
   w->data = 0;
   w->data_size = 0;
   w->count = 0;
   w->pos = 0;
-  if (action_context->context) {
-    free(action_context->context);
-  }
+  labcomm_memory_free(w->memory, 0, action_context->context);
   return 0;
 }
 
@@ -68,7 +66,7 @@ static int dyn_start(struct labcomm_writer *w,
 
   w->data_size = 1000;
   w->count = w->data_size;
-  tmp = realloc(w->data, w->data_size);
+  tmp = labcomm_memory_realloc(w->memory, 1, w->data, w->data_size);
   if (tmp != NULL) {
     w->data = tmp;
     w->error = 0;
@@ -93,11 +91,12 @@ static int dyn_flush(struct labcomm_writer *w,
 
   w->data_size += 1000;
   w->count = w->data_size;
-  tmp = realloc(w->data, w->data_size);
+  tmp = labcomm_memory_realloc(w->memory, 1, w->data, w->data_size);
   if (tmp != NULL) {
     w->data = tmp;
     w->error = 0;
   } else {
+    /* Old pointer in w->data still valid */
     w->error = -ENOMEM;
   }
 
@@ -137,19 +136,21 @@ static const struct labcomm_writer_action action = {
 const struct labcomm_writer_action *labcomm_dynamic_buffer_writer_action = 
   &action;
 
-struct labcomm_writer *labcomm_dynamic_buffer_writer_new()
+struct labcomm_writer *labcomm_dynamic_buffer_writer_new(
+  struct labcomm_memory *memory)
 {
   struct result {
     struct labcomm_writer writer;
     struct labcomm_writer_action_context action_context;
   } *result;
 
-  result = malloc(sizeof(*result));
+  result = labcomm_memory_alloc(memory, 0, sizeof(*result));
   if (result != NULL) {
     result->action_context.next = NULL;
     result->action_context.context = result;
     result->action_context.action = &action;
     result->writer.action_context = &result->action_context;
+    result->writer.memory = memory;
     return &result->writer;
   }
   return NULL;

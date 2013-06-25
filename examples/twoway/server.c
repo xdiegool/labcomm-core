@@ -68,13 +68,18 @@ static void handle_Terminate(types_Terminate *value, void *context)
   exit(0);
 }
 
-static void *run_decoder(void *context)
+static void *run_decoder(void *arg)
 {
-  struct labcomm_decoder *decoder = context;
+  struct client *client = arg;
   int result;
 
+  
+  labcomm_decoder_register_types_A(client->decoder, handle_A, client);
+  labcomm_decoder_register_types_B(client->decoder, handle_B, client);
+  labcomm_decoder_register_types_Terminate(client->decoder, handle_Terminate, 
+					   NULL);
   do {
-    result = labcomm_decoder_decode_one(decoder);
+    result = labcomm_decoder_decode_one(client->decoder);
   } while (result >= 0);
   return NULL;
 }
@@ -89,30 +94,31 @@ static void *run_client(void *arg)
   printf("Client start\n");
   client->A = 0;
   client->B = 0;
-  lock = labcomm_pthread_mutex_lock_new();
-  decimating = decimating_new(labcomm_fd_reader_new(client->fd, 1),
-			      labcomm_fd_writer_new(client->fd, 0),
-			      lock);
+  lock = labcomm_pthread_mutex_lock_new(labcomm_default_memory);
+  decimating = decimating_new(labcomm_fd_reader_new(labcomm_default_memory,
+						    client->fd, 1),
+			      labcomm_fd_writer_new(labcomm_default_memory,
+						    client->fd, 0),
+			      lock,
+			      labcomm_default_memory);
   if (decimating == NULL) {
     /* Warning: might leak reader and writer at this point */
     goto out;
   }
   introspecting = introspecting_new(decimating->reader,
 				    decimating->writer,
-				    lock);
+				    lock,
+				    labcomm_default_memory);
   if (introspecting == NULL) {
     /* Warning: might leak reader and writer at this point */
     goto out;
   }
-  client->decoder = labcomm_decoder_new(introspecting->reader, lock);
-  client->encoder = labcomm_encoder_new(introspecting->writer, lock);
+  client->decoder = labcomm_decoder_new(introspecting->reader, lock,
+					labcomm_default_memory);
+  client->encoder = labcomm_encoder_new(introspecting->writer, lock,
+					labcomm_default_memory);
   pthread_t rdt;
-  
-  labcomm_decoder_register_types_A(client->decoder, handle_A, client);
-  labcomm_decoder_register_types_B(client->decoder, handle_B, client);
-  labcomm_decoder_register_types_Terminate(client->decoder, handle_Terminate, 
-					   NULL);
-  pthread_create(&rdt, NULL, run_decoder, client->decoder);  
+  pthread_create(&rdt, NULL, run_decoder, client);  
   labcomm_encoder_register_types_Sum(client->encoder);
   labcomm_encoder_register_types_Diff(client->encoder);
   pthread_join(rdt, NULL);

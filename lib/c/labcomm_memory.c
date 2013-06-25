@@ -1,7 +1,7 @@
 /*
-  labcomm_dynamic_buffer_writer.h -- LabComm dynamic memory writer.
+  labcomm_memory.c -- dynamic memory handlig dispatcher
 
-  Copyright 2006-2013 Anders Blomdell <anders.blomdell@control.lth.se>
+  Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
   This file is part of LabComm.
 
@@ -19,14 +19,22 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _LABCOMM_DYNAMIC_BUFFER_READER_WRITER_H_
-#define _LABCOMM_DYNAMIC_BUFFER_READER_WRITER_H_
+#include "labcomm_private.h"
 
-#include "labcomm.h"
+void *labcomm_memory_alloc(struct labcomm_memory *m, int lifetime, 
+			   size_t size) 
+{
+  return m->alloc(m, lifetime, size);
+}
 
-extern const struct labcomm_writer_action *labcomm_dynamic_buffer_writer_action;
+void *labcomm_memory_realloc(struct labcomm_memory *m, int lifetime, 
+			     void *ptr, size_t size) 
+{
+  return m->realloc(m, lifetime, ptr, size);
+}
 
-struct labcomm_writer *labcomm_dynamic_buffer_writer_new(
-  struct labcomm_memory *memory);
-
-#endif
+void labcomm_memory_free(struct labcomm_memory *m, int lifetime, 
+			 void *ptr)
+{
+  m->free(m, lifetime, ptr);
+}

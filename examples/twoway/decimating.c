@@ -29,8 +29,8 @@
 
 struct decimating_private {
   struct decimating decimating;
+  struct labcomm_memory *memory;
   struct labcomm_lock *lock;
-  struct labcomm_encoder *encoder;
   int encoder_initialized;
   struct labcomm_reader_action_context reader_action_context;
   struct labcomm_writer_action_context writer_action_context;
@@ -48,7 +48,8 @@ static void set_decimation(
   struct decimating_private *decimating = context;
   struct decimation *decimation;
 
-  decimation = LABCOMM_SIGNATURE_ARRAY_REF(decimating->decimation, 
+  decimation = LABCOMM_SIGNATURE_ARRAY_REF(decimating->memory,
+					   decimating->decimation, 
 					   struct decimation, 
 					   value->signature_index);
   decimation->n = value->decimation;
@@ -92,7 +93,7 @@ static int wrap_reader_ioctl(
     decimation.signature_index = signature_index;
     va_end(va);
     return labcomm_encode_decimating_messages_set_decimation(
-      decimating->encoder, &decimation);
+      decimating->decimating.writer->encoder, &decimation);
   } else {
     return labcomm_reader_ioctl(r, action_context->next,
 				signature_index, signature, action, args);
@@ -123,11 +124,8 @@ static int wrap_writer_alloc(
   labcomm_encoder_enqueue enqueue)
 {
   int result;
-  struct decimating_private *decimating = action_context->context;
 
   fprintf(stderr, "%s %s\n", __FILE__, __FUNCTION__);
-  /* Stash away encoder for later use */
-  decimating->encoder = encoder;
   result = labcomm_writer_alloc(w, action_context->next,
 				encoder, labcomm_version, enqueue);
   enqueue(encoder, register_signatures, NULL);
@@ -144,7 +142,8 @@ static int wrap_writer_start(
   struct decimating_private *decimating = action_context->context;
   struct decimation *decimation;
 
-  decimation = LABCOMM_SIGNATURE_ARRAY_REF(decimating->decimation, 
+  decimation = LABCOMM_SIGNATURE_ARRAY_REF(decimating->memory, 
+					   decimating->decimation, 
 					   struct decimation, index);
   decimation->current++;
   if (decimation->current < decimation->n) {
@@ -168,7 +167,8 @@ struct labcomm_writer_action decimating_writer_action = {
 extern struct decimating *decimating_new(
   struct labcomm_reader *reader,
   struct labcomm_writer *writer,
-  struct labcomm_lock *lock)
+  struct labcomm_lock *lock,
+  struct labcomm_memory *memory)
 {
   struct decimating_private *result;
 
@@ -194,8 +194,7 @@ extern struct decimating *decimating_new(
 
   /* Init other fields */
   result->lock = lock;
-  result->encoder = NULL;
-  result->encoder_initialized = 0;
+  result->memory = memory;
   LABCOMM_SIGNATURE_ARRAY_INIT(result->decimation, struct decimation);
 
   goto out_ok;

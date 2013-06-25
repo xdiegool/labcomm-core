@@ -45,7 +45,7 @@ static int fd_alloc(struct labcomm_writer *w,
 		    char *version,
 		    labcomm_encoder_enqueue enqueue)
 {
-  w->data = malloc(BUFFER_SIZE);
+  w->data = labcomm_memory_alloc(w->memory, 0, BUFFER_SIZE);
   if (! w->data) {
     w->error = -ENOMEM;
     w->data_size = 0;
@@ -67,17 +67,19 @@ static int fd_alloc(struct labcomm_writer *w,
 static int fd_free(struct labcomm_writer *w, 
 		   struct labcomm_writer_action_context *action_context)
 {
-  struct labcomm_fd_writer *fd_context = action_context->context;
+  struct labcomm_fd_writer *fd_writer = action_context->context;
+  struct labcomm_memory *memory = w->memory;
 
-  free(w->data);
+  labcomm_memory_free(memory, 0, w->data);
   w->data = 0;
   w->data_size = 0;
   w->count = 0;
   w->pos = 0;
 
-  if (fd_context->close_fd_on_free) {
-    close(fd_context->fd);
+  if (fd_writer->close_fd_on_free) {
+    close(fd_writer->fd);
   }
+  labcomm_memory_free(memory, 0, fd_writer);
   return 0;
 }
 
@@ -117,35 +119,29 @@ static int fd_flush(struct labcomm_writer *w,
   return w->error;
 }
 
-static int fd_ioctl(struct labcomm_writer *w, 
-		    struct labcomm_writer_action_context *action_context, 
-		    int signature_index, struct labcomm_signature *signature, 
-		    uint32_t action, va_list args)
-{
-  return -ENOTSUP;
-}
-
 static const struct labcomm_writer_action action = {
   .alloc = fd_alloc,
   .free = fd_free,
   .start = fd_start,
   .end = fd_flush,
   .flush = fd_flush,
-  .ioctl = fd_ioctl
+  .ioctl = NULL
 };
 
-struct labcomm_writer *labcomm_fd_writer_new(int fd, int close_fd_on_free)
+struct labcomm_writer *labcomm_fd_writer_new(struct labcomm_memory *memory,
+					     int fd, int close_fd_on_free)
 {
   struct labcomm_fd_writer *result;
 
-  result = malloc(sizeof(*result));
+  result = labcomm_memory_alloc(memory, 0, sizeof(*result));
   if (result == NULL) {
     return NULL;
   } else {
-    result->writer.action_context = &result->action_context;
     result->action_context.next = NULL;
     result->action_context.action = &action;
     result->action_context.context = result;
+    result->writer.action_context = &result->action_context;
+    result->writer.memory = memory;
     result->fd = fd;
     result->close_fd_on_free = close_fd_on_free;
     return &result->writer;

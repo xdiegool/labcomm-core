@@ -1,7 +1,7 @@
 /*
-  labcomm_dynamic_buffer_writer.h -- LabComm dynamic memory writer.
+  test_default_memory.c -- LabComm default memory allocator
 
-  Copyright 2006-2013 Anders Blomdell <anders.blomdell@control.lth.se>
+  Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
   This file is part of LabComm.
 
@@ -19,14 +19,31 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _LABCOMM_DYNAMIC_BUFFER_READER_WRITER_H_
-#define _LABCOMM_DYNAMIC_BUFFER_READER_WRITER_H_
-
+#include <stdlib.h>
 #include "labcomm.h"
+#include "labcomm_private.h"
 
-extern const struct labcomm_writer_action *labcomm_dynamic_buffer_writer_action;
+void *default_alloc(struct labcomm_memory *m, int lifetime, size_t size)
+{
+  return malloc(size);
+}
 
-struct labcomm_writer *labcomm_dynamic_buffer_writer_new(
-  struct labcomm_memory *memory);
+void *default_realloc(struct labcomm_memory *m, int lifetime, 
+		      void *ptr, size_t size)
+{
+  return realloc(ptr, size);
+}
 
-#endif
+void default_free(struct labcomm_memory *m, int lifetime, void *ptr)
+{
+  free(ptr);
+}
+
+struct labcomm_memory memory = {
+  .alloc = default_alloc,
+  .realloc = default_realloc,
+  .free = default_free,
+  .context = NULL
+};
+
+struct labcomm_memory *labcomm_default_memory = &memory;

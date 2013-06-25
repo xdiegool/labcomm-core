@@ -53,6 +53,8 @@ static void *run_decoder(void *context)
   struct labcomm_decoder *decoder = context;
   int result;
 
+  labcomm_decoder_register_types_Sum(decoder, handle_Sum, NULL);
+  labcomm_decoder_register_types_Diff(decoder, handle_Diff, NULL);
   do {
     result = labcomm_decoder_decode_one(decoder);
   } while (result >= 0);
@@ -112,33 +114,34 @@ int main(int argc, char *argv[])
   
   nodelay = 1;
   setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay));
-  lock = labcomm_pthread_mutex_lock_new();
-  decimating = decimating_new(labcomm_fd_reader_new(fd, 1),
-			      labcomm_fd_writer_new(fd, 0),
-			      lock);
+  lock = labcomm_pthread_mutex_lock_new(labcomm_default_memory);
+  decimating = decimating_new(labcomm_fd_reader_new(labcomm_default_memory, 
+						    fd, 1),
+			      labcomm_fd_writer_new(labcomm_default_memory, 
+						    fd, 0),
+			      lock,
+			      labcomm_default_memory);
   if (decimating == NULL) {
     /* Warning: might leak reader and writer at this point */
     goto out;
   }
   introspecting = introspecting_new(decimating->reader,
 				    decimating->writer,
-				    lock);
+				    lock,
+				    labcomm_default_memory);
   if (introspecting == NULL) {
     /* Warning: might leak reader and writer at this point */
     goto out;
   }
-  decoder = labcomm_decoder_new(introspecting->reader, lock);
-  encoder = labcomm_encoder_new(introspecting->writer, lock);
+  decoder = labcomm_decoder_new(introspecting->reader, lock,
+				labcomm_default_memory);
+  encoder = labcomm_encoder_new(introspecting->writer, lock,
+				labcomm_default_memory);
   pthread_t rdt;
-  
-  labcomm_decoder_register_types_Sum(decoder, handle_Sum, NULL);
-  labcomm_decoder_register_types_Diff(decoder, handle_Diff, NULL);
   pthread_create(&rdt, NULL, run_decoder, decoder);  
   labcomm_encoder_register_types_A(encoder);
   labcomm_encoder_register_types_B(encoder);
   labcomm_encoder_register_types_Terminate(encoder);
-
-  usleep(100000);
 
   err = labcomm_decoder_ioctl_types_Sum(decoder, SET_DECIMATION, 2);
   err = labcomm_decoder_ioctl_types_Diff(decoder, SET_DECIMATION, 4);
@@ -151,7 +154,7 @@ int main(int argc, char *argv[])
       sleep(1);
     }
   }
-  labcomm_encode_types_Terminate(encoder, NULL);
+  labcomm_encode_types_Terminate(encoder, LABCOMM_VOID);
 out:
   return 0;
   

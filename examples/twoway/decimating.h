@@ -12,7 +12,8 @@ struct decimating {
 extern struct decimating *decimating_new(
   struct labcomm_reader *reader,
   struct labcomm_writer *writer,
-  struct labcomm_lock *lock);
+  struct labcomm_lock *lock,
+  struct labcomm_memory *memory);
 
 #define SET_DECIMATION LABCOMM_IOSW('d',0,int)
 

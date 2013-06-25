@@ -21,3 +21,5 @@ sample struct_t struct_t_s;
 sample struct_array_t struct_array_t_s;
 sample struct_struct_t struct_struct_t_s;
 
+sample string string_array[_];
+sample struct { string s[_]; } string_struct_array;

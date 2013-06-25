@@ -36,7 +36,8 @@ struct introspecting {
 extern struct introspecting *introspecting_new(
   struct labcomm_reader *reader,
   struct labcomm_writer *writer,
-  struct labcomm_lock *lock);
+  struct labcomm_lock *lock,
+  struct labcomm_memory *memory);
 
 #define HAS_SIGNATURE LABCOMM_IOS('i',2)
 
