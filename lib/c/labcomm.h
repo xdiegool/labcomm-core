@@ -90,6 +90,9 @@ int labcomm_lock_acquire(struct labcomm_lock *lock);
 int labcomm_lock_release(struct labcomm_lock *lock);
 int labcomm_lock_wait(struct labcomm_lock *lock, useconds_t usec);
 int labcomm_lock_notify(struct labcomm_lock *lock);
+int labcomm_lock_sleep_epoch(struct labcomm_lock *lock);
+int labcomm_lock_sleep_add(struct labcomm_lock *lock, useconds_t usec);
+int labcomm_lock_sleep(struct labcomm_lock *lock);
 
 /*
  * Dynamic memory handling

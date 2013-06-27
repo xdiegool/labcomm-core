@@ -5,18 +5,21 @@ CC=gcc
 CFLAGS=-g -Wall -Werror -O3  -I. -Itest 
 LDFLAGS=-L.
 #LDLIBS_TEST=-Tlabcomm.linkscript  -lcunit -llabcomm
-LDLIBS_TEST=-lcunit -llabcomm -Tlabcomm.linkscript
+LDLIBS_TEST=-lcunit -llabcomm -Tlabcomm.linkscript -lrt
 
-OBJS= labcomm.o \
-      labcomm_memory.o labcomm_default_memory.o \
-      labcomm_dynamic_buffer_writer.o labcomm_fd_reader.o labcomm_fd_writer.o \
-      labcomm_pthread_mutex_lock.o
+OBJS=labcomm_memory.o labcomm_default_memory.o \
+     labcomm_time.o labcomm_scheduler.o \
+     labcomm.o \
+     labcomm_dynamic_buffer_writer.o labcomm_fd_reader.o labcomm_fd_writer.o \
+     labcomm_pthread_scheduler.o \
+     labcomm_pthread_mutex_lock.o
 
 #FIXME: labcomm_mem_reader.o labcomm_mem_writer.o
 LABCOMM_JAR=../../compiler/labComm.jar
 LABCOMM=java -jar $(LABCOMM_JAR) 
 
-TESTS=test_labcomm_basic_type_encoding test_labcomm_generated_encoding 
+TESTS=test_labcomm_basic_type_encoding test_labcomm_generated_encoding \
+      test_labcomm_pthread_scheduler 
 #
 #FIXME: test_labcomm test_labcomm_errors
 TEST_DIR=test
@@ -70,6 +73,7 @@ run-test-%: $(TEST_DIR)/% | $(TEST_DIR)
 $(TEST_DIR)/%.o: $(TEST_DIR)/%.c
 	$(CC) $(CFLAGS) -o $@ -c $<
 
+.PRECIOUS: $(TEST_DIR)/%
 $(TEST_DIR)/%: $(TEST_DIR)/%.o liblabcomm.a
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS) $(LDLIBS_TEST)
 
