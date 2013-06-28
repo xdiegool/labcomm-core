@@ -259,11 +259,13 @@ static void call_handler(void *value, void *context)
 {
   struct call_handler_context *wrap = context;
 
-  labcomm_reader_start(wrap->reader, wrap->reader->action_context,
-		       wrap->local_index, wrap->remote_index, wrap->signature,
-		       value);
-  wrap->handler(value, wrap->context);
-  labcomm_reader_end(wrap->reader, wrap->reader->action_context);
+  if (wrap->reader->error >= 0) {
+    labcomm_reader_start(wrap->reader, wrap->reader->action_context,
+			 wrap->local_index, wrap->remote_index, wrap->signature,
+			 value);
+    wrap->handler(value, wrap->context);
+    labcomm_reader_end(wrap->reader, wrap->reader->action_context);
+  }
 }
 
 static void reader_alloc(struct labcomm_decoder *d)
