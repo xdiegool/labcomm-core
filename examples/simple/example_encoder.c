@@ -2,6 +2,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <labcomm_fd_writer.h>
+#include <labcomm_default_error_handler.h>
+#include <labcomm_default_memory.h>
+#include <labcomm_default_scheduler.h>
 #include "gen/simple.h"
 #include <stdio.h>
 
@@ -14,7 +17,9 @@ int main(int argc, char *argv[]) {
   fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC, 0644);
   encoder = labcomm_encoder_new(labcomm_fd_writer_new(
 				  labcomm_default_memory, fd, 1), 
-				NULL, labcomm_default_memory);
+				labcomm_default_error_handler, 
+				labcomm_default_memory,
+				labcomm_default_scheduler);
   labcomm_encoder_register_simple_theTwoInts(encoder);
   labcomm_encoder_register_simple_anotherTwoInts(encoder);
   labcomm_encoder_register_simple_IntString(encoder);

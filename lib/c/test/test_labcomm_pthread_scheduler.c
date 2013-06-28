@@ -22,9 +22,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "labcomm_default_memory.h"
 #include "labcomm_scheduler.h"
 #include "labcomm_pthread_scheduler.h"
 
+#define TICK 100000
 struct func_arg {
   struct labcomm_scheduler *scheduler;
   int i;
@@ -50,7 +52,7 @@ void enqueue(struct labcomm_scheduler *scheduler,
     
     tmp->scheduler = scheduler;
     tmp->i = i;
-    labcomm_scheduler_enqueue(scheduler, i*1000000, func, tmp);
+    labcomm_scheduler_enqueue(scheduler, i*TICK, func, tmp);
   }
 }
 
@@ -69,10 +71,10 @@ int main(int argc, char *argv[])
     
     tmp->scheduler = scheduler;
     tmp->i = 999;
-    labcomm_scheduler_enqueue(scheduler, 6000000, func, tmp);
+    labcomm_scheduler_enqueue(scheduler, 6*TICK, func, tmp);
   }
   time = labcomm_scheduler_now(scheduler);
-  labcomm_time_add_usec(time, 12*1000000);
+  labcomm_time_add_usec(time, 12*TICK);
   labcomm_scheduler_sleep(scheduler, NULL);
   labcomm_scheduler_sleep(scheduler, time);
 

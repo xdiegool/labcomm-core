@@ -37,7 +37,6 @@ struct labcomm_fd_reader {
 
 static int fd_alloc(struct labcomm_reader *r,
 		    struct labcomm_reader_action_context *action_context, 
-		    struct labcomm_decoder *decoder,
 		    char *version)
 {
   int result = 0;

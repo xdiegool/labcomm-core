@@ -324,7 +324,7 @@ out:
   return result;
 }
 
-const struct labcomm_scheduler_action scheduler_action = {
+static const struct labcomm_scheduler_action scheduler_action = {
   .free = scheduler_free,
   .writer_lock = scheduler_writer_lock,
   .writer_unlock = scheduler_writer_unlock,

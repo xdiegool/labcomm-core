@@ -2,6 +2,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <labcomm_fd_reader.h>
+#include <labcomm_default_error_handler.h>
+#include <labcomm_default_memory.h>
+#include <labcomm_default_scheduler.h>
 #include "gen/simple.h"
 #include <stdio.h>
 
@@ -58,7 +61,9 @@ int main(int argc, char *argv[]) {
   fd = open(filename, O_RDONLY);
   decoder = labcomm_decoder_new(labcomm_fd_reader_new(
 				  labcomm_default_memory, fd, 1), 
-				NULL, labcomm_default_memory);
+				labcomm_default_error_handler, 
+				labcomm_default_memory,
+				labcomm_default_scheduler);
   if (!decoder) { 
     printf("Failed to allocate decoder %s:%d\n", __FUNCTION__, __LINE__);
     return 1;

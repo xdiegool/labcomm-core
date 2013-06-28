@@ -27,7 +27,9 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <labcomm_pthread_mutex_lock.h>
+#include <labcomm_default_error_handler.h>
+#include <labcomm_default_memory.h>
+#include <labcomm_pthread_scheduler.h>
 #include <labcomm_fd_reader.h>
 #include <labcomm_fd_writer.h>
 #include "decimating.h"
@@ -89,34 +91,40 @@ static void *run_client(void *arg)
   struct client *client = arg;
   struct decimating *decimating;
   struct introspecting *introspecting;
-  struct labcomm_lock *lock;
+  struct labcomm_scheduler *scheduler;
 
   printf("Client start\n");
   client->A = 0;
   client->B = 0;
-  lock = labcomm_pthread_mutex_lock_new(labcomm_default_memory);
+  scheduler = labcomm_pthread_scheduler_new(labcomm_default_memory);
   decimating = decimating_new(labcomm_fd_reader_new(labcomm_default_memory,
 						    client->fd, 1),
 			      labcomm_fd_writer_new(labcomm_default_memory,
 						    client->fd, 0),
-			      lock,
-			      labcomm_default_memory);
+			      labcomm_default_error_handler,
+			      labcomm_default_memory,
+			      scheduler);
   if (decimating == NULL) {
     /* Warning: might leak reader and writer at this point */
     goto out;
   }
   introspecting = introspecting_new(decimating->reader,
 				    decimating->writer,
-				    lock,
-				    labcomm_default_memory);
+				    labcomm_default_error_handler,
+				    labcomm_default_memory,
+				    scheduler);
   if (introspecting == NULL) {
     /* Warning: might leak reader and writer at this point */
     goto out;
   }
-  client->decoder = labcomm_decoder_new(introspecting->reader, lock,
-					labcomm_default_memory);
-  client->encoder = labcomm_encoder_new(introspecting->writer, lock,
-					labcomm_default_memory);
+  client->decoder = labcomm_decoder_new(introspecting->reader,
+				    labcomm_default_error_handler,
+				    labcomm_default_memory,
+				    scheduler);
+  client->encoder = labcomm_encoder_new(introspecting->writer,
+				    labcomm_default_error_handler,
+				    labcomm_default_memory,
+				    scheduler);
   pthread_t rdt;
   pthread_create(&rdt, NULL, run_decoder, client);  
   labcomm_encoder_register_types_Sum(client->encoder);

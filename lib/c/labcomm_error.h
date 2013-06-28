@@ -7,6 +7,8 @@ enum labcomm_error {
 #undef LABCOMM_ERROR
 };
 
+struct labcomm_error_handler;
+
 #endif
 
 #ifdef LABCOMM_ERROR

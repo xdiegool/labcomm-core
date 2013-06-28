@@ -33,7 +33,9 @@
 #include <labcomm.h>
 #include <labcomm_fd_reader.h>
 #include <labcomm_fd_writer.h>
-#include <labcomm_pthread_mutex_lock.h>
+#include <labcomm_default_error_handler.h>
+#include <labcomm_default_memory.h>
+#include <labcomm_pthread_scheduler.h>
 #include "decimating.h"
 #include "introspecting.h"
 #include "gen/types.h"
@@ -74,7 +76,7 @@ int main(int argc, char *argv[])
   struct introspecting *introspecting;
   char *hostname;
   int port;
-  struct labcomm_lock *lock;
+  struct labcomm_scheduler *scheduler;
   struct labcomm_decoder *decoder;
   struct labcomm_encoder *encoder;
   int32_t i, j;
@@ -114,29 +116,35 @@ int main(int argc, char *argv[])
   
   nodelay = 1;
   setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay));
-  lock = labcomm_pthread_mutex_lock_new(labcomm_default_memory);
+  scheduler = labcomm_pthread_scheduler_new(labcomm_default_memory);
   decimating = decimating_new(labcomm_fd_reader_new(labcomm_default_memory, 
 						    fd, 1),
 			      labcomm_fd_writer_new(labcomm_default_memory, 
 						    fd, 0),
-			      lock,
-			      labcomm_default_memory);
+			      labcomm_default_error_handler,
+			      labcomm_default_memory,
+			      scheduler);
   if (decimating == NULL) {
     /* Warning: might leak reader and writer at this point */
     goto out;
   }
   introspecting = introspecting_new(decimating->reader,
 				    decimating->writer,
-				    lock,
-				    labcomm_default_memory);
+				    labcomm_default_error_handler,
+				    labcomm_default_memory,
+				    scheduler);
   if (introspecting == NULL) {
     /* Warning: might leak reader and writer at this point */
     goto out;
   }
-  decoder = labcomm_decoder_new(introspecting->reader, lock,
-				labcomm_default_memory);
-  encoder = labcomm_encoder_new(introspecting->writer, lock,
-				labcomm_default_memory);
+  decoder = labcomm_decoder_new(introspecting->reader, 
+				labcomm_default_error_handler,
+				labcomm_default_memory,
+				scheduler);
+  encoder = labcomm_encoder_new(introspecting->writer, 
+				labcomm_default_error_handler,
+				labcomm_default_memory,
+				scheduler);
   pthread_t rdt;
   pthread_create(&rdt, NULL, run_decoder, decoder);  
   labcomm_encoder_register_types_A(encoder);

@@ -1,5 +1,5 @@
 /*
-  labcomm_pthread_mutex_lock.h -- a labcomm_lock on top of pthread_mutex.
+  test_default_memory.h -- LabComm default memory allocator
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -19,12 +19,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _LABCOMM_PTHREAD_MUTEX_LOCK_H_
-#define _LABCOMM_PTHREAD_MUTEX_LOCK_H_
-
+#include <stdlib.h>
 #include "labcomm.h"
+#include "labcomm_private.h"
 
-struct labcomm_lock *labcomm_pthread_mutex_lock_new(
-  struct labcomm_memory *memory);
+extern struct labcomm_memory *labcomm_default_memory;
 
-#endif

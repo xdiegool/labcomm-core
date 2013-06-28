@@ -41,9 +41,7 @@ static int fd_flush(struct labcomm_writer *w,
 
 static int fd_alloc(struct labcomm_writer *w, 
 		    struct labcomm_writer_action_context *action_context, 
-		    struct labcomm_encoder *encoder,
-		    char *version,
-		    labcomm_encoder_enqueue enqueue)
+		    char *version)
 {
   w->data = labcomm_memory_alloc(w->memory, 0, BUFFER_SIZE);
   if (! w->data) {

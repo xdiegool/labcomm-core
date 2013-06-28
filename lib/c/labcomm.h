@@ -26,7 +26,8 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <unistd.h>
-#include <labcomm_error.h>
+#include "labcomm_error.h"
+#include "labcomm_scheduler.h"
 
 /* Forward declaration */
 struct labcomm_encoder;
@@ -80,21 +81,6 @@ void labcomm_decoder_register_new_datatype_handler(struct labcomm_decoder *d,
 		labcomm_handle_new_datatype_callback on_new_datatype);
 
 /*
- * Locking support (optional), if not used only a single thread
- * may access an encoder or decoder at the same time.
- */
-struct labcomm_lock;
-
-int labcomm_lock_free(struct labcomm_lock *lock);
-int labcomm_lock_acquire(struct labcomm_lock *lock);
-int labcomm_lock_release(struct labcomm_lock *lock);
-int labcomm_lock_wait(struct labcomm_lock *lock, useconds_t usec);
-int labcomm_lock_notify(struct labcomm_lock *lock);
-int labcomm_lock_sleep_epoch(struct labcomm_lock *lock);
-int labcomm_lock_sleep_add(struct labcomm_lock *lock, useconds_t usec);
-int labcomm_lock_sleep(struct labcomm_lock *lock);
-
-/*
  * Dynamic memory handling
  *   lifetime == 0     memory that will live for as long as the 
  *                     encoder/decoder or that are allocated/deallocated 
@@ -109,8 +95,6 @@ void *labcomm_memory_realloc(struct labcomm_memory *m, int lifetime,
 			     void *ptr, size_t size);
 void labcomm_memory_free(struct labcomm_memory *m, int lifetime, void *ptr);
 
-extern struct labcomm_memory *labcomm_default_memory;
-
 /*
  * Decoder
  */
@@ -118,13 +102,14 @@ struct labcomm_reader;
 
 struct labcomm_decoder *labcomm_decoder_new(
   struct labcomm_reader *reader,
-  struct labcomm_lock *lock,
-  struct labcomm_memory *memory);
+  struct labcomm_error_handler *error,
+  struct labcomm_memory *memory,
+  struct labcomm_scheduler *scheduler);
+void labcomm_decoder_free(
+  struct labcomm_decoder *decoder);
 int labcomm_decoder_decode_one(
   struct labcomm_decoder *decoder);
 void labcomm_decoder_run(
-  struct labcomm_decoder *decoder);
-void labcomm_decoder_free(
   struct labcomm_decoder *decoder);
 
 /* See labcomm_ioctl.h for predefined ioctl_action values */
@@ -139,8 +124,9 @@ struct labcomm_writer;
 
 struct labcomm_encoder *labcomm_encoder_new(
   struct labcomm_writer *writer,
-  struct labcomm_lock *lock,
-  struct labcomm_memory *memory);
+  struct labcomm_error_handler *error,
+  struct labcomm_memory *memory,
+  struct labcomm_scheduler *scheduler);
 void labcomm_encoder_free(
   struct labcomm_encoder *encoder);
 

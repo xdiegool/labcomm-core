@@ -29,8 +29,9 @@
 
 struct decimating_private {
   struct decimating decimating;
+  struct labcomm_error_handler *error;
   struct labcomm_memory *memory;
-  struct labcomm_lock *lock;
+  struct labcomm_scheduler *scheduler;
   int encoder_initialized;
   struct labcomm_reader_action_context reader_action_context;
   struct labcomm_writer_action_context writer_action_context;
@@ -59,19 +60,19 @@ static void set_decimation(
 static int wrap_reader_alloc(
   struct labcomm_reader *r, 
   struct labcomm_reader_action_context *action_context, 
-  struct labcomm_decoder *decoder,
   char *labcomm_version)
 {
   int result;
 
   struct decimating_private *decimating = action_context->context;
   
-  fprintf(stderr, "%s %s\n", __FILE__, __FUNCTION__);
+  fprintf(stderr, "%s %s %d\n", __FILE__, __FUNCTION__, __LINE__);
   /* Stash away decoder for later use */
-  result = labcomm_reader_alloc(r, action_context->next, 
-				decoder, labcomm_version);
+  result = labcomm_reader_alloc(r, action_context->next, labcomm_version);
+  fprintf(stderr, "%s %s %d\n", __FILE__, __FUNCTION__, __LINE__);
   labcomm_decoder_register_decimating_messages_set_decimation(
-    decoder, set_decimation, decimating);
+    r->decoder, set_decimation, decimating);
+  fprintf(stderr, "%s %s %d\n", __FILE__, __FUNCTION__, __LINE__);
   return result;
 }
 
@@ -110,25 +111,26 @@ struct labcomm_reader_action decimating_reader_action = {
   .ioctl = wrap_reader_ioctl
 };
 
-static void register_signatures(struct labcomm_encoder *encoder,
-				void *context)
+static void register_signatures(void *context)
 {
+  struct decimating_private *decimating = context;
+
   labcomm_encoder_register_decimating_messages_set_decimation(
-    encoder);
+    decimating->decimating.writer->encoder);
 }
 
 static int wrap_writer_alloc(
   struct labcomm_writer *w, 
   struct labcomm_writer_action_context *action_context, 
-  struct labcomm_encoder *encoder, char *labcomm_version,
-  labcomm_encoder_enqueue enqueue)
+  char *labcomm_version)
 {
+  struct decimating_private *decimating = action_context->context;
   int result;
 
   fprintf(stderr, "%s %s\n", __FILE__, __FUNCTION__);
-  result = labcomm_writer_alloc(w, action_context->next,
-				encoder, labcomm_version, enqueue);
-  enqueue(encoder, register_signatures, NULL);
+  result = labcomm_writer_alloc(w, action_context->next, labcomm_version);
+  labcomm_scheduler_enqueue(decimating->scheduler, 
+			    0, register_signatures, decimating);
 
   return result;
 }
@@ -164,11 +166,12 @@ struct labcomm_writer_action decimating_writer_action = {
   .ioctl = NULL
 };
 
-extern struct decimating *decimating_new(
+struct decimating *decimating_new(
   struct labcomm_reader *reader,
   struct labcomm_writer *writer,
-  struct labcomm_lock *lock,
-  struct labcomm_memory *memory)
+  struct labcomm_error_handler *error,
+  struct labcomm_memory *memory,
+  struct labcomm_scheduler *scheduler)
 {
   struct decimating_private *result;
 
@@ -193,8 +196,9 @@ extern struct decimating *decimating_new(
   result->decimating.writer = writer;
 
   /* Init other fields */
-  result->lock = lock;
+  result->error = error;
   result->memory = memory;
+  result->scheduler = scheduler;
   LABCOMM_SIGNATURE_ARRAY_INIT(result->decimation, struct decimation);
 
   goto out_ok;

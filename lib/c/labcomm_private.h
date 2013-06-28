@@ -68,25 +68,6 @@
   struct labcomm_signature __attribute__((section("labcomm"),aligned(1))) name 
 
 /*
- * Semi private lock declarations
- */
-struct labcomm_lock;
-
-struct labcomm_lock_action {
-  int (*free)(struct labcomm_lock *lock);
-  int (*acquire)(struct labcomm_lock *lock);
-  int (*release)(struct labcomm_lock *lock);
-  int (*wait)(struct labcomm_lock *lock, useconds_t usec);
-  int (*notify)(struct labcomm_lock *lock);
-};
-
-struct labcomm_lock {
-  const struct labcomm_lock_action *action;
-  struct labcomm_memory *memory;
-  void *context;
-};
-
-/*
  * Semi private dynamic memory declarations
  */
 
@@ -122,7 +103,7 @@ struct labcomm_reader_action {
   */
   int (*alloc)(struct labcomm_reader *r, 
 	       struct labcomm_reader_action_context *action_context, 
-	       struct labcomm_decoder *decoder, char *labcomm_version);
+	       char *labcomm_version);
   /* 'free' returns the resources claimed by 'alloc' and might have other
      reader specific side-effects as well.
 
@@ -137,7 +118,8 @@ struct labcomm_reader_action {
    */
   int (*start)(struct labcomm_reader *r, 
 	       struct labcomm_reader_action_context *action_context,
-	       int index, struct labcomm_signature *signature,
+	       int local_index, int remote_index,
+	       struct labcomm_signature *signature,
 	       void *value);
   int (*end)(struct labcomm_reader *r, 
 	     struct labcomm_reader_action_context *action_context);
@@ -169,13 +151,13 @@ struct labcomm_reader {
 
 int labcomm_reader_alloc(struct labcomm_reader *r, 
 			 struct labcomm_reader_action_context *action_context, 
-			 struct labcomm_decoder *decoder, 
 			 char *labcomm_version);
 int labcomm_reader_free(struct labcomm_reader *r, 
 			struct labcomm_reader_action_context *action_context);
 int labcomm_reader_start(struct labcomm_reader *r, 
 			 struct labcomm_reader_action_context *action_context,
-			 int index, struct labcomm_signature *signature,
+			 int local_index, int remote_index,
+			 struct labcomm_signature *signature,
 			 void *value);
 int labcomm_reader_end(struct labcomm_reader *r, 
 		       struct labcomm_reader_action_context *action_context);
@@ -286,21 +268,14 @@ static inline char *labcomm_read_string(struct labcomm_reader *r)
 /*
  * Semi private encoder declarations
  */
-typedef int (*labcomm_encoder_function)(
-  struct labcomm_writer *,
-  void *value);
-typedef int (*labcomm_encoder_enqueue)(
-  struct labcomm_encoder *encoder, 
-  void (*action)(struct labcomm_encoder *encoder, 
-		 void *context),
-  void *context);
+typedef int (*labcomm_encoder_function)(struct labcomm_writer *,
+					void *value);
 struct labcomm_writer_action_context;
 
 struct labcomm_writer_action {
   int (*alloc)(struct labcomm_writer *w, 
 	       struct labcomm_writer_action_context *action_context, 
-	       struct labcomm_encoder *encoder, char *labcomm_version,
-	       labcomm_encoder_enqueue enqueue);
+	       char *labcomm_version);
   int (*free)(struct labcomm_writer *w, 
 	      struct labcomm_writer_action_context *action_context);
   /* 'start' is called right before a sample is to be sent. In the 
@@ -346,9 +321,7 @@ struct labcomm_writer {
 
 int labcomm_writer_alloc(struct labcomm_writer *w, 
 			 struct labcomm_writer_action_context *action_context, 
-			 struct labcomm_encoder *encoder, 
-			 char *labcomm_version,
-			 labcomm_encoder_enqueue enqueue);
+			 char *labcomm_version);
 int labcomm_writer_free(struct labcomm_writer *w, 
 			struct labcomm_writer_action_context *action_context);
 int labcomm_writer_start(struct labcomm_writer *w, 

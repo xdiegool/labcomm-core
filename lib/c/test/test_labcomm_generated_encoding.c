@@ -24,6 +24,9 @@
 #include <string.h>
 #include <errno.h>
 #include "labcomm_private.h"
+#include "labcomm_default_error_handler.h"
+#include "labcomm_default_memory.h"
+#include "labcomm_pthread_scheduler.h"
 #include "test/gen/generated_encoding.h"
 
 #define IOCTL_WRITER_ASSERT_BYTES 4096
@@ -35,9 +38,7 @@ struct labcomm_writer *writer;
 static int buf_writer_alloc(
   struct labcomm_writer *w, 
   struct labcomm_writer_action_context *action_context,
-  struct labcomm_encoder *encoder,
-  char *labcomm_version,
-  labcomm_encoder_enqueue enqueue)
+  char *labcomm_version)
 {
   writer = w; /* Hack */
   w->data_size = sizeof(buffer);
@@ -181,9 +182,11 @@ int main(void)
   generated_encoding_V V;
   generated_encoding_B B = 1;
 
-  struct labcomm_encoder *encoder = labcomm_encoder_new(&buffer_writer, 
-							NULL,
-							labcomm_default_memory);
+  struct labcomm_encoder *encoder = labcomm_encoder_new(
+    &buffer_writer, 
+    labcomm_default_error_handler,
+    labcomm_default_memory,
+    labcomm_pthread_scheduler_new(labcomm_default_memory));
 
   labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   labcomm_encoder_register_generated_encoding_V(encoder);

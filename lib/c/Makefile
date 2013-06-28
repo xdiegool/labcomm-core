@@ -7,12 +7,16 @@ LDFLAGS=-L.
 #LDLIBS_TEST=-Tlabcomm.linkscript  -lcunit -llabcomm
 LDLIBS_TEST=-lcunit -llabcomm -Tlabcomm.linkscript -lrt
 
-OBJS=labcomm_memory.o labcomm_default_memory.o \
+OBJS=labcomm_memory.o \
+     labcomm_default_error_handler.o \
+     labcomm_default_memory.o \
+     labcomm_default_scheduler.o \
      labcomm_time.o labcomm_scheduler.o \
+     labcomm_encoder.o labcomm_decoder.o \
      labcomm.o \
      labcomm_dynamic_buffer_writer.o labcomm_fd_reader.o labcomm_fd_writer.o \
      labcomm_pthread_scheduler.o \
-     labcomm_pthread_mutex_lock.o
+     labcomm_signature_gnu_ld_tricks.o
 
 #FIXME: labcomm_mem_reader.o labcomm_mem_writer.o
 LABCOMM_JAR=../../compiler/labComm.jar

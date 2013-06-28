@@ -1,6 +1,5 @@
 /*
-  introspecting.h -- LabComm example of a twoway stacked introspection 
-                     reader/writer.
+  labcomm_signature.h -- signature handling.
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -20,26 +19,5 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __INTROSPECTING_H__
-#define __INTROSPECTING_H__
-
-#include <labcomm.h>
-#include <labcomm_ioctl.h>
-#include <labcomm_fd_reader.h>
-#include <labcomm_fd_writer.h>
-
-struct introspecting {
-  struct labcomm_reader *reader;
-  struct labcomm_writer *writer;
-};
-
-extern struct introspecting *introspecting_new(
-  struct labcomm_reader *reader,
-  struct labcomm_writer *writer,
-  struct labcomm_error_handler *error,
-  struct labcomm_memory *memory,
-  struct labcomm_scheduler *scheduler);
-
-#define HAS_SIGNATURE LABCOMM_IOS('i',2)
-
-#endif
+#include "labcomm.h"
+int labcomm_signature_local_index(struct labcomm_signature *s);

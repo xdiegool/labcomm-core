@@ -27,6 +27,9 @@ if __name__ == '__main__':
       |#include <sys/stat.h>
       |#include <fcntl.h>
       |#include <labcomm.h>
+      |#include <labcomm_default_error_handler.h>
+      |#include <labcomm_default_memory.h>
+      |#include <labcomm_default_scheduler.h>
       |#include <labcomm_fd_reader.h>
       |#include <labcomm_fd_writer.h>
       |#include "c_code.h"
@@ -52,10 +55,14 @@ if __name__ == '__main__':
       |  if (out < 0) { return 1; }
       |  e = labcomm_encoder_new(labcomm_fd_writer_new(
       |                              labcomm_default_memory, out, 1), 
-      |                           NULL, labcomm_default_memory);
+      |                           labcomm_default_error_handler,
+      |                           labcomm_default_memory,
+      |                           labcomm_default_scheduler);
       |  d = labcomm_decoder_new(labcomm_fd_reader_new(
-      |                               labcomm_default_memory, in, 1), 
-      |                          NULL, labcomm_default_memory);
+      |                              labcomm_default_memory, in, 1), 
+      |                           labcomm_default_error_handler,
+      |                           labcomm_default_memory,
+      |                           labcomm_default_scheduler);
     """))
     for func,arg in sample:
         result.extend(split_match('^[^|]*\|(.*)$', """
