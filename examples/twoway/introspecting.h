@@ -41,5 +41,8 @@ extern struct introspecting *introspecting_new(
   struct labcomm_scheduler *scheduler);
 
 #define HAS_SIGNATURE LABCOMM_IOS('i',2)
-
+enum introspecting_status { introspecting_unknown, 
+			    introspecting_unhandled, 
+			    introspecting_unregistered, 
+			    introspecting_registered };
 #endif

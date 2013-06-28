@@ -42,9 +42,10 @@ struct client {
   pthread_t decoder_thread;
   struct sockaddr_in adr;
   unsigned int adrlen;
-  int32_t A, B, Sum, Diff;
+  int32_t A, B, Sum, Diff, Product;
   struct labcomm_decoder *decoder;
   struct labcomm_encoder *encoder;
+  struct labcomm_scheduler *scheduler;
 };
 
 static void handle_A(int32_t *value, void *context)
@@ -57,12 +58,25 @@ static void handle_A(int32_t *value, void *context)
 static void handle_B(int32_t *value, void *context)
 {
   struct client *client = context;
+  int status;
 
   client->B = *value;
   client->Sum = client->A + client->B;
   client->Diff = client->A - client->B;
   labcomm_encode_types_Sum(client->encoder, &client->Sum);
   labcomm_encode_types_Diff(client->encoder, &client->Diff);
+  status = labcomm_encoder_ioctl_types_Product(client->encoder, HAS_SIGNATURE);
+  switch (status) {
+    case introspecting_unregistered:
+      labcomm_encoder_register_types_Product(client->encoder);
+      /* fall through */
+    case introspecting_registered:
+      client->Product = client->A * client->B;
+      labcomm_encode_types_Product(client->encoder, &client->Product);
+      break;
+    default:
+      break;
+  }
 }
 
 static void handle_Terminate(types_Terminate *value, void *context)
@@ -75,7 +89,6 @@ static void *run_decoder(void *arg)
   struct client *client = arg;
   int result;
 
-  
   labcomm_decoder_register_types_A(client->decoder, handle_A, client);
   labcomm_decoder_register_types_B(client->decoder, handle_B, client);
   labcomm_decoder_register_types_Terminate(client->decoder, handle_Terminate, 
@@ -83,6 +96,7 @@ static void *run_decoder(void *arg)
   do {
     result = labcomm_decoder_decode_one(client->decoder);
   } while (result >= 0);
+  labcomm_scheduler_wakeup(client->scheduler);
   return NULL;
 }
 
@@ -91,19 +105,18 @@ static void *run_client(void *arg)
   struct client *client = arg;
   struct decimating *decimating;
   struct introspecting *introspecting;
-  struct labcomm_scheduler *scheduler;
 
   printf("Client start\n");
   client->A = 0;
   client->B = 0;
-  scheduler = labcomm_pthread_scheduler_new(labcomm_default_memory);
+  client->scheduler = labcomm_pthread_scheduler_new(labcomm_default_memory);
   decimating = decimating_new(labcomm_fd_reader_new(labcomm_default_memory,
 						    client->fd, 1),
 			      labcomm_fd_writer_new(labcomm_default_memory,
 						    client->fd, 0),
 			      labcomm_default_error_handler,
 			      labcomm_default_memory,
-			      scheduler);
+			      client->scheduler);
   if (decimating == NULL) {
     /* Warning: might leak reader and writer at this point */
     goto out;
@@ -112,7 +125,7 @@ static void *run_client(void *arg)
 				    decimating->writer,
 				    labcomm_default_error_handler,
 				    labcomm_default_memory,
-				    scheduler);
+				    client->scheduler);
   if (introspecting == NULL) {
     /* Warning: might leak reader and writer at this point */
     goto out;
@@ -120,15 +133,17 @@ static void *run_client(void *arg)
   client->decoder = labcomm_decoder_new(introspecting->reader,
 				    labcomm_default_error_handler,
 				    labcomm_default_memory,
-				    scheduler);
+				    client->scheduler);
   client->encoder = labcomm_encoder_new(introspecting->writer,
 				    labcomm_default_error_handler,
 				    labcomm_default_memory,
-				    scheduler);
+				    client->scheduler);
   pthread_t rdt;
   pthread_create(&rdt, NULL, run_decoder, client);  
   labcomm_encoder_register_types_Sum(client->encoder);
   labcomm_encoder_register_types_Diff(client->encoder);
+  labcomm_scheduler_sleep(client->scheduler, NULL);
+  printf("Awoken\n");
   pthread_join(rdt, NULL);
 out:
   printf("Client end\n");

@@ -49,12 +49,14 @@ static void set_decimation(
   struct decimating_private *decimating = context;
   struct decimation *decimation;
 
+  labcomm_scheduler_data_lock(decimating->scheduler);
   decimation = LABCOMM_SIGNATURE_ARRAY_REF(decimating->memory,
 					   decimating->decimation, 
 					   struct decimation, 
 					   value->signature_index);
   decimation->n = value->decimation;
   decimation->current = 0;
+  labcomm_scheduler_data_unlock(decimating->scheduler);
 }
 
 static int wrap_reader_alloc(
@@ -62,18 +64,27 @@ static int wrap_reader_alloc(
   struct labcomm_reader_action_context *action_context, 
   char *labcomm_version)
 {
-  int result;
-
   struct decimating_private *decimating = action_context->context;
   
-  fprintf(stderr, "%s %s %d\n", __FILE__, __FUNCTION__, __LINE__);
-  /* Stash away decoder for later use */
-  result = labcomm_reader_alloc(r, action_context->next, labcomm_version);
-  fprintf(stderr, "%s %s %d\n", __FILE__, __FUNCTION__, __LINE__);
   labcomm_decoder_register_decimating_messages_set_decimation(
     r->decoder, set_decimation, decimating);
-  fprintf(stderr, "%s %s %d\n", __FILE__, __FUNCTION__, __LINE__);
-  return result;
+  return labcomm_reader_alloc(r, action_context->next, labcomm_version);
+}
+
+struct send_set_decimation {
+  struct decimating_private *decimating;
+  decimating_messages_set_decimation set_decimation;
+
+};
+
+static void send_set_decimation(void *arg)
+{
+  struct send_set_decimation *msg = arg;
+  struct labcomm_memory *memory = msg->decimating->memory;
+
+  labcomm_encode_decimating_messages_set_decimation(
+    msg->decimating->decimating.writer->encoder, &msg->set_decimation);
+  labcomm_memory_free(memory, 1, msg);
 }
 
 static int wrap_reader_ioctl(
@@ -86,20 +97,26 @@ static int wrap_reader_ioctl(
   struct decimating_private *decimating = action_context->context;
 
   if (action == SET_DECIMATION) {
-    decimating_messages_set_decimation decimation;
-    va_list va;
+    struct send_set_decimation *msg;
 
-    va_copy(va, args);
-    decimation.decimation = va_arg(va, int);
-    decimation.signature_index = signature_index;
-    va_end(va);
-    return labcomm_encode_decimating_messages_set_decimation(
-      decimating->decimating.writer->encoder, &decimation);
+    msg = labcomm_memory_alloc(decimating->memory, 1, sizeof(*msg));
+    if (msg) {
+      va_list va;
+
+      va_copy(va, args);
+      msg->decimating = decimating;
+      msg->set_decimation.decimation = va_arg(va, int);
+      msg->set_decimation.signature_index = signature_index;
+      va_end(va);
+      
+      labcomm_scheduler_enqueue(decimating->scheduler, 0, 
+				send_set_decimation, msg);
+    }
   } else {
     return labcomm_reader_ioctl(r, action_context->next,
 				signature_index, signature, action, args);
   }
-  
+  return 0;
 }
 
 struct labcomm_reader_action decimating_reader_action = {
@@ -125,14 +142,10 @@ static int wrap_writer_alloc(
   char *labcomm_version)
 {
   struct decimating_private *decimating = action_context->context;
-  int result;
 
-  fprintf(stderr, "%s %s\n", __FILE__, __FUNCTION__);
-  result = labcomm_writer_alloc(w, action_context->next, labcomm_version);
   labcomm_scheduler_enqueue(decimating->scheduler, 
 			    0, register_signatures, decimating);
-
-  return result;
+  return labcomm_writer_alloc(w, action_context->next, labcomm_version);
 }
 
 static int wrap_writer_start(
@@ -143,18 +156,27 @@ static int wrap_writer_start(
 {
   struct decimating_private *decimating = action_context->context;
   struct decimation *decimation;
+  int result;
+
+  labcomm_scheduler_data_lock(decimating->scheduler);
 
   decimation = LABCOMM_SIGNATURE_ARRAY_REF(decimating->memory, 
 					   decimating->decimation, 
 					   struct decimation, index);
   decimation->current++;
   if (decimation->current < decimation->n) {
-    return -EALREADY;
+    result = -EALREADY;
   } else {
     decimation->current = 0;
-    return labcomm_writer_start(w, action_context->next,
-				index, signature, value);
+    result = 0;
   }
+  labcomm_scheduler_data_unlock(decimating->scheduler);
+
+  if (result == 0) {
+    result = labcomm_writer_start(w, action_context->next,
+				 index, signature, value);
+  }
+  return result;
 }
 
 struct labcomm_writer_action decimating_writer_action = {

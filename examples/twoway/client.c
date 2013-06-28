@@ -19,6 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <errno.h>
 #include <arpa/inet.h>
 #include <linux/tcp.h>
 #include <netdb.h>
@@ -42,12 +43,17 @@
 
 static void handle_Sum(int32_t *value, void *context)
 {
-  printf("A+B=%d\n", *value);
+  printf("A+B=%d ", *value);
 }
 
 static void handle_Diff(int32_t *value, void *context)
 {
-  printf("A-B=%d\n", *value);
+  printf("A-B=%d ", *value);
+}
+
+static void handle_Product(int32_t *value, void *context)
+{
+  printf("A*B=%d ", *value);
 }
 
 static void *run_decoder(void *context)
@@ -151,17 +157,24 @@ int main(int argc, char *argv[])
   labcomm_encoder_register_types_B(encoder);
   labcomm_encoder_register_types_Terminate(encoder);
 
+  /* Sleep to make all remote types be known to introspecting and decimating
+     wrappers, this is a HACK! */
+  sleep(1);
   err = labcomm_decoder_ioctl_types_Sum(decoder, SET_DECIMATION, 2);
   err = labcomm_decoder_ioctl_types_Diff(decoder, SET_DECIMATION, 4);
 
   for (i = 0 ; i < 4 ; i++) {
+    if (i == 2) {
+      labcomm_decoder_register_types_Product(decoder, handle_Product, NULL);
+    }
     for (j = 0 ; j < 4 ; j++) {
-      printf("A=%d B=%d\n", i, j);
+      printf("\nA=%d B=%d: ", i, j);
       labcomm_encode_types_A(encoder, &i);
       labcomm_encode_types_B(encoder, &j);
       sleep(1);
     }
   }
+  printf("\n");
   labcomm_encode_types_Terminate(encoder, LABCOMM_VOID);
 out:
   return 0;
