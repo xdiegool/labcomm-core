@@ -55,6 +55,8 @@ struct labcomm_encoder *labcomm_encoder_new(
     result->memory = memory;
     result->scheduler = scheduler;
     LABCOMM_SIGNATURE_ARRAY_INIT(result->registered, int);
+    labcomm_writer_alloc(result->writer,
+			 result->writer->action_context, LABCOMM_VERSION);
   }
   return result;
 }
@@ -78,9 +80,6 @@ int labcomm_internal_encoder_register(
 
   index = labcomm_signature_local_index(signature);
   labcomm_scheduler_writer_lock(e->scheduler);
-  if (e->writer->data == NULL) {
-    labcomm_writer_alloc(e->writer,e->writer->action_context, LABCOMM_VERSION);
-  }
   if (signature->type != LABCOMM_SAMPLE) { goto out; }
   if (index <= 0) { goto out; }
   done = LABCOMM_SIGNATURE_ARRAY_REF(e->memory, e->registered, int, index);
@@ -118,9 +117,6 @@ int labcomm_internal_encode(
 
   index = labcomm_signature_local_index(signature);
   labcomm_scheduler_writer_lock(e->scheduler);
-  if (e->writer->data == NULL) {
-    labcomm_writer_alloc(e->writer,e->writer->action_context, LABCOMM_VERSION);
-  }
   result = labcomm_writer_start(e->writer, e->writer->action_context, 
 				index, signature, value);
   if (result == -EALREADY) { result = 0; goto no_end; }
@@ -162,61 +158,11 @@ int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder,
 				   uint32_t action, va_list va)
 {
   int result = -ENOTSUP;
-  
+  int index;
+
+  index = labcomm_signature_local_index(signature);
   result = labcomm_writer_ioctl(encoder->writer, 
 				encoder->writer->action_context, 
-				-1, signature, action, va);
+				index, signature, action, va);
   return result;
 }
-
-
-
-#if 0
-static struct labcomm_encoder *enter_encoder(struct labcomm_encoder *e)
-{
-  if (e->is_deferred) {
-    return e->is_deferred;
-  } else {
-    labcomm_lock_acquire(e->lock); 
-    e->waiting++;
-    while (e->busy) { labcomm_lock_wait(e->lock, 10000000); }
-    e->busy = 1;
-    labcomm_lock_release(e->lock);
-    
-    if (e->writer->data == NULL) {
-      labcomm_writer_alloc(e->writer,e->writer->action_context,
-			   e, LABCOMM_VERSION, encoder_enqueue_action);
-      if (e->alloc_action) {
-	struct labcomm_encoder deferred;
-	struct encoder_alloc_action *p;
-
-	deferred.is_deferred = e;
-	p = e->alloc_action;
-	e->alloc_action = NULL;
-	while (p) {
-	  struct encoder_alloc_action *tmp;
-
-	  p->action(&deferred, p->context);
-	  tmp = p;
-	  p = p->next;
-	  labcomm_memory_free(e->memory, 1, tmp);
-	}
-      }
-    }
-  }
-  return e;
-}
-static void leave_encoder(struct labcomm_encoder *e)
-{
-  if (!e->is_deferred) {
-    labcomm_lock_acquire(e->lock); {
-      e->busy = 0;
-      e->waiting--;
-      if (e->waiting) {
-	labcomm_lock_notify(e->lock);
-      }
-    } labcomm_lock_release(e->lock);
-  }
-}
-
-#endif

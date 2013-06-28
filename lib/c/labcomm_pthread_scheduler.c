@@ -48,6 +48,7 @@ struct pthread_scheduler {
   pthread_mutex_t writer_mutex;
   pthread_mutex_t data_mutex;
   pthread_cond_t data_cond;
+  int running_deferred;
   struct pthread_deferred deferred;
   struct pthread_deferred deferred_with_delay;
 };
@@ -137,6 +138,7 @@ static struct labcomm_time_action time_action = {
 static int run_action(struct pthread_scheduler *scheduler,
 		      struct pthread_deferred *element)
 {
+  /* Called with data_lock held */
   element->prev->next = element->next;
   element->next->prev = element->prev;
   labcomm_scheduler_data_unlock(&scheduler->scheduler);
@@ -148,6 +150,9 @@ static int run_action(struct pthread_scheduler *scheduler,
 
 static int run_deferred(struct pthread_scheduler *scheduler)
 {
+  /* Called with data_lock held */
+  if (scheduler->running_deferred) { goto out; }
+  scheduler->running_deferred = 1;
   while (!queue_empty(&scheduler->deferred)) {
     run_action(scheduler, scheduler->deferred.next);
   }
@@ -160,6 +165,8 @@ static int run_deferred(struct pthread_scheduler *scheduler)
       run_action(scheduler, scheduler->deferred_with_delay.next);
     }
   }
+  scheduler->running_deferred = 0;
+out:
   return 0;
 }
 
@@ -359,6 +366,7 @@ struct labcomm_scheduler *labcomm_pthread_scheduler_new(
     if (pthread_cond_init(&scheduler->data_cond, NULL) != 0) {
       goto destroy_data_mutex;
     }
+    scheduler->running_deferred = 0;
     scheduler->deferred.next = &scheduler->deferred;
     scheduler->deferred.prev = &scheduler->deferred;
     scheduler->deferred_with_delay.next = &scheduler->deferred_with_delay;

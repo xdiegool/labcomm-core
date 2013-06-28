@@ -37,6 +37,7 @@ struct sample_entry {
 
 struct labcomm_decoder {
   struct labcomm_reader *reader;
+  int reader_allocated;
   struct labcomm_error_handler *error;
   struct labcomm_memory *memory;
   struct labcomm_scheduler *scheduler;
@@ -63,6 +64,7 @@ struct labcomm_decoder *labcomm_decoder_new(
     result->reader->count = 0;
     result->reader->pos = 0;
     result->reader->error = 0;
+    result->reader_allocated = 0;
     result->error = error;
     result->memory = memory;
     result->scheduler = scheduler;
@@ -264,10 +266,11 @@ static void call_handler(void *value, void *context)
   labcomm_reader_end(wrap->reader, wrap->reader->action_context);
 }
 
-static void reader_alloc(struct labcomm_reader *reader)
+static void reader_alloc(struct labcomm_decoder *d)
 {
-  if (reader->data == NULL) {
-    labcomm_reader_alloc(reader, reader->action_context,
+  if (!d->reader_allocated) {
+    d->reader_allocated = 1;
+    labcomm_reader_alloc(d->reader, d->reader->action_context,
 			 LABCOMM_VERSION);
   }
 }
@@ -276,7 +279,7 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
 {
   int result, remote_index;
 
-  reader_alloc(d->reader);
+  reader_alloc(d);
   remote_index = labcomm_read_packed32(d->reader);
   if (d->reader->error < 0) {
     result = d->reader->error;
@@ -377,7 +380,7 @@ int labcomm_internal_decoder_register(
   int local_index;
   struct sample_entry *entry;
  
-  reader_alloc(d->reader);
+  reader_alloc(d);
   local_index = labcomm_signature_local_index(signature);
   if (local_index <= 0) { goto out; }
   labcomm_reader_start(d->reader, d->reader->action_context,
