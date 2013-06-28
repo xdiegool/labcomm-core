@@ -175,9 +175,11 @@ static int decode_typedef_or_sample(struct labcomm_decoder *d, int kind)
     .pos = 0,
     .error = 0,
   };
-  struct labcomm_signature signature;
-  int remote_index, err;
-      
+  struct labcomm_signature signature, *local_signature;
+  int remote_index, local_index, err;
+  
+  local_signature = NULL;
+  local_index = 0;
   labcomm_writer_alloc(&writer, writer.action_context, "");
   labcomm_writer_start(&writer, writer.action_context, 0, NULL, NULL);
   remote_index = labcomm_read_packed32(d->reader); //int
@@ -219,6 +221,8 @@ static int decode_typedef_or_sample(struct labcomm_decoder *d, int kind)
 	  bcmp((void*)s->signature->signature, (void*)signature.signature,
 	       signature.size) == 0) {
 	s->remote_index = remote_index;
+	local_signature = s->signature;
+	local_index = i;
 	remote_to_local = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
 						      d->remote_to_local, int,
 						      remote_index);
@@ -228,6 +232,12 @@ static int decode_typedef_or_sample(struct labcomm_decoder *d, int kind)
       }
     }
     labcomm_scheduler_data_unlock(d->scheduler);
+    if (local_signature) {
+      labcomm_reader_start(d->reader, d->reader->action_context,
+			   local_index, remote_index, local_signature,
+			   NULL);
+      labcomm_reader_end(d->reader, d->reader->action_context);
+    }
   }
 #if 0
   if (! entry) {
@@ -344,7 +354,7 @@ int labcomm_decoder_ioctl(struct labcomm_decoder *d,
   va_start(va, action);
   result = labcomm_reader_ioctl(d->reader, 
 				d->reader->action_context,
-				0, NULL, action, va);
+				0, 0, NULL, action, va);
   va_end(va);
   return result;
 }
@@ -363,12 +373,9 @@ int labcomm_internal_decoder_ioctl(struct labcomm_decoder *d,
 					     struct sample_entry,
 					     local_index)->remote_index;
   labcomm_scheduler_data_unlock(d->scheduler);
-  if (remote_index == 0) {
-    result = -EAGAIN;
-  } else {
-    result = labcomm_reader_ioctl(d->reader, d->reader->action_context,
-				  remote_index, signature, action, va);
-  }
+  result = labcomm_reader_ioctl(d->reader, d->reader->action_context,
+				local_index, remote_index, 
+				signature, action, va);
   return result;
 }
 

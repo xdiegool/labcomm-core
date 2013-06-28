@@ -85,6 +85,7 @@ int main(int argc, char *argv[])
   struct labcomm_scheduler *scheduler;
   struct labcomm_decoder *decoder;
   struct labcomm_encoder *encoder;
+  struct labcomm_time *next;
   int32_t i, j;
 
   hostname = argv[1];
@@ -157,12 +158,10 @@ int main(int argc, char *argv[])
   labcomm_encoder_register_types_B(encoder);
   labcomm_encoder_register_types_Terminate(encoder);
 
-  /* Sleep to make all remote types be known to introspecting and decimating
-     wrappers, this is a HACK! */
-  sleep(1);
   err = labcomm_decoder_ioctl_types_Sum(decoder, SET_DECIMATION, 2);
   err = labcomm_decoder_ioctl_types_Diff(decoder, SET_DECIMATION, 4);
 
+  next = labcomm_scheduler_now(scheduler);
   for (i = 0 ; i < 4 ; i++) {
     if (i == 2) {
       labcomm_decoder_register_types_Product(decoder, handle_Product, NULL);
@@ -171,7 +170,8 @@ int main(int argc, char *argv[])
       printf("\nA=%d B=%d: ", i, j);
       labcomm_encode_types_A(encoder, &i);
       labcomm_encode_types_B(encoder, &j);
-      sleep(1);
+      labcomm_time_add_usec(next, 100000);
+      labcomm_scheduler_sleep(scheduler, next);
     }
   }
   printf("\n");

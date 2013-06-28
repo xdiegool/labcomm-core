@@ -113,8 +113,13 @@ struct labcomm_reader_action {
   */
   int (*free)(struct labcomm_reader *r, 
 	      struct labcomm_reader_action_context *action_context);
-  /* 'start' is called right after a sample has arrived. In the case of 
-     a sample or typedef, 'value' == NULL.
+  /* 'start' is called at the following instances:
+     1. When a sample is registered 
+          (local_index != 0, remote_index == 0, value == NULL)
+     2. When a sample definition is received 
+          (local_index != 0, remote_index != 0, value == NULL)
+     3. When a sample is received
+          (local_index != 0, remote_index != 0, value != NULL)
    */
   int (*start)(struct labcomm_reader *r, 
 	       struct labcomm_reader_action_context *action_context,
@@ -127,7 +132,8 @@ struct labcomm_reader_action {
 	      struct labcomm_reader_action_context *action_context);
   int (*ioctl)(struct labcomm_reader *r, 
 	       struct labcomm_reader_action_context *action_context,
-	       int index, struct labcomm_signature *signature, 
+	       int local_index, int remote_index,
+	       struct labcomm_signature *signature, 
 	       uint32_t ioctl_action, va_list args);
 };
 
@@ -165,7 +171,8 @@ int labcomm_reader_fill(struct labcomm_reader *r,
 			struct labcomm_reader_action_context *action_context);
 int labcomm_reader_ioctl(struct labcomm_reader *r, 
 			 struct labcomm_reader_action_context *action_context,
-			 int index, struct labcomm_signature *signature, 
+			 int local_index, int remote_index,
+			 struct labcomm_signature *signature, 
 			 uint32_t ioctl_action, va_list args);
 
 /*

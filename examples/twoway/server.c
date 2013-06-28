@@ -20,6 +20,7 @@
 */
 
 #include <arpa/inet.h>
+#include <linux/tcp.h>
 #include <errno.h>
 #include <pthread.h>
 #include <stdlib.h>
@@ -61,10 +62,6 @@ static void handle_B(int32_t *value, void *context)
   int status;
 
   client->B = *value;
-  client->Sum = client->A + client->B;
-  client->Diff = client->A - client->B;
-  labcomm_encode_types_Sum(client->encoder, &client->Sum);
-  labcomm_encode_types_Diff(client->encoder, &client->Diff);
   status = labcomm_encoder_ioctl_types_Product(client->encoder, HAS_SIGNATURE);
   switch (status) {
     case introspecting_unregistered:
@@ -77,6 +74,10 @@ static void handle_B(int32_t *value, void *context)
     default:
       break;
   }
+  client->Sum = client->A + client->B;
+  client->Diff = client->A - client->B;
+  labcomm_encode_types_Sum(client->encoder, &client->Sum);
+  labcomm_encode_types_Diff(client->encoder, &client->Diff);
 }
 
 static void handle_Terminate(types_Terminate *value, void *context)
@@ -183,6 +184,7 @@ int main(int argc, char *argv[])
   }
   while (1) {
     struct client *client;
+    int nodelay;
 
     client = malloc(sizeof(*client));
     if (client == NULL) {
@@ -198,6 +200,8 @@ int main(int argc, char *argv[])
       result = errno;
       goto failed_to_accept;
     }
+    nodelay = 1;
+    setsockopt(client->fd, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay));
     pthread_create(&client->main_thread, NULL, run_client, client);
   } 
 
