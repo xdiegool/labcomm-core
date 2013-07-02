@@ -83,33 +83,11 @@ public class TestLabCommCompiler {
 			try {
 				m = hc.getDeclaredMethod("handle_foo", fc);
 				m.invoke(h, f);
-			} catch (SecurityException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (NoSuchMethodException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalArgumentException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InvocationTargetException e) {
-				// TODO Auto-generated catch block
+			} catch (Throwable e) {
 				e.printStackTrace();
 			}
 			
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (InstantiationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchFieldException e) {
-			// TODO Auto-generated catch block
+		} catch (Throwable e) {
 			e.printStackTrace();
 		}
 	}
