@@ -1,2 +1,8 @@
 This directory contains an embryo of an example of how to 
 generate and compile a labcomm endpoint on the fly.
+
+NB! There is currently no connection between the files StaticPart.java, DynamicPart.java, and
+TestLabCommCompiler.java
+
+the runme.sh script builds and runs the TestLabCommCompiler, which illustrates the 
+on-the-fly compilation to RAM, but is not yet connected to an actual LabComm channel
