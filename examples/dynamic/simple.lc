@@ -1,0 +1,13 @@
+typedef struct {
+  int a;
+  int b;
+} TwoInts;
+
+sample TwoInts theTwoInts;
+sample TwoInts anotherTwoInts;
+
+sample struct {
+  int x;
+  string s;
+} IntString;
+
