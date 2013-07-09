@@ -31,3 +31,4 @@ bar:handler(int value) {
 	System.out.println(value);
 }###
 
+Note that parameters differ: the value for foo is an object but for bar it is a primitive type (int) value.

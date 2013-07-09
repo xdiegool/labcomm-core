@@ -1,4 +1,5 @@
 import java.io.ByteArrayInputStream;
+import java.io.EOFException;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -28,6 +29,7 @@ import beaver.Parser.Exception;
 public class TestLabcommGen {
 
 	private static final String SAMPLE_NAME_FOO = "foo";
+	private static final String SAMPLE_NAME_BAR = "bar";
 
 	static class HandlerSrc {
 		private String sampleName;
@@ -63,12 +65,12 @@ public class TestLabcommGen {
 
 		System.out.println("*** Generated handler source:");
 		handlers.keySet();
-		
+
 		for (String n : handlers.keySet()) {
 			System.out.println(n+":");
 			System.out.println(handlers.get(n));
 		}
-		
+
 
 		InRAMCompiler irc = generateCode(labcommStr, handlers);
 
@@ -78,19 +80,19 @@ public class TestLabcommGen {
 
 			String tmpFile = args[2];
 			System.out.println("*** Testing writing and reading file "+tmpFile);
-			encodeTest(irc, SAMPLE_NAME_FOO, tmpFile);
-			decodeTest(irc, SAMPLE_NAME_FOO, tmpFile);
+			encodeTest(irc, tmpFile);
+			decodeTest(irc, tmpFile, SAMPLE_NAME_FOO, SAMPLE_NAME_BAR);
 		}
 	}
 	public static void generateHandlers(String srcStr, HashMap<String,String> handlers) {
 		int pos = 0;	
 		while(pos < srcStr.length()) {
-//			System.out.println("--------");
+			//			System.out.println("--------");
 			int nameEnd = srcStr.indexOf(':', pos);
 			if(nameEnd <0) break;
 
 			String name = srcStr.substring(pos,nameEnd);
-//			System.out.println("Name="+name);
+			//			System.out.println("Name="+name);
 
 			pos=nameEnd+1;
 			String par = "";
@@ -98,7 +100,7 @@ public class TestLabcommGen {
 			if(srcStr.startsWith(handler_decl, pos)) {
 				int endPar = srcStr.indexOf(')', pos);
 				par = srcStr.substring(pos+handler_decl.length(), endPar);
-//				System.out.println("param="+par);
+				//				System.out.println("param="+par);
 				pos = endPar+1;
 			} else {
 				System.out.println("expeced handler decl:\n"+srcStr.substring(pos));	
@@ -106,14 +108,14 @@ public class TestLabcommGen {
 			int bodyEnd = srcStr.indexOf("}###", pos); // HERE BE DRAGONS! a bit brittle
 			String body = srcStr.substring(pos, bodyEnd+1);
 			pos = bodyEnd+5;
-//			System.out.println("body:");
-//			System.out.println(body);
+			//			System.out.println("body:");
+			//			System.out.println(body);
 
-//			System.out.println("**** generates:");
+			//			System.out.println("**** generates:");
 
 			HandlerSrc s = new HandlerSrc(name, par, body);
 			final String genSrc = s.getSrc();
-//			System.out.println(genSrc);
+			//			System.out.println(genSrc);
 			handlers.put(name,genSrc);
 		}
 	}
@@ -135,7 +137,7 @@ public class TestLabcommGen {
 		String srcStr = buf.toString().substring(0, len);
 		return srcStr;
 	}
-	
+
 	private static String readLabcommDecl(String lcfile) {
 		FileReader fr;
 		int len=0;;
@@ -239,21 +241,28 @@ public class TestLabcommGen {
 	}
 	/** test method
 	 */
-	private static void decodeTest(InRAMCompiler irc, String sampleName, String tmpFile) {
+	private static void decodeTest(InRAMCompiler irc, String tmpFile, String... sampleNames) {
 		try {
 			FileInputStream in = new FileInputStream(tmpFile);
 			LabCommDecoderChannel dec = new LabCommDecoderChannel(in);
+			for (String sampleName : sampleNames) {
+				System.out.println("registering handler for "+sampleName);
+				Class sampleClass = irc.load(sampleName);
+				Class handlerClass = irc.load("gen_"+sampleName+"Handler");
+				Class handlerInterface = irc.load(sampleName+"$Handler");
 
-			Class fc = irc.load(sampleName);
-			Class hc = irc.load("gen_"+sampleName+"Handler");
-			Class hi = irc.load(sampleName+"$Handler");
+				Object handler = handlerClass.newInstance(); 
 
-			Object h = hc.newInstance(); 
+				Method reg = sampleClass.getDeclaredMethod("register", LabCommDecoder.class, handlerInterface);
+				reg.invoke(sampleClass, dec, handler);
+			}
 
-			Method reg = fc.getDeclaredMethod("register", LabCommDecoder.class, hi);
-			reg.invoke(fc, dec, h);
-
-			dec.runOne();
+			try{
+				System.out.println("*** decoding:");
+				dec.run();
+			} catch(EOFException e) {
+				System.out.println("*** reached EOF ***");
+			}
 			in.close();
 		} catch (Throwable e) {
 			e.printStackTrace();
@@ -262,24 +271,38 @@ public class TestLabcommGen {
 	}
 	/** test encoding
 	 */
-	private static void encodeTest(InRAMCompiler irc, String sampleName, String tmpFile) {
+	private static void encodeTest(InRAMCompiler irc, String tmpFile) {
 		try {
-			Class fc = irc.load(sampleName);
+			Class fc = irc.load(SAMPLE_NAME_FOO);
+			Class bc = irc.load(SAMPLE_NAME_BAR);
+
+			/* create sample class and instance objects */
 			Object f = fc.newInstance();
+			
 			Field x = fc.getDeclaredField("x");
 			Field y = fc.getDeclaredField("y");
 			Field z = fc.getDeclaredField("z");
 			x.setInt(f, 10);
 			y.setInt(f, 11);
 			z.setInt(f, 12);
+			
 
 			FileOutputStream out = new FileOutputStream(tmpFile);
 			LabCommEncoderChannel enc = new LabCommEncoderChannel(out);
-			Method reg = fc.getDeclaredMethod("register", LabCommEncoder.class);
-			reg.invoke(fc, enc);
 
-			Method doEncode = fc.getDeclaredMethod("encode", LabCommEncoder.class, fc);
-			doEncode.invoke(fc, enc, f);
+			/* register and send foo */
+			Method regFoo = fc.getDeclaredMethod("register", LabCommEncoder.class);
+			regFoo.invoke(fc, enc);
+
+			Method doEncodeFoo = fc.getDeclaredMethod("encode", LabCommEncoder.class, fc);
+			doEncodeFoo.invoke(fc, enc, f);
+
+			/* register and send bar (NB! uses primitive type int) */
+			Method regBar = bc.getDeclaredMethod("register", LabCommEncoder.class);
+			regBar.invoke(bc, enc);
+
+			Method doEncodeBar = bc.getDeclaredMethod("encode", LabCommEncoder.class, Integer.TYPE);
+			doEncodeBar.invoke(bc, enc, 42);
 
 			out.close();
 		} catch (Throwable e) {
