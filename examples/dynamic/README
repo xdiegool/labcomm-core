@@ -5,4 +5,5 @@ NB! There is currently no connection between the files StaticPart.java, DynamicP
 TestLabCommCompiler.java
 
 the runme.sh script builds and runs the TestLabCommCompiler, which illustrates the 
-on-the-fly compilation to RAM, but is not yet connected to an actual LabComm channel
+on-the-fly compilation to RAM, reading the labcomm declarations from file but with the
+handlers hard coded in the test program.
