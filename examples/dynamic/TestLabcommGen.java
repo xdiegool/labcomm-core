@@ -27,8 +27,7 @@ import beaver.Parser.Exception;
 
 public class TestLabcommGen {
 
-	private static final String FOO = "foo";
-	private static final String BAR = "bar";
+	private static final String SAMPLE_NAME_FOO = "foo";
 
 	static class HandlerSrc {
 		private String sampleName;
@@ -57,14 +56,12 @@ public class TestLabcommGen {
 		String labcommStr = readLabcommDecl(args[0]);
 		String srcStr = readHandlerDecl(args[1]);
 
-
+		/*Map<sample name, handler code>*/
 		HashMap <String, String> handlers = new HashMap<String, String>();
 
-//		handlers.put(FOO, "public void handle_"+FOO+"("+FOO+" value) {\nSystem.out.println(value.x);\nSystem.out.println(value.y);\nSystem.out.println(value.z);}");
-//		handlers.put(BAR, "public void handle_"+BAR+"(int value) {System.out.println(value);}");
-		
 		generateHandlers(srcStr, handlers);
-		System.out.println("=======*******=========");
+
+		System.out.println("*** Generated handler source:");
 		handlers.keySet();
 		
 		for (String n : handlers.keySet()) {
@@ -81,14 +78,14 @@ public class TestLabcommGen {
 
 			String tmpFile = args[2];
 			System.out.println("*** Testing writing and reading file "+tmpFile);
-			encodeTest(irc, tmpFile);
-			decodeTest(irc, tmpFile);
+			encodeTest(irc, SAMPLE_NAME_FOO, tmpFile);
+			decodeTest(irc, SAMPLE_NAME_FOO, tmpFile);
 		}
 	}
 	public static void generateHandlers(String srcStr, HashMap<String,String> handlers) {
 		int pos = 0;	
 		while(pos < srcStr.length()) {
-			System.out.println("--------");
+//			System.out.println("--------");
 			int nameEnd = srcStr.indexOf(':', pos);
 			if(nameEnd <0) break;
 
@@ -157,56 +154,6 @@ public class TestLabcommGen {
 		return labcommStr;
 	}
 
-	private static void decodeTest(InRAMCompiler irc, String tmpFile) {
-		try {
-			FileInputStream in = new FileInputStream(tmpFile);
-			LabCommDecoderChannel dec = new LabCommDecoderChannel(in);
-
-			Class fc = irc.load(FOO);
-			Class hc = irc.load("gen_"+FOO+"Handler");
-			Class hi = irc.load(FOO+"$Handler");
-
-			Object h = hc.newInstance(); 
-
-			Method reg = fc.getDeclaredMethod("register", LabCommDecoder.class, hi);
-			reg.invoke(fc, dec, h);
-
-			dec.runOne();
-			in.close();
-		} catch (Throwable e) {
-			e.printStackTrace();
-		}
-
-	}
-	private static void encodeTest(InRAMCompiler irc, String tmpFile) {
-		Class<?> hc;
-		try {
-			hc = irc.load("gen_"+FOO+"Handler");
-			Object h = hc.newInstance(); 
-			Class fc = irc.load(FOO);
-			Object f = fc.newInstance();
-			Field x = fc.getDeclaredField("x");
-			Field y = fc.getDeclaredField("y");
-			Field z = fc.getDeclaredField("z");
-			x.setInt(f, 10);
-			y.setInt(f, 11);
-			z.setInt(f, 12);
-
-			FileOutputStream out = new FileOutputStream(tmpFile);
-			LabCommEncoderChannel enc = new LabCommEncoderChannel(out);
-			Method reg = fc.getDeclaredMethod("register", LabCommEncoder.class);
-			reg.invoke(fc, enc);
-
-			Method doEncode = fc.getDeclaredMethod("encode", LabCommEncoder.class, fc);
-			doEncode.invoke(fc, enc, f);
-
-			out.close();
-		} catch (Throwable e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-	}
 	public static InRAMCompiler generateCode(String lcDecl, HashMap<String, String> handlers) {
 		Program ast = null;
 		InputStream in = new ByteArrayInputStream(lcDecl.getBytes());
@@ -239,53 +186,6 @@ public class TestLabcommGen {
 			System.err.println("compilation failed");
 		}
 		return irc;
-	}
-	/* dummy test creating instances of sample and handler, and calling handle*/
-	private static void dummyTest(InRAMCompiler irc) {
-		try {
-			Class hc = irc.load("gen_"+FOO+"Handler");
-			Object h = hc.newInstance(); 
-			Class fc = irc.load(FOO);
-			Object f = fc.newInstance();
-			Field x = fc.getDeclaredField("x");
-			Field y = fc.getDeclaredField("y");
-			Field z = fc.getDeclaredField("z");
-			x.setInt(f, 10);
-			y.setInt(f, 11);
-			z.setInt(f, 12);
-			Method m;
-			try {
-				m = hc.getDeclaredMethod("handle_"+FOO, fc);
-				m.invoke(h, f);
-			} catch (SecurityException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (NoSuchMethodException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalArgumentException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InvocationTargetException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (InstantiationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchFieldException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 
 	/** generate labcomm code and compile handlers 
@@ -336,5 +236,103 @@ public class TestLabcommGen {
 			System.out.println("================================");
 		}
 		return irc;
+	}
+	/** test method
+	 */
+	private static void decodeTest(InRAMCompiler irc, String sampleName, String tmpFile) {
+		try {
+			FileInputStream in = new FileInputStream(tmpFile);
+			LabCommDecoderChannel dec = new LabCommDecoderChannel(in);
+
+			Class fc = irc.load(sampleName);
+			Class hc = irc.load("gen_"+sampleName+"Handler");
+			Class hi = irc.load(sampleName+"$Handler");
+
+			Object h = hc.newInstance(); 
+
+			Method reg = fc.getDeclaredMethod("register", LabCommDecoder.class, hi);
+			reg.invoke(fc, dec, h);
+
+			dec.runOne();
+			in.close();
+		} catch (Throwable e) {
+			e.printStackTrace();
+		}
+
+	}
+	/** test encoding
+	 */
+	private static void encodeTest(InRAMCompiler irc, String sampleName, String tmpFile) {
+		try {
+			Class fc = irc.load(sampleName);
+			Object f = fc.newInstance();
+			Field x = fc.getDeclaredField("x");
+			Field y = fc.getDeclaredField("y");
+			Field z = fc.getDeclaredField("z");
+			x.setInt(f, 10);
+			y.setInt(f, 11);
+			z.setInt(f, 12);
+
+			FileOutputStream out = new FileOutputStream(tmpFile);
+			LabCommEncoderChannel enc = new LabCommEncoderChannel(out);
+			Method reg = fc.getDeclaredMethod("register", LabCommEncoder.class);
+			reg.invoke(fc, enc);
+
+			Method doEncode = fc.getDeclaredMethod("encode", LabCommEncoder.class, fc);
+			doEncode.invoke(fc, enc, f);
+
+			out.close();
+		} catch (Throwable e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	/** dummy test creating instances of sample and handler, and calling handle*/
+	private static void dummyTest(InRAMCompiler irc) {
+		try {
+			Class hc = irc.load("gen_"+SAMPLE_NAME_FOO+"Handler");
+			Object h = hc.newInstance(); 
+			Class fc = irc.load(SAMPLE_NAME_FOO);
+			Object f = fc.newInstance();
+			Field x = fc.getDeclaredField("x");
+			Field y = fc.getDeclaredField("y");
+			Field z = fc.getDeclaredField("z");
+			x.setInt(f, 10);
+			y.setInt(f, 11);
+			z.setInt(f, 12);
+			Method m;
+			try {
+				m = hc.getDeclaredMethod("handle_"+SAMPLE_NAME_FOO, fc);
+				m.invoke(h, f);
+			} catch (SecurityException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (NoSuchMethodException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalArgumentException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InvocationTargetException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (InstantiationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchFieldException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }
