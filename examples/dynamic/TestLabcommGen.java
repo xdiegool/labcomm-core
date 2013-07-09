@@ -103,9 +103,9 @@ public class TestLabcommGen {
 			} else {
 				System.out.println("expeced handler decl:\n"+srcStr.substring(pos));	
 			}
-			int bodyEnd = srcStr.indexOf('}', pos); // HERE BE DRAGONS! too brittle
+			int bodyEnd = srcStr.indexOf("}###", pos); // HERE BE DRAGONS! a bit brittle
 			String body = srcStr.substring(pos, bodyEnd+1);
-			pos = bodyEnd+2;
+			pos = bodyEnd+5;
 //			System.out.println("body:");
 //			System.out.println(body);
 

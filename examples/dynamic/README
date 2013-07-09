@@ -1,9 +1,33 @@
 This directory contains an embryo of an example of how to 
 generate and compile a labcomm endpoint on the fly.
 
-NB! There is currently no connection between the files StaticPart.java, DynamicPart.java, and
-TestLabCommCompiler.java
+NB! There is currently no connection to the StaticPart.java
 
-the runme.sh script builds and runs the TestLabCommCompiler, which illustrates the 
-on-the-fly compilation to RAM, reading the labcomm declarations from file but with the
-handlers hard coded in the test program.
+the runme.sh script builds and runs the TestLabCommGen, which illustrates the 
+on-the-fly compilation to RAM, reading the labcomm declarations and handlers from file
+
+The handlers declaration (in handlers.txt) is experimental, and has the following format:
+
+<sample name>:handler(<data type> <variable name>) {
+	<handler method code>
+}###
+
+where the end marker (}###) is a kludge to avoid having to parse the method body while still allowing
+it to contain blocks. Thus, having the sequence "}###" in the method body breaks this. Caveat hacker!
+
+An example handlers declaration:
+
+foo:handler(foo value) {
+	System.out.println("foo handler from handlers.txt");
+	System.out.println(value.x);
+	System.out.println(value.y);
+	System.out.println(value.z);
+	for(int i=0; i<value.x; i++){
+		System.out.print("."+(value.x-i));
+	}
+	System.out.println();
+}###
+bar:handler(int value) {
+	System.out.println(value);
+}###
+
