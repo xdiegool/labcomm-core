@@ -12,7 +12,7 @@ public class StaticPart {
   /**
    * Simple encoder 
    */
-  public class Encoder {
+  public static class Encoder {
 
     LabCommEncoderChannel encoder;
 
@@ -20,30 +20,28 @@ public class StaticPart {
       throws Exception 
     {
       encoder = new LabCommEncoderChannel(out);
-      theTwoInts.register(encoder);
-      IntString.register(encoder);
-      TwoArrays.register(encoder);
+      foo.register(encoder);
+      bar.register(encoder);
     }
 
     public void doEncode() throws java.io.IOException {
-      TwoInts x = new TwoInts();
-      x.a = 17;
-      x.b = 42;
-  
-      IntString y = new IntString();
-      y.x = 37;
-      y.s = "Testing, testing";
+      foo f = new foo();
+      f.x = 17;
+      f.y = 42;
+      f.z = 37;
 
-      System.out.println("Encoding theTwoInts, a="+x.a+", b="+x.b);
-      theTwoInts.encode(encoder, x);
+      int b = 13;
 
-      System.out.println("Encoding IntString, x="+y.x+", s="+y.s);
-      IntString.encode(encoder, y);
+      System.out.println("Encoding foo, x="+f.x+", y="+f.y+", z="+f.z);
+      foo.encode(encoder, f);
+
+      System.out.println("Encoding bar: "+b);
+      bar.encode(encoder, b);
     }
   }
 
-  public class Decoder
-  implements theTwoInts.Handler, anotherTwoInts.Handler, IntString.Handler
+  public static class Decoder
+  implements foo.Handler, bar.Handler
   {
 
     LabCommDecoderChannel decoder;
@@ -52,46 +50,40 @@ public class StaticPart {
       throws Exception 
     {
       decoder = new LabCommDecoderChannel(in);
-      theTwoInts.register(decoder, this);
-      anotherTwoInts.register(decoder, this);
-      IntString.register(decoder, this);
-      TwoArrays.register(decoder, this);
-      TwoFixedArrays.register(decoder, this);
+      foo.register(decoder, this);
+      bar.register(decoder, this);
 
+    }
+
+    public void doDecode() throws java.io.IOException {
       try {
         System.out.println("Running decoder.");
         decoder.run();
       } catch (java.io.EOFException e) {
   	System.out.println("Decoder reached end of file.");
+      } catch (Exception e) {
+	e.printStackTrace();
       }
     }
 
-    public void printTwoInts(TwoInts d) throws java.io.IOException {
-      System.out.println("a="+d.a+", b="+d.b);
+
+    public void handle_foo(foo d) throws java.io.IOException {
+      System.out.println("Got foo, x="+d.x+", y="+d.y+", z="+d.z);
     }
 
-    public void handle_theTwoInts(TwoInts d) throws java.io.IOException {
-      System.out.print("Got theTwoInts: ");
-      printTwoInts(d);
-    }
-
-    public void handle_anotherTwoInts(TwoInts d) throws java.io.IOException {
-      System.out.print("Got anotherheTwoInts: ");
-      printTwoInts(d);
-    }
-
-    public void handle_IntString(IntString d) throws java.io.IOException {
-      System.out.println("Got IntString, x="+d.x+", s="+d.s);
+    public void handle_bar(int d) throws java.io.IOException {
+      System.out.println("Got bar: "+d);
     }
 
   }
 
   public static void main(String[] arg) throws Exception {
     FileOutputStream fos = new FileOutputStream(arg[0]);
-    FileInputStream fis = new FileInputStream(new File(arg[0]))
-    Encoder example = new Encoder(fos);
-    Decoder example = new Decoder(fis);
-    example.doEncode();
+    FileInputStream fis = new FileInputStream(new File(arg[0]));
+    Encoder enc = new Encoder(fos);
+    Decoder dec = new Decoder(fis);
+    enc.doEncode();
+    dec.doDecode();
     fos.close();
     fis.close();
   }

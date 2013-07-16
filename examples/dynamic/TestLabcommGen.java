@@ -31,6 +31,7 @@ public class TestLabcommGen {
 	private static final String SAMPLE_NAME_FOO = "foo";
 	private static final String SAMPLE_NAME_BAR = "bar";
 
+	/** A class representing the source code for one Labcomm handler */
 	static class HandlerSrc {
 		private String sampleName;
 		private String param;
