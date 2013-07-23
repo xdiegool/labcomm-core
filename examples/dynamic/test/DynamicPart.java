@@ -1,3 +1,4 @@
+package test;
 import java.io.ByteArrayInputStream;
 import java.io.EOFException;
 import java.io.FileInputStream;
@@ -26,7 +27,12 @@ import beaver.Parser.Exception;
 
 
 
-public class TestLabcommGen {
+/** Simple test class that illustrates on-the-fly generation, compilation, and loading
+ *   of labcomm handlers.
+ *
+ *  It reads, modifies and writes the "foo" and "bar" sample types
+ */
+public class DynamicPart {
 
 	private static final String SAMPLE_NAME_FOO = "foo";
 	private static final String SAMPLE_NAME_BAR = "bar";
@@ -50,8 +56,16 @@ public class TestLabcommGen {
 			return res;
 		}
 	}
+
+        public void doTest(InRAMCompiler irc, String inFile, String outFile) {
+		System.out.println("*** DynamicPart reading from "+inFile);
+		decodeTest(irc, tmpFile, SAMPLE_NAME_FOO, SAMPLE_NAME_BAR);
+		System.out.println("*** DynamicPart writing to "+outFile);
+		encodeTest(irc, tmpFile);
+	}
+
 	/**
-	 * @param args
+	 * @param args (types.lc, handlers.txt, inputfile, outputfile) 
 	 */
 	public static void main(String[] args) {
 
@@ -76,15 +90,12 @@ public class TestLabcommGen {
 		InRAMCompiler irc = generateCode(labcommStr, handlers);
 
 		if(irc != null) {
-			System.out.println("*** Testing instantiation and invocation of Handler ");
-			dummyTest(irc);
-
-			String tmpFile = args[2];
-			System.out.println("*** Testing writing and reading file "+tmpFile);
-			encodeTest(irc, tmpFile);
-			decodeTest(irc, tmpFile, SAMPLE_NAME_FOO, SAMPLE_NAME_BAR);
+			String inFile = args[2];
+			String outFile = args[3];
+			new DynamicPart().doTest(irc, inFile, outFile);
 		}
 	}
+
 	public static void generateHandlers(String srcStr, HashMap<String,String> handlers) {
 		int pos = 0;	
 		while(pos < srcStr.length()) {
@@ -242,7 +253,7 @@ public class TestLabcommGen {
 	}
 	/** test method
 	 */
-	private static void decodeTest(InRAMCompiler irc, String tmpFile, String... sampleNames) {
+	private void decodeTest(InRAMCompiler irc, String tmpFile, String... sampleNames) {
 		try {
 			FileInputStream in = new FileInputStream(tmpFile);
 			LabCommDecoderChannel dec = new LabCommDecoderChannel(in);
@@ -272,7 +283,7 @@ public class TestLabcommGen {
 	}
 	/** test encoding
 	 */
-	private static void encodeTest(InRAMCompiler irc, String tmpFile) {
+	private void encodeTest(InRAMCompiler irc, String tmpFile) {
 		try {
 			Class fc = irc.load(SAMPLE_NAME_FOO);
 			Class bc = irc.load(SAMPLE_NAME_BAR);
