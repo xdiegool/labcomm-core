@@ -1,0 +1,18 @@
+foo:handler(foo value) {
+	test.HandlerContext ctx = (test.HandlerContext)context;
+	System.out.println("foo handler from handlers.txt");
+	System.out.println("using context "+ctx.str);
+        ctx.x = value.x;
+	ctx.y = value.y;
+	ctx.z = value.z;
+	System.out.println(value.x);
+	System.out.println(value.y);
+	System.out.println(value.z);
+	for(int i=0; i<value.x; i++){
+		System.out.print("."+(value.x-i));
+	}
+	System.out.println();
+}###
+bar:handler(int value) {
+	System.out.println("bar:"+value);
+}###

@@ -1,0 +1,13 @@
+foo:handler(foo value) {
+	System.out.println("foo handler from handlers.txt");
+	System.out.println(value.x);
+	System.out.println(value.y);
+	System.out.println(value.z);
+	for(int i=0; i<value.x; i++){
+		System.out.print("."+(value.x-i));
+	}
+	System.out.println();
+}###
+bar:handler(int value) {
+	System.out.println("bar:"+value);
+}###
