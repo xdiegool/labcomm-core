@@ -75,13 +75,13 @@ public class DynamicPart {
 
 		generateHandlers(srcStr, handlers);
 
-		System.out.println("*** Generated handler source:");
+//		System.out.println("*** Generated handler source:");
 		handlers.keySet();
 
-		for (String n : handlers.keySet()) {
-			System.out.println(n+":");
-			System.out.println(handlers.get(n));
-		}
+//		for (String n : handlers.keySet()) {
+//			System.out.println(n+":");
+//			System.out.println(handlers.get(n));
+//		}
 
 
 		InRAMCompiler irc = generateCode(labcommStr, handlers);
@@ -95,12 +95,10 @@ public class DynamicPart {
 	public static void generateHandlers(String srcStr, HashMap<String,String> handlers) {
 		int pos = 0;	
 		while(pos < srcStr.length()) {
-			//			System.out.println("--------");
 			int nameEnd = srcStr.indexOf(':', pos);
 			if(nameEnd <0) break;
 
 			String name = srcStr.substring(pos,nameEnd);
-			//			System.out.println("Name="+name);
 
 			pos=nameEnd+1;
 			String par = "";
@@ -108,7 +106,6 @@ public class DynamicPart {
 			if(srcStr.startsWith(handler_decl, pos)) {
 				int endPar = srcStr.indexOf(')', pos);
 				par = srcStr.substring(pos+handler_decl.length(), endPar);
-				//				System.out.println("param="+par);
 				pos = endPar+1;
 			} else {
 				System.out.println("expeced handler decl:\n"+srcStr.substring(pos));	
@@ -116,14 +113,9 @@ public class DynamicPart {
 			int bodyEnd = srcStr.indexOf("}###", pos); // HERE BE DRAGONS! a bit brittle
 			String body = srcStr.substring(pos, bodyEnd+1);
 			pos = bodyEnd+5;
-			//			System.out.println("body:");
-			//			System.out.println(body);
-
-			//			System.out.println("**** generates:");
 
 			HandlerSrc s = new HandlerSrc(name, par, body);
 			final String genSrc = s.getSrc();
-			//			System.out.println(genSrc);
 			handlers.put(name,genSrc);
 		}
 	}
@@ -211,7 +203,7 @@ public class DynamicPart {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		System.out.println("Generated labcomm code:");
+//		System.out.println("Generated labcomm code:");
 
 		InRAMCompiler irc = new InRAMCompilerJavax("labcomm.generated", TestLabcommGen.class.getClassLoader());
 
@@ -219,12 +211,12 @@ public class DynamicPart {
 		StringBuilder handlerMethods = new StringBuilder();
 
 		handlerClass.append("package labcomm.generated;\n");
-		handlerClass.append("import test.TestLabcommGen;\n");
 		handlerClass.append("public class "+handlerClassName+" implements ");
 
 
 		String handlerAttributes = "Object context;\n";
-		String handlerConstructor = "public "+handlerClassName+"(Object context){ this.context=context;}\n";
+		String handlerConstr = "public "+handlerClassName+"(){super();}\n";
+		String handlerConstrCtxt = "public "+handlerClassName+"(Object context){ this.context=context;}\n";
 		
 		Iterator<String> i = genCode.keySet().iterator();
 		try {
@@ -237,12 +229,13 @@ public class DynamicPart {
 				}
 				handlerMethods.append(handlers.get(sampleName));
 				handlerMethods.append("\n");
-				System.out.println("***"+sampleName+"\n"+src);
+//				System.out.println("***"+sampleName+"\n"+src);
 				irc.compile(sampleName, src);  // while iterating, compile the labcomm generated code
 			}
 			handlerClass.append("{\n");
 			handlerClass.append(handlerAttributes);
-			handlerClass.append(handlerConstructor);
+			handlerClass.append(handlerConstr);
+			handlerClass.append(handlerConstrCtxt);
 			handlerClass.append(handlerMethods.toString());
 			handlerClass.append("}\n");
 
@@ -270,55 +263,6 @@ public class DynamicPart {
 		return irc;
 	}
 
-	/** generate labcomm code and compile handlers. Version for separate handler classes 
-	 *
-	 * @param lcAST - the AST of the labcomm declaration
-	 * @param handlers - a map <name, source> of handlers for the types in ast
-	 * @return an InRAMCompiler object containing the generated clases
-	 */
-	private static InRAMCompiler handleAstSeparate(Program lcAST, HashMap<String, String> handlers) {
-		Map<String, String> genCode = new HashMap<String, String>();
-		try {
-			lcAST.J_gen(genCode, "labcomm.generated");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		System.out.println("Generated labcomm code:");
-
-		InRAMCompiler irc = new InRAMCompilerJavax("labcomm.generated", null);
-
-		Iterator<String> i = genCode.keySet().iterator();
-		while(i.hasNext()){
-			final String sampleName = i.next();
-			final String src = genCode.get(sampleName);
-			System.out.println("***"+sampleName+"\n"+src);
-			StringBuilder sb = new StringBuilder();
-			sb.append("package labcomm.generated;\n");
-			sb.append("public class gen_"+sampleName+"Handler implements "+sampleName+".Handler {\n");
-			sb.append(handlers.get(sampleName));
-			sb.append("}\n");
-			System.out.println("-------------------------------------");
-			System.out.println(sb.toString());
-			try {
-				irc.compile(sampleName, src);
-				irc.compile("gen_"+sampleName+"Handler", sb.toString());
-			} catch (IllegalArgumentException e) {
-				e.printStackTrace();
-			} catch (SecurityException e) {
-				e.printStackTrace();
-			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
-			} catch (IllegalAccessException e) {
-				e.printStackTrace();
-			} catch (InvocationTargetException e) {
-				e.printStackTrace();
-			} catch (NoSuchMethodException e) {
-				e.printStackTrace();
-			}
-			System.out.println("================================");
-		}
-		return irc;
-	}
 	/** test method
 	 */
 	private void decodeTest(InRAMCompiler irc, HandlerContext ctxt, String tmpFile, String... sampleNames) {
@@ -446,84 +390,6 @@ public class DynamicPart {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (NoSuchMethodException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	/** test method
-	 */
-	private static void decodeTestSeparate(InRAMCompiler irc, String tmpFile, String... sampleNames) {
-		try {
-			FileInputStream in = new FileInputStream(tmpFile);
-			LabCommDecoderChannel dec = new LabCommDecoderChannel(in);
-			for (String sampleName : sampleNames) {
-				System.out.println("registering handler for "+sampleName);
-				Class sampleClass = irc.load(sampleName);
-				Class handlerClass = irc.load("gen_"+sampleName+"Handler");
-				Class handlerInterface = irc.load(sampleName+"$Handler");
-
-				Object handler = handlerClass.newInstance(); 
-
-				Method reg = sampleClass.getDeclaredMethod("register", LabCommDecoder.class, handlerInterface);
-				reg.invoke(sampleClass, dec, handler);
-			}
-
-			try{
-				System.out.println("*** decoding:");
-				dec.run();
-			} catch(EOFException e) {
-				System.out.println("*** reached EOF ***");
-			}
-			in.close();
-		} catch (Throwable e) {
-			e.printStackTrace();
-		}
-
-	}
-
-	/** dummy test creating instances of sample and handler, and calling handle*/
-	private static void dummyTestSeparate(InRAMCompiler irc) {
-		try {
-			Class hc = irc.load("gen_"+SAMPLE_NAME_FOO+"Handler");
-			Object h = hc.newInstance(); 
-			Class fc = irc.load(SAMPLE_NAME_FOO);
-			Object f = fc.newInstance();
-			Field x = fc.getDeclaredField("x");
-			Field y = fc.getDeclaredField("y");
-			Field z = fc.getDeclaredField("z");
-			x.setInt(f, 10);
-			y.setInt(f, 11);
-			z.setInt(f, 12);
-			Method m;
-			try {
-				m = hc.getDeclaredMethod("handle_"+SAMPLE_NAME_FOO, fc);
-				m.invoke(h, f);
-			} catch (SecurityException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (NoSuchMethodException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalArgumentException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InvocationTargetException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (InstantiationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchFieldException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

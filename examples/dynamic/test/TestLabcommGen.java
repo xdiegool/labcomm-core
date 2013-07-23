@@ -208,7 +208,7 @@ public class TestLabcommGen {
 		}
 		System.out.println("Generated labcomm code:");
 
-		InRAMCompiler irc = new InRAMCompilerJavax("labcomm.generated", TestLabcommGen.class.getClassLoader());
+		InRAMCompiler irc = new InRAMCompilerJavax("labcomm.generated", TestLabcommGen.class.getClassLoader(), true);
 
 		StringBuilder handlerClass = new StringBuilder();
 		StringBuilder handlerMethods = new StringBuilder();
@@ -219,7 +219,8 @@ public class TestLabcommGen {
 
 
 		String handlerAttributes = "Object context;\n";
-		String handlerConstructor = "public "+handlerClassName+"(Object context){ this.context=context;}\n";
+		String handlerConstr = "public "+handlerClassName+"(){ super();}\n";
+		String handlerConstrCtxt = "public "+handlerClassName+"(Object context){ this.context=context;}\n";
 		
 		Iterator<String> i = genCode.keySet().iterator();
 		try {
@@ -237,7 +238,8 @@ public class TestLabcommGen {
 			}
 			handlerClass.append("{\n");
 			handlerClass.append(handlerAttributes);
-			handlerClass.append(handlerConstructor);
+			handlerClass.append(handlerConstr);
+			handlerClass.append(handlerConstrCtxt);
 			handlerClass.append(handlerMethods.toString());
 			handlerClass.append("}\n");
 

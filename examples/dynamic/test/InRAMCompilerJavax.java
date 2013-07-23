@@ -48,6 +48,8 @@ import javax.tools.ToolProvider;
 
 public class InRAMCompilerJavax implements InRAMCompiler {
 
+	private boolean debug;
+
 	// Source for both test classes. They go in package
 	// "just.generated"
 
@@ -127,6 +129,18 @@ public class InRAMCompilerJavax implements InRAMCompiler {
 		createNewClassLoader(providedClassLoader);
 
 	}
+
+	/**
+	 * 
+	 * @param pkgName - The package for the generated classes. The source code must only contain classes in this package.
+	 * @param cl - An optional (i.e., may be null) classloader that is also searched
+         *
+	 * @param debug - set to true to turn on debug output
+	 */
+	public InRAMCompilerJavax(String pkgName, ClassLoader cl, boolean debug) {
+		this(pkgName, cl);
+		this.debug = debug;
+	}
 	
 	/* (non-Javadoc)
 	 * @see se.lth.cs.sven.rosettaTest.cc.InRAMCompiler#deleteClass(java.lang.String)
@@ -202,7 +216,9 @@ public class InRAMCompilerJavax implements InRAMCompiler {
 		jfm.isCompiling(false);
 
 		// Traces the classes now found in the cache
-		System.out.println("\nInRAMCompiler: generated classes = " + output.keySet());
+		if(debug) {
+			System.out.println("\nInRAMCompiler: generated classes = " + output.keySet());
+		}
 	}
 
 	/* (non-Javadoc)
@@ -378,7 +394,9 @@ trick:
 		RAMClassLoader(Map<String, JavaFileObject> output, ClassLoader cl) {
 			this.output = output;
 			this.classLoader = cl;
-			testGetResources();
+			if(debug) {
+				testGetResources();
+			}
 		}
 
 		private void testGetResources() {
@@ -395,8 +413,10 @@ trick:
 			try {
 				//XXX This is a hack! Look in "parent" class loader first, to find correct Service instances.
 				if(classLoader != null) {
-					System.out.println("RAMClassLoader.findClass: getResource (package): "+classLoader.getResource("se/lth/cs/sven/rosettaTest"));
-					System.out.println("RAMClassLoader.findClass: getResource: "+classLoader.getResource("se/lth/cs/sven/rosettaTest/Constraint.class"));
+					if(debug) {
+						System.out.println("RAMClassLoader.findClass: getResource (package): "+classLoader.getResource("se/lth/cs/sven/rosettaTest"));
+						System.out.println("RAMClassLoader.findClass: getResource: "+classLoader.getResource("se/lth/cs/sven/rosettaTest/Constraint.class"));
+					}
 
 					try {
 						Class<?> c = classLoader.loadClass(name);
