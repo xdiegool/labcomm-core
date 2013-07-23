@@ -1,9 +1,13 @@
-This directory contains an embryo of an example of how to 
-generate and compile a labcomm endpoint on the fly.
+This directory contains a small example of how to generate and compile 
+a labcomm endpoint on the fly.
 
-NB! There is currently no connection to the StaticPart.java
+the script static.sh builds and runs a very simple static labcomm demo
 
-the runme.sh script builds and runs the TestLabCommGen, which illustrates the 
+the script dynamic.sh builds and runs an example where labcomm is generated and woven
+togerther with user-defined handler code. 
+
+
+the test.sh script builds and runs the TestLabCommGen, which illustrates the 
 on-the-fly compilation to RAM, reading the labcomm declarations and handlers from file
 
 The handlers declaration (in handlers.txt) is experimental, and has the following format:
