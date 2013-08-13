@@ -59,7 +59,7 @@ def generate(decl):
         return [False, True]
 
     elif decl.__class__ == labcomm.BYTE:
-        return [-128, 0, 127]
+        return [0, 127, 128, 255]
 
     elif decl.__class__ == labcomm.SHORT:
         return [-32768, 0, 32767]

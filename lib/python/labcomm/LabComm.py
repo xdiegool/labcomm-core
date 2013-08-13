@@ -93,6 +93,7 @@
 # sequences of 7 bit chunks, represented in bytes with the high bit meaning 
 # that more data is to come.
  
+import types
 import struct as packer
 
 VERSION = "LabComm2013"
@@ -316,18 +317,26 @@ class array(object):
             encoder.encode_packed32(i)
         encoder.encode_type_number(self.decl)
 
-    def min_max_shape(self, l, depth=0, shape=[]):
-        if isinstance(l, list):
+    def min_max_shape(self, l, depth, shape):
+        if isinstance(l, types.StringTypes):
+            return shape
+        try:
             length = len(l)
             if len(shape) <= depth:
                 shape.append((length, length))
+                pass
             else:
                 (low, high) = shape[depth]
                 low = min(low, length)
                 high = max(high, length)
                 shape[depth] = (low, high)
+                pass
             for e in l:
                 shape = self.min_max_shape(e, depth + 1, shape)
+                pass
+            pass
+        except TypeError:
+            pass
         return shape    
 
     def shape(self, l):
@@ -356,7 +365,8 @@ class array(object):
         return depth
 
     def encode_value(self, encoder, value, depth):
-        if depth and isinstance(value, list):
+        # if depth and isinstance(value, list):
+        if depth:
             for e in value:
                 self.encode_value(encoder, e, depth - 1)
         else:
@@ -585,7 +595,7 @@ class Encoder(Codec):
             self.pack("!b", 0)
 
     def encode_byte(self, v):
-        self.pack("!b", v)
+        self.pack("!B", v)
 
     def encode_short(self, v):
         self.pack("!h", v)
@@ -669,7 +679,7 @@ class Decoder(Codec):
         return self.unpack("!b") != 0
     
     def decode_byte(self):
-        return self.unpack("!b")
+        return self.unpack("!B")
     
     def decode_short(self):
         return self.unpack("!h")
