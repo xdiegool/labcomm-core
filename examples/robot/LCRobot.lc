@@ -1,0 +1,38 @@
+sample struct {
+	struct {
+		float x;
+		float y;
+		float z;
+	} trans;
+	struct {
+		float q1;
+		float q2;
+		float q3;
+		float q4;
+	} rot;
+	struct {
+		short cf1;
+		short cf4;
+		short cf6;
+		short cfx;
+	} robconfig;
+} robtarget;
+
+sample struct {
+	struct {
+		float rax_1;
+		float rax_2;
+		float rax_3;
+		float rax_4;
+		float rax_5;
+		float rax_6;
+	} robax;
+	struct {
+		float eax_a;
+		float eax_b;
+		float eax_C;
+		float eax_d;
+		float eax_e;
+		float eax_f;
+	} extax;
+} jointtarget;

@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <AssemblyName>LabComm</AssemblyName>
+    <ProjectGuid>{755CD5A6-C48E-4D35-B0BE-8EC0FDE1A2A1}</ProjectGuid>
+    <!-- Properties which affect the build process -->
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <OutputPath>bin\Debug\</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="se\lth\control\labcomm\LabCommDispatcher.cs" />
+    <Compile Include="se\lth\control\labcomm\LabCommDecoderRegistry.cs" />
+    <Compile Include="se\lth\control\labcomm\LabComm.cs" />
+    <Compile Include="se\lth\control\labcomm\LabCommSample.cs" />
+    <Compile Include="se\lth\control\labcomm\LabCommHandler.cs" />
+    <Compile Include="se\lth\control\labcomm\LabCommEncoderRegistry.cs" />
+    <Compile Include="se\lth\control\labcomm\LabCommDecoder.cs" />
+    <Compile Include="se\lth\control\labcomm\LabCommType.cs" />
+    <Compile Include="se\lth\control\labcomm\LabCommEncoderChannel.cs" />
+    <Compile Include="se\lth\control\labcomm\LabCommEncoder.cs" />
+    <Compile Include="se\lth\control\labcomm\LabCommDecoderChannel.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

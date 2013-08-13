@@ -80,6 +80,7 @@ public class LabComm {
     String pythonFile = null;
     String prettyFile = null;
     String typeinfoFile = null;
+	String rapidFile = null;
 
     for (int i = 0 ; i < args.length ; i++) {
       if (fileName == null ||
@@ -119,6 +120,8 @@ public class LabComm {
 	prettyFile = args[i].substring(9);
       } else if (args[i].startsWith("--typeinfo=")) {
 	typeinfoFile = args[i].substring(11);
+      } else if (args[i].equals("--rapid")) {
+	rapidFile = coreName + ".sys";
       } else if (i == args.length - 1) {
 	fileName = args[i];
       } else {
@@ -191,6 +194,13 @@ public class LabComm {
 	  }
 	  genPython(ast, pythonFile, prefix);
 	  prettyOnStdout = false;
+	}
+	if (rapidFile != null) {
+		if (verbose) {
+			System.err.println("Generating RAPID: " + rapidFile);
+		}
+		genRAPID(ast, rapidFile, coreName);
+		prettyOnStdout = false;
 	}
 	if (prettyFile != null) {
 	  if (verbose) { 
@@ -290,6 +300,13 @@ public class LabComm {
     }
   }
 
+  private static void genRAPID(Program p, String filename, String prefix) {
+    try {
+      p.RAPID_gen(filename, prefix);
+    } catch (IOException e) {
+      System.err.println("IOException: " + filename + " " + e);
+    }
+  }
 
 
 }

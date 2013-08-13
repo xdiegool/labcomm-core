@@ -1,0 +1,355 @@
+
+aspect RAPID_env {
+	public class RAPID_env {
+		private String prefix;
+		private StringBuilder types;
+		private StringBuilder constants;
+		private StringBuilder procedures;
+		private PrintStream ps;
+
+		public RAPID_env(PrintStream ps, String prefix)
+		{
+			this.types = new StringBuilder();
+			this.constants = new StringBuilder();
+			this.procedures = new StringBuilder();
+			this.prefix = prefix;
+			this.ps = ps;
+		}
+
+		public String prefix() { return this.prefix; }
+
+		public String addRecord(String name, java.util.List<String> components)
+		{
+			String recordName = this.prefix + "_" + name;
+			types.append("\tRECORD " + recordName);
+			types.append("\n");
+			for (String c : components) {
+				types.append("\t\t" + c + "\n");
+			}
+			types.append("\tENDRECORD");
+			types.append("\n\n");
+			return recordName;
+		}
+
+		public void addConstant(String type, String name, String value) {
+			this.constants.append("\tLOCAL CONST " + type + " " + name +
+					" := " + value + ";\n");
+		}
+
+		public void addProc(String name, java.util.List<String> params,
+					java.util.List<String> stmts)
+		{
+			this.procedures.append("\tLOCAL PROC " + name + "(");
+			for (int i = 0; i < params.size(); i++) {
+				this.procedures.append(params.get(i));
+				if (i < params.size() - 1) {
+					this.procedures.append(", ");
+				}
+			}
+			this.procedures.append(")\n");
+			for (String stmt : stmts) {
+				this.procedures.append("\t\t" + stmt + "\n");
+			}
+			this.procedures.append("\tERROR\n\t\tRAISE ;\n\tENDPROC\n\n");
+		}
+
+		public void flush()
+		{
+			ps.println("MODULE " + prefix() + "(SYSMODULE)");
+			ps.println();
+			ps.print(types.toString());
+			ps.println();
+			ps.println("\tLOCAL CONST string prefix:=\"" + this.prefix + "\";");
+			ps.print(constants.toString());
+			ps.println();
+			ps.print(procedures.toString());
+			ps.println();
+			ps.print("ENDMODULE");
+		}
+	}
+}
+
+aspect RAPID_CodeGen {
+
+	public void ASTNode.RAPID_gen(RAPID_env env) {
+		throw new UnsupportedOperationException();
+	}
+
+	public void Program.RAPID_gen(String file, String prefix)
+			throws IOException
+	{
+		PrintStream ps = new PrintStream(new FileOutputStream(new File(file)));
+		RAPID_env env = new RAPID_env(ps, prefix);
+		RAPID_gen(env);
+	}
+
+	public void Program.RAPID_gen(RAPID_env env)
+	{
+		for (int i = 0; i < getNumDecl(); i++) {
+			getDecl(i).RAPID_gen(env);
+		}
+		env.flush();
+	}
+
+	public void Decl.RAPID_gen(RAPID_env env) {
+		throw new UnsupportedOperationException();
+	}
+
+	public void SampleDecl.RAPID_gen(RAPID_env env) {
+		// Add type declarations
+		String fullName = getType().RAPID_AddType(env, getName());
+		// Add signature constants
+		String sig_len_name = "signature_len_" + getName();
+		String sig_name = "signature_" + getName();
+		SignatureList sig = signature();
+		StringBuilder sb = new StringBuilder();
+		sb.append("[");
+		byte[] d = null;
+		int sig_len = 0;
+		for (int i = 0; i < sig.size(); i++) {
+			d = sig.getData(i);
+			for (int j = 0; d != null && j < d.length; j++) {
+				sb.append(d[j] + ",");
+				sig_len++;
+			}
+		}
+		sb.delete(sb.length() - 1, sb.length());
+		sb.append("]");
+		env.addConstant("num", sig_len_name, "" + sig_len);
+		env.addConstant("byte", sig_name + "{" + sig_len_name + "}",
+			sb.toString());
+		
+		// Add decode procedures
+		ArrayList<String> params = new ArrayList<String>();
+		ArrayList<String> stmts = new ArrayList<String>();
+		params.add("VAR LabComm_Decoder_Sample s");
+		params.add("string handler");
+		stmts.add("s.prefix := prefix;");
+		stmts.add("s.name := \"" + getName() + "\";");
+		stmts.add("s.handler := handler;");
+		env.addProc("Dec_Reg_" + getName(), params, stmts);	
+
+		params.clear();
+		stmts.clear();
+		params.add("VAR LabComm_Decoder_Sample s");
+		params.add("VAR rawbytes sig");
+		params.add("num user_id");
+		stmts.add("VAR byte tmp_sig{" + sig_len_name + "};");
+		stmts.add("IF RawBytesLen(sig)<>" + sig_len_name + " THEN");
+		stmts.add("\tRETURN;");
+		stmts.add("ENDIF");
+		stmts.add("FOR i FROM 1 TO " + sig_len_name + " DO");
+		stmts.add("\tUnpackRawBytes sig, i, tmp_sig{i}, \\Hex1;");
+		stmts.add("ENDFOR");
+		stmts.add("IF tmp_sig<>" + sig_name + " THEN");
+		stmts.add("\tRETURN;");
+		stmts.add("ENDIF");
+		stmts.add("s.user_id := user_id;");
+		env.addProc("Reg_If_Signature_Of_" + getName(), params, stmts);
+
+		params.clear();
+		stmts.clear();
+		params.add("VAR Decoder d");
+		params.add("VAR LabComm_Stream st");
+		params.add("VAR LabComm_Decoder_Sample s");
+		stmts.add("VAR " + fullName + " tmp;");
+		getType().RAPID_AddDecodeInstr(env, stmts, "tmp", "st");
+		stmts.add("% s.handler % tmp;");
+		env.addProc("Decode_And_Handle_" + getName(), params, stmts);
+
+		params.clear();
+		stmts.clear();
+		params.add("VAR Encoder e");
+		params.add("VAR LabComm_Stream st");
+		params.add("VAR LabComm_Encoder_Sample s");
+		stmts.add("s.prefix := prefix;");
+		stmts.add("s.name := \"" + getName() + "\";");
+		stmts.add("Encoder_Register_Sample e, st, s;");
+		env.addProc("Enc_Reg_" + getName(), params, stmts);
+
+		params.clear();
+		stmts.clear();
+		params.add("VAR Encoder e");
+		params.add("VAR LabComm_Stream s");
+		stmts.add("VAR rawbytes buffer;");
+		stmts.add("FOR i FROM 1 TO " + sig_len_name + " DO");
+		stmts.add("\tPackRawBytes " + sig_name +
+					"{i}, buffer, \\Network, i, \\Hex1;");
+		stmts.add("ENDFOR");
+		stmts.add("SocketSend s.soc, \\RawData:=buffer, \\NoOfBytes:=" +
+					sig_len_name + ";");
+		env.addProc("Encode_Signature_" + getName(), params, stmts);
+
+		params.clear();
+		stmts.clear();
+		params.add("VAR Encoder e");
+		params.add("VAR LabComm_Stream st");
+		params.add("VAR LabComm_Encoder_Sample s");
+		params.add("VAR " + fullName + " val");
+		stmts.add("Encode_Packed st, s.user_id;");
+		getType().RAPID_AddEncodeInstr(env, stmts, "val", "st");
+		env.addProc("Encode_" + getName(), params, stmts);
+	}
+
+	public String Type.RAPID_AddType(RAPID_env env, String name) {
+		throw new UnsupportedOperationException();
+	}
+
+	public String StructType.RAPID_AddType(RAPID_env env, String name) {
+		ArrayList<String> components = new ArrayList<String>();
+		for (int i = 0; i < getNumField(); i++) {
+			Field f = getField(i);
+			components.add(
+					f.getType().RAPID_AddType(env, name + "_" + f.getName()) +
+					" " + f.getName() + ";");
+		}
+		String typeName = env.addRecord(name, components);
+		return typeName;
+	}
+
+	public String FixedArrayType.RAPID_AddType(RAPID_env env, String name) {
+		String typeName = getType().RAPID_AddType(env, name + "_e");
+		if (getNumExp() > 1) {
+			throw new UnsupportedOperationException();
+		}
+		ArrayList<String> components = new ArrayList<String>();
+		for (int i = 1; i <= getExp(0).RAPID_getValue(); i++) {
+			components.add(typeName + " e" + i + ";");
+		}
+		String completeName = env.addRecord("list_" + name, components);
+		return completeName;
+	}
+
+	public String PrimType.RAPID_AddType(RAPID_env env, String name) {
+		if (getToken() == LABCOMM_SHORT ||
+			getToken() == LABCOMM_FLOAT ||
+			getToken() == LABCOMM_INT) {
+			return "num";
+		} else if (getToken() == LABCOMM_LONG) {
+			return "dnum";
+		} else if (getToken() == LABCOMM_STRING) {
+			return "string";
+		} else if (getToken() == LABCOMM_BOOLEAN) {
+			return "bool";
+		} else if (getToken() == LABCOMM_BYTE) {
+			return "byte";
+		}
+		throw new UnsupportedOperationException();
+	}
+
+	public void Type.RAPID_AddDecodeInstr(RAPID_env env,
+			java.util.List<String> instrs,
+			String var_name, String stream_name) {
+		throw new UnsupportedOperationException();
+	}
+
+	public void StructType.RAPID_AddDecodeInstr(RAPID_env env,
+			java.util.List<String> instrs,
+			String var_name, String stream_name) {
+		for (int i = 0; i < getNumField(); i++) {
+			getField(i).getType().RAPID_AddDecodeInstr(env, instrs,
+					var_name + "." + getField(i).getName(), stream_name);
+		}
+	}
+
+	public void FixedArrayType.RAPID_AddDecodeInstr(RAPID_env env,
+			java.util.List<String> instrs,
+			String var_name, String stream_name) {
+		for (int i = 1; i <= getExp(0).RAPID_getValue(); i++) {
+			getType().RAPID_AddDecodeInstr(env, instrs,
+					var_name + ".e" + i, stream_name);
+		}
+	}
+
+	public void PrimType.RAPID_AddDecodeInstr(RAPID_env env,
+			java.util.List<String> instrs,
+			String var_name, String stream_name) {
+		switch(getToken()) {
+			case LABCOMM_BYTE:
+				instrs.add("Decode_Byte " + stream_name + "," + var_name + ";");
+				break;
+			case LABCOMM_BOOLEAN:
+				instrs.add("Decode_Bool " + stream_name + "," + var_name + ";");
+				break;
+			case LABCOMM_SHORT:
+				instrs.add("Decode_Short " + stream_name + "," + var_name + ";");
+				break;
+			case LABCOMM_INT:
+				instrs.add("Decode_Int " + stream_name + "," + var_name + ";");
+				break;
+			case LABCOMM_LONG:
+				instrs.add("Decode_Long " + stream_name + "," + var_name + ";");
+				break;
+			case LABCOMM_FLOAT:
+				instrs.add("Decode_Float " + stream_name + "," + var_name + ";");
+				break;
+			case LABCOMM_STRING:
+				instrs.add("Decode_String " + stream_name + "," + var_name + ";");
+				break;
+			default:
+				throw new UnsupportedOperationException();
+		}
+	}
+
+	public void Type.RAPID_AddEncodeInstr(RAPID_env env,
+			java.util.List<String> instrs,
+			String var_name, String stream_name) {
+		throw new UnsupportedOperationException();
+	}
+
+	public void StructType.RAPID_AddEncodeInstr(RAPID_env env,
+			java.util.List<String> instrs,
+			String var_name, String stream_name) {
+		for (int i = 0; i < getNumField(); i++) {
+			getField(i).getType().RAPID_AddEncodeInstr(env, instrs,
+					var_name + "." + getField(i).getName(), stream_name);
+		}
+	}
+
+	public void FixedArrayType.RAPID_AddEncodeInstr(RAPID_env env,
+			java.util.List<String> instrs,
+			String var_name, String stream_name) {
+		for (int i = 1; i <= getExp(0).RAPID_getValue(); i++) {
+			getType().RAPID_AddEncodeInstr(env, instrs,
+					var_name + ".e" + i, stream_name);
+		}
+	}
+
+	public void PrimType.RAPID_AddEncodeInstr(RAPID_env env,
+			java.util.List<String> instrs,
+			String var_name, String stream_name) {
+		switch(getToken()) {
+			case LABCOMM_BYTE:
+				instrs.add("Encode_Byte " + stream_name + "," + var_name + ";");
+				break;
+			case LABCOMM_BOOLEAN:
+				instrs.add("Encode_Bool " + stream_name + "," + var_name + ";");
+				break;
+			case LABCOMM_SHORT:
+				instrs.add("Encode_Short " + stream_name + "," + var_name + ";");
+				break;
+			case LABCOMM_INT:
+				instrs.add("Encode_Int " + stream_name + "," + var_name + ";");
+				break;
+			case LABCOMM_LONG:
+				instrs.add("Encode_Long " + stream_name + "," + var_name + ";");
+				break;
+			case LABCOMM_FLOAT:
+				instrs.add("Encode_Float " + stream_name + "," + var_name + ";");
+				break;
+			case LABCOMM_STRING:
+				instrs.add("Encode_String " + stream_name + "," + var_name + ";");
+				break;
+			default:
+				throw new UnsupportedOperationException();
+		}
+	}
+
+	public int Exp.RAPID_getValue() {
+		throw new UnsupportedOperationException();
+	}
+
+	public int IntegerLiteral.RAPID_getValue() {
+		return Integer.parseInt(getValue());
+	}
+}
