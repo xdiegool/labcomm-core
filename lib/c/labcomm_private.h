@@ -64,8 +64,10 @@
 /*
  *
  */
+#ifndef LABCOMM_DECLARE_SIGNATURE
 #define LABCOMM_DECLARE_SIGNATURE(name) \
   struct labcomm_signature __attribute__((section("labcomm"),aligned(1))) name 
+#endif
 
 /*
  * Semi private dynamic memory declarations

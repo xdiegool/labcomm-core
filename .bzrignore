@@ -34,3 +34,5 @@ lib/c/test/test_labcomm_generated_encoding
 lib/java/se/lth/control/labcomm/WriterWrapper.class
 lib/c/liblabcomm.so.1
 lib/c/test/test_labcomm_pthread_scheduler
+lib/c/liblabcomm_plain_c.so.1
+lib/c/test/test_signature_plain_c

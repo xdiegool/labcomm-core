@@ -1,5 +1,5 @@
 /*
-  labcomm_signature_gnu_ld_tricks.h -- signature handling.
+  labcomm_signature_gnu_ld_tricks.c -- signature handling.
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
