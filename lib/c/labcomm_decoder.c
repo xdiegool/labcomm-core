@@ -330,6 +330,9 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
     labcomm_scheduler_data_unlock(d->scheduler);
     if (do_decode) {
       do_decode(d->reader, call_handler, &wrap);
+      if (d->reader->error < 0) {
+	result = d->reader->error;
+      }
     } else {
       result = -ENOENT;
     }
