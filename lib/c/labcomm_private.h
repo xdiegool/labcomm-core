@@ -201,6 +201,9 @@ int labcomm_internal_decoder_ioctl(struct labcomm_decoder *decoder,
     for (i = sizeof(type) - 1 ; i >= 0 ; i--) {				\
       if (r->pos >= r->count) {						\
 	labcomm_reader_fill(r, r->action_context);			\
+	if (r->error < 0) {						\
+	  return 0;							\
+	}								\
       }									\
       ((unsigned char*)(&result))[i] = r->data[r->pos];			\
       r->pos++;								\
@@ -216,6 +219,9 @@ int labcomm_internal_decoder_ioctl(struct labcomm_decoder *decoder,
     for (i = 0 ; i < sizeof(type) ; i++) {				\
       if (r->pos >= r->count) {						\
 	labcomm_reader_fille(r, r->action_context);			\
+	if (r->error < 0) {						\
+	  return 0;							\
+	}								\
       }									\
       ((unsigned char*)(&result))[i] = r->data[r->pos];			\
       r->pos++;								\
@@ -259,19 +265,23 @@ out:
  
 static inline char *labcomm_read_string(struct labcomm_reader *r)
 {
-  char *result;
-  int length, i; 
+  char *result = NULL;
+  int length, pos; 
   
   length = labcomm_read_packed32(r);
   result = labcomm_memory_alloc(r->memory, 1, length + 1);
-  for (i = 0 ; i < length ; i++) {
+  for (pos = 0 ; pos < length ; pos++) {
     if (r->pos >= r->count) {	
       labcomm_reader_fill(r, r->action_context);
+      if (r->error < 0) {
+	goto out;
+      }
     }
-    result[i] = r->data[r->pos];
+    result[pos] = r->data[r->pos];
     r->pos++;
   }
-  result[length] = 0;
+out:
+  result[pos] = 0;
   return result;
 }
 

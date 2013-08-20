@@ -1,7 +1,6 @@
 ## Macros
 
 CC=gcc
-#CFLAGS=-g -Wall -Werror -O3  -I. -Itest -DLABCOMM_ENCODER_LINEAR_SEARCH
 CFLAGS=-g -Wall -Werror -O3  -I. -Itest 
 LDFLAGS=-L.
 LDLIBS_TEST=-llabcomm -lrt
@@ -23,17 +22,14 @@ LABCOMM_JAR=../../compiler/labComm.jar
 LABCOMM=java -jar $(LABCOMM_JAR) 
 
 TESTS=test_labcomm_basic_type_encoding test_labcomm_generated_encoding \
+      test_signature_numbers \
+      test_labcomm \
       test_labcomm_pthread_scheduler \
-      test_signature_numbers
 #
 #FIXME: test_labcomm test_labcomm_errors
 TEST_DIR=test
-TESTDATA_DIR=$(TEST_DIR)/testdata
-TEST_GEN_DIR=$(TESTDATA_DIR)/gen
 
 VPATH=$(TEST_DIR)
-
-CREATED_DIRS=$(TEST_DIR) $(TESTDATA_DIR) $(TEST_GEN_DIR)
 
 # Enable experimental objects by invoking make like `make LABCOMM_EXPERIMENTAL=true`
 ifeq ($(LABCOMM_EXPERIMENTAL),true)
@@ -66,10 +62,6 @@ labcomm_fd_reader_writer.o : labcomm_fd_reader_writer.c  labcomm_fd_reader_write
 
 ethaddr.o: ethaddr.c
 
-$(CREATED_DIRS):
-	mkdir -p $@
-
-## NB! the tests need CUnit to be installed
 run-test: $(TESTS:%=run-test-%)
 
 run-test-%: $(TEST_DIR)/% | $(TEST_DIR)
@@ -85,6 +77,8 @@ $(TEST_DIR)/%: $(TEST_DIR)/%.o
 $(TEST_DIR)/gen:
 	mkdir -p $@
 
+.PRECIOUS: $(TEST_DIR)/gen/%.c
+.PRECIOUS: $(TEST_DIR)/gen/%.h
 $(TEST_DIR)/gen/%.c $(TEST_DIR)/gen/%.h: $(TEST_DIR)/%.lc | $(TEST_DIR)/gen
 	$(LABCOMM) \
 		--c=$(TEST_DIR)/gen/$*.c \
@@ -127,7 +121,7 @@ $(TEST_DIR)/test_labcomm_generated_encoding.o: labcomm_private.h
 $(TEST_DIR)/test_labcomm_generated_encoding.o: $(TEST_DIR)/gen/generated_encoding.h
 $(TEST_DIR)/test_labcomm_generated_encoding : $(TEST_DIR)/gen/generated_encoding.o
 
-$(TEST_DIR)/test_labcomm:  $(TEST_GEN_DIR)/test_sample.o
+$(TEST_DIR)/test_labcomm:  $(TEST_DIR)/gen/test_sample.o
 $(TEST_DIR)/test_signature_numbers.c: $(TEST_DIR)/gen/another_encoding.h
 $(TEST_DIR)/test_signature_numbers.c: $(TEST_DIR)/gen/generated_encoding.h
 $(TEST_DIR)/test_signature_numbers: $(TEST_DIR)/gen/another_encoding.o

@@ -38,3 +38,4 @@ lib/c/liblabcomm_plain_c.so.1
 lib/c/test/test_signature_plain_c
 test/test_signature_numbers
 lib/c/test/test_signature_numbers
+lib/c/test/test_labcomm

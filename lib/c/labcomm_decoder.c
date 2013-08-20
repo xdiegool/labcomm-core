@@ -83,11 +83,15 @@ void labcomm_decoder_free(struct labcomm_decoder* d)
   labcomm_memory_free(memory, 0, d);
 }
 
-static void collect_flat_signature(
+static int collect_flat_signature(
   struct labcomm_decoder *decoder,
   struct labcomm_writer *writer)
 {
-  int type = labcomm_read_packed32(decoder->reader); 
+  int result, type;
+
+  type = labcomm_read_packed32(decoder->reader); 
+  result = decoder->reader->error;
+  if (result < 0) { goto out; }
   if (type >= LABCOMM_USER) {
     decoder->on_error(LABCOMM_ERROR_UNIMPLEMENTED_FUNC, 3,
 			"Implement %s ... (1) for type 0x%x\n", __FUNCTION__, type);
@@ -103,7 +107,8 @@ static void collect_flat_signature(
 	  int n = labcomm_read_packed32(decoder->reader);
 	  labcomm_write_packed32(writer, n);
 	}
-	collect_flat_signature(decoder, writer);
+	result = collect_flat_signature(decoder, writer);
+	if (result < 0) { goto out; }
       } break;
       case LABCOMM_STRUCT: {
 	int fields, i;
@@ -114,7 +119,8 @@ static void collect_flat_signature(
 	  char *name = labcomm_read_string(decoder->reader);
 	  labcomm_write_string(writer, name);
 	  labcomm_memory_free(decoder->memory, 1, name);
-	  collect_flat_signature(decoder, writer);
+	  result = collect_flat_signature(decoder, writer);
+	  if (result < 0) { goto out; }
 	}
       } break;
       case LABCOMM_BOOLEAN:
@@ -127,11 +133,14 @@ static void collect_flat_signature(
       case LABCOMM_STRING: {
       } break;
       default: {
+	result = -ENOSYS;
         decoder->on_error(LABCOMM_ERROR_UNIMPLEMENTED_FUNC, 3,
 				"Implement %s (2) for type 0x%x...\n", __FUNCTION__, type);
       } break;
     }
   }
+out:
+  return result;
 }
 
 static int writer_ioctl(struct labcomm_writer *writer,
@@ -181,7 +190,7 @@ static int decode_typedef_or_sample(struct labcomm_decoder *d, int kind)
   local_index = 0;
   labcomm_writer_alloc(&writer, writer.action_context, "");
   labcomm_writer_start(&writer, writer.action_context, 0, NULL, NULL);
-  remote_index = labcomm_read_packed32(d->reader); //int
+  remote_index = labcomm_read_packed32(d->reader);
   signature.name = labcomm_read_string(d->reader);
   signature.type = kind;
   collect_flat_signature(d, &writer);

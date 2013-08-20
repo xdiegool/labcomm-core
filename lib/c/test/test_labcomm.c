@@ -1,6 +1,173 @@
+/*
+  test_labcomm.c -- Various labcomm tests
 
-#include "CUnit/Basic.h"
-#include "CUnit/Console.h"
+  Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
+
+  This file is part of LabComm.
+
+  LabComm is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  LabComm is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#include <stdint.h>
+#include <inttypes.h>
+#include <string.h>
+#include <stdlib.h>
+#include <errno.h>
+#include "labcomm_private.h"
+#include "labcomm_default_error_handler.h"
+#include "labcomm_default_memory.h"
+#include "labcomm_default_scheduler.h"
+#include "test/gen/test_sample.h"
+
+static unsigned char buffer[512];
+
+static int writer_alloc(struct labcomm_writer *w, 
+			struct labcomm_writer_action_context *action_context, 
+			char *labcomm_version)
+{
+  w->data = buffer;
+  w->data_size = sizeof(buffer);
+  w->count = sizeof(buffer);
+  
+  return 0;
+}
+static int writer_start(struct labcomm_writer *w, 
+			 struct labcomm_writer_action_context *action_context,
+			 int index, struct labcomm_signature *signature,
+			 void *value)
+{
+  return 0;
+}
+const struct labcomm_writer_action writer_action = {
+  .alloc = writer_alloc,
+  .start = writer_start,
+};
+static struct labcomm_writer_action_context writer_action_context = {
+  .next = NULL,
+  .action = &writer_action,
+  .context = NULL
+}; 
+static struct labcomm_writer writer =  {
+  .action_context = &writer_action_context,
+  .data = buffer,
+  .data_size = sizeof(buffer),
+  .count = sizeof(buffer),
+  .pos = 0,
+  .error = 0,
+};
+
+static int reader_alloc(struct labcomm_reader *r, 
+			struct labcomm_reader_action_context *action_context, 
+			char *labcomm_version)
+{
+  r->data = buffer;
+  r->data_size = sizeof(buffer);
+  r->count = 0;
+  r->memory = labcomm_default_memory;
+  
+  return 0;
+}
+static int reader_fill(struct labcomm_reader *r, 
+		       struct labcomm_reader_action_context *action_context)
+{
+  r->error = -ENOMEM;
+  return r->error;
+}
+const struct labcomm_reader_action reader_action = {
+  .alloc = reader_alloc,
+  .fill = reader_fill,
+};
+static struct labcomm_reader_action_context reader_action_context = {
+  .next = NULL,
+  .action = &reader_action,
+  .context = NULL
+}; 
+static struct labcomm_reader reader =  {
+  .action_context = &reader_action_context,
+  .data = buffer,
+  .data_size = sizeof(buffer),
+  .count = 0,
+  .pos = 0,
+  .error = 0,
+};
+
+test_sample_test_var encoder_var, decoder_var;
+
+void handle_test_var(test_sample_test_var *v, void *ctx)
+{
+  decoder_var = *v;  
+}
+
+int test_decode_one(struct labcomm_decoder *decoder)
+{
+  int result;
+
+  for (reader.count = 0 ; reader.count < writer.pos ; reader.count++) {
+    reader.error = 0;
+    reader.pos = 0;
+    result = labcomm_decoder_decode_one(decoder);
+    if (result >= 0) {
+      fprintf(stderr, "Got result from buffer with bogus length (%d)\n",
+	      result);
+      exit(1);
+    }
+  }
+  reader.error = 0;
+  reader.pos = 0;
+  reader.count = writer.pos;
+  result = labcomm_decoder_decode_one(decoder);
+  if (result < 0) {
+    fprintf(stderr, "Got result from buffer with correct length (%d)\n",
+	    result);
+    exit(1);
+  }
+  return result;
+}
+
+int main(void)
+{
+  int err;
+  struct labcomm_encoder *encoder = labcomm_encoder_new(
+    &writer, 
+    labcomm_default_error_handler,
+    labcomm_default_memory,
+    labcomm_default_scheduler);
+  struct labcomm_decoder *decoder = labcomm_decoder_new(
+    &reader,
+    labcomm_default_error_handler,
+    labcomm_default_memory,
+    labcomm_default_scheduler);
+  labcomm_decoder_register_test_sample_test_var(decoder,
+						handle_test_var, 
+						NULL);
+  labcomm_encoder_register_test_sample_test_var(encoder);
+  err = test_decode_one(decoder);
+  fprintf(stderr, "decode of register %d\n", err);
+  writer.pos = 0;
+  encoder_var = 314;
+  labcomm_encode_test_sample_test_var(encoder, &encoder_var);
+  err = test_decode_one(decoder);
+  fprintf(stderr, "decode of sample %d -> %d\n", err, decoder_var);
+  if (decoder_var != encoder_var) {
+    fprintf(stderr, "Failed to decode correct value %d != %d\n", 
+	    encoder_var, decoder_var);
+    exit(1);
+  }
+  return 0;
+}
+
+#if 0
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -186,3 +353,4 @@ int main()
 
 	return CU_get_error();
 }
+#endif
