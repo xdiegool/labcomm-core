@@ -30,9 +30,23 @@ enum labcomm_error {
 
 struct labcomm_error_handler;
 
+void labcomm_error_warning(struct labcomm_error_handler *e,
+			   enum labcomm_error,
+			   char *format,
+			   ...);
+			 
+void labcomm_error_fatal_global(enum labcomm_error error,
+				char *format,
+				...);
+			 
 #endif
 
 #ifdef LABCOMM_ERROR
+
+LABCOMM_ERROR(LABCOMM_ERROR_SIGNATURE_ALREADY_SET, 
+	      "Signature has already been set")
+LABCOMM_ERROR(LABCOMM_ERROR_SIGNATURE_NOT_SET, 
+	      "Signature has not been set")
 
 LABCOMM_ERROR(LABCOMM_ERROR_ENC_NO_REG_SIGNATURE, 
 	      "Encoder has no registration for this signature")

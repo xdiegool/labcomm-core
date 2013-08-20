@@ -201,14 +201,8 @@ aspect C_CodeGen {
   }
 
   public void Program.C_emitC(C_env env) {
-    env.print("#if ! defined(LABCOMM_GEN_CODE) && ");
-    env.println("! defined(LABCOMM_GEN_SIGNATURE)");
-    env.println("#define LABCOMM_GEN_CODE");
-    env.println("#define LABCOMM_GEN_SIGNATURE");
-    env.println("#endif");
-    env.println("#if defined(LABCOMM_GEN_CODE)");
     for (int i = 0; i < getNumDecl(); i++) {
-      getDecl(i).C_emitSignatureBitsAndForward(env);
+      getDecl(i).C_emitSignature(env);
       getDecl(i).C_emitDecoder(env);
       getDecl(i).C_emitDecoderRegisterHandler(env);
       getDecl(i).C_emitDecoderIoctl(env);
@@ -217,12 +211,7 @@ aspect C_CodeGen {
       getDecl(i).C_emitEncoderIoctl(env);
       getDecl(i).C_emitSizeof(env);
     }
-    env.println("#endif");
-    env.println("#if defined(LABCOMM_GEN_SIGNATURE)");
-    for (int i = 0; i < getNumDecl(); i++) {
-      getDecl(i).C_emitSignature(env);
-    }
-    env.println("#endif");
+    C_emitConstructor(env);
   }
  
 }
@@ -880,16 +869,16 @@ aspect C_EncoderIoctl {
 
 aspect C_Signature {
 
-  public void ASTNode.C_emitSignatureBitsAndForward(C_env env) {
+  public void ASTNode.C_emitSignature(C_env env) {
     throw new Error(this.getClass().getName() + 
-		    ".C_emitSignaturBitsAndForwarde(C_env env)" + 
+		    ".C_emitSignature(C_env env)" + 
 		    " not declared");
   }
 
-  public void Decl.C_emitSignatureBitsAndForward(C_env env) {
+  public void Decl.C_emitSignature(C_env env) {
   }
 
-  public void SampleDecl.C_emitSignatureBitsAndForward(C_env env) {
+  public void SampleDecl.C_emitSignature(C_env env) {
     env.println("static unsigned char signature_bytes_" + 
 		       env.prefix + getName() + "[] = {");
     SignatureList signature = signature();
@@ -908,30 +897,49 @@ aspect C_Signature {
       }
     }
     env.println("};");
-    env.println("LABCOMM_DECLARE_SIGNATURE(labcomm_signature_" + 
-		env.prefix + getName() + ");");
-  }
-
-  public void ASTNode.C_emitSignature(C_env env) {
-    throw new Error(this.getClass().getName() + 
-		    ".C_emitSignature(C_env env)" + 
-		    " not declared");
-  }
-
-  public void Decl.C_emitSignature(C_env env) {
-  }
-
-  public void SampleDecl.C_emitSignature(C_env env) {
-    env.println("LABCOMM_DECLARE_SIGNATURE(labcomm_signature_" + 
-		env.prefix + getName() + ") = {");
+    env.println("struct labcomm_signature labcomm_signature_" + 
+		env.prefix + getName() + " = {");
     env.indent();
     env.println("LABCOMM_SAMPLE, \"" + getName() + "\",");
     env.println("(int (*)(struct labcomm_signature *, void *))labcomm_sizeof_" + 
 		env.prefix + getName() + ",");
     env.println("sizeof(signature_bytes_" + env.prefix + getName() + "),");
-    env.println("signature_bytes_" + env.prefix + getName());
+    env.println("signature_bytes_" + env.prefix + getName() + ",");
+    env.println("0");
     env.unindent();
     env.println(" };");
+  }
+
+  public void ASTNode.C_emitConstructor(C_env env) {
+    throw new Error(this.getClass().getName() + 
+		    ".C_emitConstructor(C_env env)" + 
+		    " not declared");
+  }
+
+  public void Program.C_emitConstructor(C_env env) {
+    env.println("LABCOMM_CONSTRUCTOR void init_" +
+		env.prefix + "_signatures(void)");
+    env.println("{");
+    env.indent();
+    env.println("static int initialized = 0;");
+    env.println("if (initialized == 0) {");
+    env.indent();
+    env.println("initialized = 1;");
+    for (int i = 0; i < getNumDecl(); i++) {
+      getDecl(i).C_emitConstructor(env);
+    }
+    env.unindent();
+    env.println("}"); 
+    env.unindent();
+    env.println("}"); 
+  }
+
+  public void Decl.C_emitConstructor(C_env env) {
+  }
+
+  public void SampleDecl.C_emitConstructor(C_env env) {
+    env.println("labcomm_set_local_index(&labcomm_signature_" + 
+		env.prefix + getName() + ");");
   }
 
 

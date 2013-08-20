@@ -1,5 +1,5 @@
 /*
-  labcomm_signature_gnu_ld_tricks.c -- signature handling.
+  labcomm_error.c -- labcomm error handling
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -19,20 +19,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <errno.h>
-#include "labcomm.h"
-#include "labcomm_signature.h"
-#include "labcomm_private.h"
-
-extern struct labcomm_signature labcomm_first_signature;
-extern struct labcomm_signature labcomm_last_signature;
-
-int labcomm_signature_local_index(struct labcomm_signature *s)
+#include <stdlib.h>
+#include <stdio.h>
+#include "labcomm_error.h"
+ 
+void labcomm_error_fatal_global(enum labcomm_error error,
+				char *format,
+				...)
 {
-  int result = -ENOENT;
-  
-  if (&labcomm_first_signature <= s && s < &labcomm_last_signature) {
-    result = (int)(s - &labcomm_first_signature) + LABCOMM_USER;
-  }
-  return result;
+  fprintf(stderr, "Fatal error %d\n", error);
+  exit(1);
 }

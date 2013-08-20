@@ -4,22 +4,19 @@ CC=gcc
 #CFLAGS=-g -Wall -Werror -O3  -I. -Itest -DLABCOMM_ENCODER_LINEAR_SEARCH
 CFLAGS=-g -Wall -Werror -O3  -I. -Itest 
 LDFLAGS=-L.
-#LDLIBS_TEST=-Tlabcomm.linkscript  -lcunit -llabcomm
-LDLIBS_TEST=-llabcomm -Tlabcomm.linkscript -lrt
-LDLIBS_TEST_PLAIN_C=-llabcomm_plain_c -lrt
+LDLIBS_TEST=-llabcomm -lrt
 
-OBJS_PLAIN_C=labcomm_memory.o \
-             labcomm_default_error_handler.o \
-             labcomm_default_memory.o \
-             labcomm_default_scheduler.o \
-             labcomm_time.o labcomm_scheduler.o \
-             labcomm_encoder.o labcomm_decoder.o \
-             labcomm.o \
-             labcomm_dynamic_buffer_writer.o \
-	     labcomm_fd_reader.o labcomm_fd_writer.o \
-             labcomm_pthread_scheduler.o 
-OBJS=$(OBJS_PLAIN_C) \
-     labcomm_signature_gnu_ld_tricks.o
+OBJS=labcomm_memory.o \
+     labcomm_error.o \
+     labcomm_default_error_handler.o \
+     labcomm_default_memory.o \
+     labcomm_default_scheduler.o \
+     labcomm_time.o labcomm_scheduler.o \
+     labcomm_encoder.o labcomm_decoder.o \
+     labcomm.o \
+     labcomm_dynamic_buffer_writer.o \
+     labcomm_fd_reader.o labcomm_fd_writer.o \
+     labcomm_pthread_scheduler.o 
 
 #FIXME: labcomm_mem_reader.o labcomm_mem_writer.o
 LABCOMM_JAR=../../compiler/labComm.jar
@@ -27,7 +24,7 @@ LABCOMM=java -jar $(LABCOMM_JAR)
 
 TESTS=test_labcomm_basic_type_encoding test_labcomm_generated_encoding \
       test_labcomm_pthread_scheduler \
-      test_signature_plain_c
+      test_signature_numbers
 #
 #FIXME: test_labcomm test_labcomm_errors
 TEST_DIR=test
@@ -51,19 +48,12 @@ endif
 
 .PHONY: all run-test clean distclean
 
-all: liblabcomm.a liblabcomm_plain_c.a \
-     liblabcomm.so.1  liblabcomm_plain_c.so.1 
+all: liblabcomm.a liblabcomm.so.1
 
 liblabcomm.a: $(OBJS)
 	ar -r $@ $^
 
-liblabcomm_plain_c.a: $(OBJS_PLAIN_C)
-	ar -r $@ $^
-
 liblabcomm.so.1: $(OBJS:%.o=%.pic.o)
-	gcc -shared -Wl,-soname,$@ -o $@ $^ -lc -lrt
-
-liblabcomm_plain_c.so.1: $(OBJS_PLAIN_C:%.o=%.pic.o)
 	gcc -shared -Wl,-soname,$@ -o $@ $^ -lc -lrt
 
 labcomm.o : labcomm.c labcomm.h  labcomm_private.h
@@ -89,21 +79,8 @@ $(TEST_DIR)/%.o: $(TEST_DIR)/%.c
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 .PRECIOUS: $(TEST_DIR)/%
-$(TEST_DIR)/%: $(TEST_DIR)/%.o liblabcomm.a
+$(TEST_DIR)/%: $(TEST_DIR)/%.o 
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS) $(LDLIBS_TEST)
-
-$(TEST_DIR)/test_signature_plain_c_index.o: \
-			labcomm_signature_plain_c.c \
-			$(TEST_DIR)/gen/generated_encoding.c \
-			$(TEST_DIR)/gen/another_encoding.h \
-			$(TEST_DIR)/gen/another_encoding.c
-	$(CC) $(CFLAGS) -o $@ -c $< \
-		-DALL_LABCOMM_FILES=\"test/test_signature_plain_c.h\"
-
-$(TEST_DIR)/test_signature_plain_c: \
-			$(TEST_DIR)/test_signature_plain_c.o \
-			$(TEST_DIR)/test_signature_plain_c_index.o 
-	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS_TEST_PLAIN_C) 
 
 $(TEST_DIR)/gen:
 	mkdir -p $@
@@ -142,8 +119,6 @@ clean:
 distclean: clean
 	$(RM) liblabcomm.so.1
 	$(RM) liblabcomm.a
-	$(RM) liblabcomm_plain_c.a
-	$(RM) liblabcomm_plain_c.so.1
 
 # Extra dependencies
 $(TEST_DIR)/test_labcomm_basic_type_encoding.o: labcomm_private.h
@@ -151,9 +126,12 @@ $(TEST_DIR)/test_labcomm_basic_type_encoding.o: labcomm_private.h
 $(TEST_DIR)/test_labcomm_generated_encoding.o: labcomm_private.h
 $(TEST_DIR)/test_labcomm_generated_encoding.o: $(TEST_DIR)/gen/generated_encoding.h
 $(TEST_DIR)/test_labcomm_generated_encoding : $(TEST_DIR)/gen/generated_encoding.o
+
 $(TEST_DIR)/test_labcomm:  $(TEST_GEN_DIR)/test_sample.o
-$(TEST_DIR)/test_signature_plain_c.o: $(TEST_DIR)/gen/another_encoding.h
-$(TEST_DIR)/test_signature_plain_c.o: $(TEST_DIR)/gen/generated_encoding.h
+$(TEST_DIR)/test_signature_numbers.c: $(TEST_DIR)/gen/another_encoding.h
+$(TEST_DIR)/test_signature_numbers.c: $(TEST_DIR)/gen/generated_encoding.h
+$(TEST_DIR)/test_signature_numbers: $(TEST_DIR)/gen/another_encoding.o
+$(TEST_DIR)/test_signature_numbers: $(TEST_DIR)/gen/generated_encoding.o
 labcomm_fd_reader.o: labcomm_private.h
 labcomm_fd_writer.o: labcomm_private.h
 labcomm_dynamic_buffer_writer.o: labcomm_private.h

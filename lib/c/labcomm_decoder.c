@@ -23,7 +23,6 @@
 #include <errno.h>
 #include "labcomm.h"
 #include "labcomm_private.h"
-#include "labcomm_signature.h"
 #include "labcomm_ioctl.h"
 #include "labcomm_dynamic_buffer_writer.h"
 
@@ -369,7 +368,7 @@ int labcomm_internal_decoder_ioctl(struct labcomm_decoder *d,
   int result;
   int local_index, remote_index;
 
-  local_index = labcomm_signature_local_index(signature);
+  local_index = labcomm_get_local_index(signature);
   labcomm_scheduler_data_lock(d->scheduler);
   remote_index = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
 					     d->local,
@@ -393,7 +392,7 @@ int labcomm_internal_decoder_register(
   struct sample_entry *entry;
  
   reader_alloc(d);
-  local_index = labcomm_signature_local_index(signature);
+  local_index = labcomm_get_local_index(signature);
   if (local_index <= 0) { goto out; }
   labcomm_reader_start(d->reader, d->reader->action_context,
 		       local_index, 0, signature,

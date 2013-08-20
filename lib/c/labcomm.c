@@ -239,3 +239,24 @@ void *labcomm_signature_array_ref(struct labcomm_memory *memory,
     return NULL;
   }
 }
+
+static int local_index = 0x40;
+
+void labcomm_set_local_index(struct labcomm_signature *signature)
+{
+  if (signature->index != 0) {
+    labcomm_error_fatal_global(LABCOMM_ERROR_SIGNATURE_ALREADY_SET,
+			       "%s", signature->name);
+  }
+  signature->index = local_index;
+  local_index++;
+}
+
+int labcomm_get_local_index(struct labcomm_signature *signature)
+{
+  if (signature->index == 0) {
+    labcomm_error_fatal_global(LABCOMM_ERROR_SIGNATURE_NOT_SET,
+			       "%s", signature->name);
+  }
+  return signature->index;
+}

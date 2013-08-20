@@ -62,11 +62,12 @@
 #define LABCOMM_USER     0x40
 
 /*
- *
+ * Macro to automagically call constructors in modules compiled 
+ * with the labcomm compiler. If __attribute__((constructor)) is
+ * not supported, these calls has to be done first in main program.
  */
-#ifndef LABCOMM_DECLARE_SIGNATURE
-#define LABCOMM_DECLARE_SIGNATURE(name) \
-  struct labcomm_signature __attribute__((section("labcomm"),aligned(1))) name 
+#ifndef LABCOMM_CONSTRUCTOR
+#define LABCOMM_CONSTRUCTOR __attribute__((constructor))
 #endif
 
 /*
@@ -486,5 +487,11 @@ void *labcomm_signature_array_ref(struct labcomm_memory * memory,
 #define LABCOMM_SIGNATURE_ARRAY_FOREACH(name, kind, var)		\
   for (name.data = (kind *)name.data, /* typechecking no-op */		\
        var = name.first ; var < name.last ; var++)
+
+/* Give signature a free local index, this may not be used concurrently */
+void labcomm_set_local_index(struct labcomm_signature *signature);
+
+/* Get the local index for a signature */
+int labcomm_get_local_index(struct labcomm_signature *s);
 
 #endif

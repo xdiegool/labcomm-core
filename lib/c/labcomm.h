@@ -42,6 +42,7 @@ struct labcomm_signature {
   int (*encoded_size)(struct labcomm_signature *, void *); // void * == encoded_sample *
   int size;
   unsigned char *signature; 
+  int index;
   int cached_encoded_size; // -1 if not initialized or type is variable size
 };
 

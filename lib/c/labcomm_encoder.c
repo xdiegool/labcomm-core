@@ -22,7 +22,6 @@
 
 #include <errno.h>
 #include "labcomm.h"
-#include "labcomm_signature.h"
 #include "labcomm_private.h"
 #include "labcomm_ioctl.h"
 
@@ -78,7 +77,7 @@ int labcomm_internal_encoder_register(
   int result = -EINVAL;
   int index, *done, err, i;
 
-  index = labcomm_signature_local_index(signature);
+  index = labcomm_get_local_index(signature);
   labcomm_scheduler_writer_lock(e->scheduler);
   if (signature->type != LABCOMM_SAMPLE) { goto out; }
   if (index <= 0) { goto out; }
@@ -115,7 +114,7 @@ int labcomm_internal_encode(
   int result;
   int index;
 
-  index = labcomm_signature_local_index(signature);
+  index = labcomm_get_local_index(signature);
   labcomm_scheduler_writer_lock(e->scheduler);
   result = labcomm_writer_start(e->writer, e->writer->action_context, 
 				index, signature, value);
@@ -160,7 +159,7 @@ int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder,
   int result = -ENOTSUP;
   int index;
 
-  index = labcomm_signature_local_index(signature);
+  index = labcomm_get_local_index(signature);
   result = labcomm_writer_ioctl(encoder->writer, 
 				encoder->writer->action_context, 
 				index, signature, action, va);

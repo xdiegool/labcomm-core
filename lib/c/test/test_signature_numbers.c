@@ -1,16 +1,14 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include "labcomm_private.h"
 #include "test/gen/another_encoding.h"
 #include "test/gen/generated_encoding.h"
-
-extern int labcomm_signature_local_index(struct labcomm_signature *s);
-
 
 static void info(char *name, char *full_name, 
 		 struct labcomm_signature *signature) {
   printf("%s %s %p -> %d\n", name,  full_name, signature, 
-	 labcomm_signature_local_index(signature));
-  if (labcomm_signature_local_index(signature) < 0x40) {
+	 labcomm_get_local_index(signature));
+  if (labcomm_get_local_index(signature) < 0x40) {
     exit(1);
   }
 };
