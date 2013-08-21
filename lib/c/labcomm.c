@@ -154,7 +154,7 @@ const char *labcomm_error_get_str(enum labcomm_error error_id)
 {
   const char *error_str = NULL;
   // Check if this is a known error ID.
-  if (0 <= error_id && error_id < labcomm_error_string_count) {
+  if (error_id < labcomm_error_string_count) {
     error_str = labcomm_error_string[error_id];
   }
   return error_str;
