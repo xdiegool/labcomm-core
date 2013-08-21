@@ -27,6 +27,10 @@
 #include "labcomm_scheduler_private.h"
 #include "labcomm_pthread_scheduler.h"
 
+#ifdef LABCOMM_COMPAT
+  #include LABCOMM_COMPAT
+#endif 
+
 struct pthread_time {
   struct labcomm_time time;
   struct labcomm_memory *memory;

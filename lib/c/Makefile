@@ -1,9 +1,21 @@
 ## Macros
-
-CC=gcc
-CFLAGS=-g -Wall -Werror -O3  -I. -Itest 
-LDFLAGS=-L.
-LDLIBS_TEST=-llabcomm -lrt
+UNAME_S=$(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+  CC=gcc
+  CFLAGS=-g -Wall -Werror -O3  -I. -Itest 
+  LDFLAGS=-L.
+  LDLIBS=-llabcomm -lrt
+  MAKESHARED=gcc -o $1 -shared -Wl,-soname,$2 $3 -lc -lrt
+else ifeq ($(UNAME_S),Darwin)
+  CC=clang
+  CFLAGS=-g -Wall -Werror -O3  -I. -Itest 
+	 -DLABCOMM_COMPAT=\"labcomm_compat_osx.h\" \
+	 -Wno-tautological-compare -Wno-unused-function
+  LDLIBS=-llabcomm
+  MAKESHARED=clang -o $1 -shared -Wl,-install_name,$2 $3 -lc
+else
+  $(error Unknown system $(UNAME_S))
+endif
 
 OBJS=labcomm_memory.o \
      labcomm_error.o \
@@ -50,6 +62,7 @@ liblabcomm.a: $(OBJS)
 	ar -r $@ $^
 
 liblabcomm.so.1: $(OBJS:%.o=%.pic.o)
+	$(call MAKESHARED,$@,$@,$^)
 	gcc -shared -Wl,-soname,$@ -o $@ $^ -lc -lrt
 
 labcomm.o : labcomm.c labcomm.h  labcomm_private.h
@@ -72,7 +85,7 @@ $(TEST_DIR)/%.o: $(TEST_DIR)/%.c
 
 .PRECIOUS: $(TEST_DIR)/%
 $(TEST_DIR)/%: $(TEST_DIR)/%.o 
-	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS) $(LDLIBS_TEST)
+	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS) 
 
 $(TEST_DIR)/gen:
 	mkdir -p $@
