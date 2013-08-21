@@ -8,9 +8,10 @@ ifeq ($(UNAME_S),Linux)
   MAKESHARED=gcc -o $1 -shared -Wl,-soname,$2 $3 -lc -lrt
 else ifeq ($(UNAME_S),Darwin)
   CC=clang
-  CFLAGS=-g -Wall -Werror -O3  -I. -Itest 
+  CFLAGS=-g -Wall -Werror -O3  -I. -Itest \
 	 -DLABCOMM_COMPAT=\"labcomm_compat_osx.h\" \
 	 -Wno-tautological-compare -Wno-unused-function
+  LDFLAGS=-L.
   LDLIBS=-llabcomm
   MAKESHARED=clang -o $1 -shared -Wl,-install_name,$2 $3 -lc
 else

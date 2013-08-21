@@ -13,7 +13,7 @@
 #include <mach/mach.h>
 
 #define CLOCK_REALTIME 0
-static void clock_gettime(int garbage, struct timespec *ts)
+static inline void clock_gettime(int garbage, struct timespec *ts)
 {
   (void) garbage;
   clock_serv_t cclock;
