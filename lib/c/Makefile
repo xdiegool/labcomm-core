@@ -63,7 +63,6 @@ liblabcomm.a: $(OBJS)
 
 liblabcomm.so.1: $(OBJS:%.o=%.pic.o)
 	$(call MAKESHARED,$@,$@,$^)
-	gcc -shared -Wl,-soname,$@ -o $@ $^ -lc -lrt
 
 labcomm.o : labcomm.c labcomm.h  labcomm_private.h
 
