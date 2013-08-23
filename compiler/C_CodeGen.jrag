@@ -951,8 +951,7 @@ aspect C_Signature {
   }
 
   public void Program.C_emitConstructorDeclaration(C_env env) {
-    env.println("LABCOMM_CONSTRUCTOR void init_" +
-		env.prefix + "_signatures(void);");
+    env.println("void init_" + env.prefix + "_signatures(void);");
   }
 
 }

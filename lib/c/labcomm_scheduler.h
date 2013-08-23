@@ -23,11 +23,12 @@
 #define _LABCOMM_SCHEDULER_H_
 
 #include <unistd.h>
+#include <stdint.h>
 
 struct labcomm_time;
 
 int labcomm_time_free(struct labcomm_time *t);
-int labcomm_time_add_usec(struct labcomm_time *t, useconds_t usec);
+int labcomm_time_add_usec(struct labcomm_time *t, uint32_t usec);
 
 struct labcomm_scheduler;
 
@@ -47,7 +48,7 @@ int labcomm_scheduler_wakeup(struct labcomm_scheduler *s);
 
 /* Deferred action handling */
 int labcomm_scheduler_enqueue(struct labcomm_scheduler *s,
-			      useconds_t delay,
+			      uint32_t delay,
 			      void (*deferred)(void *context),
 			      void *context);
 

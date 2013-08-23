@@ -2,7 +2,7 @@ TARGETS=client server
 LABCOMM_JAR=../../compiler/labComm.jar
 LABCOMM=java -jar $(LABCOMM_JAR) 
 
-CFLAGS=-O3 -g -Wall -Werror -I../../lib/c -I. -lpthread
+CFLAGS=-O3 -g -Wall -Werror -I../../lib/c -I.
 
 all: $(TARGETS:%=gen/%)
 
@@ -26,11 +26,11 @@ gen/%.c gen/%.h: %.lc | gen/.dir
 
 gen/client: client.c 
 	$(CC) -o $@ $(CFLAGS) $^ -lpthread \
-		-L../../lib/c -llabcomm -Tlabcomm.linkscript
+		-L../../lib/c -llabcomm 
 
 gen/server: server.c 
 	$(CC) -o $@ $(CFLAGS) $^ -lpthread \
-		-L../../lib/c -llabcomm -Tlabcomm.linkscript
+		-L../../lib/c -llabcomm 
 
 .PHONY: clean
 clean:

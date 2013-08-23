@@ -2,7 +2,7 @@
 UNAME_S=$(shell uname -s)
 ifeq ($(UNAME_S),Linux)
   CC=gcc
-  CFLAGS=-g -Wall -Werror -O3  -I. -Itest 
+  CFLAGS=-std=c99 -g -Wall -Werror -O3  -I. -Itest 
   LDFLAGS=-L.
   LDLIBS=-llabcomm -lrt
   MAKESHARED=gcc -o $1 -shared -Wl,-soname,$2 $3 -lc -lrt

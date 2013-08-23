@@ -75,7 +75,7 @@ int labcomm_scheduler_wakeup(struct labcomm_scheduler *s)
 }
 
 int labcomm_scheduler_enqueue(struct labcomm_scheduler *s,
-			      useconds_t delay,
+			      uint32_t delay,
 			      void (*func)(void *context),
 			      void *context)
 {

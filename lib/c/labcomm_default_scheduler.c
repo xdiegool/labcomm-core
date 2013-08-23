@@ -79,7 +79,7 @@ static int scheduler_wakeup(struct labcomm_scheduler *s)
 }
 
 static int scheduler_enqueue(struct labcomm_scheduler *s,
-			     useconds_t delay,
+			     uint32_t delay,
 			     void (*deferred)(void *context),
 			     void *context)
 {

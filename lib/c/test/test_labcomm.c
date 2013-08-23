@@ -164,6 +164,10 @@ int main(void)
 	    encoder_var, decoder_var);
     exit(1);
   }
+  fprintf(stderr, "Size: %d %d\n", 
+	  labcomm_sizeof_test_sample_test_var(NULL, NULL),
+	  writer.pos);
+//  exit(1);
   return 0;
 }
 

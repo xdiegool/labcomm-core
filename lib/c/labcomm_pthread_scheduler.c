@@ -18,6 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#define _POSIX_C_SOURCE (200112L)
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -64,7 +65,7 @@ static int queue_empty(struct pthread_deferred *queue)
   return queue->next == queue;
 }
 
-static void timespec_add_usec(struct timespec *t, useconds_t usec)
+static void timespec_add_usec(struct timespec *t, uint32_t usec)
 {
   time_t sec = usec / 1000000;
   long nsec = (usec % 1000000) * 1000;
@@ -125,7 +126,7 @@ static int time_free(struct labcomm_time *t)
   return 0;
 }
  
-static int time_add_usec(struct labcomm_time *t, useconds_t usec)
+static int time_add_usec(struct labcomm_time *t, uint32_t usec)
 {
   struct pthread_time *time = t->context;
 
@@ -297,7 +298,7 @@ static int scheduler_wakeup(struct labcomm_scheduler *s)
 }
 
 static int scheduler_enqueue(struct labcomm_scheduler *s,
-			     useconds_t delay,
+			     uint32_t delay,
 			     void (*deferred)(void *context),
 			     void *context)
 {

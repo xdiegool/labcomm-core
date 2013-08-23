@@ -226,7 +226,7 @@ static int decode_typedef_or_sample(struct labcomm_decoder *d, int kind)
 	  s->signature->type == signature.type &&
 	  s->signature->size == signature.size &&
 	  strcmp(s->signature->name, signature.name) == 0 &&
-	  bcmp((void*)s->signature->signature, (void*)signature.signature,
+	  memcmp((void*)s->signature->signature, (void*)signature.signature,
 	       signature.size) == 0) {
 	s->remote_index = remote_index;
 	local_signature = s->signature;

@@ -35,7 +35,7 @@ int labcomm_time_free(struct labcomm_time *s)
   TIME(free, s);
 }
 
-int labcomm_time_add_usec(struct labcomm_time *s, useconds_t usec)
+int labcomm_time_add_usec(struct labcomm_time *s, uint32_t usec)
 {
   TIME(add_usec, s, usec);
 }

@@ -28,7 +28,7 @@
 struct labcomm_time {
   const struct labcomm_time_action {
     int (*free)(struct labcomm_time *t);
-    int (*add_usec)(struct labcomm_time *t, useconds_t usec);
+    int (*add_usec)(struct labcomm_time *t, uint32_t usec);
   } *action;
   void *context;
 };
@@ -45,7 +45,7 @@ struct labcomm_scheduler {
 		 struct labcomm_time *wakeup);
     int (*wakeup)(struct labcomm_scheduler *s);
     int (*enqueue)(struct labcomm_scheduler *s,
-		   useconds_t delay,
+		   uint32_t delay,
 		   void (*deferred)(void *context),
 		   void *context);
   } *action;
