@@ -43,7 +43,9 @@ struct labcomm_signature {
   int size;
   unsigned char *signature; 
   int index;
+#ifdef LABCOMM_EXPERIMENTAL_CACHED_ENCODED_SIZE
   int cached_encoded_size; // -1 if not initialized or type is variable size
+#endif
 };
 
 /*

@@ -455,6 +455,19 @@ static inline int labcomm_write_string(struct labcomm_writer *w, char *s)
   return 0;
 }
 
+/* Size of packed32 variable */
+static inline int labcomm_size_packed32(unsigned int data)
+{
+  int result = 0;
+  int i;
+
+  for (i = 0 ; i == 0 || data ; i++, data = (data >> 7)) {
+    result++;
+  }
+  return result;
+
+}
+
 /*
  * Macros for handling arrays indexed by signature index
  */

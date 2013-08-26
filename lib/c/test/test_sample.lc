@@ -1,1 +1,1 @@
-sample int test_var;
+sample int test_var[_,_];
