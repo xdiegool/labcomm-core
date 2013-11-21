@@ -160,6 +160,7 @@ The LabComm compiler generates code for the declared samples, including marshall
 demarshalling code, in the supported target languages.
 
 The compiler itself is implemented in Java using the JastAdd~\cite{jastadd} compiler compiler.
+\pagebreak
 \subsection{The LabComm library}
 
 The LabComm libraries contain functionality for the end-to-end transmission
@@ -168,6 +169,7 @@ the general encoding and decoding of samples, and the lower one deals with
 the transmission of the encoded byte stream on a particular transport layer.
 
 Thus, the LabComm communication stack looks like this:
+\begin{figure}[h!]
 \begin{verbatim}
     _______________________
     |     Application     |
@@ -179,7 +181,7 @@ Thus, the LabComm communication stack looks like this:
     | transport layer / OS|
     +---------------------+
 \end{verbatim}
-
+\end{figure}
 \subsubsection{LabComm actions}
 
 (similar to ioctl()) 
@@ -316,6 +318,7 @@ way of supporting the common cases is to include run-time checks for overflow in
 and decoders.
 
 \appendix
+\newpage
 \section{The LabComm language}
 \label{sec:LanguageGrammar}
 
@@ -346,6 +349,7 @@ IntegerLiteral : Exp ::= <Value:String>;
 VariableSize : Exp;
 \end{verbatim}
 
+\newpage
 \section{The LabComm protocol}
 \label{sec:ProtocolGrammar}
 
