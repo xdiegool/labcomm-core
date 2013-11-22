@@ -1,0 +1,10 @@
+sample struct {
+  double b;
+  int c;
+  int d;
+  string e;
+  boolean f;
+  short g;
+  long h;
+  float i;
+} foo; 
