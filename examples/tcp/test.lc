@@ -1,0 +1,6 @@
+sample struct {
+    int x;
+    int y;
+    long t;
+    double d;
+} FooSample;

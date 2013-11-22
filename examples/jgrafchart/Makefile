@@ -15,7 +15,7 @@ ${LCFILE}.c : ${LCFILE}.lc
 	${LCC} -C ${LCFILE}.lc
 
 
-.PHONY: clean, runclient
+.PHONY: clean runclient
 clean :
 	rm ${LCFILE}.c ${LCFILE}.h client testserver
 
