@@ -11,13 +11,13 @@ import se.lth.control.labcomm.LabCommEncoderChannel;
 import labcommTCPtest.gen.FooSample;
 import labcommTCPtest.gen.FooSample.Handler;
 
-public class TestClient implements Handler {
+public class TestClientSingleshot implements Handler {
 
 
 	private OutputStream out;
 	private InputStream in;
 
-	public TestClient(Socket server) throws IOException {
+	public TestClientSingleshot(Socket server) throws IOException {
 		out = server.getOutputStream();
 		in = server.getInputStream();
 	}
@@ -37,7 +37,7 @@ public class TestClient implements Handler {
 
 			LabCommDecoderChannel c = new LabCommDecoderChannel(in);
 			FooSample.register(c,this);
-			c.run();
+			c.runOne();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -48,7 +48,7 @@ public class TestClient implements Handler {
 		int port = 9999;
 		try {
 			Socket s = new Socket(server, port);
-			TestClient c = new TestClient(s);
+			TestClientSingleshot c = new TestClientSingleshot(s);
 			c.test();
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
@@ -59,11 +59,11 @@ public class TestClient implements Handler {
 
 	private void printSample(String header, FooSample sample2) throws Exception {
 		System.out.println(header);
-		System.out.format("TestClient.invoke(%d, %d, %d, %f)\n", sample2.x, sample2.y, sample2.t, sample2.d);
+		System.out.format("TestClientSingleshot.invoke(%d, %d, %d, %f)\n", sample2.x, sample2.y, sample2.t, sample2.d);
 	}
 
 	public void handle_FooSample(FooSample sample2) throws Exception {
-		printSample("TestClient.handle_FooSample", sample2);
+		printSample("TestClientSingleshot.handle_FooSample", sample2);
 
 	}
 }

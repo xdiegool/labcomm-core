@@ -8,8 +8,8 @@ import java.net.UnknownHostException;
 
 import se.lth.control.labcomm.LabCommDecoderChannel;
 import se.lth.control.labcomm.LabCommEncoderChannel;
-import labcommTCPtest.gen.FooSample;
-import labcommTCPtest.gen.FooSample.Handler;
+import labcommTCPtest.gen.foo;
+import labcommTCPtest.gen.foo.Handler;
 
 public class TestClient implements Handler {
 
@@ -26,17 +26,18 @@ public class TestClient implements Handler {
 		
 		try {
 			LabCommEncoderChannel e = new LabCommEncoderChannel(out );
-			FooSample.register(e);
-			FooSample sample = new FooSample();
-			sample.x = 17;
-			sample.y = 42;
-			sample.t = 1717;
-			sample.d = 0.42;
+			foo.register(e);
+			foo sample = new foo();
+			sample.c = 17;
+			sample.d = 42;
+			sample.h = 1717;
+			sample.b = 0.42;
+			sample.e = "Testing";
 			printSample("Client sending", sample);
-			FooSample.encode(e, sample);
+			foo.encode(e, sample);
 
 			LabCommDecoderChannel c = new LabCommDecoderChannel(in);
-			FooSample.register(c,this);
+			foo.register(c,this);
 			c.run();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -57,13 +58,13 @@ public class TestClient implements Handler {
 		}
 	}
 
-	private void printSample(String header, FooSample sample2) throws Exception {
+	private void printSample(String header, foo sample2) throws Exception {
 		System.out.println(header);
-		System.out.format("TestClient.invoke(%d, %d, %d, %f)\n", sample2.x, sample2.y, sample2.t, sample2.d);
+		System.out.format("TestClient.invoke(%f, %d, %d, %d)\n", sample2.b, sample2.c, sample2.d, sample2.h);
 	}
 
-	public void handle_FooSample(FooSample sample2) throws Exception {
-		printSample("TestClient.handle_FooSample", sample2);
+	public void handle_foo(foo sample2) throws Exception {
+		printSample("TestClient.handle_foo", sample2);
 
 	}
 }
