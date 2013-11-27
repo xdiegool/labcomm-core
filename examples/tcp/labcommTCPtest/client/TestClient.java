@@ -8,8 +8,8 @@ import java.net.UnknownHostException;
 
 import se.lth.control.labcomm.LabCommDecoderChannel;
 import se.lth.control.labcomm.LabCommEncoderChannel;
-import labcommTCPtest.FooSample;
-import labcommTCPtest.FooSample.Handler;
+import labcommTCPtest.gen.FooSample;
+import labcommTCPtest.gen.FooSample.Handler;
 
 public class TestClient implements Handler {
 
