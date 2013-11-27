@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<GCDocument color="-1" dimTicks="25" dpwsInterface="" dpwsPort="-1" height="599" horizontalScrollBar="1" modifiable="1" name="Client" saveVersion="7" scale="1.0" simulationMode="1" socketHost="" socketIsServer="0" socketPort="-1" socketSendMode="Changed" threadSpeed="40" tokenLuminance="0" verticalScrollBar="1" viewPositionX="0" viewPositionY="0" width="490" x="358" y="-1">
+  <LabCommObject height="60" isSocketServer="0" name="LabComm" socketHost="127.0.0.1" socketPort="9999" specification="sample struct {&#10;  double b;&#10;  int c;&#10;  int d;&#10;  string e;&#10;  boolean f;&#10;  short g;&#10;  long h;&#10;  float i;&#10;} foo;&#10;&#10;//sample int bar;&#10;" width="60" x="50" y="300"/>
+  <GCInitialStep actionBlockVisible="1" actionText="P b = LabComm.foo.b;" fileName="" height="70" id="d518e8b8-6b49-4af4-abcc-ec8024853580" name="" useIcon="0" width="200" x="140" y="65"/>
+  <IntegerVariable constant="0" exp="" height="45" initialValue="" name="b" updated="0" value="437" width="65" x="380" y="70"/>
+</GCDocument>
