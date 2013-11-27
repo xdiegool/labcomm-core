@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <netdb.h> 
 
+#include "jg.h"
 #include "dec.h"
 #include "enc.h"
 
@@ -16,10 +17,13 @@ void error(const char *msg)
     exit(0);
 }
 
-void do_labcomm(int sockfd)
+void do_labcomm(int sockfd, jg_foo *v)
 {
     void *enc = enc_init(sockfd);
-    enc_run(enc);
+    int i;
+    for(i=0; i<10;i++) {
+        enc_run(enc, v);
+    }
     enc_cleanup(enc);
 }
 
@@ -40,6 +44,11 @@ int main(int argc, char *argv[])
     if (sockfd < 0) 
         error("ERROR opening socket");
 
+    int so_reuseaddr = 1; //TRUE;
+    if(setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR, &so_reuseaddr, sizeof so_reuseaddr)) {
+        error("ERROR setting socket options");
+    }
+
     bzero((char *) &serv_addr, sizeof(serv_addr));
 
     serv_addr.sin_addr.s_addr = INADDR_ANY;
@@ -59,8 +68,19 @@ int main(int argc, char *argv[])
         perror("ERROR on accept");
        exit(1);
     }
+    
+    jg_foo v;
 
-    do_labcomm(newsockfd);
+    v.b = 17.17;
+    v.c = 1742;
+    v.d = 4217;
+    v.e = "hello";
+    v.f = 17;
+    v.g = 42;
+    v.h = 2;
+    v.i = 42.42;
+
+    do_labcomm(newsockfd, &v);
 
     close(newsockfd);
     close(sockfd);

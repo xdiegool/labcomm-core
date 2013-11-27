@@ -20,7 +20,8 @@ struct labcomm_encoder *enc_init( int fd) {
   return encoder;
 }
 
-void enc_run(struct labcomm_encoder * encoder) {
+void enc_run(struct labcomm_encoder *encoder, jg_foo *v) {
+#if 0
 	jg_foo v;
 
 	v.b = 17.17;
@@ -31,12 +32,12 @@ void enc_run(struct labcomm_encoder * encoder) {
 	v.g = 42;
 	v.h = 2;
 	v.i = 42.42;
+#endif
 
-	labcomm_encode_jg_foo(encoder, &v);
 	usleep(500000);
-	v.f += 42;
-	v.h += 42017040;
-	labcomm_encode_jg_foo(encoder, &v);
+	v->b += 42;
+	v->h += 42000000;
+	labcomm_encode_jg_foo(encoder, v);
 }
 
 void enc_cleanup(struct labcomm_encoder *encoder) {
