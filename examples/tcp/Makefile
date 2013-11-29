@@ -12,12 +12,18 @@ ${JAVA_PKG}/gen/FooSample.class: ${JAVA_PKG}/gen/FooSample.java
 ${JAVA_PKG}/server/TestServer.class: ${JAVA_PKG}/server/TestServer.java ${JAVA_PKG}/gen/FooSample.class
 	javac -cp ${CLASSPATH} $<
 
+${JAVA_PKG}/server/OneShotServer.class: ${JAVA_PKG}/server/OneShotServer.java ${JAVA_PKG}/gen/FooSample.class
+	javac -cp ${CLASSPATH} $<
+
 ${JAVA_PKG}/client/TestClient.class: ${JAVA_PKG}/client/TestClient.java ${JAVA_PKG}/gen//FooSample.class
 	javac -cp ${CLASSPATH} $<
 
 .PHONY : clean runserver runclient
 
 runserver : ${JAVA_PKG}/server/TestServer.class
+	java -cp ${CLASSPATH} $(<:.class=)
+
+runOSserver : ${JAVA_PKG}/server/OneShotServer.class
 	java -cp ${CLASSPATH} $(<:.class=)
 
 runclient : ${JAVA_PKG}/client/TestClient.class

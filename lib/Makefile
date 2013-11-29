@@ -1,6 +1,6 @@
 all:
 	cd c ; make
-	cd csharp ; make
+#	cd csharp ; make
 	cd java ; make
 
 test:

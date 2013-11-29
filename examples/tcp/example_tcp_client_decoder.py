@@ -28,7 +28,6 @@ if __name__ == "__main__":
                 print data
         except KeyError as e:
             print 'KeyError : "%s"' % str(e)
-            break 
         except:
             print 'exception...', sys.exc_info()[0]
             break
