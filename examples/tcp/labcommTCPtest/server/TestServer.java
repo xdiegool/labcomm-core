@@ -49,9 +49,16 @@ public class TestServer implements Handler {
 	public void handle_FooSample(FooSample sample) throws Exception {
 		LabCommEncoderChannel e = new LabCommEncoderChannel(out );
 		FooSample.register(e);
-		System.out.println("TestServer.handle_FooSample...");
+		System.out.println("TestServer.handle_FooSample: "+sample.s);
+		int tmp[] = new int[2*sample.a.length];
+		for (int i = 0; i < sample.a.length;i++) {
+			tmp[2*i] = tmp[2*i+1] = sample.a[i];
+		}
+		
+		sample.s = "double!";
 		sample.x *= 2;
 		sample.y *= 2;
+		sample.a = tmp;
 		sample.t *= 2;
 		sample.d *= 2;
 		FooSample.encode(e, sample);

@@ -28,8 +28,15 @@ public class TestClient implements Handler {
 			LabCommEncoderChannel e = new LabCommEncoderChannel(out );
 			FooSample.register(e);
 			FooSample sample = new FooSample();
+			int a[] = new int[3];
+			a[0] = 1;
+			a[1] = 2;
+			a[2] = 3;
+
+			sample.s = "Some random values";
 			sample.x = 17;
 			sample.y = 42;
+			sample.a = a;
 			sample.t = 1717;
 			sample.d = 0.42;
 			printSample("Client sending", sample);
@@ -57,8 +64,22 @@ public class TestClient implements Handler {
 		}
 	}
 
+	private String formatArray(int a[]) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("[");
+		for(int i=0; i < a.length; i++) {
+			sb.append(a[i]);
+			if(i < a.length-1) {
+				sb.append(", ");
+			}
+		}
+		sb.append("]");
+
+		return sb.toString();
+	}
+
 	private void printSample(String header, FooSample sample2) throws Exception {
-		System.out.format("[TestClient] %s: (%d, %d, %d, %f)\n", header, sample2.x, sample2.y, sample2.t, sample2.d);
+		System.out.format("[TestClient] %s: (%s, %d, %d, %s, %d, %f )\n", header, sample2.s, sample2.x, sample2.y, formatArray(sample2.a), sample2.t, sample2.d);
 	}
 
 	public void handle_FooSample(FooSample sample2) throws Exception {
