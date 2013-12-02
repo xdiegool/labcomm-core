@@ -37,7 +37,7 @@ public class TestClient implements Handler {
 
 			LabCommDecoderChannel c = new LabCommDecoderChannel(in);
 			FooSample.register(c,this);
-			c.run();
+			c.runOne();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -58,8 +58,7 @@ public class TestClient implements Handler {
 	}
 
 	private void printSample(String header, FooSample sample2) throws Exception {
-		System.out.println(header);
-		System.out.format("TestClient.invoke(%d, %d, %d, %f)\n", sample2.x, sample2.y, sample2.t, sample2.d);
+		System.out.format("[TestClient] %s: (%d, %d, %d, %f)\n", header, sample2.x, sample2.y, sample2.t, sample2.d);
 	}
 
 	public void handle_FooSample(FooSample sample2) throws Exception {
