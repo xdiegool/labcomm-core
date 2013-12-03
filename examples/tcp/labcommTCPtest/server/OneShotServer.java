@@ -24,8 +24,10 @@ public class OneShotServer {//implements Handler {
 			LabCommEncoderChannel e = new LabCommEncoderChannel(out );
 			FooSample.register(e);
 			FooSample sample = new FooSample();
+			sample.s = "OneShotServer message";
 			sample.x = 17;
 			sample.y = 42;
+			sample.a = new int[]{10,11,12};
 			sample.t = 1717;
 			sample.d = 0.42;
 			printSample("Server sending", sample);
