@@ -346,6 +346,21 @@ aspect Java_Class {
     }
   }
 
+//  TODO: ?
+//  Code snippet for making samples of user types extend their type 
+//  currently commented out. Is this a good idea?
+//
+//  syn String Type.getTypeName();
+//  eq Type.getTypeName() = getClass().getName();
+//  eq PrimType.getTypeName() = getName();
+//  eq UserType.getTypeName() = getName();
+
+//  syn boolean Type.isUserType();
+//  eq Type.isUserType() = false;
+//  eq UserType.isUserType() = true;
+//
+// plus use some lines down
+
   public void SampleDecl.Java_emitClass(Java_env env, String pack) {
     env.println("/* ");
     pp(env.getPrintStream());
@@ -362,7 +377,11 @@ aspect Java_Class {
     env.println("import se.lth.control.labcomm.LabCommHandler;");
     env.println("import se.lth.control.labcomm.LabCommSample;");
     env.println();
-    env.println("public class " + getName() + " implements LabCommSample {");
+    env.print("public class " + getName());
+//    if(getType().isUserType()) {
+//        env.print(" extends "+getType().getTypeName());
+//    }
+    env.println(" implements LabCommSample {");
     env.println();
     env.indent();
     getType().Java_emitInstance(env);

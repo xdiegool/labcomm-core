@@ -1,4 +1,4 @@
-foo:handler(foo value) {
+foo:handler(foo_t value) {
 	test.HandlerContext ctx = (test.HandlerContext)context;
 	System.out.println("foo handler from handlers2.txt");
 	System.out.println("using context "+ctx.str);

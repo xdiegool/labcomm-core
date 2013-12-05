@@ -29,6 +29,7 @@ import beaver.Parser.Exception;
 
 public class TestLabcommGen {
 
+	private static final String TYPE_NAME_FOO = "foo_t";
 	private static final String SAMPLE_NAME_FOO = "foo";
 	private static final String SAMPLE_NAME_BAR = "bar";
 
@@ -79,7 +80,7 @@ public class TestLabcommGen {
 
 		if(irc != null) {
 			System.out.println("*** Testing instantiation and invocation of Handler ");
-			dummyTest(irc);
+			//dummyTest(irc);
 
 			String tmpFile = args[2];
 			System.out.println("*** Testing writing and reading file "+tmpFile);
@@ -226,25 +227,35 @@ public class TestLabcommGen {
 		try {
 			while(i.hasNext()){
 				final String sampleName = i.next();
+				System.out.println("sample: "+sampleName);
 				final String src = genCode.get(sampleName);
-				handlerClass.append(sampleName+".Handler");
-				if(i.hasNext()) {
-					handlerClass.append(", ");
+				String hctmp = handlers.get(sampleName);
+				if(hctmp != null) {
+					handlerClass.append(sampleName+".Handler");
+					if(i.hasNext()) {
+						handlerClass.append(", ");
+					}
+					handlerMethods.append(hctmp);
+					handlerMethods.append("\n");
 				}
-				handlerMethods.append(handlers.get(sampleName));
-				handlerMethods.append("\n");
+				//System.out.println("FOOOO:"+sampleName+"++++"+hctmp);
+				//System.out.println("GOOO: "+sampleName+"----"+handlerMethods);
 				System.out.println("***"+sampleName+"\n"+src);
 				irc.compile(sampleName, src);  // while iterating, compile the labcomm generated code
 			}
 			handlerClass.append("{\n");
-			handlerClass.append(handlerAttributes);
-			handlerClass.append(handlerConstr);
-			handlerClass.append(handlerConstrCtxt);
-			handlerClass.append(handlerMethods.toString());
+			if(handlerAttributes != null)
+				handlerClass.append(handlerAttributes);
+			if(handlerConstr != null)
+				handlerClass.append(handlerConstr);
+			if(handlerConstrCtxt != null)
+				handlerClass.append(handlerConstrCtxt);
+			if(handlerMethods != null)
+				handlerClass.append(handlerMethods.toString());
 			handlerClass.append("}\n");
 
 
-			System.out.println("-------------------------------------");
+			System.out.println("--- generated code to compile -------"+ handlerClassName);
 
 			final String handlerSrc = handlerClass.toString();
 			System.out.println(handlerSrc);
@@ -294,7 +305,7 @@ public class TestLabcommGen {
 			sb.append("public class gen_"+sampleName+"Handler implements "+sampleName+".Handler {\n");
 			sb.append(handlers.get(sampleName));
 			sb.append("}\n");
-			System.out.println("-------------------------------------");
+			System.out.println("--- foo -----------------------------");
 			System.out.println(sb.toString());
 			try {
 				irc.compile(sampleName, src);
@@ -356,15 +367,16 @@ public class TestLabcommGen {
 	 */
 	private static void encodeTest(InRAMCompiler irc, String tmpFile) {
 		try {
+			Class ft = irc.load(TYPE_NAME_FOO);
 			Class fc = irc.load(SAMPLE_NAME_FOO);
 			Class bc = irc.load(SAMPLE_NAME_BAR);
 
 			/* create sample class and instance objects */
-			Object f = fc.newInstance();
+			Object f = ft.newInstance();
 
-			Field x = fc.getDeclaredField("x");
-			Field y = fc.getDeclaredField("y");
-			Field z = fc.getDeclaredField("z");
+			Field x = ft.getDeclaredField("x");
+			Field y = ft.getDeclaredField("y");
+			Field z = ft.getDeclaredField("z");
 			x.setInt(f, 10);
 			y.setInt(f, 11);
 			z.setInt(f, 12);
@@ -377,7 +389,7 @@ public class TestLabcommGen {
 			Method regFoo = fc.getDeclaredMethod("register", LabCommEncoder.class);
 			regFoo.invoke(fc, enc);
 
-			Method doEncodeFoo = fc.getDeclaredMethod("encode", LabCommEncoder.class, fc);
+			Method doEncodeFoo = fc.getDeclaredMethod("encode", LabCommEncoder.class, ft);
 			doEncodeFoo.invoke(fc, enc, f);
 
 			/* register and send bar (NB! uses primitive type int) */

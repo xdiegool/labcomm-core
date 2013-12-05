@@ -1,8 +1,10 @@
-sample struct {
+typedef struct {
   int x;
   int y;
   int z;
-} foo;
+} foo_t;
+
+sample foo_t foo;
 
 sample int bar;
 

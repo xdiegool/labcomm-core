@@ -29,6 +29,7 @@ import beaver.Parser.Exception;
 
 public class DynamicPart {
 
+	private static final String TYPE_NAME_FOO = "foo_t";
 	private static final String SAMPLE_NAME_FOO = "foo";
 	private static final String SAMPLE_NAME_BAR = "bar";
 
@@ -223,12 +224,15 @@ public class DynamicPart {
 			while(i.hasNext()){
 				final String sampleName = i.next();
 				final String src = genCode.get(sampleName);
-				handlerClass.append(sampleName+".Handler");
-				if(i.hasNext()) {
-					handlerClass.append(", ");
+				String handleM = handlers.get(sampleName);
+				if(handleM != null) {
+					handlerClass.append(sampleName+".Handler");
+					if(i.hasNext()) {
+						handlerClass.append(", ");
+					}
+					handlerMethods.append(handleM);
+					handlerMethods.append("\n");
 				}
-				handlerMethods.append(handlers.get(sampleName));
-				handlerMethods.append("\n");
 //				System.out.println("***"+sampleName+"\n"+src);
 				irc.compile(sampleName, src);  // while iterating, compile the labcomm generated code
 			}
@@ -298,18 +302,19 @@ public class DynamicPart {
 	 */
 	private void encodeTest(InRAMCompiler irc, HandlerContext ctxt, String tmpFile) {
 		try {
+			Class ft = irc.load(TYPE_NAME_FOO);
 			Class fc = irc.load(SAMPLE_NAME_FOO);
 			Class bc = irc.load(SAMPLE_NAME_BAR);
 
 			/* create sample class and instance objects */
-			Object f = fc.newInstance();
+			Object fv = ft.newInstance();
 
-			Field x = fc.getDeclaredField("x");
-			Field y = fc.getDeclaredField("y");
-			Field z = fc.getDeclaredField("z");
-			x.setInt(f, ctxt.x);
-			y.setInt(f, ctxt.y);
-			z.setInt(f, ctxt.z);
+			Field x = ft.getField("x");
+			Field y = ft.getField("y");
+			Field z = ft.getField("z");
+			x.setInt(fv, ctxt.x);
+			y.setInt(fv, ctxt.y);
+			z.setInt(fv, ctxt.z);
 
 
 			FileOutputStream out = new FileOutputStream(tmpFile);
@@ -319,8 +324,8 @@ public class DynamicPart {
 			Method regFoo = fc.getDeclaredMethod("register", LabCommEncoder.class);
 			regFoo.invoke(fc, enc);
 
-			Method doEncodeFoo = fc.getDeclaredMethod("encode", LabCommEncoder.class, fc);
-			doEncodeFoo.invoke(fc, enc, f);
+			Method doEncodeFoo = fc.getDeclaredMethod("encode", LabCommEncoder.class, ft);
+			doEncodeFoo.invoke(fc, enc, fv);
 
 			/* register and send bar (NB! uses primitive type int) */
 			Method regBar = bc.getDeclaredMethod("register", LabCommEncoder.class);
@@ -343,17 +348,17 @@ public class DynamicPart {
 			Constructor hcc = hc.getDeclaredConstructor(Object.class);
 //			Object h = hc.newInstance(); 
 			Object h = hcc.newInstance(new HandlerContext());
-			Class fc = irc.load(SAMPLE_NAME_FOO);
-			Object f = fc.newInstance();
-			Field x = fc.getDeclaredField("x");
-			Field y = fc.getDeclaredField("y");
-			Field z = fc.getDeclaredField("z");
+			Class ft = irc.load(TYPE_NAME_FOO);
+			Object f = ft.newInstance();
+			Field x = ft.getDeclaredField("x");
+			Field y = ft.getDeclaredField("y");
+			Field z = ft.getDeclaredField("z");
 			x.setInt(f, 10);
 			y.setInt(f, 11);
 			z.setInt(f, 12);
 			Method m;
 			try {
-				m = hc.getDeclaredMethod("handle_"+SAMPLE_NAME_FOO, fc);
+				m = hc.getDeclaredMethod("handle_"+SAMPLE_NAME_FOO, ft);
 				m.invoke(h, f);
 			} catch (SecurityException e) {
 				// TODO Auto-generated catch block
