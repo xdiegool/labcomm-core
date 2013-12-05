@@ -56,3 +56,8 @@ allowing state to be kept between invokations. The class containing the handler
 methods have an attribute, Object context, and its initialization is currently
 hard coded. The permanent solution is TBD.
 
+TODO: Currently, for UserType samples (i.e., if typedef is used in the .lc file)
+the type of the value parameter to encode and handler is of the UserType and not
+the sample class. Should this be kept, or changed so that the sample extends the type.
+An argument against is that for primitive types, the type of the argument is 
+the primitive type, and not the class, so that has to be taken care of anyhow.
