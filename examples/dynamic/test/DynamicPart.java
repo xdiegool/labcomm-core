@@ -302,9 +302,15 @@ public class DynamicPart {
 	 */
 	private void encodeTest(InRAMCompiler irc, HandlerContext ctxt, String tmpFile) {
 		try {
-			Class ft = irc.load(TYPE_NAME_FOO);
 			Class fc = irc.load(SAMPLE_NAME_FOO);
 			Class bc = irc.load(SAMPLE_NAME_BAR);
+			Class ft; // hack for both cases with and w/o typedef
+			try {
+				ft = irc.load(TYPE_NAME_FOO);
+			} catch (ClassNotFoundException e) {
+				System.out.println("** encodeTest: defaulting to sample==type");
+				ft = fc;
+			}
 
 			/* create sample class and instance objects */
 			Object fv = ft.newInstance();

@@ -4,7 +4,6 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import se.lth.control.labcomm.LabCommEncoderChannel;
 
-import gen.foo_t;
 import gen.foo;
 import gen.bar;
 
@@ -21,7 +20,7 @@ public class StaticEncoder {
   }
 
   public void doEncode() throws java.io.IOException {
-    foo_t f = new foo_t();
+    foo f = new foo();
     f.x = 17;
     f.y = 42;
     f.z = 37;

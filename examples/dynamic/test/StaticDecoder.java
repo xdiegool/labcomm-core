@@ -1,6 +1,5 @@
 package test;
 
-import gen.foo_t;
 import gen.foo;
 import gen.bar;
 
@@ -32,7 +31,7 @@ public class StaticDecoder implements foo.Handler, bar.Handler
   }
 
 
-  public void handle_foo(foo_t d) throws java.io.IOException {
+  public void handle_foo(foo d) throws java.io.IOException {
     System.out.println("Got foo, x="+d.x+", y="+d.y+", z="+d.z);
   }
 
