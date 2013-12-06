@@ -367,9 +367,15 @@ public class TestLabcommGen {
 	 */
 	private static void encodeTest(InRAMCompiler irc, String tmpFile) {
 		try {
-			Class ft = irc.load(TYPE_NAME_FOO);
+			Class ft;
 			Class fc = irc.load(SAMPLE_NAME_FOO);
 			Class bc = irc.load(SAMPLE_NAME_BAR);
+			try {
+				ft = irc.load(TYPE_NAME_FOO);
+			} catch (ClassNotFoundException e) {
+				System.out.println("encodeTest: defaulting to ft == fc");
+				ft = fc;
+			}
 
 			/* create sample class and instance objects */
 			Object f = ft.newInstance();
