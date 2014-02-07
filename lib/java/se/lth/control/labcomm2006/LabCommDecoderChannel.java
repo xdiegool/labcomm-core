@@ -134,19 +134,12 @@ public class LabCommDecoderChannel implements LabCommDecoder {
     return new String(chars);
   }
 
+  /**
+     method for API harmonization with labcomm2013.
+     Labcomm2006 encodes lengths etc as 32 bit ints.
+  */
   public int decodePacked32() throws IOException {
-    long res=0;
-    byte i=0;
-    boolean cont=true;
-
-    do {
-      byte c = in.readByte();
-      res = (res << 7) | (c & 0x7f);
-      cont = (c & 0x80) != 0;
-      i++;
-    } while(cont);
-
-    return (int) (res & 0xffffffff);
+    return in.readInt();
   }
 }
 

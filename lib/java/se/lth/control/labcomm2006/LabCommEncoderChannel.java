@@ -19,7 +19,7 @@ public class LabCommEncoderChannel implements LabCommEncoder {
     data = new DataOutputStream(bytes);
     registry = new LabCommEncoderRegistry();
     if (emitVersion) {
-        throw new RuntimeError("Labcomm 2006 does not support emitVersion");
+        throw new IllegalArgumentException("Labcomm 2006 does not support emitVersion");
     }
   }
 
@@ -91,27 +91,17 @@ public class LabCommEncoderChannel implements LabCommEncoder {
   public void encodeString(String value) throws IOException {
     data.writeShort(0); // HACK...
     data.writeUTF(value);
-
-    //kludge, to replace above hack with packed length
-    ByteArrayOutputStream tmpb = new ByteArrayOutputStream();
-    DataOutputStream tmps = new DataOutputStream(tmpb);
-
-    tmps.writeUTF(value);
-    tmps.flush();
-    byte[] tmp = tmpb.toByteArray();
-  
-    encodePacked32(tmp.length-2);
-    for (int i = 2 ; i < tmp.length ; i++) {
-      encodeByte(tmp[i]);
-    }
   }
 
   /**
      method for API harmonization with labcomm2013.
      Labcomm2006 encodes lengths etc as 32 bit ints.
   */
-  public inline void encodePacked32(long value) throws IOException {
-    encodeInt(value);
+  public void encodePacked32(long value) throws IOException {
+    if(value > Integer.MAX_VALUE) {
+      throw new IllegalArgumentException("Value too large, must fit in 32 bits");
+    }
+    encodeInt((int) value);
   }
 }
 

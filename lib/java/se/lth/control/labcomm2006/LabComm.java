@@ -27,6 +27,6 @@ public class LabComm {
   /*
    * Start of user declared types
    */
-  public static final int FIRST_USER_INDEX = 0x40;
+  public static final int FIRST_USER_INDEX = 0x80;
 
 }
