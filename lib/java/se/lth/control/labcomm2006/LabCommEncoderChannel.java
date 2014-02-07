@@ -24,7 +24,7 @@ public class LabCommEncoderChannel implements LabCommEncoder {
   }
 
   public LabCommEncoderChannel(LabCommWriter writer) throws IOException {
-    this(writer, true);
+    this(writer, false);
   }
 
   public LabCommEncoderChannel(OutputStream writer, 
@@ -33,7 +33,7 @@ public class LabCommEncoderChannel implements LabCommEncoder {
   }
 
   public LabCommEncoderChannel(OutputStream writer) throws IOException {
-    this(new WriterWrapper(writer), true);
+    this(new WriterWrapper(writer), false);
   }
 
   public void register(LabCommDispatcher dispatcher) throws IOException {

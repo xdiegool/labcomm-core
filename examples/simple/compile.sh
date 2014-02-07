@@ -3,7 +3,7 @@
 mkdir -p gen
 java -jar ../../compiler/labComm.jar --ver=2006 --java=gen --c=gen/simple.c --h=gen/simple.h  --python=gen/simple.py simple.lc 
 
-javac -cp ../../lib/java:. gen/*.java Encoder.java Decoder.java
+javac -cp ../../lib/java:. gen/*.java Encoder06.java Decoder06.java
 
 # gcc -Wall -Werror -I. -I../../lib/c -L../../lib/c \
 #    -o example_encoder example_encoder.c gen/simple.c \

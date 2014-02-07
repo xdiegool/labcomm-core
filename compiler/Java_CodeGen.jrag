@@ -9,6 +9,7 @@ aspect Java_CodeGenEnv {
   public class Java_env {
 
     public final int version;  //labcomm version to generate code for
+    public final String verStr;
     private int indent;
     private int depth;
     private Java_printer printer;
@@ -78,6 +79,7 @@ aspect Java_CodeGenEnv {
 
     private Java_env(int version, int indent) {
       this.version = version; 
+      this.verStr = (version == 2006) ? "2006" : "";
       this.indent = indent;
     }
 
@@ -337,9 +339,9 @@ aspect Java_Class {
       }
 
       env.println("import java.io.IOException;");
-      env.println("import se.lth.control.labcomm.LabCommType;");
-      env.println("import se.lth.control.labcomm.LabCommEncoder;");
-      env.println("import se.lth.control.labcomm.LabCommDecoder;");
+      env.println("import se.lth.control.labcomm"+env.verStr+".LabCommType;");
+      env.println("import se.lth.control.labcomm"+env.verStr+".LabCommEncoder;");
+      env.println("import se.lth.control.labcomm"+env.verStr+".LabCommDecoder;");
       env.println();
       env.println("public class " + getName() + " implements LabCommType {");
       env.println();
@@ -377,11 +379,11 @@ aspect Java_Class {
     }
 
     env.println("import java.io.IOException;");
-    env.println("import se.lth.control.labcomm.LabCommDecoder;");
-    env.println("import se.lth.control.labcomm.LabCommDispatcher;");
-    env.println("import se.lth.control.labcomm.LabCommEncoder;");
-    env.println("import se.lth.control.labcomm.LabCommHandler;");
-    env.println("import se.lth.control.labcomm.LabCommSample;");
+    env.println("import se.lth.control.labcomm"+env.verStr+".LabCommDecoder;");
+    env.println("import se.lth.control.labcomm"+env.verStr+".LabCommDispatcher;");
+    env.println("import se.lth.control.labcomm"+env.verStr+".LabCommEncoder;");
+    env.println("import se.lth.control.labcomm"+env.verStr+".LabCommHandler;");
+    env.println("import se.lth.control.labcomm"+env.verStr+".LabCommSample;");
     env.println();
     env.print("public class " + getName());
 //    if(getType().isUserType()) {
