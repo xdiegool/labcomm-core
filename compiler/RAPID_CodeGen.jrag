@@ -1,14 +1,16 @@
 
 aspect RAPID_env {
 	public class RAPID_env {
+                public final int version;
 		private String prefix;
 		private StringBuilder types;
 		private StringBuilder constants;
 		private StringBuilder procedures;
 		private PrintStream ps;
 
-		public RAPID_env(PrintStream ps, String prefix)
+		public RAPID_env(PrintStream ps, String prefix, int version)
 		{
+			this.version = version;
 			this.types = new StringBuilder();
 			this.constants = new StringBuilder();
 			this.procedures = new StringBuilder();
@@ -75,11 +77,11 @@ aspect RAPID_CodeGen {
 		throw new UnsupportedOperationException();
 	}
 
-	public void Program.RAPID_gen(String file, String prefix)
+	public void Program.RAPID_gen(String file, String prefix, int version)
 			throws IOException
 	{
 		PrintStream ps = new PrintStream(new FileOutputStream(new File(file)));
-		RAPID_env env = new RAPID_env(ps, prefix);
+		RAPID_env env = new RAPID_env(ps, prefix, version);
 		RAPID_gen(env);
 	}
 
@@ -101,7 +103,7 @@ aspect RAPID_CodeGen {
 		// Add signature constants
 		String sig_len_name = "signature_len_" + getName();
 		String sig_name = "signature_" + getName();
-		SignatureList sig = signature();
+		SignatureList sig = signature(env.version);
 		StringBuilder sb = new StringBuilder();
 		sb.append("[");
 		byte[] d = null;

@@ -13,6 +13,7 @@ public class LabComm {
     println("");
     println(" --help                  Shows this help text");
     println(" -v                      Be verbose");
+    println(" --ver=VERSION           Generate code for labcomm VERSION (=2006 or 2013)");
     println("[ C options ]");
     println(" -C                      Generates C/H code in FILE.[ch]");
     println(" --cprefix=PREFIX        Prefixes C types with PREFIX");
@@ -53,6 +54,16 @@ public class LabComm {
     return s.substring(s.lastIndexOf('/') + 1, s.length());
   }
 
+  /** To be cleaned up.
+   */
+  private static void checkVersion(int v) {
+     if(! (v == 2006 || v == 2013) ) {
+	System.err.println(" Unknown version: " + v);
+	System.err.println(" Supported versions: 2006, 2013 ");
+	System.exit(2);
+     }
+  }
+
   public static void main(String[] args) {
     String fileName = null;
     // Scan for first non-option
@@ -69,6 +80,7 @@ public class LabComm {
       prefix = getPrefix(coreName);
     }
     boolean verbose = false;
+    int ver = 2013; //Version 2013 as default
     String cFile = null;
     String hFile = null;
     Vector cIncludes = new Vector();
@@ -91,6 +103,9 @@ public class LabComm {
 	System.exit(0);
       } else if (args[i].equals("-v")) {
 	verbose=true;
+      } else if (args[i].startsWith("--ver=")) {
+	ver = Integer.parseInt(args[i].substring(6));
+        checkVersion(ver);
       } else if (args[i].equals("-C")) {
 	cFile = coreName + ".c";
 	hFile = coreName + ".h";
@@ -170,36 +185,36 @@ public class LabComm {
 	boolean prettyOnStdout = true;
 	if (cFile != null) {
 	  if (verbose) { System.err.println("Generating C: " + cFile); }
-	  genC(ast, cFile, cIncludes, coreName, cPrefix);
+	  genC(ast, cFile, cIncludes, coreName, cPrefix, ver);
 	  prettyOnStdout = false;
 	}
 	if (hFile != null) {
 	  if (verbose) { System.err.println("Generating H: " + hFile); }
-	  genH(ast, hFile, hIncludes, coreName, cPrefix);
+	  genH(ast, hFile, hIncludes, coreName, cPrefix, ver);
 	  prettyOnStdout = false;
 	}
 	if (csFile != null) {
 	  if (verbose) { System.err.println("Generating C#: " + csFile); }
-	  genCS(ast, csFile, csNamespace);
+	  genCS(ast, csFile, csNamespace, ver);
 	  prettyOnStdout = false;
 	}
 	if (javaDir != null) {
 	  if (verbose) { System.err.println("Generating Java: " + javaDir); }
-	  genJava(ast, javaDir, javaPackage);
+	  genJava(ast, javaDir, javaPackage, ver);
 	  prettyOnStdout = false;
 	}
 	if (pythonFile != null) {
 	  if (verbose) { 
 	    System.err.println("Generating Python: " + pythonFile); 
 	  }
-	  genPython(ast, pythonFile, prefix);
+	  genPython(ast, pythonFile, prefix, ver);
 	  prettyOnStdout = false;
 	}
 	if (rapidFile != null) {
 		if (verbose) {
 			System.err.println("Generating RAPID: " + rapidFile);
 		}
-		genRAPID(ast, rapidFile, coreName);
+		genRAPID(ast, rapidFile, coreName, ver);
 		prettyOnStdout = false;
 	}
 	if (prettyFile != null) {
@@ -223,9 +238,9 @@ public class LabComm {
 	  try {
 	    FileOutputStream f = new FileOutputStream(typeinfoFile);
 	    PrintStream out = new PrintStream(f);
-	    ast.C_info(out, cPrefix);
-	    ast.Java_info(out);
-	    ast.CS_info(out, csNamespace);
+	    ast.C_info(out, cPrefix, ver);
+	    ast.Java_info(out, ver);
+	    ast.CS_info(out, csNamespace, ver);
 	    prettyOnStdout = false;
 	  } catch (IOException e) {
 	    System.err.println("IOException: " + typeinfoFile + " " + e);
@@ -239,14 +254,14 @@ public class LabComm {
   } 
 
   private static void genH(Program p, String hName, 
-			   Vector cIncludes, String coreName, String prefix) {
+			   Vector cIncludes, String coreName, String prefix, int ver) {
     try {
       FileOutputStream f;
       PrintStream out;
       
       f = new FileOutputStream(hName);
       out = new PrintStream(f);
-      p.C_genH(out, cIncludes, coreName, prefix);
+      p.C_genH(out, cIncludes, coreName, prefix, ver);
       out.close();
     } catch (IOException e) {
       System.err.println("IOException: " + hName + " " + e);
@@ -254,59 +269,57 @@ public class LabComm {
   }
 
   private static void genC(Program p, String cName, 
-			   Vector cIncludes, String coreName, String prefix) {
+			   Vector cIncludes, String coreName, String prefix, int ver) {
     try {
       FileOutputStream f;
       PrintStream out;
 
       f = new FileOutputStream(cName);
       out = new PrintStream(f);
-      p.C_genC(out, cIncludes, coreName, prefix);
+      p.C_genC(out, cIncludes, coreName, prefix, ver);
       out.close();
     } catch (IOException e) {
       System.err.println("IOException: " + cName + " " + e);
     }
   }
 
-  private static void genCS(Program p, String csName, String csNamespace) {
+  private static void genCS(Program p, String csName, String csNamespace, int ver) {
     try {
-      p.CS_gen(csName, csNamespace);
+      p.CS_gen(csName, csNamespace, ver);
     } catch (IOException e) {
       System.err.println("IOException: " + csName + " " + 
 			 csNamespace + " " + e);
     }
   }
 
-  private static void genJava(Program p,  String dirName, String packageName) {
+  private static void genJava(Program p,  String dirName, String packageName, int ver) {
     try {
-      p.J_gen(dirName, packageName);
+      p.J_gen(dirName, packageName, ver);
     } catch (IOException e) {
       System.err.println("IOException: " + dirName + " " + 
 			 packageName + " " + e);
     }
   }
 
-  private static void genPython(Program p, String filename, String prefix) {
+  private static void genPython(Program p, String filename, String prefix, int ver) {
     try {
       FileOutputStream f;
       PrintStream out;
 
       f = new FileOutputStream(filename);
       out = new PrintStream(f);
-      p.Python_gen(out, prefix);
+      p.Python_gen(out, prefix, ver);
       out.close();
     } catch (IOException e) {
       System.err.println("IOException: " + filename + " " + e);
     }
   }
 
-  private static void genRAPID(Program p, String filename, String prefix) {
+  private static void genRAPID(Program p, String filename, String prefix, int ver) {
     try {
-      p.RAPID_gen(filename, prefix);
+      p.RAPID_gen(filename, prefix, ver);
     } catch (IOException e) {
       System.err.println("IOException: " + filename + " " + e);
     }
   }
-
-
 }

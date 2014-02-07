@@ -31,25 +31,42 @@ aspect Signature {
   public class SignatureList {
 
     private int indent;
+    private final int ver;
     private ArrayList list = new ArrayList();
     
+    public SignatureList(int version) {
+      this.ver = version; 
+    }
+
     public void add(byte[] data, String comment) {
       list.add(new SignatureLine(indent, data, comment));
     }
 
     public void addInt(int value, String comment) {
-	byte[] tmp = new byte[5];
- 	long v = value & 0xffffffff;
-        int i, j;
-
-        for (i = 0 ; i == 0 || v != 0 ; i++, v = (v >> 7)) {
-          tmp[i] = (byte)(v & 0x7f);
-        }
- 	byte[] packed = new byte[i];
-        for (i = i - 1, j = 0 ; i >= 0 ; i--, j++) {
-	  packed[j] = (byte)(tmp[i] | (i!=0?0x80:0x00));
-        }
-	add(packed, comment);
+      switch(ver) {
+        case 2006:             // Use old encoding with 32 bit integers
+	    byte[] data = new byte[4];
+	    for (int i = 0 ; i < 4 ; i++) {
+	        data[3 - i] = (byte)((value >> (8 * i)) & 0xff);
+	    }
+	    add(data, comment);
+        break;
+        case 2013:             // Use new encoding with varints
+	    byte[] tmp = new byte[5];
+ 	    long v = value & 0xffffffff;
+            int i, j;
+            for (i = 0 ; i == 0 || v != 0 ; i++, v = (v >> 7)) {
+		tmp[i] = (byte)(v & 0x7f);
+            }
+	    byte[] packed = new byte[i];
+            for (i = i - 1, j = 0 ; i >= 0 ; i--, j++) {
+		packed[j] = (byte)(tmp[i] | (i!=0?0x80:0x00));
+            }
+	    add(packed, comment);
+        break;
+        default: 
+            throw new RuntimeException("Version = "+ver+". This should never happen.");
+      }
     }
 
     public void addString(String value, String comment) {
@@ -92,8 +109,8 @@ aspect Signature {
 
   }
 
-  public SignatureList Decl.signature() {
-    SignatureList result = new SignatureList();
+  public SignatureList Decl.signature(int version) {
+    SignatureList result = new SignatureList(version);
     flatSignature(result);
     return result;
   }

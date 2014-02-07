@@ -8,7 +8,7 @@ aspect C_CodeGenEnv {
 
   public class C_env {
 
-    final private class C_printer {
+    final private static class C_printer {
       
       private boolean newline = true;
       private PrintStream out;
@@ -33,6 +33,8 @@ aspect C_CodeGenEnv {
       }
     }
 
+    public final int version; //labcomm version (2006 or 2013)
+
     public final String qualid;
     public final String lcName;
     public final String rawPrefix;
@@ -42,7 +44,8 @@ aspect C_CodeGenEnv {
     private C_printer printer;
 
     private C_env(String qualid, String lcName, String rawPrefix, 
-		  int indent, int depth, C_printer printer) {
+		  int indent, int depth, C_printer printer, int version) {
+      this.version = version;
       this.qualid = qualid;
       this.lcName = lcName;
       this.rawPrefix = rawPrefix;
@@ -57,28 +60,18 @@ aspect C_CodeGenEnv {
     }
 
     public C_env(String qualid, String lcName, String rawPrefix, 
-		 PrintStream out) {
-      this.qualid = qualid;
-      this.lcName = lcName;
-      this.rawPrefix = rawPrefix;
-      if (rawPrefix.equals("")) {
-        this.prefix = rawPrefix;
-      } else {
-        this.prefix = rawPrefix + "_";
-      }
-      this.depth = 0;
-      this.indent = 0;
-      this.printer = new C_printer(out);
+		 PrintStream out, int version) {
+      this(qualid, lcName, rawPrefix, 0, 0, new C_printer(out), version);
     }
 
     public C_env nestArray(String suffix) {
       return new C_env(qualid + suffix, lcName, rawPrefix, 
-		       indent, depth + 1, printer);
+		       indent, depth + 1, printer, version);
     }
 
     public C_env nestStruct(String suffix) {
       return new C_env(qualid + suffix, lcName, rawPrefix, 
-		       indent, depth, printer);
+		       indent, depth, printer, version);
     }
 
     public void indent() {
@@ -147,8 +140,8 @@ aspect C_IsDynamic {
 aspect C_CodeGen {
 
   public void Program.C_genH(PrintStream out, Vector includes, 
-			     String lcName, String prefix) {
-    C_env env = new C_env("", lcName, prefix, out);
+			     String lcName, String prefix, int version) {
+    C_env env = new C_env("", lcName, prefix, out, version);
 
     // Hackish prettyprint preamble
     out.println("/* LabComm declarations:");
@@ -174,8 +167,8 @@ aspect C_CodeGen {
   }
 
   public void Program.C_genC(PrintStream out, Vector includes, 
-			     String lcName, String prefix) {
-    C_env env = new C_env("", lcName, prefix, out);
+			     String lcName, String prefix, int version) {
+    C_env env = new C_env("", lcName, prefix, out, version);
 
     // Include
     env.println("#include \"labcomm.h\"");
@@ -882,7 +875,7 @@ aspect C_Signature {
   public void SampleDecl.C_emitSignature(C_env env) {
     env.println("static unsigned char signature_bytes_" + 
 		       env.prefix + getName() + "[] = {");
-    SignatureList signature = signature();
+    SignatureList signature = signature(env.version);
     for (int i = 0 ; i < signature.size() ; i++) {
       String comment = signature.getComment(i);
       if (comment != null) {
@@ -1146,8 +1139,8 @@ aspect C_forAll {
 
 aspect C_Info {
 
-  public void Program.C_info(PrintStream out, String prefix) {
-    C_env env = new C_env("", "", prefix, out);
+  public void Program.C_info(PrintStream out, String prefix, int version) {
+    C_env env = new C_env("", "", prefix, out, version);
     for (int i = 0; i < getNumDecl(); i++) {
       getDecl(i).C_info(env);
     }
