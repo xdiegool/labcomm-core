@@ -13,9 +13,13 @@ MODULES=LabCommDispatcher \
 	LabCommReader \
 	WriterWrapper
 
-all: labcomm.jar labcomm2006.jar
+all: labcomm.jar labcomm2013.jar labcomm2006.jar
 
 labcomm.jar: gen/JAVAC
+	echo $@
+	cd gen ; jar cf ../$@ se/lth/control/labcomm/*.class se/lth/control/labcomm2006/*.class
+
+labcomm2013.jar: gen/JAVAC
 	echo $@
 	cd gen ; jar cf ../$@ se/lth/control/labcomm/*.class
 
@@ -34,5 +38,5 @@ gen/JAVAC: $(MODULES:%=se/lth/control/labcomm/%.java) $(MODULES:%=se/lth/control
 .PHONY: clean
 
 clean:
-	rm -rf labcomm.jar gen labcomm2006.jar
+	rm -rf labcomm.jar labcomm2006.jar labcomm2013.jar gen 
 
