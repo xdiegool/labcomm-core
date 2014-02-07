@@ -20,8 +20,8 @@
 */
 
 #include <stdlib.h>
-#include "labcomm.h"
-#include "labcomm_private.h"
+#include "labcomm2006.h"
+#include "labcomm2006_private.h"
 
-extern struct labcomm_memory *labcomm_default_memory;
+extern struct labcomm2006_memory *labcomm2006_default_memory;
 

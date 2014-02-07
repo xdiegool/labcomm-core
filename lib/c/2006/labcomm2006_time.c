@@ -1,5 +1,5 @@
 /*
-  labcomm_time.c -- labcomm time handling
+  labcomm2006_time.c -- labcomm time handling
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -20,7 +20,7 @@
 */
 
 #include <errno.h>
-#include "labcomm_scheduler_private.h"
+#include "labcomm2006_scheduler_private.h"
 
 #define TIME_time(time, ...) time
 #define TIME(func, ...)						\
@@ -30,12 +30,12 @@
   }									\
   return -ENOSYS;
 
-int labcomm_time_free(struct labcomm_time *s)
+int labcomm2006_time_free(struct labcomm2006_time *s)
 {
   TIME(free, s);
 }
 
-int labcomm_time_add_usec(struct labcomm_time *s, uint32_t usec)
+int labcomm2006_time_add_usec(struct labcomm2006_time *s, uint32_t usec)
 {
   TIME(add_usec, s, usec);
 }

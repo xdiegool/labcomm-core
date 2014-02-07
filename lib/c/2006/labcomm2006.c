@@ -32,10 +32,10 @@
 #include <stdarg.h>
 #include <stddef.h>
 
-#include "labcomm.h"
-#include "labcomm_private.h"
-#include "labcomm_ioctl.h"
-#include "labcomm_dynamic_buffer_writer.h"
+#include "labcomm2006.h"
+#include "labcomm2006_private.h"
+#include "labcomm2006_ioctl.h"
+#include "labcomm2006_dynamic_buffer_writer.h"
 
 #define LABCOMM_VERSION "LabComm2006"
 
@@ -49,87 +49,87 @@
     UNWRAP_ac( __VA_ARGS__) = UNWRAP_ac(__VA_ARGS__)->next;		\
   }
 
-int labcomm_reader_alloc(struct labcomm_reader *r, 
-                         struct labcomm_reader_action_context *action_context, 
-                         char *labcomm_version)
+int labcomm2006_reader_alloc(struct labcomm2006_reader *r, 
+                         struct labcomm2006_reader_action_context *action_context, 
+                         char *labcomm2006_version)
 {
-  UNWRAP(alloc, r, action_context, labcomm_version);
+  UNWRAP(alloc, r, action_context, labcomm2006_version);
 }
 
-int labcomm_reader_free(struct labcomm_reader *r, 
-                        struct labcomm_reader_action_context *action_context)
+int labcomm2006_reader_free(struct labcomm2006_reader *r, 
+                        struct labcomm2006_reader_action_context *action_context)
 {
   UNWRAP(free, r, action_context);
 }
 
-int labcomm_reader_start(struct labcomm_reader *r, 
-                         struct labcomm_reader_action_context *action_context,
+int labcomm2006_reader_start(struct labcomm2006_reader *r, 
+                         struct labcomm2006_reader_action_context *action_context,
 			 int local_index, int remote_index,
-			 struct labcomm_signature *signature,
+			 struct labcomm2006_signature *signature,
 			 void *value)
 {
   UNWRAP(start, r, action_context, local_index, remote_index, signature, value);
 }
 
-int labcomm_reader_end(struct labcomm_reader *r, 
-                       struct labcomm_reader_action_context *action_context)
+int labcomm2006_reader_end(struct labcomm2006_reader *r, 
+                       struct labcomm2006_reader_action_context *action_context)
 {
   UNWRAP(end, r, action_context);
 }
 
-int labcomm_reader_fill(struct labcomm_reader *r, 
-                        struct labcomm_reader_action_context *action_context)
+int labcomm2006_reader_fill(struct labcomm2006_reader *r, 
+                        struct labcomm2006_reader_action_context *action_context)
 {
   UNWRAP(fill, r, action_context);
 }
 
-int labcomm_reader_ioctl(struct labcomm_reader *r, 
-                         struct labcomm_reader_action_context *action_context,
+int labcomm2006_reader_ioctl(struct labcomm2006_reader *r, 
+                         struct labcomm2006_reader_action_context *action_context,
                          int local_index, int remote_index,
-                         struct labcomm_signature *signature, 
+                         struct labcomm2006_signature *signature, 
                          uint32_t ioctl_action, va_list args)
 {
   UNWRAP(ioctl, r, action_context, 
 	 local_index, remote_index, signature, ioctl_action, args);
 }
 
-int labcomm_writer_alloc(struct labcomm_writer *w, 
-                         struct labcomm_writer_action_context *action_context, 
-                         char *labcomm_version)
+int labcomm2006_writer_alloc(struct labcomm2006_writer *w, 
+                         struct labcomm2006_writer_action_context *action_context, 
+                         char *labcomm2006_version)
 {
-  UNWRAP(alloc, w, action_context, labcomm_version);
+  UNWRAP(alloc, w, action_context, labcomm2006_version);
 }
 
-int labcomm_writer_free(struct labcomm_writer *w, 
-                        struct labcomm_writer_action_context *action_context)
+int labcomm2006_writer_free(struct labcomm2006_writer *w, 
+                        struct labcomm2006_writer_action_context *action_context)
 {
   UNWRAP(free, w, action_context);
 }
 
-int labcomm_writer_start(struct labcomm_writer *w, 
-                         struct labcomm_writer_action_context *action_context,
-                         int index, struct labcomm_signature *signature,
+int labcomm2006_writer_start(struct labcomm2006_writer *w, 
+                         struct labcomm2006_writer_action_context *action_context,
+                         int index, struct labcomm2006_signature *signature,
                          void *value)
 {
   UNWRAP(start, w, action_context, index, signature, value);
 }
 
-int labcomm_writer_end(struct labcomm_writer *w, 
-                       struct labcomm_writer_action_context *action_context)
+int labcomm2006_writer_end(struct labcomm2006_writer *w, 
+                       struct labcomm2006_writer_action_context *action_context)
 {
   UNWRAP(end, w, action_context);
 } 
 
-int labcomm_writer_flush(struct labcomm_writer *w, 
-                         struct labcomm_writer_action_context *action_context)
+int labcomm2006_writer_flush(struct labcomm2006_writer *w, 
+                         struct labcomm2006_writer_action_context *action_context)
 {
   UNWRAP(flush, w, action_context);
 } 
 
-int labcomm_writer_ioctl(struct labcomm_writer *w, 
-                         struct labcomm_writer_action_context *action_context, 
+int labcomm2006_writer_ioctl(struct labcomm2006_writer *w, 
+                         struct labcomm2006_writer_action_context *action_context, 
                          int index, 
-                         struct labcomm_signature *signature, 
+                         struct labcomm2006_signature *signature, 
                          uint32_t ioctl_action, va_list args)
 {
   UNWRAP(ioctl, w, action_context, index, signature, ioctl_action, args);
@@ -141,29 +141,30 @@ int labcomm_writer_ioctl(struct labcomm_writer *w,
 
 
 
-static const char *labcomm_error_string[] = { 
+static const char *labcomm2006_error_string[] = { 
 #define LABCOMM_ERROR(name, description) description ,
-#include "labcomm_error.h"
+#include "labcomm2006_error.h"
 #undef LABCOMM_ERROR
 };
-static const int labcomm_error_string_count = (sizeof(labcomm_error_string) / 
-					       sizeof(labcomm_error_string[0]));
+static const int labcomm2006_error_string_count = (sizeof(labcomm2006_error_string) / 
+					       sizeof(labcomm2006_error_string[0]));
 
 
-const char *labcomm_error_get_str(enum labcomm_error error_id)
+const char *labcomm2006_error_get_str(enum labcomm2006_error error_id)
 {
   const char *error_str = NULL;
   // Check if this is a known error ID.
-  if (error_id < labcomm_error_string_count) {
-    error_str = labcomm_error_string[error_id];
+  if (error_id < labcomm2006_error_string_count) {
+    error_str = labcomm2006_error_string[error_id];
   }
   return error_str;
 }
 
-void on_error_fprintf(enum labcomm_error error_id, size_t nbr_va_args, ...)
+#if 0 //XXX hack to avoid name clash. is this really the same as in 2013?
+void on_error_fprintf(enum labcomm2006_error error_id, size_t nbr_va_args, ...)
 {
 #ifndef LABCOMM_NO_STDIO
-  const char *err_msg = labcomm_error_get_str(error_id); // The final string to print.
+  const char *err_msg = labcomm2006_error_get_str(error_id); // The final string to print.
   if (err_msg == NULL) {
     err_msg = "Error with an unknown error ID occured.";
   }
@@ -184,6 +185,7 @@ void on_error_fprintf(enum labcomm_error error_id, size_t nbr_va_args, ...)
  ; // If labcomm can't be compiled with stdio the user will have to make an own error callback functionif he/she needs error reporting.
 #endif
 }
+#endif
 
 
 
@@ -203,14 +205,14 @@ static void dump(void *p, int size, int first, int last)
 }
 #endif
 
-void *labcomm_signature_array_ref(struct labcomm_memory *memory,
+void *labcomm2006_signature_array_ref(struct labcomm2006_memory *memory,
 				  int *first, int *last, void **data,
 				  int size, int index)
 {
   if (*first == 0 && *last == 0) {
     *first = index;
     *last = index + 1;
-    *data = labcomm_memory_alloc(memory, 0, size);
+    *data = labcomm2006_memory_alloc(memory, 0, size);
     if (*data) { 
       memset(*data, 0, size); 
     }
@@ -222,7 +224,7 @@ void *labcomm_signature_array_ref(struct labcomm_memory *memory,
     *first = (index<old_first)?index:old_first;
     *last = (old_last<=index)?index+1:old_last;
     n = (*last - *first);
-    *data = labcomm_memory_alloc(memory, 0, n * size);
+    *data = labcomm2006_memory_alloc(memory, 0, n * size);
     if (*data) {
       memset(*data, 0, n * size);
       memcpy(*data + (old_first - *first) * size, 
@@ -230,7 +232,7 @@ void *labcomm_signature_array_ref(struct labcomm_memory *memory,
 	     (old_last - old_first) * size);
     }
 //    dump(old_data, size, old_first, old_last);
-    labcomm_memory_free(memory, 0, old_data);
+    labcomm2006_memory_free(memory, 0, old_data);
   }
   if (*data) {
 //    dump(*data, size, *first, *last);
@@ -242,20 +244,20 @@ void *labcomm_signature_array_ref(struct labcomm_memory *memory,
 
 static int local_index = 0x40;
 
-void labcomm_set_local_index(struct labcomm_signature *signature)
+void labcomm2006_set_local_index(struct labcomm2006_signature *signature)
 {
   if (signature->index != 0) {
-    labcomm_error_fatal_global(LABCOMM_ERROR_SIGNATURE_ALREADY_SET,
+    labcomm2006_error_fatal_global(LABCOMM_ERROR_SIGNATURE_ALREADY_SET,
 			       "%s", signature->name);
   }
   signature->index = local_index;
   local_index++;
 }
 
-int labcomm_get_local_index(struct labcomm_signature *signature)
+int labcomm2006_get_local_index(struct labcomm2006_signature *signature)
 {
   if (signature->index == 0) {
-    labcomm_error_fatal_global(LABCOMM_ERROR_SIGNATURE_NOT_SET,
+    labcomm2006_error_fatal_global(LABCOMM_ERROR_SIGNATURE_NOT_SET,
 			       "%s", signature->name);
   }
   return signature->index;

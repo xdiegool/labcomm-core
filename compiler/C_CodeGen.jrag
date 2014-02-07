@@ -34,6 +34,7 @@ aspect C_CodeGenEnv {
     }
 
     public final int version; //labcomm version (2006 or 2013)
+    public final String verStr; // version suffix to append (currently _2006 and empty string)
 
     public final String qualid;
     public final String lcName;
@@ -46,6 +47,7 @@ aspect C_CodeGenEnv {
     private C_env(String qualid, String lcName, String rawPrefix, 
 		  int indent, int depth, C_printer printer, int version) {
       this.version = version;
+      this.verStr = (version == 2006 ? "2006" : ""); 
       this.qualid = qualid;
       this.lcName = lcName;
       this.rawPrefix = rawPrefix;
@@ -155,7 +157,7 @@ aspect C_CodeGen {
 
     // Include
     env.println("#include <stdint.h>");
-    env.println("#include \"labcomm.h\"");
+    env.println("#include \"labcomm"+env.verStr+".h\"");
     for (int i = 0 ; i < includes.size() ; i++) {
       env.println("#include \"" + includes.get(i) + "\"");
     }
@@ -171,8 +173,8 @@ aspect C_CodeGen {
     C_env env = new C_env("", lcName, prefix, out, version);
 
     // Include
-    env.println("#include \"labcomm.h\"");
-    env.println("#include \"labcomm_private.h\"");
+    env.println("#include \"labcomm"+env.verStr+".h\"");
+    env.println("#include \"labcomm"+env.verStr+"_private.h\"");
     for (int i = 0 ; i < includes.size() ; i++) {
       env.println("#include \"" + includes.get(i) + "\"");
     }
@@ -334,10 +336,10 @@ aspect C_Declarations {
   }
 
   public void SampleDecl.C_emitDecoderDeclaration(C_env env) {
-    env.println("int labcomm_decoder_register_" + 
+    env.println("int labcomm"+env.verStr+"_decoder_register_" + 
 		env.prefix + getName() + "(");
     env.indent();
-    env.println("struct labcomm_decoder *d,");
+    env.println("struct labcomm"+env.verStr+"_decoder *d,");
     env.println("void (*handler)(");
     env.indent();
     env.println(env.prefix + getName() + " *v,");
@@ -348,9 +350,9 @@ aspect C_Declarations {
     env.unindent();
     env.println(");");
 
-    env.println("int labcomm_decoder_ioctl_" + env.prefix + getName() + "(");
+    env.println("int labcomm"+env.verStr+"_decoder_ioctl_" + env.prefix + getName() + "(");
     env.indent();
-    env.println("struct labcomm_decoder *d,");
+    env.println("struct labcomm"+env.verStr+"_decoder *d,");
     env.println("int ioctl_action,");
     env.println("...");
     env.unindent();
@@ -361,22 +363,22 @@ aspect C_Declarations {
   }
 
   public void SampleDecl.C_emitEncoderDeclaration(C_env env) {
-    env.println("int labcomm_encoder_register_" + 
+    env.println("int labcomm"+env.verStr+"_encoder_register_" + 
 		env.prefix + getName() + "(");
     env.indent();
-    env.println("struct labcomm_encoder *e);");
+    env.println("struct labcomm"+env.verStr+"_encoder *e);");
     env.unindent();
 
-    env.println("int labcomm_encode_" + env.prefix + getName() + "(");
+    env.println("int labcomm"+env.verStr+"_encode_" + env.prefix + getName() + "(");
     env.indent();
-    env.println("struct labcomm_encoder *e,");
+    env.println("struct labcomm"+env.verStr+"_encoder *e,");
     env.println(env.prefix + getName() + " *v");
     env.unindent();
     env.println(");");
 
-    env.println("int labcomm_encoder_ioctl_" + env.prefix + getName() + "(");
+    env.println("int labcomm"+env.verStr+"_encoder_ioctl_" + env.prefix + getName() + "(");
     env.indent();
-    env.println("struct labcomm_encoder *e,");
+    env.println("struct labcomm"+env.verStr+"_encoder *e,");
     env.println("int ioctl_action,");
     env.println("...");
     env.unindent();
@@ -438,7 +440,7 @@ aspect C_Decoder {
     env = env.nestStruct("v");
     env.println("static void decode_" + env.prefix + getName() + "(");
     env.indent();
-    env.println("struct labcomm_reader *r,");
+    env.println("struct labcomm"+env.verStr+"_reader *r,");
     env.println("void (*handle)(");
     env.indent();
     env.println(env.prefix + getName() + " *v,");
@@ -474,7 +476,7 @@ aspect C_Decoder {
   }
 
   public void PrimType.C_emitDecoder(C_env env) {
-    env.println(env.qualid + " = labcomm_read_" + getName() + "(r);");
+    env.println(env.qualid + " = labcomm"+env.verStr+"_read_" + getName() + "(r);");
   }
 
   public void UserType.C_emitDecoder(C_env env) {
@@ -520,7 +522,7 @@ aspect C_Decoder {
   }
 
   public void VariableSize.C_emitDecoderDecodeLimit(C_env env, int i) {
-    env.println(env.qualid + ".n_" + i + " = labcomm_read_packed32(r);");
+    env.println(env.qualid + ".n_" + i + " = labcomm"+env.verStr+"_read_packed32(r);");
   }
 
   public void ArrayType.C_emitDecoderDecodeLimit(C_env env) {
@@ -534,7 +536,7 @@ aspect C_Decoder {
 
   public void VariableArrayType.C_emitDecoderArrayAllocate(C_env env) {
     env.print(env.qualid + 
-              ".a = labcomm_memory_alloc(r->memory, 1, sizeof(" + 
+              ".a = labcomm"+env.verStr+"_memory_alloc(r->memory, 1, sizeof(" + 
 	      env.qualid + ".a[0])");
     for (int i = 0 ; i < getNumExp() ; i++) {
       env.print(" * " + getExp(i).C_getLimit(env, i));
@@ -552,7 +554,7 @@ aspect C_Decoder {
 
   public void PrimType.C_emitDecoderDeallocation(C_env env) {
     if (C_isDynamic()) {
-      env.println("labcomm_memory_free(r->memory, 1, " + 
+      env.println("labcomm"+env.verStr+"_memory_free(r->memory, 1, " + 
                   env.qualid + ");");
     }
   }
@@ -598,7 +600,7 @@ aspect C_Decoder {
 
   public void VariableArrayType.C_emitDecoderDeallocation(C_env env) {
     super.C_emitDecoderDeallocation(env);
-    env.println("labcomm_memory_free(r->memory, 1, " + 
+    env.println("labcomm"+env.verStr+"_memory_free(r->memory, 1, " + 
                 env.qualid + ".a);");
   }
 
@@ -616,10 +618,10 @@ aspect C_Decoder {
   }
 
   public void SampleDecl.C_emitDecoderRegisterHandler(C_env env) {
-    env.println("int labcomm_decoder_register_" + 
+    env.println("int labcomm"+env.verStr+"_decoder_register_" + 
 		env.prefix + getName() + "(");
     env.indent();
-    env.println("struct labcomm_decoder *d,");
+    env.println("struct labcomm"+env.verStr+"_decoder *d,");
     env.println("void (*handler)(");
     env.indent();
     env.println(env.prefix + getName() + " *v,");
@@ -631,12 +633,12 @@ aspect C_Decoder {
     env.println(")");
     env.println("{");
     env.indent();
-    env.println("return labcomm_internal_decoder_register(");
+    env.println("return labcomm"+env.verStr+"_internal_decoder_register(");
     env.indent();
     env.println("d,");
-    env.println("&labcomm_signature_" + env.prefix + getName() + ",");
-    env.println("(labcomm_decoder_function)decode_" + env.prefix + getName() + ",");
-    env.println("(labcomm_handler_function)handler,");
+    env.println("&labcomm"+env.verStr+"_signature_" + env.prefix + getName() + ",");
+    env.println("(labcomm"+env.verStr+"_decoder_function)decode_" + env.prefix + getName() + ",");
+    env.println("(labcomm"+env.verStr+"_handler_function)handler,");
     env.println("context");
     env.unindent();
     env.println(");");
@@ -658,9 +660,9 @@ aspect C_DecoderIoctl {
   }
 
   public void SampleDecl.C_emitDecoderIoctl(C_env env) {
-    env.println("int labcomm_decoder_ioctl_" + env.prefix + getName() + "(");
+    env.println("int labcomm"+env.verStr+"_decoder_ioctl_" + env.prefix + getName() + "(");
     env.indent();
-    env.println("struct labcomm_decoder *d,");
+    env.println("struct labcomm"+env.verStr+"_decoder *d,");
     env.println("int ioctl_action,");
     env.println("...");
     env.unindent();
@@ -670,9 +672,9 @@ aspect C_DecoderIoctl {
     env.println("int result;");
     env.println("va_list va;");
     env.println("va_start(va, ioctl_action);");
-    env.println("result = labcomm_internal_decoder_ioctl(");
+    env.println("result = labcomm"+env.verStr+"_internal_decoder_ioctl(");
     env.indent();
-    env.println("d, &labcomm_signature_" + env.prefix + getName() + ", ");
+    env.println("d, &labcomm"+env.verStr+"_signature_" + env.prefix + getName() + ", ");
     env.println("ioctl_action, va);");
     env.unindent();
     env.println("va_end(va);");
@@ -698,7 +700,7 @@ aspect C_Encoder {
     env = env.nestStruct("(*v)");
     env.println("static int encode_" + env.prefix + getName() + "(");
     env.indent();
-    env.println("struct labcomm_writer *w,");
+    env.println("struct labcomm"+env.verStr+"_writer *w,");
     env.println(env.prefix + getName() + " *v");
     env.unindent();
     env.println(")");
@@ -711,16 +713,16 @@ aspect C_Encoder {
     env.println("}");
 
     // Typesafe encode wrapper
-    env.println("int labcomm_encode_" + env.prefix + getName() + "(");
-    env.println("struct labcomm_encoder *e,");
+    env.println("int labcomm"+env.verStr+"_encode_" + env.prefix + getName() + "(");
+    env.println("struct labcomm"+env.verStr+"_encoder *e,");
     env.println(env.prefix + getName() + " *v");
     env.unindent();
     env.println(")");
     env.println("{");
     env.indent();
-    env.println("return labcomm_internal_encode(e, &labcomm_signature_" + 
+    env.println("return labcomm"+env.verStr+"_internal_encode(e, &labcomm"+env.verStr+"_signature_" + 
 		env.prefix + getName() + 
-		", (labcomm_encoder_function)encode_" + env.prefix + getName() +
+		", (labcomm"+env.verStr+"_encoder_function)encode_" + env.prefix + getName() +
 		", v);");
     env.unindent();
     env.println("}");
@@ -737,7 +739,7 @@ aspect C_Encoder {
   }
 
   public void PrimType.C_emitEncoder(C_env env) {
-    env.println("result = labcomm_write_" + getName() + 
+    env.println("result = labcomm"+env.verStr+"_write_" + getName() + 
                 "(w, " + env.qualid + ");");
     env.println("if (result != 0) { return result; }");
   }
@@ -784,7 +786,7 @@ aspect C_Encoder {
   }
 
   public void VariableSize.C_emitEncoderEncodeLimit(C_env env, int i) {
-    env.println("labcomm_write_packed32(w, " + env.qualid + ".n_" + i + ");");
+    env.println("labcomm"+env.verStr+"_write_packed32(w, " + env.qualid + ".n_" + i + ");");
   }
 
   public void ArrayType.C_emitEncoderEncodeLimit(C_env env) {
@@ -803,19 +805,19 @@ aspect C_Encoder {
   }
 
   public void SampleDecl.C_emitEncoderRegisterHandler(C_env env) {
-    env.println("int labcomm_encoder_register_" + 
+    env.println("int labcomm"+env.verStr+"_encoder_register_" + 
 		env.prefix + getName() + "(");
     env.indent();
-    env.println("struct labcomm_encoder *e");
+    env.println("struct labcomm"+env.verStr+"_encoder *e");
     env.unindent();
     env.println(")");
     env.println("{");
     env.indent();
-    env.println("return labcomm_internal_encoder_register(");
+    env.println("return labcomm"+env.verStr+"_internal_encoder_register(");
     env.indent();
     env.println("e,");
-    env.println("&labcomm_signature_" + env.prefix + getName() + ",");
-    env.println("(labcomm_encoder_function)encode_" + env.prefix + getName());
+    env.println("&labcomm"+env.verStr+"_signature_" + env.prefix + getName() + ",");
+    env.println("(labcomm"+env.verStr+"_encoder_function)encode_" + env.prefix + getName());
     env.unindent();
     env.println(");");
     env.unindent();
@@ -836,9 +838,9 @@ aspect C_EncoderIoctl {
   }
 
   public void SampleDecl.C_emitEncoderIoctl(C_env env) {
-    env.println("int labcomm_encoder_ioctl_" + env.prefix + getName() + "(");
+    env.println("int labcomm"+env.verStr+"_encoder_ioctl_" + env.prefix + getName() + "(");
     env.indent();
-    env.println("struct labcomm_encoder *e,");
+    env.println("struct labcomm"+env.verStr+"_encoder *e,");
     env.println("int ioctl_action,");
     env.println("...");
     env.unindent();
@@ -848,9 +850,9 @@ aspect C_EncoderIoctl {
     env.println("int result;");
     env.println("va_list va;");
     env.println("va_start(va, ioctl_action);");
-    env.println("result = labcomm_internal_encoder_ioctl(");
+    env.println("result = labcomm"+env.verStr+"_internal_encoder_ioctl(");
     env.indent();
-    env.println("e, &labcomm_signature_" + env.prefix + getName() + ", ");
+    env.println("e, &labcomm"+env.verStr+"_signature_" + env.prefix + getName() + ", ");
     env.println("ioctl_action, va);");
     env.unindent();
     env.println("va_end(va);");
@@ -891,11 +893,11 @@ aspect C_Signature {
       }
     }
     env.println("};");
-    env.println("struct labcomm_signature labcomm_signature_" + 
+    env.println("struct labcomm"+env.verStr+"_signature labcomm"+env.verStr+"_signature_" + 
 		env.prefix + getName() + " = {");
     env.indent();
     env.println("LABCOMM_SAMPLE, \"" + getName() + "\",");
-    env.println("(int (*)(struct labcomm_signature *, void *))labcomm_sizeof_" + 
+    env.println("(int (*)(struct labcomm"+env.verStr+"_signature *, void *))labcomm"+env.verStr+"_sizeof_" + 
 		env.prefix + getName() + ",");
     env.println("sizeof(signature_bytes_" + env.prefix + getName() + "),");
     env.println("signature_bytes_" + env.prefix + getName() + ",");
@@ -932,7 +934,7 @@ aspect C_Signature {
   }
 
   public void SampleDecl.C_emitConstructor(C_env env) {
-    env.println("labcomm_set_local_index(&labcomm_signature_" + 
+    env.println("labcomm"+env.verStr+"_set_local_index(&labcomm"+env.verStr+"_signature_" + 
 		env.prefix + getName() + ");");
   }
 
@@ -955,7 +957,7 @@ aspect C_Sizeof {
   }
 
   public void SampleDecl.C_emitSizeofDeclaration(C_env env) {
-    env.println("extern int labcomm_sizeof_" + env.prefix + getName() +
+    env.println("extern int labcomm"+env.verStr+"_sizeof_" + env.prefix + getName() +
 		"(" + env.prefix + getName() + " *v);");
   }
 
@@ -1016,11 +1018,11 @@ aspect C_Sizeof {
 
   public void SampleDecl.C_emitSizeof(C_env env) {
     env = env.nestStruct("(*v)");
-    env.println("int labcomm_sizeof_" + env.prefix + getName() +
+    env.println("int labcomm"+env.verStr+"_sizeof_" + env.prefix + getName() +
 		"(" + env.prefix + getName() + " *v)");
     env.println("{");
     env.indent();
-    env.println("int result = labcomm_size_packed32(labcomm_signature_" + 
+    env.println("int result = labcomm"+env.verStr+"_size_packed32(labcomm"+env.verStr+"_signature_" + 
                 env.prefix + getName() +".index);");
     if (C_isDynamic()) {
       getType().C_emitSizeof(env);
@@ -1094,7 +1096,7 @@ aspect C_Sizeof {
       env.println("}");
     } else {
       for (int i = 0 ; i < getNumExp() ; i++) {
-      	env.println("result += labcomm_size_packed32(" + 
+      	env.println("result += labcomm"+env.verStr+"_size_packed32(" + 
 	            getExp(i).C_getLimit(env, i) + ");");
       }
       env.print("result += " + getType().C_fixedSizeof());

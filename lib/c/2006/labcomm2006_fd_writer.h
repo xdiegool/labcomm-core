@@ -1,5 +1,5 @@
 /*
-  labcomm_fd_writer.c -- a writer for unix style file-descriptors
+  labcomm2006_fd_writer.c -- a writer for unix style file-descriptors
 
   Copyright 2006-2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -22,9 +22,9 @@
 #ifndef _LABCOMM_FD_WRITER_H_
 #define _LABCOMM_FD_WRITER_H_
 
-#include "labcomm.h"
+#include "labcomm2006.h"
 
-struct labcomm_writer *labcomm_fd_writer_new(struct labcomm_memory *memory,
+struct labcomm2006_writer *labcomm2006_fd_writer_new(struct labcomm2006_memory *memory,
 					     int fd, int close_on_free);
 
 #endif

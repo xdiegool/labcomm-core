@@ -1,5 +1,5 @@
 /*
-  labcomm_pthread_scheduler.h -- labcomm pthread based task coordination
+  labcomm2006_pthread_scheduler.h -- labcomm pthread based task coordination
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -22,10 +22,10 @@
 #ifndef _LABCOMM_PTHREAD_SCHEDULER_H_
 #define _LABCOMM_PTHREAD_SCHEDULER_H_
 
-#include "labcomm.h"
+#include "labcomm2006.h"
 
-struct labcomm_scheduler *labcomm_pthread_scheduler_new(
-  struct labcomm_memory *memory);
+struct labcomm2006_scheduler *labcomm2006_pthread_scheduler_new(
+  struct labcomm2006_memory *memory);
 
 #endif
 

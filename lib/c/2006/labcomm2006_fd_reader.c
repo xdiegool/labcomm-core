@@ -1,5 +1,5 @@
 /*
-  labcomm_fd_reader.c -- LabComm reader for Unix file descriptors.
+  labcomm2006_fd_reader.c -- LabComm reader for Unix file descriptors.
 
   Copyright 2006-2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -23,27 +23,27 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include "labcomm_private.h"
-#include "labcomm_fd_reader.h"
+#include "labcomm2006_private.h"
+#include "labcomm2006_fd_reader.h"
 
 #define BUFFER_SIZE 2048
 
-struct labcomm_fd_reader {
-  struct labcomm_reader reader;
-  struct labcomm_reader_action_context action_context;
+struct labcomm2006_fd_reader {
+  struct labcomm2006_reader reader;
+  struct labcomm2006_reader_action_context action_context;
   int fd;
   int close_fd_on_free;
 };
 
-static int fd_alloc(struct labcomm_reader *r,
-		    struct labcomm_reader_action_context *action_context, 
+static int fd_alloc(struct labcomm2006_reader *r,
+		    struct labcomm2006_reader_action_context *action_context, 
 		    char *version)
 {
   int result = 0;
   
   r->count = 0;
   r->pos = 0;
-  r->data = labcomm_memory_alloc(r->memory, 0, BUFFER_SIZE);
+  r->data = labcomm2006_memory_alloc(r->memory, 0, BUFFER_SIZE);
   if (! r->data) {
     r->data_size = 0;
     result = -ENOMEM;
@@ -54,25 +54,25 @@ static int fd_alloc(struct labcomm_reader *r,
     if (version && version[0]) {
       char *tmp;
       
-      tmp = labcomm_read_string(r);
+      tmp = labcomm2006_read_string(r);
       if (strcmp(tmp, version) != 0) {
 	result = -EINVAL;
       } else {
 	result = r->data_size;
       }
-      labcomm_memory_free(r->memory, 1, tmp);
+      labcomm2006_memory_free(r->memory, 1, tmp);
     }
   }
   return result;
 }
 
-static int fd_free(struct labcomm_reader *r, 
-		   struct labcomm_reader_action_context *action_context)
+static int fd_free(struct labcomm2006_reader *r, 
+		   struct labcomm2006_reader_action_context *action_context)
 {
-  struct labcomm_fd_reader *fd_reader = action_context->context;
-  struct labcomm_memory *memory = r->memory;
+  struct labcomm2006_fd_reader *fd_reader = action_context->context;
+  struct labcomm2006_memory *memory = r->memory;
 
-  labcomm_memory_free(memory, 0, r->data);
+  labcomm2006_memory_free(memory, 0, r->data);
   r->data = 0;
   r->data_size = 0;
   r->count = 0;
@@ -81,16 +81,16 @@ static int fd_free(struct labcomm_reader *r,
   if (fd_reader->close_fd_on_free) {
     close(fd_reader->fd);
   }
-  labcomm_memory_free(memory, 0, fd_reader);
+  labcomm2006_memory_free(memory, 0, fd_reader);
 
   return 0;
 }
 
-static int fd_fill(struct labcomm_reader *r, 
-		   struct labcomm_reader_action_context *action_context)
+static int fd_fill(struct labcomm2006_reader *r, 
+		   struct labcomm2006_reader_action_context *action_context)
 {
   int result = 0;
-  struct labcomm_fd_reader *fd_reader = action_context->context;
+  struct labcomm2006_fd_reader *fd_reader = action_context->context;
 
   if (r->pos < r->count) {
     result = r->count - r->pos;
@@ -111,7 +111,7 @@ static int fd_fill(struct labcomm_reader *r,
   return result;
 }
 
-static const struct labcomm_reader_action action = {
+static const struct labcomm2006_reader_action action = {
   .alloc = fd_alloc,
   .free = fd_free,
   .start = NULL,
@@ -120,12 +120,12 @@ static const struct labcomm_reader_action action = {
   .ioctl = NULL
 };
 
-struct labcomm_reader *labcomm_fd_reader_new(struct labcomm_memory *memory,
+struct labcomm2006_reader *labcomm2006_fd_reader_new(struct labcomm2006_memory *memory,
 					     int fd, int close_fd_on_free)
 {
-  struct labcomm_fd_reader *result;
+  struct labcomm2006_fd_reader *result;
 
-  result = labcomm_memory_alloc(memory, 0, sizeof(*result));
+  result = labcomm2006_memory_alloc(memory, 0, sizeof(*result));
   if (result == NULL) {
     return NULL;
   } else {

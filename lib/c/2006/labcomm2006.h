@@ -26,20 +26,20 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <unistd.h>
-#include "labcomm_error.h"
-#include "labcomm_scheduler.h"
+#include "labcomm2006_error.h"
+#include "labcomm2006_scheduler.h"
 
 /* Forward declaration */
-struct labcomm_encoder;
-struct labcomm_decoder;
+struct labcomm2006_encoder;
+struct labcomm2006_decoder;
 
 /*
  * Signature entry
  */
-struct labcomm_signature {
+struct labcomm2006_signature {
   int type;
   char *name;
-  int (*encoded_size)(struct labcomm_signature *, void *); // void * == encoded_sample *
+  int (*encoded_size)(struct labcomm2006_signature *, void *); // void * == encoded_sample *
   int size;
   unsigned char *signature; 
   int index;
@@ -59,29 +59,29 @@ struct labcomm_signature {
  * Optionaly other paramters can be supplied depending on what is needed 
  * for this error ID.
  */
-typedef void (*labcomm_error_handler_callback)(enum labcomm_error error_id, 
+typedef void (*labcomm2006_error_handler_callback)(enum labcomm2006_error error_id, 
 					       size_t nbr_va_args, ...); 
 
 /* Default error handler, prints message to stderr. 
  * Extra info about the error can be supplied as char* as VA-args. Especially user defined errors should supply a describing string. if nbr_va_args > 1 the first variable argument must be a printf format string and the possibly following arguments are passed as va_args to vprintf. 
  */
-void on_error_fprintf(enum labcomm_error error_id, size_t nbr_va_args, ...);
+void on_error_fprintf(enum labcomm2006_error error_id, size_t nbr_va_args, ...);
 
 /* Register a callback for the error handler for this encoder. */
-void labcomm_register_error_handler_encoder(struct labcomm_encoder *encoder, labcomm_error_handler_callback callback);
+void labcomm2006_register_error_handler_encoder(struct labcomm2006_encoder *encoder, labcomm2006_error_handler_callback callback);
 
 /* Register a callback for the error handler for this decoder. */
-void labcomm_register_error_handler_decoder(struct labcomm_decoder *decoder, labcomm_error_handler_callback callback);
+void labcomm2006_register_error_handler_decoder(struct labcomm2006_decoder *decoder, labcomm2006_error_handler_callback callback);
 
 /* Get a string describing the supplied standrad labcomm error. */
-const char *labcomm_error_get_str(enum labcomm_error error_id);
+const char *labcomm2006_error_get_str(enum labcomm2006_error error_id);
 
-typedef int (*labcomm_handle_new_datatype_callback)(
-  struct labcomm_decoder *decoder,
-  struct labcomm_signature *sig);
+typedef int (*labcomm2006_handle_new_datatype_callback)(
+  struct labcomm2006_decoder *decoder,
+  struct labcomm2006_signature *sig);
 
-void labcomm_decoder_register_new_datatype_handler(struct labcomm_decoder *d,
-		labcomm_handle_new_datatype_callback on_new_datatype);
+void labcomm2006_decoder_register_new_datatype_handler(struct labcomm2006_decoder *d,
+		labcomm2006_handle_new_datatype_callback on_new_datatype);
 
 /*
  * Dynamic memory handling
@@ -91,50 +91,50 @@ void labcomm_decoder_register_new_datatype_handler(struct labcomm_decoder *d,
  *   otherwise         memory will live for approximately this number of
  *                     sent/received samples
  */
-struct labcomm_memory;
+struct labcomm2006_memory;
 
-void *labcomm_memory_alloc(struct labcomm_memory *m, int lifetime, size_t size);
-void *labcomm_memory_realloc(struct labcomm_memory *m, int lifetime, 
+void *labcomm2006_memory_alloc(struct labcomm2006_memory *m, int lifetime, size_t size);
+void *labcomm2006_memory_realloc(struct labcomm2006_memory *m, int lifetime, 
 			     void *ptr, size_t size);
-void labcomm_memory_free(struct labcomm_memory *m, int lifetime, void *ptr);
+void labcomm2006_memory_free(struct labcomm2006_memory *m, int lifetime, void *ptr);
 
 /*
  * Decoder
  */
-struct labcomm_reader;
+struct labcomm2006_reader;
 
-struct labcomm_decoder *labcomm_decoder_new(
-  struct labcomm_reader *reader,
-  struct labcomm_error_handler *error,
-  struct labcomm_memory *memory,
-  struct labcomm_scheduler *scheduler);
-void labcomm_decoder_free(
-  struct labcomm_decoder *decoder);
-int labcomm_decoder_decode_one(
-  struct labcomm_decoder *decoder);
-void labcomm_decoder_run(
-  struct labcomm_decoder *decoder);
+struct labcomm2006_decoder *labcomm2006_decoder_new(
+  struct labcomm2006_reader *reader,
+  struct labcomm2006_error_handler *error,
+  struct labcomm2006_memory *memory,
+  struct labcomm2006_scheduler *scheduler);
+void labcomm2006_decoder_free(
+  struct labcomm2006_decoder *decoder);
+int labcomm2006_decoder_decode_one(
+  struct labcomm2006_decoder *decoder);
+void labcomm2006_decoder_run(
+  struct labcomm2006_decoder *decoder);
 
-/* See labcomm_ioctl.h for predefined ioctl_action values */
-int labcomm_decoder_ioctl(struct labcomm_decoder *decoder, 
+/* See labcomm2006_ioctl.h for predefined ioctl_action values */
+int labcomm2006_decoder_ioctl(struct labcomm2006_decoder *decoder, 
 			  uint32_t ioctl_action,
 			  ...);
 
 /*
  * Encoder
  */
-struct labcomm_writer;
+struct labcomm2006_writer;
 
-struct labcomm_encoder *labcomm_encoder_new(
-  struct labcomm_writer *writer,
-  struct labcomm_error_handler *error,
-  struct labcomm_memory *memory,
-  struct labcomm_scheduler *scheduler);
-void labcomm_encoder_free(
-  struct labcomm_encoder *encoder);
+struct labcomm2006_encoder *labcomm2006_encoder_new(
+  struct labcomm2006_writer *writer,
+  struct labcomm2006_error_handler *error,
+  struct labcomm2006_memory *memory,
+  struct labcomm2006_scheduler *scheduler);
+void labcomm2006_encoder_free(
+  struct labcomm2006_encoder *encoder);
 
-/* See labcomm_ioctl.h for predefined ioctl_action values */
-int labcomm_encoder_ioctl(struct labcomm_encoder *encoder, 
+/* See labcomm2006_ioctl.h for predefined ioctl_action values */
+int labcomm2006_encoder_ioctl(struct labcomm2006_encoder *encoder, 
 			  uint32_t ioctl_action,
 			  ...);
 

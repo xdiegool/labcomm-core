@@ -2,9 +2,9 @@
 UNAME_S=$(shell uname -s)
 ifeq ($(UNAME_S),Linux)
   CC=gcc
-  CFLAGS=-std=c99 -g -Wall -Werror -O3  -I. -Itest 
+  CFLAGS=-std=c99 -g -Wall -Werror -O3  -I. -Itest -I2006
   LDFLAGS=-L.
-  LDLIBS=-llabcomm -lrt
+  LDLIBS=-llabcomm -llabcomm2006 -lrt
   MAKESHARED=gcc -o $1 -shared -Wl,-soname,$2 $3 -lc -lrt
 else ifeq ($(UNAME_S),Darwin)
   CC=clang
@@ -12,11 +12,23 @@ else ifeq ($(UNAME_S),Darwin)
 	 -DLABCOMM_COMPAT=\"labcomm_compat_osx.h\" \
 	 -Wno-tautological-compare -Wno-unused-function
   LDFLAGS=-L.
-  LDLIBS=-llabcomm
+  LDLIBS=-llabcomm -llabcomm2006 
   MAKESHARED=clang -o $1 -shared -Wl,-install_name,$2 $3 -lc
 else
   $(error Unknown system $(UNAME_S))
 endif
+
+OBJS2006=2006/labcomm2006_memory.o \
+     2006/labcomm2006_error.o \
+     2006/labcomm2006_default_error_handler.o \
+     2006/labcomm2006_default_memory.o \
+     2006/labcomm2006_default_scheduler.o \
+     2006/labcomm2006_time.o labcomm_scheduler.o \
+     2006/labcomm2006_encoder.o labcomm_decoder.o \
+     2006/labcomm2006.o \
+     2006/labcomm2006_dynamic_buffer_writer.o \
+     2006/labcomm2006_fd_reader.o labcomm_fd_writer.o \
+     2006/labcomm2006_pthread_scheduler.o 
 
 OBJS=labcomm_memory.o \
      labcomm_error.o \
@@ -57,17 +69,33 @@ endif
 
 .PHONY: all run-test clean distclean
 
-all: liblabcomm.a liblabcomm.so.1
+all: liblabcomm.a liblabcomm.so.1 liblabcomm2006.a liblabcomm2006.so.1
 
-liblabcomm.a: $(OBJS)
+liblabcomm.a: $(OBJS) $(OBJS2006)
 	ar -r $@ $^
 
-liblabcomm.so.1: $(OBJS:%.o=%.pic.o)
+liblabcomm.so.1: $(OBJS:%.o=%.pic.o) $(OBJS2006:%.o=%.pic.o)
+	$(call MAKESHARED,$@,$@,$^)
+
+liblabcomm2013.a: $(OBJS)
+	ar -r $@ $^
+
+liblabcomm2013.so.1: $(OBJS:%.o=%.pic.o)
+	$(call MAKESHARED,$@,$@,$^)
+
+liblabcomm2006.a: $(OBJS2006)
+	ar -r $@ $^
+
+liblabcomm2006.so.1: $(OBJS2006:%.o=%.pic.o)
 	$(call MAKESHARED,$@,$@,$^)
 
 labcomm.o : labcomm.c labcomm.h  labcomm_private.h
 
 labcomm_fd_reader_writer.o : labcomm_fd_reader_writer.c  labcomm_fd_reader_writer.h  labcomm.h  labcomm_private.h
+
+2006/labcomm2006.o : 2006/labcomm2006.c 2006/labcomm2006.h  2006/labcomm2006_private.h
+
+2006/labcomm2006_fd_reader_writer.o : 2006/labcomm2006_fd_reader_writer.c  2006/labcomm2006_fd_reader_writer.h  labcomm.h  2006/labcomm2006_private.h
 
 #$(TEST_DIR)/labcomm_mem_reader.o: labcomm_fd_reader_writer.c labcomm_fd_reader_writer.h
 
@@ -126,6 +154,8 @@ clean:
 distclean: clean
 	$(RM) liblabcomm.so.1
 	$(RM) liblabcomm.a
+	$(RM) liblabcomm2006.so.1
+	$(RM) liblabcomm2006.a
 
 # Extra dependencies
 $(TEST_DIR)/test_labcomm_basic_type_encoding.o: labcomm_private.h

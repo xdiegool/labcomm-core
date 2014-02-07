@@ -20,30 +20,30 @@
 */
 
 #include <stdlib.h>
-#include "labcomm.h"
-#include "labcomm_private.h"
+#include "labcomm2006.h"
+#include "labcomm2006_private.h"
 
-void *default_alloc(struct labcomm_memory *m, int lifetime, size_t size)
+void *default_alloc2006(struct labcomm2006_memory *m, int lifetime, size_t size)
 {
   return malloc(size);
 }
 
-void *default_realloc(struct labcomm_memory *m, int lifetime, 
+void *default_realloc2006(struct labcomm2006_memory *m, int lifetime, 
 		      void *ptr, size_t size)
 {
   return realloc(ptr, size);
 }
 
-void default_free(struct labcomm_memory *m, int lifetime, void *ptr)
+void default_free2006(struct labcomm2006_memory *m, int lifetime, void *ptr)
 {
   free(ptr);
 }
 
-struct labcomm_memory memory = {
-  .alloc = default_alloc,
-  .realloc = default_realloc,
-  .free = default_free,
+struct labcomm2006_memory memory2006 = {
+  .alloc = default_alloc2006,
+  .realloc = default_realloc2006,
+  .free = default_free2006,
   .context = NULL
 };
 
-struct labcomm_memory *labcomm_default_memory = &memory;
+struct labcomm2006_memory *labcomm2006_default_memory = &memory2006;

@@ -1,5 +1,5 @@
 /*
-  labcomm_scheduler.h -- labcomm task coordination, semi-private part
+  labcomm2006_scheduler.h -- labcomm task coordination, semi-private part
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -23,28 +23,28 @@
 #define _LABCOMM_SCHEDULER_PRIVATE_H_
 
 #include <unistd.h>
-#include "labcomm_scheduler.h"
+#include "labcomm2006_scheduler.h"
 
-struct labcomm_time {
-  const struct labcomm_time_action {
-    int (*free)(struct labcomm_time *t);
-    int (*add_usec)(struct labcomm_time *t, uint32_t usec);
+struct labcomm2006_time {
+  const struct labcomm2006_time_action {
+    int (*free)(struct labcomm2006_time *t);
+    int (*add_usec)(struct labcomm2006_time *t, uint32_t usec);
   } *action;
   void *context;
 };
 
-struct labcomm_scheduler {
-  const struct labcomm_scheduler_action {
-    int (*free)(struct labcomm_scheduler *s);
-    int (*writer_lock)(struct labcomm_scheduler *s);
-    int (*writer_unlock)(struct labcomm_scheduler *s);
-    int (*data_lock)(struct labcomm_scheduler *s);
-    int (*data_unlock)(struct labcomm_scheduler *s);
-    struct labcomm_time *(*now)(struct labcomm_scheduler *s);
-    int (*sleep)(struct labcomm_scheduler *s,
-		 struct labcomm_time *wakeup);
-    int (*wakeup)(struct labcomm_scheduler *s);
-    int (*enqueue)(struct labcomm_scheduler *s,
+struct labcomm2006_scheduler {
+  const struct labcomm2006_scheduler_action {
+    int (*free)(struct labcomm2006_scheduler *s);
+    int (*writer_lock)(struct labcomm2006_scheduler *s);
+    int (*writer_unlock)(struct labcomm2006_scheduler *s);
+    int (*data_lock)(struct labcomm2006_scheduler *s);
+    int (*data_unlock)(struct labcomm2006_scheduler *s);
+    struct labcomm2006_time *(*now)(struct labcomm2006_scheduler *s);
+    int (*sleep)(struct labcomm2006_scheduler *s,
+		 struct labcomm2006_time *wakeup);
+    int (*wakeup)(struct labcomm2006_scheduler *s);
+    int (*enqueue)(struct labcomm2006_scheduler *s,
 		   uint32_t delay,
 		   void (*deferred)(void *context),
 		   void *context);

@@ -19,6 +19,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "labcomm.h"
+#include "labcomm2006.h"
 
-extern struct labcomm_scheduler *labcomm_default_scheduler;
+extern struct labcomm2006_scheduler *labcomm2006_default_scheduler;

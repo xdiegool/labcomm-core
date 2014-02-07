@@ -1,5 +1,5 @@
 /*
-  labcomm_ioctl.h -- labcomm ioctl declarations
+  labcomm2006_ioctl.h -- labcomm ioctl declarations
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -22,7 +22,7 @@
 #ifndef __LABCOMM_IOCTL_H__
 #define __LABCOMM_IOCTL_H__
 
-#include "labcomm.h"
+#include "labcomm2006.h"
 
 /*
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+

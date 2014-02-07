@@ -19,6 +19,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "labcomm.h"
+#include "labcomm2006.h"
 
-struct labcomm_error_handler *labcomm_default_error_handler = NULL;
+struct labcomm2006_error_handler *labcomm2006_default_error_handler = NULL;

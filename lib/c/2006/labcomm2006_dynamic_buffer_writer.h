@@ -1,5 +1,5 @@
 /*
-  labcomm_dynamic_buffer_writer.h -- LabComm dynamic memory writer.
+  labcomm2006_dynamic_buffer_writer.h -- LabComm dynamic memory writer.
 
   Copyright 2006-2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -22,11 +22,11 @@
 #ifndef _LABCOMM_DYNAMIC_BUFFER_READER_WRITER_H_
 #define _LABCOMM_DYNAMIC_BUFFER_READER_WRITER_H_
 
-#include "labcomm.h"
+#include "labcomm2006.h"
 
-extern const struct labcomm_writer_action *labcomm_dynamic_buffer_writer_action;
+extern const struct labcomm2006_writer_action *labcomm2006_dynamic_buffer_writer_action;
 
-struct labcomm_writer *labcomm_dynamic_buffer_writer_new(
-  struct labcomm_memory *memory);
+struct labcomm2006_writer *labcomm2006_dynamic_buffer_writer_new(
+  struct labcomm2006_memory *memory);
 
 #endif

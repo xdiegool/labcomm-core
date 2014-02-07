@@ -1,5 +1,5 @@
 /*
-  labcomm_error.c -- labcomm error handling
+  labcomm2006_error.c -- labcomm error handling
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -21,9 +21,9 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "labcomm_error.h"
+#include "labcomm2006_error.h"
  
-void labcomm_error_fatal_global(enum labcomm_error error,
+void labcomm2006_error_fatal_global(enum labcomm2006_error error,
 				char *format,
 				...)
 {

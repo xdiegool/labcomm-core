@@ -1,5 +1,5 @@
 /*
-  labcomm_memory.c -- dynamic memory handlig dispatcher
+  labcomm2006_memory.c -- dynamic memory handlig dispatcher
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -19,21 +19,21 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "labcomm_private.h"
+#include "labcomm2006_private.h"
 
-void *labcomm_memory_alloc(struct labcomm_memory *m, int lifetime, 
+void *labcomm2006_memory_alloc(struct labcomm2006_memory *m, int lifetime, 
 			   size_t size) 
 {
   return m->alloc(m, lifetime, size);
 }
 
-void *labcomm_memory_realloc(struct labcomm_memory *m, int lifetime, 
+void *labcomm2006_memory_realloc(struct labcomm2006_memory *m, int lifetime, 
 			     void *ptr, size_t size) 
 {
   return m->realloc(m, lifetime, ptr, size);
 }
 
-void labcomm_memory_free(struct labcomm_memory *m, int lifetime, 
+void labcomm2006_memory_free(struct labcomm2006_memory *m, int lifetime, 
 			 void *ptr)
 {
   m->free(m, lifetime, ptr);

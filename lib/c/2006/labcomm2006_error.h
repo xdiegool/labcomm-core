@@ -1,5 +1,5 @@
 /*
-  labcomm_error.h -- labcomm error declarations
+  labcomm2006_error.h -- labcomm error declarations
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -22,20 +22,20 @@
 #ifndef __LABCOMM_ERROR_H__
 #define __LABCOMM_ERROR_H__
 
-enum labcomm_error {
+enum labcomm2006_error {
 #define LABCOMM_ERROR(name, description) name ,
-#include "labcomm_error.h"
+#include "labcomm2006_error.h"
 #undef LABCOMM_ERROR
 };
 
-struct labcomm_error_handler;
+struct labcomm2006_error_handler;
 
-void labcomm_error_warning(struct labcomm_error_handler *e,
-			   enum labcomm_error,
+void labcomm2006_error_warning(struct labcomm2006_error_handler *e,
+			   enum labcomm2006_error,
 			   char *format,
 			   ...);
 			 
-void labcomm_error_fatal_global(enum labcomm_error error,
+void labcomm2006_error_fatal_global(enum labcomm2006_error error,
 				char *format,
 				...);
 			 

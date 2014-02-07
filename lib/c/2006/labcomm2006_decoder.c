@@ -1,5 +1,5 @@
 /*
-  labcomm_decoder.c -- runtime for handling decoding of labcomm samples.
+  labcomm2006_decoder.c -- runtime for handling decoding of labcomm samples.
 
   Copyright 2006-2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -21,40 +21,40 @@
 #define LABCOMM_VERSION "LabComm2006"
 
 #include <errno.h>
-#include "labcomm.h"
-#include "labcomm_private.h"
-#include "labcomm_ioctl.h"
-#include "labcomm_dynamic_buffer_writer.h"
+#include "labcomm2006.h"
+#include "labcomm2006_private.h"
+#include "labcomm2006_ioctl.h"
+#include "labcomm2006_dynamic_buffer_writer.h"
 
 struct sample_entry {
   int remote_index;
-  struct labcomm_signature *signature;
-  labcomm_decoder_function decode;
-  labcomm_handler_function handler;
+  struct labcomm2006_signature *signature;
+  labcomm2006_decoder_function decode;
+  labcomm2006_handler_function handler;
   void *context;
 };
 
-struct labcomm_decoder {
-  struct labcomm_reader *reader;
+struct labcomm2006_decoder {
+  struct labcomm2006_reader *reader;
   int reader_allocated;
-  struct labcomm_error_handler *error;
-  struct labcomm_memory *memory;
-  struct labcomm_scheduler *scheduler;
-  labcomm_error_handler_callback on_error;
-  labcomm_handle_new_datatype_callback on_new_datatype;
+  struct labcomm2006_error_handler *error;
+  struct labcomm2006_memory *memory;
+  struct labcomm2006_scheduler *scheduler;
+  labcomm2006_error_handler_callback on_error;
+  labcomm2006_handle_new_datatype_callback on_new_datatype;
   LABCOMM_SIGNATURE_ARRAY_DEF(local, struct sample_entry);
   LABCOMM_SIGNATURE_ARRAY_DEF(remote_to_local, int);
 };
 
-struct labcomm_decoder *labcomm_decoder_new(
-  struct labcomm_reader *reader,
-  struct labcomm_error_handler *error,
-  struct labcomm_memory *memory,
-  struct labcomm_scheduler *scheduler)
+struct labcomm2006_decoder *labcomm2006_decoder_new(
+  struct labcomm2006_reader *reader,
+  struct labcomm2006_error_handler *error,
+  struct labcomm2006_memory *memory,
+  struct labcomm2006_scheduler *scheduler)
 {
-  struct labcomm_decoder *result;
+  struct labcomm2006_decoder *result;
 
-  result = labcomm_memory_alloc(memory, 0, sizeof(*result));
+  result = labcomm2006_memory_alloc(memory, 0, sizeof(*result));
   if (result) {
     result->reader = reader;
     result->reader->decoder = result;
@@ -73,39 +73,39 @@ struct labcomm_decoder *labcomm_decoder_new(
   return result;
 }
 
-void labcomm_decoder_free(struct labcomm_decoder* d)
+void labcomm2006_decoder_free(struct labcomm2006_decoder* d)
 {
-  struct labcomm_memory *memory = d->memory;
+  struct labcomm2006_memory *memory = d->memory;
 
-  labcomm_reader_free(d->reader, d->reader->action_context);
+  labcomm2006_reader_free(d->reader, d->reader->action_context);
   LABCOMM_SIGNATURE_ARRAY_FREE(memory, d->local, struct sample_entry);
   LABCOMM_SIGNATURE_ARRAY_FREE(memory, d->remote_to_local, int);
-  labcomm_memory_free(memory, 0, d);
+  labcomm2006_memory_free(memory, 0, d);
 }
 
 static int collect_flat_signature(
-  struct labcomm_decoder *decoder,
-  struct labcomm_writer *writer)
+  struct labcomm2006_decoder *decoder,
+  struct labcomm2006_writer *writer)
 {
   int result, type;
 
-  type = labcomm_read_packed32(decoder->reader); 
+  type = labcomm2006_read_packed32(decoder->reader); 
   result = decoder->reader->error;
   if (result < 0) { goto out; }
   if (type >= LABCOMM_USER) {
     decoder->on_error(LABCOMM_ERROR_UNIMPLEMENTED_FUNC, 3,
 			"Implement %s ... (1) for type 0x%x\n", __FUNCTION__, type);
   } else {
-    labcomm_write_packed32(writer, type); 
+    labcomm2006_write_packed32(writer, type); 
     switch (type) {
       case LABCOMM_ARRAY: {
 	int dimensions, i;
 
-	dimensions = labcomm_read_packed32(decoder->reader);
-	labcomm_write_packed32(writer, dimensions);
+	dimensions = labcomm2006_read_packed32(decoder->reader);
+	labcomm2006_write_packed32(writer, dimensions);
 	for (i = 0 ; i < dimensions ; i++) {
-	  int n = labcomm_read_packed32(decoder->reader);
-	  labcomm_write_packed32(writer, n);
+	  int n = labcomm2006_read_packed32(decoder->reader);
+	  labcomm2006_write_packed32(writer, n);
 	}
 	result = collect_flat_signature(decoder, writer);
 	if (result < 0) { goto out; }
@@ -113,12 +113,12 @@ static int collect_flat_signature(
       case LABCOMM_STRUCT: {
 	int fields, i;
 
-	fields = labcomm_read_packed32(decoder->reader); 
-	labcomm_write_packed32(writer, fields); 
+	fields = labcomm2006_read_packed32(decoder->reader); 
+	labcomm2006_write_packed32(writer, fields); 
 	for (i = 0 ; i < fields ; i++) {
-	  char *name = labcomm_read_string(decoder->reader);
-	  labcomm_write_string(writer, name);
-	  labcomm_memory_free(decoder->memory, 1, name);
+	  char *name = labcomm2006_read_string(decoder->reader);
+	  labcomm2006_write_string(writer, name);
+	  labcomm2006_memory_free(decoder->memory, 1, name);
 	  result = collect_flat_signature(decoder, writer);
 	  if (result < 0) { goto out; }
 	}
@@ -143,7 +143,7 @@ out:
   return result;
 }
 
-static int writer_ioctl(struct labcomm_writer *writer,
+static int writer_ioctl(struct labcomm2006_writer *writer,
 			uint32_t action,
 			...)
 {
@@ -156,25 +156,25 @@ static int writer_ioctl(struct labcomm_writer *writer,
   }
   
   va_start(va, action);
-  result = labcomm_writer_ioctl(writer, writer->action_context, 
+  result = labcomm2006_writer_ioctl(writer, writer->action_context, 
 				0, NULL, action, va);
   va_end(va);
 out:
   return result;
 }
 
-static int decode_typedef_or_sample(struct labcomm_decoder *d, int kind)
+static int decode_typedef_or_sample(struct labcomm2006_decoder *d, int kind)
 {
   int result;
 
-  /* TODO: should the labcomm_dynamic_buffer_writer be 
-     a permanent part of labcomm_decoder? */
-  struct labcomm_writer_action_context action_context = {
+  /* TODO: should the labcomm2006_dynamic_buffer_writer be 
+     a permanent part of labcomm2006_decoder? */
+  struct labcomm2006_writer_action_context action_context = {
     .next = NULL,
-    .action = labcomm_dynamic_buffer_writer_action,
+    .action = labcomm2006_dynamic_buffer_writer_action,
     .context = NULL
   };
-  struct labcomm_writer writer = {
+  struct labcomm2006_writer writer = {
     .action_context = &action_context,
     .memory = d->memory,
     .data = NULL,
@@ -183,18 +183,18 @@ static int decode_typedef_or_sample(struct labcomm_decoder *d, int kind)
     .pos = 0,
     .error = 0,
   };
-  struct labcomm_signature signature, *local_signature;
+  struct labcomm2006_signature signature, *local_signature;
   int remote_index, local_index, err;
   
   local_signature = NULL;
   local_index = 0;
-  labcomm_writer_alloc(&writer, writer.action_context, "");
-  labcomm_writer_start(&writer, writer.action_context, 0, NULL, NULL);
-  remote_index = labcomm_read_packed32(d->reader);
-  signature.name = labcomm_read_string(d->reader);
+  labcomm2006_writer_alloc(&writer, writer.action_context, "");
+  labcomm2006_writer_start(&writer, writer.action_context, 0, NULL, NULL);
+  remote_index = labcomm2006_read_packed32(d->reader);
+  signature.name = labcomm2006_read_string(d->reader);
   signature.type = kind;
   collect_flat_signature(d, &writer);
-  labcomm_writer_end(&writer, writer.action_context);
+  labcomm2006_writer_end(&writer, writer.action_context);
   err = writer_ioctl(&writer, 
 		     LABCOMM_IOCTL_WRITER_GET_BYTES_WRITTEN,
 		     &signature.size);
@@ -214,7 +214,7 @@ static int decode_typedef_or_sample(struct labcomm_decoder *d, int kind)
   {
     int i;
 
-    labcomm_scheduler_data_lock(d->scheduler);
+    labcomm2006_scheduler_data_lock(d->scheduler);
     LABCOMM_SIGNATURE_ARRAY_FOREACH(d->local, struct sample_entry, i) {
       struct sample_entry *s;
       int *remote_to_local;
@@ -239,12 +239,12 @@ static int decode_typedef_or_sample(struct labcomm_decoder *d, int kind)
 	break;
       }
     }
-    labcomm_scheduler_data_unlock(d->scheduler);
+    labcomm2006_scheduler_data_unlock(d->scheduler);
     if (local_signature) {
-      labcomm_reader_start(d->reader, d->reader->action_context,
+      labcomm2006_reader_start(d->reader, d->reader->action_context,
 			   local_index, remote_index, local_signature,
 			   NULL);
-      labcomm_reader_end(d->reader, d->reader->action_context);
+      labcomm2006_reader_end(d->reader, d->reader->action_context);
     }
   }
 #if 0
@@ -259,17 +259,17 @@ static int decode_typedef_or_sample(struct labcomm_decoder *d, int kind)
     result = -ENOENT;
 #endif
 free_signature_name:
-  labcomm_memory_free(d->memory, 0, signature.name);
-  labcomm_writer_free(&writer, writer.action_context);
+  labcomm2006_memory_free(d->memory, 0, signature.name);
+  labcomm2006_writer_free(&writer, writer.action_context);
   return result;
 }
 
 struct call_handler_context {
-  struct labcomm_reader *reader;
+  struct labcomm2006_reader *reader;
   int local_index;
   int remote_index;
-  struct labcomm_signature *signature;
-  labcomm_handler_function handler;
+  struct labcomm2006_signature *signature;
+  labcomm2006_handler_function handler;
   void *context;
 };
 
@@ -278,29 +278,29 @@ static void call_handler(void *value, void *context)
   struct call_handler_context *wrap = context;
 
   if (wrap->reader->error >= 0) {
-    labcomm_reader_start(wrap->reader, wrap->reader->action_context,
+    labcomm2006_reader_start(wrap->reader, wrap->reader->action_context,
 			 wrap->local_index, wrap->remote_index, wrap->signature,
 			 value);
     wrap->handler(value, wrap->context);
-    labcomm_reader_end(wrap->reader, wrap->reader->action_context);
+    labcomm2006_reader_end(wrap->reader, wrap->reader->action_context);
   }
 }
 
-static void reader_alloc(struct labcomm_decoder *d)
+static void reader_alloc(struct labcomm2006_decoder *d)
 {
   if (!d->reader_allocated) {
     d->reader_allocated = 1;
-    labcomm_reader_alloc(d->reader, d->reader->action_context,
+    labcomm2006_reader_alloc(d->reader, d->reader->action_context,
 			 LABCOMM_VERSION);
   }
 }
 
-int labcomm_decoder_decode_one(struct labcomm_decoder *d)
+int labcomm2006_decoder_decode_one(struct labcomm2006_decoder *d)
 {
   int result, remote_index;
 
   reader_alloc(d);
-  remote_index = labcomm_read_packed32(d->reader);
+  remote_index = labcomm2006_read_packed32(d->reader);
   if (d->reader->error < 0) {
     result = d->reader->error;
     goto out;
@@ -316,9 +316,9 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
       .handler = NULL,
       .context = NULL,
     };
-    labcomm_decoder_function do_decode = NULL;
+    labcomm2006_decoder_function do_decode = NULL;
 
-    labcomm_scheduler_data_lock(d->scheduler);
+    labcomm2006_scheduler_data_lock(d->scheduler);
     local_index = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
 					      d->remote_to_local, int,
 					      remote_index);
@@ -335,7 +335,7 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
       do_decode = entry->decode;
       result = *local_index;
     }
-    labcomm_scheduler_data_unlock(d->scheduler);
+    labcomm2006_scheduler_data_unlock(d->scheduler);
     if (do_decode) {
       do_decode(d->reader, call_handler, &wrap);
       if (d->reader->error < 0) {
@@ -349,13 +349,13 @@ out:
   return result;
 }
 
-void labcomm_decoder_run(struct labcomm_decoder *d)
+void labcomm2006_decoder_run(struct labcomm2006_decoder *d)
 {
-  while (labcomm_decoder_decode_one(d) > 0) {
+  while (labcomm2006_decoder_decode_one(d) > 0) {
   }
 }
 
-int labcomm_decoder_ioctl(struct labcomm_decoder *d, 
+int labcomm2006_decoder_ioctl(struct labcomm2006_decoder *d, 
 			  uint32_t action,
 			  ...)
 {
@@ -363,52 +363,52 @@ int labcomm_decoder_ioctl(struct labcomm_decoder *d,
   va_list va;
     
   va_start(va, action);
-  result = labcomm_reader_ioctl(d->reader, 
+  result = labcomm2006_reader_ioctl(d->reader, 
 				d->reader->action_context,
 				0, 0, NULL, action, va);
   va_end(va);
   return result;
 }
 
-int labcomm_internal_decoder_ioctl(struct labcomm_decoder *d, 
-				   struct labcomm_signature *signature,
+int labcomm2006_internal_decoder_ioctl(struct labcomm2006_decoder *d, 
+				   struct labcomm2006_signature *signature,
 				   uint32_t action, va_list va)
 {
   int result;
   int local_index, remote_index;
 
-  local_index = labcomm_get_local_index(signature);
-  labcomm_scheduler_data_lock(d->scheduler);
+  local_index = labcomm2006_get_local_index(signature);
+  labcomm2006_scheduler_data_lock(d->scheduler);
   remote_index = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
 					     d->local,
 					     struct sample_entry,
 					     local_index)->remote_index;
-  labcomm_scheduler_data_unlock(d->scheduler);
-  result = labcomm_reader_ioctl(d->reader, d->reader->action_context,
+  labcomm2006_scheduler_data_unlock(d->scheduler);
+  result = labcomm2006_reader_ioctl(d->reader, d->reader->action_context,
 				local_index, remote_index, 
 				signature, action, va);
   return result;
 }
 
-int labcomm_internal_decoder_register(
-  struct labcomm_decoder *d,
-  struct labcomm_signature *signature,
-  labcomm_decoder_function decode, 
-  labcomm_handler_function handler,
+int labcomm2006_internal_decoder_register(
+  struct labcomm2006_decoder *d,
+  struct labcomm2006_signature *signature,
+  labcomm2006_decoder_function decode, 
+  labcomm2006_handler_function handler,
   void *context)
 {
   int local_index;
   struct sample_entry *entry;
  
   reader_alloc(d);
-  local_index = labcomm_get_local_index(signature);
+  local_index = labcomm2006_get_local_index(signature);
   if (local_index <= 0) { goto out; }
-  labcomm_reader_start(d->reader, d->reader->action_context,
+  labcomm2006_reader_start(d->reader, d->reader->action_context,
 		       local_index, 0, signature,
 		       NULL);
-  labcomm_reader_end(d->reader, d->reader->action_context);
+  labcomm2006_reader_end(d->reader, d->reader->action_context);
 
-  labcomm_scheduler_data_lock(d->scheduler);
+  labcomm2006_scheduler_data_lock(d->scheduler);
   entry = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
 				      d->local, struct sample_entry,
 				      local_index);
@@ -419,7 +419,7 @@ int labcomm_internal_decoder_register(
   entry->handler = handler;
   entry->context = context;
 unlock:
-  labcomm_scheduler_data_unlock(d->scheduler);
+  labcomm2006_scheduler_data_unlock(d->scheduler);
 out:
   return local_index;
 }

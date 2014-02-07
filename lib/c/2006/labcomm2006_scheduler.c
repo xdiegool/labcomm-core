@@ -1,5 +1,5 @@
 /*
-  labcomm_scheduler.c -- labcomm task coordination
+  labcomm2006_scheduler.c -- labcomm task coordination
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -20,7 +20,7 @@
 */
 
 #include <errno.h>
-#include "labcomm_scheduler_private.h"
+#include "labcomm2006_scheduler_private.h"
 
 #define SCHEDULER_scheduler(scheduler, ...) scheduler
 #define SCHEDULER(func, ...)						\
@@ -30,32 +30,32 @@
   }									\
   return -ENOSYS;
 
-int labcomm_scheduler_free(struct labcomm_scheduler *s)
+int labcomm2006_scheduler_free(struct labcomm2006_scheduler *s)
 {
   SCHEDULER(free, s);
 }
 
-int labcomm_scheduler_writer_lock(struct labcomm_scheduler *s)
+int labcomm2006_scheduler_writer_lock(struct labcomm2006_scheduler *s)
 {
   SCHEDULER(writer_lock, s);
 }
 
-int labcomm_scheduler_writer_unlock(struct labcomm_scheduler *s)
+int labcomm2006_scheduler_writer_unlock(struct labcomm2006_scheduler *s)
 {
   SCHEDULER(writer_unlock, s);
 }
 
-int labcomm_scheduler_data_lock(struct labcomm_scheduler *s)
+int labcomm2006_scheduler_data_lock(struct labcomm2006_scheduler *s)
 {
   SCHEDULER(data_lock, s);
 }
 
-int labcomm_scheduler_data_unlock(struct labcomm_scheduler *s)
+int labcomm2006_scheduler_data_unlock(struct labcomm2006_scheduler *s)
 {
   SCHEDULER(data_unlock, s);
 }
 
-struct labcomm_time *labcomm_scheduler_now(struct labcomm_scheduler *s)
+struct labcomm2006_time *labcomm2006_scheduler_now(struct labcomm2006_scheduler *s)
 {
   if (s && s->action->now) {
     return s->action->now(s); 
@@ -63,18 +63,18 @@ struct labcomm_time *labcomm_scheduler_now(struct labcomm_scheduler *s)
   return NULL;
 }
 
-int labcomm_scheduler_sleep(struct labcomm_scheduler *s,
-			    struct labcomm_time *wakeup)
+int labcomm2006_scheduler_sleep(struct labcomm2006_scheduler *s,
+			    struct labcomm2006_time *wakeup)
 {
   SCHEDULER(sleep, s, wakeup);
 }
 
-int labcomm_scheduler_wakeup(struct labcomm_scheduler *s)
+int labcomm2006_scheduler_wakeup(struct labcomm2006_scheduler *s)
 {
   SCHEDULER(wakeup, s);
 }
 
-int labcomm_scheduler_enqueue(struct labcomm_scheduler *s,
+int labcomm2006_scheduler_enqueue(struct labcomm2006_scheduler *s,
 			      uint32_t delay,
 			      void (*func)(void *context),
 			      void *context)

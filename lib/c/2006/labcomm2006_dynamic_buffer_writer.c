@@ -1,5 +1,5 @@
 /*
-  labcomm_dynamic_buffer_writer.c -- LabComm dynamic memory writer.
+  labcomm2006_dynamic_buffer_writer.c -- LabComm dynamic memory writer.
 
   Copyright 2006-2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -22,18 +22,18 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include "labcomm.h"
-#include "labcomm_private.h"
-#include "labcomm_ioctl.h"
-#include "labcomm_dynamic_buffer_writer.h"
+#include "labcomm2006.h"
+#include "labcomm2006_private.h"
+#include "labcomm2006_ioctl.h"
+#include "labcomm2006_dynamic_buffer_writer.h"
 
-static int dyn_alloc(struct labcomm_writer *w, 
-		     struct labcomm_writer_action_context *action_context,
-		     char *labcomm_version)
+static int dyn_alloc(struct labcomm2006_writer *w, 
+		     struct labcomm2006_writer_action_context *action_context,
+		     char *labcomm2006_version)
 {
   w->data_size = 1000;
   w->count = w->data_size;
-  w->data = labcomm_memory_alloc(w->memory, 1, w->data_size);
+  w->data = labcomm2006_memory_alloc(w->memory, 1, w->data_size);
   if (w->data == NULL) {
     w->error = -ENOMEM;
   }
@@ -42,29 +42,29 @@ static int dyn_alloc(struct labcomm_writer *w,
   return w->error;
 }
 
-static int dyn_free(struct labcomm_writer *w, 
-		    struct labcomm_writer_action_context *action_context)
+static int dyn_free(struct labcomm2006_writer *w, 
+		    struct labcomm2006_writer_action_context *action_context)
 {
-  labcomm_memory_free(w->memory, 1, w->data);
+  labcomm2006_memory_free(w->memory, 1, w->data);
   w->data = 0;
   w->data_size = 0;
   w->count = 0;
   w->pos = 0;
-  labcomm_memory_free(w->memory, 0, action_context->context);
+  labcomm2006_memory_free(w->memory, 0, action_context->context);
   return 0;
 }
 
-static int dyn_start(struct labcomm_writer *w, 
-		     struct labcomm_writer_action_context *action_context,
+static int dyn_start(struct labcomm2006_writer *w, 
+		     struct labcomm2006_writer_action_context *action_context,
 		     int index,
-		     struct labcomm_signature *signature,
+		     struct labcomm2006_signature *signature,
 		     void *value)
 {
   void *tmp;
 
   w->data_size = 1000;
   w->count = w->data_size;
-  tmp = labcomm_memory_realloc(w->memory, 1, w->data, w->data_size);
+  tmp = labcomm2006_memory_realloc(w->memory, 1, w->data, w->data_size);
   if (tmp != NULL) {
     w->data = tmp;
     w->error = 0;
@@ -76,20 +76,20 @@ static int dyn_start(struct labcomm_writer *w,
   return w->error;
 }
 
-static int dyn_end(struct labcomm_writer *w, 
-		   struct labcomm_writer_action_context *action_context)
+static int dyn_end(struct labcomm2006_writer *w, 
+		   struct labcomm2006_writer_action_context *action_context)
 {
   return 0;
 }
 
-static int dyn_flush(struct labcomm_writer *w, 
-		     struct labcomm_writer_action_context *action_context)
+static int dyn_flush(struct labcomm2006_writer *w, 
+		     struct labcomm2006_writer_action_context *action_context)
 {
   void *tmp;
 
   w->data_size += 1000;
   w->count = w->data_size;
-  tmp = labcomm_memory_realloc(w->memory, 1, w->data, w->data_size);
+  tmp = labcomm2006_memory_realloc(w->memory, 1, w->data, w->data_size);
   if (tmp != NULL) {
     w->data = tmp;
     w->error = 0;
@@ -101,10 +101,10 @@ static int dyn_flush(struct labcomm_writer *w,
   return w->error; 
 }
 
-static int dyn_ioctl(struct labcomm_writer *w, 
-		     struct labcomm_writer_action_context *action_context, 
+static int dyn_ioctl(struct labcomm2006_writer *w, 
+		     struct labcomm2006_writer_action_context *action_context, 
 		     int signature_index,
-		     struct labcomm_signature *signature,
+		     struct labcomm2006_signature *signature,
 		     uint32_t action, va_list arg)
 {
   int result = -ENOTSUP;
@@ -123,7 +123,7 @@ static int dyn_ioctl(struct labcomm_writer *w,
   return result;
 }
 
-static const struct labcomm_writer_action action = {
+static const struct labcomm2006_writer_action action = {
   .alloc = dyn_alloc,
   .free = dyn_free,
   .start = dyn_start,
@@ -131,18 +131,18 @@ static const struct labcomm_writer_action action = {
   .flush = dyn_flush,
   .ioctl = dyn_ioctl
 };
-const struct labcomm_writer_action *labcomm_dynamic_buffer_writer_action = 
+const struct labcomm2006_writer_action *labcomm2006_dynamic_buffer_writer_action = 
   &action;
 
-struct labcomm_writer *labcomm_dynamic_buffer_writer_new(
-  struct labcomm_memory *memory)
+struct labcomm2006_writer *labcomm2006_dynamic_buffer_writer_new(
+  struct labcomm2006_memory *memory)
 {
   struct result {
-    struct labcomm_writer writer;
-    struct labcomm_writer_action_context action_context;
+    struct labcomm2006_writer writer;
+    struct labcomm2006_writer_action_context action_context;
   } *result;
 
-  result = labcomm_memory_alloc(memory, 0, sizeof(*result));
+  result = labcomm2006_memory_alloc(memory, 0, sizeof(*result));
   if (result != NULL) {
     result->action_context.next = NULL;
     result->action_context.context = result;

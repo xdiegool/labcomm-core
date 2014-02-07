@@ -21,11 +21,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "labcomm_default_scheduler.h"
-#include "labcomm_scheduler.h"
-#include "labcomm_scheduler_private.h"
+#include "labcomm2006_default_scheduler.h"
+#include "labcomm2006_scheduler.h"
+#include "labcomm2006_scheduler_private.h"
 
-static int scheduler_free(struct labcomm_scheduler *s)
+static int scheduler_free(struct labcomm2006_scheduler *s)
 {
   fprintf(stderr, "%s:%d %s %s", __FILE__, __LINE__, __FUNCTION__,
 	  "not implemented");
@@ -33,27 +33,27 @@ static int scheduler_free(struct labcomm_scheduler *s)
   return 0;
 }
  
-static int scheduler_writer_lock(struct labcomm_scheduler *s)
+static int scheduler_writer_lock(struct labcomm2006_scheduler *s)
 {
   return 0;
 }
  
-static int scheduler_writer_unlock(struct labcomm_scheduler *s)
+static int scheduler_writer_unlock(struct labcomm2006_scheduler *s)
 {
   return 0;
 }
 
-static int scheduler_data_lock(struct labcomm_scheduler *s)
+static int scheduler_data_lock(struct labcomm2006_scheduler *s)
 {
   return 0;
 }
  
-static int scheduler_data_unlock(struct labcomm_scheduler *s)
+static int scheduler_data_unlock(struct labcomm2006_scheduler *s)
 {
   return 0;
 }
 
-static struct labcomm_time *scheduler_now(struct labcomm_scheduler *s)
+static struct labcomm2006_time *scheduler_now(struct labcomm2006_scheduler *s)
 {
   fprintf(stderr, "%s:%d %s %s", __FILE__, __LINE__, __FUNCTION__,
 	  "not implemented");
@@ -61,8 +61,8 @@ static struct labcomm_time *scheduler_now(struct labcomm_scheduler *s)
   return NULL;
 }
  
-static int scheduler_sleep(struct labcomm_scheduler *s,
-			   struct labcomm_time *t)
+static int scheduler_sleep(struct labcomm2006_scheduler *s,
+			   struct labcomm2006_time *t)
 {
   fprintf(stderr, "%s:%d %s %s", __FILE__, __LINE__, __FUNCTION__,
 	  "not implemented");
@@ -70,7 +70,7 @@ static int scheduler_sleep(struct labcomm_scheduler *s,
   return 0;
 }
 
-static int scheduler_wakeup(struct labcomm_scheduler *s)
+static int scheduler_wakeup(struct labcomm2006_scheduler *s)
 {
   fprintf(stderr, "%s:%d %s %s", __FILE__, __LINE__, __FUNCTION__,
 	  "not implemented");
@@ -78,7 +78,7 @@ static int scheduler_wakeup(struct labcomm_scheduler *s)
   return 0;
 }
 
-static int scheduler_enqueue(struct labcomm_scheduler *s,
+static int scheduler_enqueue(struct labcomm2006_scheduler *s,
 			     uint32_t delay,
 			     void (*deferred)(void *context),
 			     void *context)
@@ -89,7 +89,7 @@ static int scheduler_enqueue(struct labcomm_scheduler *s,
   return 0;
 }
 
-static const struct labcomm_scheduler_action scheduler_action = {
+static const struct labcomm2006_scheduler_action scheduler_action = {
   .free = scheduler_free,
   .writer_lock = scheduler_writer_lock,
   .writer_unlock = scheduler_writer_unlock,
@@ -101,9 +101,9 @@ static const struct labcomm_scheduler_action scheduler_action = {
   .enqueue = scheduler_enqueue  
 };
 
-static struct labcomm_scheduler scheduler = {
+static struct labcomm2006_scheduler scheduler = {
   .action = &scheduler_action,
   .context = NULL
 };
 
-struct labcomm_scheduler *labcomm_default_scheduler = &scheduler;
+struct labcomm2006_scheduler *labcomm2006_default_scheduler = &scheduler;

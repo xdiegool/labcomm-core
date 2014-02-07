@@ -1,5 +1,5 @@
 /*
-  labcomm_fd_writer.c -- LabComm writer for Unix file descriptors.
+  labcomm2006_fd_writer.c -- LabComm writer for Unix file descriptors.
 
   Copyright 2006-2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -24,26 +24,26 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include "labcomm_private.h"
-#include "labcomm_fd_writer.h"
+#include "labcomm2006_private.h"
+#include "labcomm2006_fd_writer.h"
 
 #define BUFFER_SIZE 2048
 
-struct labcomm_fd_writer {
-  struct labcomm_writer writer;
-  struct labcomm_writer_action_context action_context;
+struct labcomm2006_fd_writer {
+  struct labcomm2006_writer writer;
+  struct labcomm2006_writer_action_context action_context;
   int fd;
   int close_fd_on_free;
 };
 
-static int fd_flush(struct labcomm_writer *w, 
-		    struct labcomm_writer_action_context *action_context);
+static int fd_flush(struct labcomm2006_writer *w, 
+		    struct labcomm2006_writer_action_context *action_context);
 
-static int fd_alloc(struct labcomm_writer *w, 
-		    struct labcomm_writer_action_context *action_context, 
+static int fd_alloc(struct labcomm2006_writer *w, 
+		    struct labcomm2006_writer_action_context *action_context, 
 		    char *version)
 {
-  w->data = labcomm_memory_alloc(w->memory, 0, BUFFER_SIZE);
+  w->data = labcomm2006_memory_alloc(w->memory, 0, BUFFER_SIZE);
   if (! w->data) {
     w->error = -ENOMEM;
     w->data_size = 0;
@@ -54,7 +54,7 @@ static int fd_alloc(struct labcomm_writer *w,
     w->count = BUFFER_SIZE;
     w->pos = 0;
     if (version && version[0]) {
-      labcomm_write_string(w, version);
+      labcomm2006_write_string(w, version);
       fd_flush(w, action_context);
     }
   }
@@ -62,13 +62,13 @@ static int fd_alloc(struct labcomm_writer *w,
   return w->error;
 }
 
-static int fd_free(struct labcomm_writer *w, 
-		   struct labcomm_writer_action_context *action_context)
+static int fd_free(struct labcomm2006_writer *w, 
+		   struct labcomm2006_writer_action_context *action_context)
 {
-  struct labcomm_fd_writer *fd_writer = action_context->context;
-  struct labcomm_memory *memory = w->memory;
+  struct labcomm2006_fd_writer *fd_writer = action_context->context;
+  struct labcomm2006_memory *memory = w->memory;
 
-  labcomm_memory_free(memory, 0, w->data);
+  labcomm2006_memory_free(memory, 0, w->data);
   w->data = 0;
   w->data_size = 0;
   w->count = 0;
@@ -77,14 +77,14 @@ static int fd_free(struct labcomm_writer *w,
   if (fd_writer->close_fd_on_free) {
     close(fd_writer->fd);
   }
-  labcomm_memory_free(memory, 0, fd_writer);
+  labcomm2006_memory_free(memory, 0, fd_writer);
   return 0;
 }
 
-static int fd_start(struct labcomm_writer *w, 
-		    struct labcomm_writer_action_context *action_context,
+static int fd_start(struct labcomm2006_writer *w, 
+		    struct labcomm2006_writer_action_context *action_context,
 		    int index,
-		    struct labcomm_signature *signature,
+		    struct labcomm2006_signature *signature,
 		    void *value)
 {
   w->pos = 0;
@@ -92,10 +92,10 @@ static int fd_start(struct labcomm_writer *w,
   return w->error;
 }
 
-static int fd_flush(struct labcomm_writer *w, 
-		    struct labcomm_writer_action_context *action_context)
+static int fd_flush(struct labcomm2006_writer *w, 
+		    struct labcomm2006_writer_action_context *action_context)
 {
-  struct labcomm_fd_writer *fd_context = action_context->context;
+  struct labcomm2006_fd_writer *fd_context = action_context->context;
   int start, err;
   
   start = 0;
@@ -117,7 +117,7 @@ static int fd_flush(struct labcomm_writer *w,
   return w->error;
 }
 
-static const struct labcomm_writer_action action = {
+static const struct labcomm2006_writer_action action = {
   .alloc = fd_alloc,
   .free = fd_free,
   .start = fd_start,
@@ -126,12 +126,12 @@ static const struct labcomm_writer_action action = {
   .ioctl = NULL
 };
 
-struct labcomm_writer *labcomm_fd_writer_new(struct labcomm_memory *memory,
+struct labcomm2006_writer *labcomm2006_fd_writer_new(struct labcomm2006_memory *memory,
 					     int fd, int close_fd_on_free)
 {
-  struct labcomm_fd_writer *result;
+  struct labcomm2006_fd_writer *result;
 
-  result = labcomm_memory_alloc(memory, 0, sizeof(*result));
+  result = labcomm2006_memory_alloc(memory, 0, sizeof(*result));
   if (result == NULL) {
     return NULL;
   } else {
