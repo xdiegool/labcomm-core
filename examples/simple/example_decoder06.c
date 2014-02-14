@@ -5,7 +5,7 @@
 #include <labcomm2006_default_error_handler.h>
 #include <labcomm2006_default_memory.h>
 #include <labcomm2006_default_scheduler.h>
-#include "gen/simple.h"
+#include "gen06/simple.h"
 #include <stdio.h>
 
 static void handle_simple_theTwoInts(simple_TwoInts *v,void *context) {

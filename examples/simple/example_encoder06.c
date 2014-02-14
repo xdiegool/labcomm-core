@@ -5,7 +5,7 @@
 #include <labcomm2006_default_error_handler.h>
 #include <labcomm2006_default_memory.h>
 #include <labcomm2006_default_scheduler.h>
-#include "gen/simple.h"
+#include "gen06/simple.h"
 #include <stdio.h>
 
 int main(int argc, char *argv[]) {
