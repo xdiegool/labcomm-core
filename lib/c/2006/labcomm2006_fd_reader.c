@@ -40,6 +40,15 @@ static int fd_alloc(struct labcomm2006_reader *r,
 		    char *version)
 {
   int result = 0;
+// in-band version is not included in version 2006.
+// This may be a place for version checking and/or printing
+// a warning message
+  if (version && version[0]) {
+    if (strcmp(LABCOMM_VERSION, version) != 0) {
+      fprintf(stderr, "ERROR: version mismatch: %s != %s\n", version, LABCOMM_VERSION);
+      return -EINVAL;
+    } 
+  }
   
   r->count = 0;
   r->pos = 0;
@@ -51,22 +60,6 @@ static int fd_alloc(struct labcomm2006_reader *r,
 
     r->data_size = BUFFER_SIZE;
     result = r->data_size;
-#if 0
-// in-band version is not included in version 2006.
-// This may be a place for version checking and/or printing
-// a warning message
-    if (version && version[0]) {
-      char *tmp;
-      
-      tmp = labcomm2006_read_string(r);
-      if (strcmp(tmp, version) != 0) {
-	result = -EINVAL;
-      } else {
-	result = r->data_size;
-      }
-      labcomm2006_memory_free(r->memory, 1, tmp);
-    }
-#endif
   }
   return result;
 }

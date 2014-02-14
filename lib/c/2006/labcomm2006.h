@@ -23,6 +23,8 @@
 #ifndef _LABCOMM_H_
 #define _LABCOMM_H_
 
+#define LABCOMM_VERSION "LabComm2006"
+
 #include <stdarg.h>
 #include <stdint.h>
 #include <unistd.h>

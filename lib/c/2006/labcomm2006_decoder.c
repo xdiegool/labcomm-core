@@ -18,8 +18,6 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#define LABCOMM_VERSION "LabComm2006"
-
 #include <errno.h>
 #include "labcomm2006.h"
 #include "labcomm2006_private.h"

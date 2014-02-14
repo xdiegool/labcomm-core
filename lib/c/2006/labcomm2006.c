@@ -37,8 +37,6 @@
 #include "labcomm2006_ioctl.h"
 #include "labcomm2006_dynamic_buffer_writer.h"
 
-#define LABCOMM_VERSION "LabComm2006"
-
 /* Unwrapping reader/writer functions */
 #define UNWRAP_ac(rw, ac, ...) ac
 #define UNWRAP(func, ...)	     \

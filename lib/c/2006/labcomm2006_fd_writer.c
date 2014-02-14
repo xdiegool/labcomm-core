@@ -43,6 +43,16 @@ static int fd_alloc(struct labcomm2006_writer *w,
 		    struct labcomm2006_writer_action_context *action_context, 
 		    char *version)
 {
+// in-band version is not included in version 2006.
+// This may be a place for version checking and/or printing
+// a warning message
+  if (version && version[0]) {
+    if (strcmp(LABCOMM_VERSION, version) != 0) {
+      fprintf(stderr, "ERROR: version mismatch: %s != %s\n", version, LABCOMM_VERSION);
+      return -EINVAL;
+    } 
+  }
+  
   w->data = labcomm2006_memory_alloc(w->memory, 0, BUFFER_SIZE);
   if (! w->data) {
     w->error = -ENOMEM;
@@ -53,12 +63,6 @@ static int fd_alloc(struct labcomm2006_writer *w,
     w->data_size = BUFFER_SIZE;
     w->count = BUFFER_SIZE;
     w->pos = 0;
-    if (version && version[0]) {
-#if 0 
-      labcomm2006_write_string(w, version);
-      fd_flush(w, action_context);
-#endif
-    }
   }
 
   return w->error;
