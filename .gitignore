@@ -1,0 +1,5 @@
+*.class
+*.o
+lib/c/liblabcomm.a
+compiler/AST/
+compiler/labComm.jar
