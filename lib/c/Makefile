@@ -23,11 +23,11 @@ OBJS2006=2006/labcomm2006_memory.o \
      2006/labcomm2006_default_error_handler.o \
      2006/labcomm2006_default_memory.o \
      2006/labcomm2006_default_scheduler.o \
-     2006/labcomm2006_time.o labcomm_scheduler.o \
-     2006/labcomm2006_encoder.o labcomm_decoder.o \
+     2006/labcomm2006_time.o 2006/labcomm2006_scheduler.o \
+     2006/labcomm2006_encoder.o 2006/labcomm2006_decoder.o \
      2006/labcomm2006.o \
      2006/labcomm2006_dynamic_buffer_writer.o \
-     2006/labcomm2006_fd_reader.o labcomm_fd_writer.o \
+     2006/labcomm2006_fd_reader.o 2006/labcomm2006_fd_writer.o \
      2006/labcomm2006_pthread_scheduler.o 
 
 OBJS=labcomm_memory.o \

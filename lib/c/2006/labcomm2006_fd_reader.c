@@ -51,6 +51,10 @@ static int fd_alloc(struct labcomm2006_reader *r,
 
     r->data_size = BUFFER_SIZE;
     result = r->data_size;
+#if 0
+// in-band version is not included in version 2006.
+// This may be a place for version checking and/or printing
+// a warning message
     if (version && version[0]) {
       char *tmp;
       
@@ -62,6 +66,7 @@ static int fd_alloc(struct labcomm2006_reader *r,
       }
       labcomm2006_memory_free(r->memory, 1, tmp);
     }
+#endif
   }
   return result;
 }

@@ -346,7 +346,7 @@ struct labcomm2006_writer {
 
 int labcomm2006_writer_alloc(struct labcomm2006_writer *w, 
 			 struct labcomm2006_writer_action_context *action_context, 
-			 char *labcomm2006_version);
+			 char *labcomm_version);
 int labcomm2006_writer_free(struct labcomm2006_writer *w, 
 			struct labcomm2006_writer_action_context *action_context);
 int labcomm2006_writer_start(struct labcomm2006_writer *w, 

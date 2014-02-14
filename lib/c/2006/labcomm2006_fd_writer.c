@@ -54,8 +54,10 @@ static int fd_alloc(struct labcomm2006_writer *w,
     w->count = BUFFER_SIZE;
     w->pos = 0;
     if (version && version[0]) {
+#if 0 
       labcomm2006_write_string(w, version);
       fd_flush(w, action_context);
+#endif
     }
   }
 
