@@ -4,12 +4,13 @@ import labcomm
 import sys
 
 if __name__ == "__main__":
-    d = labcomm.Decoder(labcomm.StreamReader(open(sys.argv[1])))
+    d = labcomm.Decoder(labcomm.StreamReader(open(sys.argv[1])), sys.argv[2])
 
     while True:
         try:
             data,decl = d.decode()
             if data:
                 print data
-        except:
+        except Exception, e:
+            print e
             break

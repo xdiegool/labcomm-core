@@ -1,3 +1,5 @@
+import labcomm
+
 class StreamReader:
 
     def __init__(self, stream):
@@ -5,10 +7,13 @@ class StreamReader:
         pass
 
     def start(self, decoder, version):
-        other_version = decoder.decode_string()
-        if version != other_version:
-            raise Exception("LabComm version mismatch %s != %s" %
-                            (version, other_version))
+        self.version = version;
+        if labcomm.LabComm.sendVersionString(version):
+          other_version = decoder.decode_string()
+          if version != other_version:
+              raise Exception("LabComm version mismatch %s != %s" %
+                              (version, other_version))
+          pass
         pass
 
     def read(self, count):

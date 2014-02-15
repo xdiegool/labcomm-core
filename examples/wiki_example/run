@@ -21,4 +21,4 @@ javac -cp ../../lib/java:. *.java
 # Run through all executables (c->java->Python)
 ./example_encoder one two
 java -cp ../../lib/java:. example_decoder_encoder example.encoded example.javaencoded
-PYTHONPATH=../../lib/python ./example_decoder.py example.javaencoded
+PYTHONPATH=../../lib/python ./example_decoder.py example.javaencoded LabComm2013
