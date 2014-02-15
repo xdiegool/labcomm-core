@@ -69,7 +69,7 @@ endif
 
 .PHONY: all run-test clean distclean
 
-all: liblabcomm.a liblabcomm.so.1 liblabcomm2006.a liblabcomm2006.so.1
+all: liblabcomm.a liblabcomm.so.1 liblabcomm2006.a liblabcomm2006.so.1  liblabcomm2013.a liblabcomm2013.so.1
 
 liblabcomm.a: $(OBJS) $(OBJS2006)
 	ar -r $@ $^

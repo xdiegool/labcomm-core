@@ -11,10 +11,10 @@ javac -cp ../../lib/java:. gen/*.java Encoder.java Decoder.java
 
 gcc -Wall -Werror -I. -I../../lib/c -L../../lib/c \
     -o example_encoder example_encoder.c gen/simple.c \
-    -llabcomm -Tlabcomm.linkscript
+    -llabcomm2013 -Tlabcomm.linkscript
 gcc -Wall -Werror -I . -I ../../lib/c -L../../lib/c \
     -o example_decoder example_decoder.c gen/simple.c \
-    -llabcomm -Tlabcomm.linkscript
+    -llabcomm2013 -Tlabcomm.linkscript
 
 # For version 2006
 
