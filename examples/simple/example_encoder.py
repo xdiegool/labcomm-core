@@ -5,7 +5,8 @@ import sys
 import simple
 
 if __name__ == '__main__':
-    encoder = labcomm.Encoder(labcomm.StreamWriter(open(sys.argv[1], 'w')))
+    version = sys.argv[2] if len(sys.argv) == 3 else "LabComm2013"
+    encoder = labcomm.Encoder(labcomm.StreamWriter(open(sys.argv[1], 'w')), version)
     encoder.add_decl(simple.theTwoInts.signature)
     encoder.add_decl(simple.IntString.signature)
     foo = simple.theTwoInts()

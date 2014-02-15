@@ -556,7 +556,7 @@ class Encoder(Codec):
     def __init__(self, writer, version="LabComm2013"):
         super(Encoder, self).__init__()
         self.writer = writer
-        self.versoin = version
+        self.version = version
         self.writer.start(self, self.version)
 
     def pack(self, format, *args):

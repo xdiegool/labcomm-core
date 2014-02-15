@@ -25,6 +25,10 @@ echo
 
 java -cp .:../../lib/java:gen06 Encoder06 encoded_data06
 ./example_decoder06 encoded_data06
+
+PYTHONPATH=../../lib/python:gen ./example_encoder.py encoded_data06 LabComm2006
+java -cp .:../../lib/java:gen06 Decoder06 encoded_data06
+
 ./example_encoder06 encoded_data06
 java -cp .:../../lib/java:gen06 Decoder06 encoded_data06
 
