@@ -553,7 +553,7 @@ class Codec(object):
         
 
 class Encoder(Codec):
-    def __init__(self, writer, version):
+    def __init__(self, writer, version="LabComm2013"):
         super(Encoder, self).__init__()
         self.writer = writer
         self.versoin = version
@@ -634,7 +634,7 @@ class Encoder(Codec):
 #        self.pack("!i%ds" % len(s), len(s), s)
 
 class Decoder(Codec):
-    def __init__(self, reader, version):
+    def __init__(self, reader, version="LabComm2013"):
         super(Decoder, self).__init__()
         self.reader = reader
         self.version = version
