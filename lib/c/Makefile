@@ -1,8 +1,19 @@
 ## Macros
 UNAME_S=$(shell uname -s)
+ALL_DEPS=liblabcomm.a liblabcomm.so.1
+
 ifeq ($(UNAME_S),Linux)
-  CC=gcc
-  CFLAGS=-std=c99 -g -Wall -Werror -O3  -I. -Itest 
+  CFLAGS=-std=c99 -g -Wall -Werror -O3  -I. -Itest
+  ifndef TARGET
+    CC=gcc	
+  else ifeq ($(TARGET),vx)
+    CC=i586-wrs-vxworks-gcc
+    LD=i586-wrs-vxworks-ld
+    ALL_DEPS:=$(filter-out %.so.1, $(ALL_DEPS))
+    CFLAGS:=$(CFLAGS) -DLABCOMM_COMPAT=\"labcomm_compat_vxworks.h\"
+  else
+    @echo 'Invalid target.'
+  endif
   LDFLAGS=-L.
   LDLIBS=-llabcomm -lrt
   MAKESHARED=gcc -o $1 -shared -Wl,-soname,$2 $3 -lc -lrt
@@ -57,7 +68,7 @@ endif
 
 .PHONY: all run-test clean distclean
 
-all: liblabcomm.a liblabcomm.so.1
+all: $(ALL_DEPS)
 
 liblabcomm.a: $(OBJS)
 	ar -r $@ $^

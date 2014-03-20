@@ -3,3 +3,7 @@
 lib/c/liblabcomm.a
 compiler/AST/
 compiler/labComm.jar
+examples/twoway/gen/
+lib/csharp/labcomm.dll
+lib/java/gen/
+lib/java/labcomm.jar

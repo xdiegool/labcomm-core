@@ -199,7 +199,9 @@ static int decode_typedef_or_sample(struct labcomm_decoder *d, int kind)
 		     LABCOMM_IOCTL_WRITER_GET_BYTES_WRITTEN,
 		     &signature.size);
   if (err < 0) {
-    fprintf(stderr, "Failed to get size: %s\n", strerror(-err));
+    /* fprintf(stderr, "Failed to get size: %s\n", strerror(-err)); */
+    labcomm_error_warning(d->error, LABCOMM_ERROR_BAD_WRITER,
+			  "Failed to get size: %s\n", strerror(-err));
     result = -ENOENT;
     goto free_signature_name;
   }
@@ -207,7 +209,9 @@ static int decode_typedef_or_sample(struct labcomm_decoder *d, int kind)
 		     LABCOMM_IOCTL_WRITER_GET_BYTE_POINTER,
 		     &signature.signature);
   if (err < 0) {
-    fprintf(stderr, "Failed to get pointer: %s\n", strerror(-err));
+    /* fprintf(stderr, "Failed to get pointer: %s\n", strerror(-err)); */
+    labcomm_error_warning(d->error, LABCOMM_ERROR_BAD_WRITER,
+			  "Failed to get pointer: %s\n", strerror(-err));
     result = -ENOENT;
     goto free_signature_name;
   }
