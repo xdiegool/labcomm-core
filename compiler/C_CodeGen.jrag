@@ -371,8 +371,10 @@ aspect C_Declarations {
 
     env.println("int labcomm"+env.verStr+"_encode_" + env.prefix + getName() + "(");
     env.indent();
-    env.println("struct labcomm"+env.verStr+"_encoder *e,");
-    env.println(env.prefix + getName() + " *v");
+    env.println("struct labcomm"+env.verStr+"_encoder *e");
+    if(!isVoid() ) {
+        env.println(", "+env.prefix + getName() + " *v");
+    }
     env.unindent();
     env.println(");");
 
@@ -700,8 +702,10 @@ aspect C_Encoder {
     env = env.nestStruct("(*v)");
     env.println("static int encode_" + env.prefix + getName() + "(");
     env.indent();
-    env.println("struct labcomm"+env.verStr+"_writer *w,");
-    env.println(env.prefix + getName() + " *v");
+    env.println("struct labcomm"+env.verStr+"_writer *w");
+    if(!isVoid() ) {
+        env.println(", "+env.prefix + getName() + " *v");
+    }
     env.unindent();
     env.println(")");
     env.println("{");
@@ -714,16 +718,19 @@ aspect C_Encoder {
 
     // Typesafe encode wrapper
     env.println("int labcomm"+env.verStr+"_encode_" + env.prefix + getName() + "(");
-    env.println("struct labcomm"+env.verStr+"_encoder *e,");
-    env.println(env.prefix + getName() + " *v");
+    env.println("struct labcomm"+env.verStr+"_encoder *e");
+    if(!isVoid() ) {
+        env.println(", "+env.prefix + getName() + " *v");
+    }
     env.unindent();
     env.println(")");
     env.println("{");
     env.indent();
     env.println("return labcomm"+env.verStr+"_internal_encode(e, &labcomm"+env.verStr+"_signature_" + 
 		env.prefix + getName() + 
-		", (labcomm"+env.verStr+"_encoder_function)encode_" + env.prefix + getName() +
-		", v);");
+		", (labcomm"+env.verStr+"_encoder_function)encode_" + 
+                env.prefix + getName() +
+		(!isVoid()?", v":", NULL")+");");
     env.unindent();
     env.println("}");
   }
@@ -745,7 +752,7 @@ aspect C_Encoder {
   }
 
   public void UserType.C_emitEncoder(C_env env) {
-    lookupType(getName()).getType().C_emitEncoder(env);
+    decl().getType().C_emitEncoder(env);
   }
 
   public void StructType.C_emitEncoder(C_env env) {

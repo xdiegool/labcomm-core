@@ -645,6 +645,10 @@ aspect CS_Class {
 		    " not declared");
   }
 
+  public boolean VoidType.CS_needInstance() {
+    return false;
+  }
+
   public boolean PrimType.CS_needInstance() {
     return false;
   }

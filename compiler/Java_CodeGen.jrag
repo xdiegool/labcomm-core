@@ -196,6 +196,7 @@ aspect Java_StructName {
 aspect Java_Void {
 
   syn boolean Decl.isVoid() = getType().isVoid();
+  syn boolean UserType.isVoid() = decl().isVoid();
   syn boolean Type.isVoid() = false;
   syn boolean VoidType.isVoid() = true;
 
@@ -744,6 +745,10 @@ aspect Java_Class {
     throw new Error(this.getClass().getName() + 
 		    ".Java_needInstance()" + 
 		    " not declared");
+  }
+
+  public boolean VoidType.Java_needInstance() {
+    return false;
   }
 
   public boolean PrimType.Java_needInstance() {

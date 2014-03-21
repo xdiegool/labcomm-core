@@ -1,0 +1,29 @@
+aspect TypeCheck {
+  public void ASTNode.typeCheck() {
+    for (int i = 0; i < getNumChild(); i++) {
+      getChild(i).typeCheck();
+    }
+  }
+  
+  syn boolean Type.isNull();
+  eq Type.isNull() = false;
+  eq VoidType.isNull() = true;
+  
+  public void Field.nullTypeCheck() {
+    if(getType().isNull()) {
+      error(getName() + ": fields cannot be of type void");
+    }
+  }
+
+  public void ParseArrayType.nullTypeCheck() {
+    if(getType().isNull()) {
+      error("array elements cannot be of type void");
+    }
+  }
+
+  public void ArrayType.nullTypeCheck() {
+    if(getType().isNull()) {
+      error("array elements cannot be of type void");
+    }
+  }
+} 
