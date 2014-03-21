@@ -25,3 +25,7 @@ sample struct {
   int a[2];
   int b[2,3];
 } TwoFixedArrays;
+
+// typedef void avoid;
+
+sample void doavoid;
