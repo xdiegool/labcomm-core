@@ -1,0 +1,7 @@
+aspect DeclNames {
+	inh String Type.declName();
+	eq Decl.getType().declName() = getName();
+
+	inh String Field.declName();
+	eq StructType.getField(int i).declName() = declName();
+}

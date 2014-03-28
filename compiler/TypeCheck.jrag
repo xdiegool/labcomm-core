@@ -18,19 +18,19 @@ aspect TypeCheck {
  
   public void Field.nullTypeCheck() {
     if(getType().isNull()) {
-      error("field " + getName() + " may not be of type void");
+      error("field " + getName() + " of struct "+ declName()+ " may not be of type void");
     }
   }
 
   public void ParseArrayType.nullTypeCheck() {
     if(getType().isNull()) {
-      error("array elements may not be of type void");
+      error("elements of array "+declName()+" may not be of type void");
     }
   }
 
   public void ArrayType.nullTypeCheck() {
     if(getType().isNull()) {
-      error("array elements may not be of type void");
+      error("elements of array "+declName()+" may not be of type void");
     }
   }
 } 
