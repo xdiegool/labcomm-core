@@ -1163,12 +1163,23 @@ aspect C_Info {
 
   public void TypeDecl.C_info(C_env env) {
     env.println(",C,typedef," + env.prefix + getName() + "," + 
-                 env.prefix + getName());
+                 env.prefix + getName() + "," +
+                 C_info_type_or_void(env.prefix));
   }
 
   public void SampleDecl.C_info(C_env env) {
     env.println(",C,sample," + env.prefix + getName() + "," + 
-                env.prefix + getName());
+                 env.prefix + getName() + "," +
+                 C_info_type_or_void(env.prefix));
   }
 
+  // make void types explicitly as they require special treatment
+  // in encoder/decoder calls
+  protected String Decl.C_info_type_or_void(String prefix) {
+    if(isVoid() ) {
+      return "void";
+    } else {
+      return prefix + getName() ;
+    }
+  }
 }
