@@ -6,7 +6,7 @@ CFLAGS=-O3 -g -Wall -Werror
 
 all:
 
-test: $(TESTS:%=test_%)
+test: $(TESTS:%=test_%) compiler_errors
 #	PYTHONPATH=../lib/python \
 #		./test_encoder_decoder.py --labcomm="$(LABCOMM)" basic.lc
 
@@ -14,7 +14,7 @@ test: $(TESTS:%=test_%)
 clean distclean:
 	rm -rf gen
 
-.PHONY: test_% testErrors
+.PHONY: test_% 
 test_%: gen/%/signatures.py \
 	gen/%/c_relay \
 	gen/%/cs_relay.exe \
