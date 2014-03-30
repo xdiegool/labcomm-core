@@ -1,0 +1,63 @@
+This directory contains a small example of how to generate and compile a
+labcomm endpoint on the fly.
+
+
+the script static.sh builds and runs a very simple static labcomm demo
+
+
+the script dynamic.sh builds and runs an example where labcomm is generated and
+woven togerther with user-defined handler code. 
+
+
+the test.sh script builds and runs the TestLabCommGen, which illustrates the
+on-the-fly compilation to RAM, reading the labcomm declarations and handlers
+from file
+
+
+The handlers declaration (in handlers.txt, handlers2.txt) is experimental, and has the
+following format:
+
+<sample name>:handler(<data type> <variable name>) { <handler method code> }###
+
+where the end marker (}###) is a kludge to avoid having to parse the method
+body while still allowing it to contain blocks. Thus, having the sequence
+"}###" in the method body breaks this. Caveat hacker!
+
+An example handlers declaration:
+
+foo:handler(foo value) {
+	test.HandlerContext ctx = (test.HandlerContext)context;
+	System.out.println("foo handler from handlers2.txt");
+	System.out.println("using context "+ctx.str);
+        ctx.x = value.x + 1000;
+	ctx.y = value.y + 1000;
+	ctx.z = value.z + 1000;
+	System.out.println(value.x);
+	System.out.println(value.y);
+	System.out.println(value.z);
+	for(int i=0; i<value.x; i++){
+		System.out.print("."+(value.x-i));
+	}
+	System.out.println();
+}###
+bar:handler(int value) {
+	System.out.println("bar:"+value);
+	test.HandlerContext ctx = (test.HandlerContext)context;
+	ctx.bar = value + 1000;
+}###
+
+Note that parameters differ: the value for foo is an object but for bar it is a
+primitive type (int) value.
+
+
+The context in the example is a kludge or placeholder for tying the
+user-provided handler methods to the environment they are executed in, and
+allowing state to be kept between invokations. The class containing the handler
+methods have an attribute, Object context, and its initialization is currently
+hard coded. The permanent solution is TBD.
+
+TODO: Currently, for UserType samples (i.e., if typedef is used in the .lc file)
+the type of the value parameter to encode and handler is of the UserType and not
+the sample class. Should this be kept, or changed so that the sample extends the type.
+An argument against is that for primitive types, the type of the argument is 
+the primitive type, and not the class, so that has to be taken care of anyhow.

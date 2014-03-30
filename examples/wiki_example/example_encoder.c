@@ -1,7 +1,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <labcomm_fd_reader_writer.h>
+#include <labcomm_fd_reader.h>
+#include <labcomm_fd_writer.h>
 #include "example.h"
 
 int main(int argc, char *argv[]) {
@@ -10,7 +11,7 @@ int main(int argc, char *argv[]) {
   int i, j;
 
   fd = open("example.encoded", O_WRONLY|O_CREAT|O_TRUNC, 0644);
-  encoder = labcomm_encoder_new(labcomm_fd_writer, &fd);
+  encoder = labcomm_encoder_new(labcomm_fd_writer, &fd, NULL, NULL);
   labcomm_encoder_register_example_log_message(encoder);
   labcomm_encoder_register_example_data(encoder);
   for (i = 0 ; i < argc ; i++) {

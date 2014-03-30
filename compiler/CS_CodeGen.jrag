@@ -429,11 +429,11 @@ aspect CS_Class {
   }
 
   public void ArrayType.CS_emitEncoder(CS_env env, String name) {
+    env.print_block_begin();
     int baseDepth = env.getDepth();
     for (int i = 0 ; i < getNumExp() ; i++) {
       String limit = getExp(i).CS_emitEncoder(env, 
 					      name + ".GetLength(" + i + ")");
-      env.print_block_begin();
       env.println("int i_" + (baseDepth + i) + "_max = " + limit + ";");
     }
     String index = null;
@@ -448,8 +448,8 @@ aspect CS_Class {
     getType().CS_emitEncoder(env, name + "[" + index + "]");
     for (int i = 0 ; i < getNumExp() ; i++) {
       env.print_for_end();
-      env.print_block_end();
     }
+    env.print_block_end();
   }
   
   public String Exp.CS_emitEncoder(CS_env env, String name) {
@@ -463,7 +463,7 @@ aspect CS_Class {
   }
 
   public String VariableSize.CS_emitEncoder(CS_env env, String name) {
-    env.println("e.encodeInt(" + name + ");");
+    env.println("e.encodePacked32(" + name + ");");
     return name;
   }
 
@@ -539,7 +539,7 @@ aspect CS_Class {
       }
       env.print("i_" + (baseDepth + i) + "_max");
     }
-    env.println("]");
+    env.print("]");
     getType().CS_emitTypeSuffix(env);
     env.println(";");
     
@@ -571,7 +571,7 @@ aspect CS_Class {
   }
 
   public void VariableSize.CS_emitDecoder(CS_env env) {
-    env.print("d.decodeInt()");
+    env.print("d.decodePacked32()");
   }
 
   public void StructType.CS_emitDecoder(CS_env env, String name) {
@@ -589,22 +589,6 @@ aspect CS_Class {
       env.println(name + " = " + getName() + ".decode(d);");
     } else {
       decl().getType().CS_emitDecoder(env, name);
-    }
-  }
-
-  public void Type.CS_emitNew(CS_env env, String size) {
-    throw new Error(this.getClass().getName() + 
-		    ".CS_emitNew(CS_env env, String size)" + 
-		    " not declared");
-  }
-
-  public void ArrayType.CS_emitNew(CS_env env, String size, int depth) {
-    env.print("new ");
-    getType().CS_emitTypePrefix(env);
-    env.print("[" + size + "]");
-    getType().CS_emitTypeSuffix(env);
-    for (int i = 1 ; i < depth ; i++) {
-      env.print("[]");
     }
   }
 
@@ -647,12 +631,12 @@ aspect CS_Class {
   }
 
   public void ArrayType.CS_emitTypeSuffix(CS_env env){
-    getType().CS_emitTypeSuffix(env);
     env.print("[");
     for (int i = 1 ; i < getNumExp() ; i++) {
       env.print(",");
     }
     env.print("]");
+    getType().CS_emitTypeSuffix(env);
   }
 
   public boolean Type.CS_needInstance() {
@@ -703,7 +687,7 @@ aspect CS_Class {
 
   public void StructType.CS_emitInstance(CS_env env) {
     if (CS_Depth() > 0) {
-      env.println("public static class " + CS_structName() + " {");
+      env.println("public class " + CS_structName() + " {");
       env.indent();
     }
     for (int i = 0 ; i < getNumField() ; i++) {
@@ -751,12 +735,13 @@ aspect CS_Class {
   }
 
   public void ArrayType.CS_emitType(CS_env env){
-    getType().CS_emitType(env);
+    getType().CS_emitTypePrefix(env);
     env.print("[");
     for (int i = 1 ; i < getNumExp() ; i++) {
       env.print(",");
     }
     env.print("]");
+    getType().CS_emitTypeSuffix(env);
   }
 
   public void StructType.CS_emitType(CS_env env){
@@ -786,13 +771,13 @@ aspect CS_Info {
   }
 
   public void TypeDecl.CS_info(CS_env env, String namespace) {
-    env.print("C#,typedef," + namespace + getName() + ",");
+    env.print(";C#;typedef;" + namespace + getName() + ";");
     getType().CS_emitType(env);
     env.println();
   }
 
   public void SampleDecl.CS_info(CS_env env, String namespace) {
-    env.print("C#,sample," + namespace + getName() + ",");
+    env.print(";C#;sample;" + namespace + getName() + ";");
     getType().CS_emitType(env);
     env.println();
   }

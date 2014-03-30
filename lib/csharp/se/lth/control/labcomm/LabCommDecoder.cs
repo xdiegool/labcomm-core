@@ -6,6 +6,7 @@ namespace se.lth.control.labcomm {
 
     void register(LabCommDispatcher dispatcher, 
 		  LabCommHandler handler);
+
     bool decodeBoolean();
     byte decodeByte();
     short decodeShort();
@@ -14,6 +15,7 @@ namespace se.lth.control.labcomm {
     float decodeFloat();
     double decodeDouble();
     String decodeString();
+    int decodePacked32();
 
   }
 

@@ -1,18 +1,25 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <labcomm_fd_reader_writer.h>
+#include <labcomm_fd_writer.h>
+#include <labcomm_default_error_handler.h>
+#include <labcomm_default_memory.h>
+#include <labcomm_default_scheduler.h>
 #include "gen/simple.h"
+#include <stdio.h>
 
 int main(int argc, char *argv[]) {
   int fd;
   struct labcomm_encoder *encoder;
-  int i, j;
 
   char *filename = argv[1];
   printf("C encoder writing to %s\n", filename);
   fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC, 0644);
-  encoder = labcomm_encoder_new(labcomm_fd_writer, &fd);
+  encoder = labcomm_encoder_new(labcomm_fd_writer_new(
+				  labcomm_default_memory, fd, 1), 
+				labcomm_default_error_handler, 
+				labcomm_default_memory,
+				labcomm_default_scheduler);
   labcomm_encoder_register_simple_theTwoInts(encoder);
   labcomm_encoder_register_simple_anotherTwoInts(encoder);
   labcomm_encoder_register_simple_IntString(encoder);
@@ -60,8 +67,19 @@ int main(int argc, char *argv[]) {
 
   simple_TwoFixedArrays tfa;
 
+  tfa.a.a[0] = 41;
+  tfa.a.a[1] = 42;
+
+  tfa.b.a[0][0] = 51;
+  tfa.b.a[0][1] = 52;
+  tfa.b.a[0][2] = 53;
+  tfa.b.a[1][0] = 61;
+  tfa.b.a[1][1] = 62;
+  tfa.b.a[1][2] = 63;
+
   printf("Encoding TwoFixedArrays...\n");
   labcomm_encoder_register_simple_TwoFixedArrays(encoder);
   labcomm_encode_simple_TwoFixedArrays(encoder, &tfa);
 
+  return 0;
 }

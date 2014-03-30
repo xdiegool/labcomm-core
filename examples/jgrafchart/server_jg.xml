@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<GCDocument color="-1" dimTicks="25" dpwsInterface="" dpwsPort="-1" height="600" horizontalScrollBar="1" modifiable="1" name="Server" saveVersion="7" scale="1.0" simulationMode="1" socketHost="" socketIsServer="0" socketPort="-1" socketSendMode="Changed" threadSpeed="1000" tokenLuminance="0" verticalScrollBar="1" viewPositionX="0" viewPositionY="0" width="434" x="0" y="0">
+  <LabCommObject height="60" isSocketServer="1" name="LabComm" socketHost="asdf" socketPort="9999" specification="sample struct {&#10;  double b;&#10;  int c;&#10;  int d;&#10;  string e;&#10;  boolean f;&#10;  short g;&#10;  long h;&#10;  float i;&#10;} foo;&#10;&#10;//sample int bar;&#10;" width="60" x="60" y="290"/>
+  <GCInitialStep actionBlockVisible="1" actionText="S LabComm.foo.b = LabComm.foo.b + 1.1;&#10;S LabComm.foo.c = 8;&#10;S LabComm.foo.d = 10;&#10;S LabComm.foo.e = &quot;hej&quot;;&#10;S LabComm.foo.f = !LabComm.foo.f;&#10;S LabComm.foo.g = 32767;&#10;S LabComm.foo.h = 12345678;&#10;S LabComm.foo.i = 2.4;" fileName="" height="70" id="ef14bcd4-aa1c-4970-9a6c-5e1269c53245" name="" useIcon="0" width="200" x="170" y="15"/>
+  <GCTransition actionText="1" conditionVisible="1" height="25" id="e580e2b4-4aa2-4311-bd7a-8dfe4d3e0cb8" width="30" x="185" y="200"/>
+  <GCStep actionBlockVisible="1" actionText="S lcSend(LabComm); // send all samples&#10;//S lcSend(LabComm, &quot;foo&quot;);" fileName="" height="70" id="bb65796a-2b87-4155-af9c-cb36439497d7" name="" useIcon="0" width="200" x="170" y="235"/>
+  <GCTransition actionText="0" conditionVisible="1" height="25" id="975b3011-87d6-4e75-9532-adb4153cad38" width="30" x="185" y="320"/>
+  <GCStep actionBlockVisible="1" actionText="S LabComm.foo.b = LabComm.foo.b + 1.1;&#10;S LabComm.foo.f = !LabComm.foo.f;" fileName="" height="70" id="7503a140-222a-477f-be8f-6b358e1ea6ae" name="" useIcon="0" width="200" x="170" y="125"/>
+  <GCTransition actionText="1" conditionVisible="1" height="25" id="26534603-8853-4a41-81ea-cb4d5cbd134a" width="30" x="185" y="90"/>
+  <GCLink fromObject="e580e2b4-4aa2-4311-bd7a-8dfe4d3e0cb8" manAdj="0" toObject="bb65796a-2b87-4155-af9c-cb36439497d7">
+    <Stroke x="200" y="226"/>
+    <Stroke x="200" y="236"/>
+    <Stroke x="200" y="236"/>
+    <Stroke x="200" y="224"/>
+    <Stroke x="200" y="224"/>
+    <Stroke x="200" y="234"/>
+  </GCLink>
+  <GCLink fromObject="bb65796a-2b87-4155-af9c-cb36439497d7" manAdj="0" toObject="975b3011-87d6-4e75-9532-adb4153cad38">
+    <Stroke x="200" y="306"/>
+    <Stroke x="200" y="316"/>
+    <Stroke x="200" y="316"/>
+    <Stroke x="200" y="309"/>
+    <Stroke x="200" y="309"/>
+    <Stroke x="200" y="319"/>
+  </GCLink>
+  <GCLink fromObject="7503a140-222a-477f-be8f-6b358e1ea6ae" manAdj="0" toObject="e580e2b4-4aa2-4311-bd7a-8dfe4d3e0cb8">
+    <Stroke x="200" y="196"/>
+    <Stroke x="200" y="206"/>
+    <Stroke x="200" y="206"/>
+    <Stroke x="200" y="189"/>
+    <Stroke x="200" y="189"/>
+    <Stroke x="200" y="199"/>
+  </GCLink>
+  <GCLink fromObject="ef14bcd4-aa1c-4970-9a6c-5e1269c53245" manAdj="0" toObject="26534603-8853-4a41-81ea-cb4d5cbd134a">
+    <Stroke x="200" y="86"/>
+    <Stroke x="200" y="96"/>
+    <Stroke x="200" y="96"/>
+    <Stroke x="200" y="79"/>
+    <Stroke x="200" y="79"/>
+    <Stroke x="200" y="89"/>
+  </GCLink>
+  <GCLink fromObject="26534603-8853-4a41-81ea-cb4d5cbd134a" manAdj="0" toObject="7503a140-222a-477f-be8f-6b358e1ea6ae">
+    <Stroke x="200" y="116"/>
+    <Stroke x="200" y="126"/>
+    <Stroke x="200" y="126"/>
+    <Stroke x="200" y="114"/>
+    <Stroke x="200" y="114"/>
+    <Stroke x="200" y="124"/>
+  </GCLink>
+  <GCLink fromObject="975b3011-87d6-4e75-9532-adb4153cad38" manAdj="1" toObject="7503a140-222a-477f-be8f-6b358e1ea6ae">
+    <Stroke x="200" y="346"/>
+    <Stroke x="200" y="356"/>
+    <Stroke x="134" y="356"/>
+    <Stroke x="134" y="114"/>
+    <Stroke x="200" y="114"/>
+    <Stroke x="200" y="124"/>
+  </GCLink>
+</GCDocument>

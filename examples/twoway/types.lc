@@ -1,0 +1,6 @@
+sample int A;
+sample int B;
+sample int Sum;
+sample int Diff;
+sample int Product;
+sample void Terminate;

@@ -1,0 +1,317 @@
+MODULE LabComm(SYSMODULE)
+    
+    RECORD LabComm_Stream
+        socketdev soc;
+    ENDRECORD
+    
+    RECORD LabComm_Decoder_Sample
+        string prefix;
+        string name;
+        num user_id;
+        string handler;
+    ENDRECORD
+        
+    RECORD LabComm_Encoder_Sample
+        string prefix;
+        string name;
+        num user_id;
+    ENDRECORD
+    
+    RECORD Decoder
+        num user_id;
+    ENDRECORD
+    
+    RECORD Encoder
+        num next_user_id;
+    ENDRECORD
+    
+    ! LabComm constants
+    CONST string LabCommVersion := "LabComm2013";
+    CONST num SAMPLE_DECL:=2;
+    CONST num SAMPLE_DATA:=64;
+    
+    CONST num STRUCT_TYPE := 17;
+    CONST num ARRAY_TYPE := 16;
+    CONST num BYTE_TYPE := 37;
+    CONST num BOOL_TYPE := 37;
+    CONST num SHORT_TYPE := 34;
+    CONST num INT_TYPE := 37;
+    CONST num LONG_TYPE := 37;
+    CONST num FLOAT_TYPE := 37;
+    
+    ! Error declarations
+    CONST errnum INCORRECT_LABCOMM_VERSION := 50;
+    CONST errnum UNKNOWN_PACKET_TYPE := 51;
+    CONST errnum UNKNOWN_SAMPLE_TYPE := 52;
+    CONST errnum INCORRECT_SAMPLE_SIGNATURE := 53;
+    CONST errnum SAMPLE_TYPE_NOT_REGISTERED := 54;
+    CONST errnum IMPLEMENTATION_LIMIT_REACHED := 55;
+
+    PROC Decode_Packed(VAR LabComm_Stream s, VAR num v, \ VAR rawbytes collect)
+        VAR rawbytes buffer;
+        SocketReceive s.soc,\RawData:=buffer,\ReadNoOfBytes:=1;
+        UnpackRawBytes buffer,\Network,1,v,\IntX:=USINT;
+        IF Present(collect) THEN
+            CopyRawBytes buffer, 1, collect, (RawBytesLen(collect)+1);
+        ENDIF
+    ERROR
+        RAISE ;
+    ENDPROC
+    
+    PROC Encode_Packed(VAR LabComm_Stream s, num v)
+        VAR rawbytes buffer;
+        PackRawBytes v,buffer,\Network,1,\IntX:=USINT;
+        SocketSend s.soc,\RawData:=buffer,\NoOfBytes:=1;
+    ERROR
+        RAISE ;
+    ENDPROC
+    
+    PROC Decode_Boolean(VAR LabComm_Stream s, VAR bool v, \ VAR rawbytes collect)
+        VAR rawbytes buffer;
+        VAR num tmp;
+        SocketReceive s.soc,\RawData:=buffer,\ReadNoOfBytes:=1;
+        UnpackRawBytes buffer,\Network,1,tmp,\IntX:=USINT;
+        IF tmp = 0 THEN
+            v := FALSE;
+        ELSE
+            v := TRUE;
+        ENDIF
+        IF Present(collect) THEN
+            CopyRawBytes buffer, 1, collect, (RawBytesLen(collect)+1);
+        ENDIF
+    ERROR
+        RAISE ;
+    ENDPROC
+    
+    PROC Encode_Boolean(VAR LabComm_Stream s, bool v)
+        VAR rawbytes buffer;
+        VAR num tmp;
+        IF v THEN
+            tmp := 1;
+        ELSE
+            tmp := 0;
+        ENDIF
+        PackRawBytes tmp,buffer,\Network,1,\IntX:=USINT;
+        SocketSend s.soc,\RawData:=buffer,\NoOfBytes:=1;
+    ERROR
+        RAISE ;
+    ENDPROC
+    
+    PROC Decode_Byte(VAR LabComm_Stream s, VAR byte v, \ VAR rawbytes collect)
+        VAR rawbytes buffer;
+        SocketReceive s.soc,\RawData:=buffer,\ReadNoOfBytes:=1;
+        UnpackRawBytes buffer,\Network,1,v,\Hex1;
+        IF Present(collect) THEN
+            CopyRawBytes buffer, 1, collect, (RawBytesLen(collect)+1);
+        ENDIF
+    ERROR
+        RAISE ;
+    ENDPROC
+    
+    PROC Encode_Byte(VAR LabComm_Stream s, byte v)
+        VAR rawbytes buffer;
+        PackRawBytes v,buffer,\Network,1,\Hex1;
+        SocketSend s.soc,\RawData:=buffer,\NoOfBytes:=1;
+    ERROR
+        RAISE ;
+    ENDPROC
+    
+    PROC Decode_Short(VAR LabComm_Stream s,VAR num v, \ VAR rawbytes collect)
+        VAR rawbytes buffer;
+        SocketReceive s.soc,\RawData:=buffer,\ReadNoOfBytes:=2;
+        UnpackRawBytes buffer,\Network,1,v,\IntX:=INT;
+        IF Present(collect) THEN
+            CopyRawBytes buffer, 1, collect, (RawBytesLen(collect)+1);
+        ENDIF
+    ERROR
+        RAISE ;
+    ENDPROC
+
+    PROC Encode_Short(VAR LabComm_Stream s, num v)
+        VAR rawbytes buffer;
+        PackRawBytes v, buffer, \Network, 1, \IntX:=INT;
+        SocketSend s.soc, \RawData:=buffer, \NoOfBytes:=2;
+    ERROR
+        RAISE ;
+    ENDPROC
+    
+    PROC Decode_Integer(VAR LabComm_Stream s, VAR num v, \ VAR rawbytes collect)
+        VAR rawbytes buffer;
+        SocketReceive s.soc,\RawData:=buffer,\ReadNoOfBytes:=4;
+        UnpackRawBytes buffer,\Network,1,v,\IntX:=DINT;
+        IF Present(collect) THEN
+            CopyRawBytes buffer, 1, collect, (RawBytesLen(collect)+1);
+        ENDIF
+    ERROR
+        RAISE ;
+    ENDPROC
+    
+    PROC Encode_Integer(VAR LabComm_Stream s, num v)
+        VAR rawbytes buffer;
+        PackRawBytes v,buffer,\Network,1,\IntX:=DINT;
+        SocketSend s.soc,\RawData:=buffer,\NoOfBytes:=4;
+    ERROR
+        RAISE ;
+    ENDPROC
+    
+    PROC Decode_Long(VAR LabComm_Stream s, VAR dnum v, \ VAR rawbytes collect)
+        VAR rawbytes buffer;
+        SocketReceive s.soc,\RawData:=buffer,\ReadNoOfBytes:=8;
+        UnpackRawBytes buffer,\Network,1,v,\IntX:=LINT;
+        IF Present(collect) THEN
+            CopyRawBytes buffer, 1, collect, (RawBytesLen(collect)+1);
+        ENDIF
+    ERROR
+        RAISE ;
+    ENDPROC
+    
+    PROC Encode_Long(VAR LabComm_Stream s, dnum v)
+        VAR rawbytes buffer;
+        PackRawBytes v,buffer,\Network,1,\IntX:=LINT;
+        SocketSend s.soc,\RawData:=buffer,\NoOfBytes:=8;
+    ERROR
+        RAISE ;
+    ENDPROC
+    
+    PROC Decode_Float(VAR LabComm_Stream s,VAR num v, \ VAR rawbytes collect)
+        VAR rawbytes buffer;
+        SocketReceive s.soc,\RawData:=buffer,\ReadNoOfBytes:=4;
+        UnpackRawBytes buffer,\Network,1,v,\Float4;
+        IF Present(collect) THEN
+            CopyRawBytes buffer, 1, collect, (RawBytesLen(collect)+1);
+        ENDIF
+    ERROR
+        RAISE ;
+    ENDPROC
+       
+    PROC Encode_Float(VAR LabComm_Stream s, num v)
+        VAR rawbytes buffer;
+        PackRawBytes v, buffer,\Network,1,\Float4;
+        SocketSend s.soc,\RawData:=buffer,\NoOfBytes:=4;
+    ERROR
+        RAISE ;
+    ENDPROC
+
+    PROC Decode_String(VAR LabComm_Stream st,VAR string s, \ VAR rawbytes collect)
+        VAR rawbytes buffer;
+        VAR num length;
+        IF Present(collect) THEN
+            Decode_Packed st, length, \collect:=collect;
+        ELSE
+            Decode_Packed st, length;
+        ENDIF
+        SocketReceive st.soc,\Str:=s,\ReadNoOfBytes:=length;
+        IF Present(collect) THEN
+            PackRawBytes s, collect, (RawBytesLen(collect)+1), \ASCII;
+        ENDIF
+    ERROR
+        RAISE ;
+    ENDPROC
+    
+    PROC Encode_String(VAR LabComm_Stream st, string s)
+        VAR rawbytes buffer;
+        VAR num length;
+        length := StrLen(s);
+        Encode_Packed st, length;
+        SocketSend st.soc,\Str:=s,\NoOfBytes:=length;
+    ERROR
+        RAISE ;
+    ENDPROC
+    
+    PROC Encoder_Register_Sample(VAR Encoder e, VAR LabComm_Stream st, VAR LabComm_Encoder_Sample s)
+        s.user_id := e.next_user_id;
+        e.next_user_id := e.next_user_id + 1;
+        Encode_Packed st, SAMPLE_DECL;
+        Encode_Packed st, s.user_id;
+        Encode_String st, s.name;
+        % s.prefix + ":Encode_Signature_" + s.name % e, st;
+    ERROR
+        RAISE ;
+    ENDPROC
+    
+    PROC Collect_Array(VAR LabComm_Stream s, VAR rawbytes sig)
+        VAR num num_dim;
+        VAR num dims;
+        Decode_Packed s, num_dim, \collect:=sig;
+        FOR i FROM 1 TO num_dim DO
+            Decode_Packed s, dims, \collect:=sig;
+        ENDFOR
+        Collect_Signature s, sig;
+    ERROR
+        RAISE ;
+    ENDPROC
+    
+    PROC Collect_Struct(VAR LabComm_Stream s, VAR rawbytes sig)
+        VAR num num_elements;
+        VAR string tmp;
+        Decode_Packed s, num_elements, \collect:=sig;
+        FOR i FROM 1 TO num_elements DO
+            Decode_String s, tmp, \collect:=sig;
+            Collect_Signature s, sig;
+        ENDFOR
+    ERROR
+        RAISE ;
+    ENDPROC
+    
+    PROC Collect_Signature(VAR LabComm_Stream s, VAR rawbytes sig)
+        VAR num type_id;
+        Decode_Packed s, type_id, \collect:=sig;
+        TEST type_id
+        CASE STRUCT_TYPE:
+            Collect_Struct s, sig;
+        CASE ARRAY_TYPE:
+            Collect_Array s, sig;
+        CASE BYTE_TYPE, BOOL_TYPE, SHORT_TYPE, INT_TYPE, LONG_TYPE, SHORT_TYPE:
+        DEFAULT:
+            RAISE IMPLEMENTATION_LIMIT_REACHED;
+        ENDTEST
+    ERROR
+        RAISE ;
+    ENDPROC
+
+    PROC Decode_One(VAR Decoder d, VAR LabComm_Stream s, VAR LabComm_Decoder_Sample samples{*})
+        VAR rawbytes buffer;
+        VAR num packet_type;
+        VAR num user_id;
+        VAR string type_name;
+        Decode_Packed s, packet_type;
+        WHILE packet_type = SAMPLE_DECL DO
+            Decode_Packed s, user_id;
+            Decode_String s, type_name;
+            Collect_Signature s, buffer;
+            FOR i FROM 1 TO Dim(samples, 1) DO
+                % samples{i}.prefix + ":Reg_If_Signature_Of_" + samples{i}.name % samples{i}, buffer, user_id;
+            ENDFOR
+            Decode_Packed s, packet_type;
+        ENDWHILE
+        IF packet_type >= SAMPLE_DATA THEN
+            FOR i FROM 1 TO Dim(samples, 1) DO
+                IF samples{i}.user_id = packet_type THEN
+                    % samples{i}.prefix + ":Decode_And_Handle_" + samples{i}.name % d, s, samples{i};
+                ENDIF
+            ENDFOR
+            RETURN ;
+        ENDIF
+        RAISE UNKNOWN_PACKET_TYPE;
+    ERROR
+        RAISE ;
+    ENDPROC
+
+    PROC Init_Decoder(VAR Decoder d, VAR LabComm_Stream s)
+        VAR string version;
+        Decode_String s,version;
+        IF version<>LabCommVersion THEN
+            RAISE INCORRECT_LABCOMM_VERSION;
+        ENDIF
+    ERROR
+        RAISE ;
+    ENDPROC
+    
+    PROC Init_Encoder(VAR Encoder e, VAR LabComm_Stream s)
+        Encode_String s, LabCommVersion;
+        e.next_user_id := SAMPLE_DATA;
+    ERROR
+        RAISE ;
+    ENDPROC
+
+ENDMODULE

@@ -1,0 +1,8 @@
+sample struct {
+  int x;
+  int y;
+  int z;
+} foo;
+
+sample int bar;
+

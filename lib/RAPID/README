@@ -1,0 +1,104 @@
+The implementation of LabComm in RAPID
+
+Limitations of this implementation:
+ - The type double is not available due to limitations in RAPID. There is a
+   non-integer type with 64 bits but there is not marshalling utilities for it.
+ - Variable sized arrays is not available. There is no dynamic allocation,
+   possible solution is a max-size array (1024) and a integervalue denoting the
+   size.
+ - A RECORD (struct) cannot contain an array, but fixed size arrays are
+   available both in structs and stand alone. The current implementation creates
+   a RECORD with one member for each index in the array. Not an omptimal
+   solution, the alternativ would be a seperate variable.
+ - Decoding and encoding is done directly from a TCP socket.
+ - Every generated procedure is namespaced by declaring them LOCAL to the
+   generated module. They must be called by using runtime binding of procedure
+   names ( % proc_name % arg1, arg2, ...;). The generated types are not
+   declared local.
+
+Usage:
+
+# Declare a stream, LabComm_Stream:
+	$ VAR LabComm_Stream st;
+This contains a socketdev wich must be created and connected or instatiated
+through an accept.
+	$ SocketCreate st.soc;
+	$ SocketConnect st.soc, "127.0.0.1", 55555;
+or
+	$ SocketAccept server_socket, st.soc;
+
+# Initiate Encoder and/or Decoder with the stream:
+	$ VAR Decoder d;
+	$ Init_Decoder d, st;
+
+	$ VAR Encoder e;
+	$ Init_Encoder e, st;
+This will read/write the version of LabComm to ensure compatibility, current
+version is "LabComm2013".
+
+# Initiate the labcomm samples:
+LabComm trusts the application to manage each sample. It requests the samples,
+as a list, when performing decoding or encoding.
+This is done through the generated code which implies the procedures are LOCAL
+and must be called with runtime bindings.
+When initiating a decoder sample the name of the callback procedure to receive
+such samples is suplied as a string.
+	$ PROC handle_samplename(prefix_samplename val)
+	$ ...
+	$ ENDPROC
+	$ VAR LabComm_Decoder_Sample ds{1};
+	$ % prefix:Dec_Reg_samplename % ds{1}, "handle_samplename";
+NOTE: The callback must be of type procedure and not function. Functions cannot
+be called with runtime bindings.
+
+When initiating an encoder sample the stream must be supplied to let the
+encoder send the sample signature.
+	$ VAR LabComm_Encoder_Sample es{1};
+	$ % prefix:Enc_Reg_samplename % e, st, es{1};
+
+# Encode and/or decode samples:
+	$ Decode_One d, st, ds;
+It returns as soon as any sample is decoded. The decoded sample is supplied as
+argument to the callback procedure registered with the corresponding sample.
+	$ VAR prefix_samplename val;
+	$ <init val>
+	$ % prefix:Encode_samplename % e, st, es{1}, val;
+
+# Complete example:
+
+## LabComm definition:
+example.lc >>
+sample struct {
+	short sum;
+	short terms[2];
+} foo;
+<< EOF
+
+## RAPID CODE
+PROC handle_foo(example_foo val)
+	IF val.sum = val.terms.e1 + val.terms.e2 THEN
+		TPWrite "Verification successfull!";
+	ELSE
+		TPWrite "Verification failed!";
+	ENDIF
+ENDPROC
+
+
+PROC main()
+	VAR Decoder d;
+	VAR Encoder e;
+	VAR LabComm_Stream st;
+	VAR LabComm_Encoder_Sample es{1};
+	VAR LabComm_Decoder_Sample ds{1};
+	VAR example_foo val := [2,[1,1]];
+	SocketCreate st.soc;
+	SocketConnect st.soc, "127.0.0.1", 55555;
+	Init_Decoder d, st;
+	Init_Encoder e, st;
+	% "example:Enc_Reg_foo" % e, st, es{1};
+	% "example:Dec_Reg_foo" % ds{1}, "handle_foo";
+	% "example:Encode_foo" % e, st, es{1}, val;
+	Decode_One d, st, ds;
+	SocketClose st.soc;
+ENDPROC
+

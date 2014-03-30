@@ -195,6 +195,36 @@ aspect Java_Void {
 
 aspect Java_CodeGen {
 
+  public void Program.J_gen(PrintStream ps, String pack) throws IOException {
+    Java_env env;
+/*
+    // Registration class
+    env = new Java_env(ps);
+    if (pack != null && pack.length() > 0) {
+      env.println("package " + pack + ";");
+    }
+    env.println("public class LabCommRegister {");
+    env.println();
+    env.indent();
+    Java_emitTypeRegister(env);
+    env.unindent();
+    env.println();
+    env.println("}");
+//    env.close();
+*/
+    env = new Java_env(ps);
+    for (int i = 0; i < getNumDecl(); i++) {
+      Decl d = getDecl(i);
+      try {
+        d.Java_emitClass(env, pack);
+      } catch (Error e) {
+	System.err.println(d.getName());
+	throw e;
+      }
+    }
+    env.close();
+  }
+
   public void Program.J_gen(String dir, String pack) throws IOException {
     Java_env env;
 /*
@@ -218,6 +248,29 @@ aspect Java_CodeGen {
         env = new Java_env(new File(dir, d.getName() + ".java"));
         d.Java_emitClass(env, pack);
         env.close();
+      } catch (Error e) {
+	System.err.println(d.getName());
+	throw e;
+      }
+    }
+  }
+
+  /** Experimental method for generating code to a map <classname, source> 
+    */
+  public void Program.J_gen(Map<String,String> src, String pack) throws IOException {
+    Java_env env;
+/*
+    // Registration class was commented out, so got removed in this copy
+*/
+    for (int i = 0; i < getNumDecl(); i++) {
+      Decl d = getDecl(i);
+      try {
+        ByteArrayOutputStream bs = new ByteArrayOutputStream();
+        PrintStream out = new PrintStream(bs);
+        env = new Java_env(out);
+        d.Java_emitClass(env, pack);
+        env.close();
+        src.put(d.getName(), bs.toString());
       } catch (Error e) {
 	System.err.println(d.getName());
 	throw e;
@@ -293,6 +346,21 @@ aspect Java_Class {
     }
   }
 
+//  TODO: ?
+//  Code snippet for making samples of user types extend their type 
+//  currently commented out. Is this a good idea?
+//
+//  syn String Type.getTypeName();
+//  eq Type.getTypeName() = getClass().getName();
+//  eq PrimType.getTypeName() = getName();
+//  eq UserType.getTypeName() = getName();
+
+//  syn boolean Type.isUserType();
+//  eq Type.isUserType() = false;
+//  eq UserType.isUserType() = true;
+//
+// plus use some lines down
+
   public void SampleDecl.Java_emitClass(Java_env env, String pack) {
     env.println("/* ");
     pp(env.getPrintStream());
@@ -309,7 +377,11 @@ aspect Java_Class {
     env.println("import se.lth.control.labcomm.LabCommHandler;");
     env.println("import se.lth.control.labcomm.LabCommSample;");
     env.println();
-    env.println("public class " + getName() + " implements LabCommSample {");
+    env.print("public class " + getName());
+//    if(getType().isUserType()) {
+//        env.print(" extends "+getType().getTypeName());
+//    }
+    env.println(" implements LabCommSample {");
     env.println();
     env.indent();
     getType().Java_emitInstance(env);
@@ -783,13 +855,13 @@ aspect Java_Info {
   }
 
   public void TypeDecl.Java_info(Java_env env) {
-    env.print("Java,typedef," + getName() + ",");
+    env.print(",Java,typedef," + getName() + ",");
     getType().Java_emitType(env);
     env.println();
   }
 
   public void SampleDecl.Java_info(Java_env env) {
-    env.print("Java,sample," + getName() + ",");
+    env.print(",Java,sample," + getName() + ",");
     getType().Java_emitType(env);
     env.println();
   }

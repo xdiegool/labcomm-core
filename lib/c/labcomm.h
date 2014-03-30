@@ -1,20 +1,33 @@
+/*
+  labcomm.h -- user interface for handling encoding and decoding of
+               labcomm samples.
+
+  Copyright 2006-2013 Anders Blomdell <anders.blomdell@control.lth.se>
+
+  This file is part of LabComm.
+
+  LabComm is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  LabComm is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifndef _LABCOMM_H_
 #define _LABCOMM_H_
 
-#ifdef ARM_CORTEXM3_CODESOURCERY
-  #include <machine/endian.h>
-#else
-  #include <endian.h>
-#endif
-
-// Some projects can not use stdio.h.
-#ifndef LABCOMM_NO_STDIO
-  #include <stdio.h>
-#endif
-
-#include <stdlib.h>
-#include <string.h>
 #include <stdarg.h>
+#include <stdint.h>
+#include <unistd.h>
+#include "labcomm_error.h"
+#include "labcomm_scheduler.h"
 
 /* Forward declaration */
 struct labcomm_encoder;
@@ -23,39 +36,21 @@ struct labcomm_decoder;
 /*
  * Signature entry
  */
-typedef struct labcomm_signature{
+struct labcomm_signature {
   int type;
   char *name;
   int (*encoded_size)(struct labcomm_signature *, void *); // void * == encoded_sample *
   int size;
   unsigned char *signature; 
+  int index;
+#ifdef LABCOMM_EXPERIMENTAL_CACHED_ENCODED_SIZE
   int cached_encoded_size; // -1 if not initialized or type is variable size
-} labcomm_signature_t;
+#endif
+};
 
 /*
  * Error handling.
  */
-
-/* Error IDs */
-enum labcomm_error {
-  LABCOMM_ERROR_ENUM_BEGIN_GUARD,	// _must_ be the first enum element. labcomm_error_get_str() depends on this.
-  LABCOMM_ERROR_ENC_NO_REG_SIGNATURE, 	
-  LABCOMM_ERROR_ENC_MISSING_DO_REG,
-  LABCOMM_ERROR_ENC_MISSING_DO_ENCODE,
-  LABCOMM_ERROR_ENC_BUF_FULL,
-  LABCOMM_ERROR_DEC_MISSING_DO_REG,
-  LABCOMM_ERROR_DEC_MISSING_DO_DECODE_ONE,
-  LABCOMM_ERROR_DEC_UNKNOWN_DATATYPE,
-  LABCOMM_ERROR_DEC_INDEX_MISMATCH,
-  LABCOMM_ERROR_DEC_TYPE_NOT_FOUND,
-  LABCOMM_ERROR_UNIMPLEMENTED_FUNC,
-  LABCOMM_ERROR_MEMORY,
-  LABCOMM_ERROR_USER_DEF,			
-  LABCOMM_ERROR_ENUM_END_GUARD		// _must_ be the last enum element. labcomm_error_get_str() depends on this.
-};
-
-/* Error strings. _must_ be the same order as in enum labcomm_error */
-extern const char *labcomm_error_strings[];
 
 /* The callback prototype for error handling.
  * First parameter is the error ID.
@@ -83,82 +78,66 @@ const char *labcomm_error_get_str(enum labcomm_error error_id);
 
 typedef int (*labcomm_handle_new_datatype_callback)(
   struct labcomm_decoder *decoder,
-  labcomm_signature_t *sig);
+  struct labcomm_signature *sig);
 
 void labcomm_decoder_register_new_datatype_handler(struct labcomm_decoder *d,
 		labcomm_handle_new_datatype_callback on_new_datatype);
 
+/*
+ * Dynamic memory handling
+ *   lifetime == 0     memory that will live for as long as the 
+ *                     encoder/decoder or that are allocated/deallocated 
+ *                     during the communication setup phase
+ *   otherwise         memory will live for approximately this number of
+ *                     sent/received samples
+ */
+struct labcomm_memory;
+
+void *labcomm_memory_alloc(struct labcomm_memory *m, int lifetime, size_t size);
+void *labcomm_memory_realloc(struct labcomm_memory *m, int lifetime, 
+			     void *ptr, size_t size);
+void labcomm_memory_free(struct labcomm_memory *m, int lifetime, void *ptr);
 
 /*
  * Decoder
  */
-
-typedef enum { 
-  labcomm_reader_alloc, 
-  labcomm_reader_free,
-  labcomm_reader_start, 
-  labcomm_reader_continue, 
-  labcomm_reader_end,
-  labcomm_reader_ioctl
-} labcomm_reader_action_t;
-
-typedef struct labcomm_reader {
-  void *context;
-  unsigned char *data;
-  int data_size;
-  int count;
-  int pos;
-  int (*read)(struct labcomm_reader *, labcomm_reader_action_t);
-  int (*ioctl)(struct labcomm_reader *, int, va_list);
-  labcomm_error_handler_callback on_error;
-}  labcomm_reader_t;
+struct labcomm_reader;
 
 struct labcomm_decoder *labcomm_decoder_new(
-  int (*reader)(labcomm_reader_t *, labcomm_reader_action_t),
-  void *reader_context);
+  struct labcomm_reader *reader,
+  struct labcomm_error_handler *error,
+  struct labcomm_memory *memory,
+  struct labcomm_scheduler *scheduler);
+void labcomm_decoder_free(
+  struct labcomm_decoder *decoder);
 int labcomm_decoder_decode_one(
   struct labcomm_decoder *decoder);
 void labcomm_decoder_run(
   struct labcomm_decoder *decoder);
-void labcomm_decoder_free(
-  struct labcomm_decoder *decoder);
+
+/* See labcomm_ioctl.h for predefined ioctl_action values */
+int labcomm_decoder_ioctl(struct labcomm_decoder *decoder, 
+			  uint32_t ioctl_action,
+			  ...);
 
 /*
  * Encoder
  */
-
-typedef enum { 
-  labcomm_writer_alloc,              /* Allocate all neccessary data */
-  labcomm_writer_free,               /* Free all allocated data */
-  labcomm_writer_start,              /* Start writing an ordinary sample */
-  labcomm_writer_continue,           /* Buffer full during ordinary sample */
-  labcomm_writer_end,                /* End writing ordinary sample */
-  labcomm_writer_start_signature,    /* Start writing signature */
-  labcomm_writer_continue_signature, /* Buffer full during signature */
-  labcomm_writer_end_signature,      /* End writing signature */
-} labcomm_writer_action_t;
-
-typedef struct labcomm_writer {
-  void *context;
-  unsigned char *data;
-  int data_size;
-  int count;
-  int pos;
-  int error;
-  int (*write)(struct labcomm_writer *, labcomm_writer_action_t, ...);
-  int (*ioctl)(struct labcomm_writer *, int, va_list);
-  labcomm_error_handler_callback on_error;
-} labcomm_writer_t;
+struct labcomm_writer;
 
 struct labcomm_encoder *labcomm_encoder_new(
-  int (*writer)(labcomm_writer_t *, labcomm_writer_action_t, ...),
-  void *writer_context);
+  struct labcomm_writer *writer,
+  struct labcomm_error_handler *error,
+  struct labcomm_memory *memory,
+  struct labcomm_scheduler *scheduler);
 void labcomm_encoder_free(
   struct labcomm_encoder *encoder);
 
 /* See labcomm_ioctl.h for predefined ioctl_action values */
 int labcomm_encoder_ioctl(struct labcomm_encoder *encoder, 
-			  int ioctl_action,
+			  uint32_t ioctl_action,
 			  ...);
+
+#define LABCOMM_VOID ((void*)1)
 
 #endif

@@ -1,0 +1,67 @@
+/* Topic types */
+sample struct {
+	string turtle_name;
+	float linear;
+	float angular;
+} velocity;
+
+sample struct {
+	string turtle_name;
+	float x;
+	float y;
+	float theta;
+	float linear_velocity;
+	float angular_velocity;
+} pose;
+
+sample struct {
+	string turtle_name;
+	float r;
+	float g;
+	float b;
+} color;
+
+/* Srv types */
+sample void clear;		/* Empty. */
+sample void clear_resp;		/* Empty. */
+
+sample void reset;		/* Empty. */
+sample void reset_resp;		/* Empty. */
+
+sample string kill;		/* Name of turtle. */
+sample void kill_resp;		/* Empty. */
+
+sample struct {
+	string name;
+	float x;
+	float y;
+	float theta;
+} spawn;			/* Coordinates and direction. */
+sample string spawn_resp;	/* Returns name of turtle */
+
+sample struct {
+	string turtle_name;
+	byte r;
+	byte g;
+	byte b;
+	byte width;
+	byte off;
+} set_pen;			/* Pen properties. */
+sample void set_pen_resp;	/* Empty. */
+
+/* TODO: The following two are duplicates. Change to typedefs when working. */
+
+sample struct {
+	string turtle_name;
+	float x;
+	float y;
+	float theta;
+} teleport_absolute;		/* Coordinates and direction. */
+sample void teleport_absolute_resp; /* Empty. */
+
+sample struct {
+	string turtle_name;
+	float linear;
+	float angular;
+} teleport_relative;		/* Similar to velocity but instant. */
+sample void teleport_relative_resp; /* Empty. */

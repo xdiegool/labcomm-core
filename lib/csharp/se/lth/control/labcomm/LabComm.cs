@@ -2,7 +2,9 @@ namespace se.lth.control.labcomm {
 
   public class LabComm {
 
-    /*
+   public const string VERSION = "LabComm2013";
+
+   /*
      * Predeclared aggregate type indices
      */
     public const int TYPEDEF          = 0x01;

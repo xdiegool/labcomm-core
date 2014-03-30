@@ -1,22 +1,48 @@
 ## Macros
+UNAME_S=$(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+  CC=gcc
+  CFLAGS=-std=c99 -g -Wall -Werror -O3  -I. -Itest 
+  LDFLAGS=-L.
+  LDLIBS=-llabcomm -lrt
+  MAKESHARED=gcc -o $1 -shared -Wl,-soname,$2 $3 -lc -lrt
+else ifeq ($(UNAME_S),Darwin)
+  CC=clang
+  CFLAGS=-g -Wall -Werror -O3  -I. -Itest \
+	 -DLABCOMM_COMPAT=\"labcomm_compat_osx.h\" \
+	 -Wno-tautological-compare -Wno-unused-function
+  LDFLAGS=-L.
+  LDLIBS=-llabcomm
+  MAKESHARED=clang -o $1 -shared -Wl,-install_name,$2 $3 -lc
+else
+  $(error Unknown system $(UNAME_S))
+endif
 
-# Use LLVM clang if it's found.
-CC = $(shell hash clang 2>/dev/null && echo clang || echo gcc)
-CFLAGS = -g -Wall -Werror -I. -Itest
-LDFLAGS = -L.
-LDLIBS_TEST = -lcunit -llabcomm
+OBJS=labcomm_memory.o \
+     labcomm_error.o \
+     labcomm_default_error_handler.o \
+     labcomm_default_memory.o \
+     labcomm_default_scheduler.o \
+     labcomm_time.o labcomm_scheduler.o \
+     labcomm_encoder.o labcomm_decoder.o \
+     labcomm.o \
+     labcomm_dynamic_buffer_writer.o \
+     labcomm_fd_reader.o labcomm_fd_writer.o \
+     labcomm_pthread_scheduler.o 
 
-OBJS= labcomm.o labcomm_dynamic_buffer_writer.o labcomm_fd_reader_writer.o labcomm_mem_reader.o labcomm_mem_writer.o
-LABCOMMC_PATH=../../compiler
-LABCOMMC_JAR=$(LABCOMMC_PATH)/labComm.jar
+#FIXME: labcomm_mem_reader.o labcomm_mem_writer.o
+LABCOMM_JAR=../../compiler/labComm.jar
+LABCOMM=java -jar $(LABCOMM_JAR) 
 
+TESTS=test_labcomm_basic_type_encoding test_labcomm_generated_encoding \
+      test_signature_numbers \
+      test_labcomm \
+      test_labcomm_pthread_scheduler \
+#
+#FIXME: test_labcomm test_labcomm_errors
 TEST_DIR=test
-TESTDATA_DIR=$(TEST_DIR)/testdata
-TEST_GEN_DIR=$(TESTDATA_DIR)/gen
 
 VPATH=$(TEST_DIR)
-
-CREATED_DIRS=$(TEST_DIR) $(TESTDATA_DIR) $(TEST_GEN_DIR)
 
 # Enable experimental objects by invoking make like `make LABCOMM_EXPERIMENTAL=true`
 ifeq ($(LABCOMM_EXPERIMENTAL),true)
@@ -31,46 +57,59 @@ endif
 
 .PHONY: all run-test clean distclean
 
-all: liblabcomm.a test/test_labcomm_errors
+all: liblabcomm.a liblabcomm.so.1
 
 liblabcomm.a: $(OBJS)
-	ar -r liblabcomm.a $^
+	ar -r $@ $^
 
+liblabcomm.so.1: $(OBJS:%.o=%.pic.o)
+	$(call MAKESHARED,$@,$@,$^)
 
 labcomm.o : labcomm.c labcomm.h  labcomm_private.h
 
 labcomm_fd_reader_writer.o : labcomm_fd_reader_writer.c  labcomm_fd_reader_writer.h  labcomm.h  labcomm_private.h
 
-$(TEST_DIR)/labcomm_mem_reader.o: labcomm_fd_reader_writer.c labcomm_fd_reader_writer.h
+#$(TEST_DIR)/labcomm_mem_reader.o: labcomm_fd_reader_writer.c labcomm_fd_reader_writer.h
 
-$(TEST_DIR)/labcomm_mem_writer.o: labcomm_mem_writer.c labcomm_mem_writer.h cppmacros.h
+#$(TEST_DIR)/labcomm_mem_writer.o: labcomm_mem_writer.c labcomm_mem_writer.h cppmacros.h
 
 ethaddr.o: ethaddr.c
 
-$(CREATED_DIRS):
-	mkdir -p $@
+run-test: $(TESTS:%=run-test-%)
 
-## NB! the tests need CUnit to be installed
-run-test: $(TEST_DIR)/test_labcomm $(TEST_DIR)/test_labcomm_errors \
-	  | $(TEST_DIR)
-	test/test_labcomm
-	test/test_labcomm_errors
+run-test-%: $(TEST_DIR)/% | $(TEST_DIR)
+	$<
 
 $(TEST_DIR)/%.o: $(TEST_DIR)/%.c
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-$(TEST_DIR)/%: $(TEST_DIR)/%.o | liblabcomm.a
-	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS) $(LDLIBS_TEST)
+.PRECIOUS: $(TEST_DIR)/%
+$(TEST_DIR)/%: $(TEST_DIR)/%.o 
+	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS) 
+
+$(TEST_DIR)/gen:
+	mkdir -p $@
+
+.PRECIOUS: $(TEST_DIR)/gen/%.c
+.PRECIOUS: $(TEST_DIR)/gen/%.h
+$(TEST_DIR)/gen/%.c $(TEST_DIR)/gen/%.h: $(TEST_DIR)/%.lc | $(TEST_DIR)/gen
+	$(LABCOMM) \
+		--c=$(TEST_DIR)/gen/$*.c \
+		--h=$(TEST_DIR)/gen/$*.h \
+		$<
 
 $(TEST_GEN_DIR)/%.c $(TEST_GEN_DIR)/%.h: $(TESTDATA_DIR)/%.lc \
-					 $(LABCOMMC_JAR) | $(TEST_GEN_DIR)
-	java -jar $(LABCOMMC_JAR) \
+					 $(LABCOMM_JAR) | $(TEST_GEN_DIR)
+	$(LABCOMM) \
 		--c=$(patsubst %.h,%.c,$@) --h=$(patsubst %.c,%.h,$@) $<
 
-$(LABCOMMC_JAR):
+$(LABCOMM_JAR):
 	@echo "======Building LabComm compiler======"
-	cd $(LABCOMMC_PATH); ant jar
+	cd $(shell dirname $(LABCOMM_JAR)); ant jar
 	@echo "======End building LabComm compiler======"
+
+%.pic.o:	%.c
+	$(CC) -fPIC $(CFLAGS) -c -o $@ $<
 
 %.o: %.c %.h
 
@@ -81,10 +120,25 @@ clean:
 	$(RM) test/*.gch
 	$(RM) test/test_labcomm_errors
 	$(RM) test/testdata/gen/*.[cho]
+	$(RM) test/gen/*.[cho]
 	$(RM) $(TEST_DIR)/test_labcomm
 
 distclean: clean
+	$(RM) liblabcomm.so.1
 	$(RM) liblabcomm.a
 
 # Extra dependencies
-$(TEST_DIR)/test_labcomm:  $(TEST_GEN_DIR)/test_sample.o
+$(TEST_DIR)/test_labcomm_basic_type_encoding.o: labcomm_private.h
+
+$(TEST_DIR)/test_labcomm_generated_encoding.o: labcomm_private.h
+$(TEST_DIR)/test_labcomm_generated_encoding.o: $(TEST_DIR)/gen/generated_encoding.h
+$(TEST_DIR)/test_labcomm_generated_encoding : $(TEST_DIR)/gen/generated_encoding.o
+
+$(TEST_DIR)/test_labcomm:  $(TEST_DIR)/gen/test_sample.o
+$(TEST_DIR)/test_signature_numbers.c: $(TEST_DIR)/gen/another_encoding.h
+$(TEST_DIR)/test_signature_numbers.c: $(TEST_DIR)/gen/generated_encoding.h
+$(TEST_DIR)/test_signature_numbers: $(TEST_DIR)/gen/another_encoding.o
+$(TEST_DIR)/test_signature_numbers: $(TEST_DIR)/gen/generated_encoding.o
+labcomm_fd_reader.o: labcomm_private.h
+labcomm_fd_writer.o: labcomm_private.h
+labcomm_dynamic_buffer_writer.o: labcomm_private.h

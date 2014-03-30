@@ -12,6 +12,8 @@ struct labcomm_mem_reader_context_t {
   unsigned char *enc_data;
 };
 
-int labcomm_mem_reader( labcomm_reader_t *r, labcomm_reader_action_t action);
+int labcomm_mem_reader(labcomm_reader_t *r, 
+		       labcomm_reader_action_t action,
+		       ...);
 
 #endif

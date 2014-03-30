@@ -2,6 +2,8 @@ package se.lth.control.labcomm;
 
 public class LabComm {
 
+  public static final String VERSION = "LabComm2013";
+
   /*
    * Predeclared aggregate type indices
    */
@@ -23,7 +25,7 @@ public class LabComm {
   public static final int STRING           = 0x27;
 
   /*
-   * Start of 
+   * Start of user declared types
    */
   public static final int FIRST_USER_INDEX = 0x40;
 

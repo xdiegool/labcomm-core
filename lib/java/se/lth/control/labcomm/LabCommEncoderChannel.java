@@ -12,15 +12,28 @@ public class LabCommEncoderChannel implements LabCommEncoder {
   private DataOutputStream data;
   private LabCommEncoderRegistry registry;
 
-  public LabCommEncoderChannel(LabCommWriter writer) {
+  public LabCommEncoderChannel(LabCommWriter writer, 
+			       boolean emitVersion) throws IOException {
     this.writer = writer;
     bytes = new ByteArrayOutputStream();
     data = new DataOutputStream(bytes);
     registry = new LabCommEncoderRegistry();
+    if (emitVersion) {
+      encodeString(LabComm.VERSION);
+    }
   }
 
-  public LabCommEncoderChannel(OutputStream writer) {
-    this(new WriterWrapper(writer));
+  public LabCommEncoderChannel(LabCommWriter writer) throws IOException {
+    this(writer, true);
+  }
+
+  public LabCommEncoderChannel(OutputStream writer, 
+			       boolean emitVersion) throws IOException {
+    this(new WriterWrapper(writer), emitVersion);
+  }
+
+  public LabCommEncoderChannel(OutputStream writer) throws IOException {
+    this(new WriterWrapper(writer), true);
   }
 
   public void register(LabCommDispatcher dispatcher) throws IOException {
@@ -94,13 +107,16 @@ public class LabCommEncoderChannel implements LabCommEncoder {
   }
 
   public void encodePacked32(long value) throws IOException {
-    long tmp = value;
+    byte[] tmp = new byte[5];
+    long v = value & 0xffffffff;
+    int i;
 
-    while( tmp >= 0x80 ) {
-      encodeByte( (byte) ((tmp & 0x7f) | 0x80 ) );
-      tmp >>>= 7;
+    for (i = 0 ; i == 0 || v != 0 ; i++, v = (v >> 7)) {
+      tmp[i] = (byte)(v & 0x7f);
     }
-    encodeByte( (byte) (tmp & 0x7f) );
+    for (i = i - 1 ; i >= 0 ; i--) {
+      encodeByte((byte)(tmp[i] | (i!=0?0x80:0x00)));
+    }
   }
 }
 

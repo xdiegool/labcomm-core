@@ -38,27 +38,18 @@ aspect Signature {
     }
 
     public void addInt(int value, String comment) {
-	byte[] packed = new byte[5];
-	
-//	System.out.println("addInt: "+value);
-	int tmp = value;
-	int len = 0;
+	byte[] tmp = new byte[5];
+ 	long v = value & 0xffffffff;
+        int i, j;
 
-	while( tmp >= 0x80 ) {
-		packed[len] = (byte) ((tmp & 0x7f) | 0x80 ) ;
-		tmp >>>= 7;
-		len++;
-	}
-	packed[len] = (byte) (tmp & 0x7f);
-//	System.out.println("packed: "+packed[len]+ "len = "+len);
-
-	add(java.util.Arrays.copyOf(packed, len+1), comment);
-
-//      byte[] data = new byte[4];
-//      for (int i = 0 ; i < 4 ; i++) {
-//        data[3 - i] = (byte)((value >> (8 * i)) & 0xff);
-//      }
-//      add(data, comment);
+        for (i = 0 ; i == 0 || v != 0 ; i++, v = (v >> 7)) {
+          tmp[i] = (byte)(v & 0x7f);
+        }
+ 	byte[] packed = new byte[i];
+        for (i = i - 1, j = 0 ; i >= 0 ; i--, j++) {
+	  packed[j] = (byte)(tmp[i] | (i!=0?0x80:0x00));
+        }
+	add(packed, comment);
     }
 
     public void addString(String value, String comment) {

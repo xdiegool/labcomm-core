@@ -89,14 +89,14 @@
 #??  +----+----+----+----+
 #  
 #   
-# type numbers and lengths do not have a fixed lenght, but are packed into sequences 
-# of 7 bit chunks, represented in bytes with the high bit meaning that more data 
-# is to come.
-#
-# The chunks are sent "little endian": each 7 bit chunk is more significant than
-# the previous. See encode_packed32 and decode_packed32 in in Codec classes below.
-
+# type numbers and lengths do not have a fixed lenght, but are packed into 
+# sequences of 7 bit chunks, represented in bytes with the high bit meaning 
+# that more data is to come.
+ 
+import types
 import struct as packer
+
+VERSION = "LabComm2013"
 
 i_TYPEDEF = 0x01
 i_SAMPLE  = 0x02
@@ -317,18 +317,26 @@ class array(object):
             encoder.encode_packed32(i)
         encoder.encode_type_number(self.decl)
 
-    def min_max_shape(self, l, depth=0, shape=[]):
-        if isinstance(l, list):
+    def min_max_shape(self, l, depth, shape):
+        if isinstance(l, types.StringTypes):
+            return shape
+        try:
             length = len(l)
             if len(shape) <= depth:
                 shape.append((length, length))
+                pass
             else:
                 (low, high) = shape[depth]
                 low = min(low, length)
                 high = max(high, length)
                 shape[depth] = (low, high)
+                pass
             for e in l:
                 shape = self.min_max_shape(e, depth + 1, shape)
+                pass
+            pass
+        except TypeError:
+            pass
         return shape    
 
     def shape(self, l):
@@ -357,7 +365,8 @@ class array(object):
         return depth
 
     def encode_value(self, encoder, value, depth):
-        if depth and isinstance(value, list):
+        # if depth and isinstance(value, list):
+        if depth:
             for e in value:
                 self.encode_value(encoder, e, depth - 1)
         else:
@@ -432,7 +441,7 @@ class struct:
                 decl.encode(encoder, obj[name])
         else:
             for (name, decl) in self.field:
-                decl.encode(encoder, obj.__getattribute__(name))
+                decl.encode(encoder, getattr(obj, name))
 
     def decode_decl(self, decoder):
         n_field = decoder.decode_packed32()
@@ -471,34 +480,19 @@ TYPEDEF = typedef(None, None)
 ARRAY = array(None, None)
 STRUCT = struct({})
 
-class anonymous_object(object):
-    def __init__(self):
-        self._attr = {}
-
+class anonymous_object(dict):
     def __setattr__(self, name, value):
         if name.startswith("_"):
             super(anonymous_object, self).__setattr__(name, value)
         else:
-            self._attr[name] = value
+            self[name] = value
 
     def __getattr__(self, name):
         if name.startswith("_"):
             return super(anonymous_object, self).__getattr__(name)
         else:
-            return self._attr[name]
+            return self[name]
 
-    def __getattribute__(self, name):
-        if name.startswith("_"):
-            return super(anonymous_object, self).__getattribute__(name)
-        else:
-            return self._attr[name]
-
-    def __iter__(self):
-        return self._attr.iteritems()
-
-    def __repr__(self):
-        return self._attr.__repr__()
-    
 class Codec(object):
     def __init__(self):
         self.type_to_name = {}
@@ -555,6 +549,7 @@ class Encoder(Codec):
     def __init__(self, writer):
         super(Encoder, self).__init__()
         self.writer = writer
+        self.writer.start(self, VERSION)
 
     def pack(self, format, *args):
         self.writer.write(packer.pack(format, *args))
@@ -580,12 +575,14 @@ class Encoder(Codec):
             decl.encode_decl(self)
             
     def encode_packed32(self, v):
-        tmp = v & 0xffffffff;
-        
-        while(tmp >= 0x80 ):
-          self.encode_byte( (tmp & 0x7f) | 0x80 ) 
-          tmp >>= 7
-        self.encode_byte(tmp & 0x7f)
+        v = v & 0xffffffff
+        tmp = [ v & 0x7f ]
+        v = v >> 7
+        while v:
+            tmp.append(v & 0x7f | 0x80)
+            v = v >> 7
+        for c in reversed(tmp):
+            self.encode_byte(c) 
 
     def encode_type(self, index):
         self.encode_packed32(index)
@@ -598,7 +595,7 @@ class Encoder(Codec):
             self.pack("!b", 0)
 
     def encode_byte(self, v):
-        self.pack("!b", v)
+        self.pack("!B", v)
 
     def encode_short(self, v):
         self.pack("!h", v)
@@ -625,6 +622,7 @@ class Decoder(Codec):
     def __init__(self, reader):
         super(Decoder, self).__init__()
         self.reader = reader
+        self.reader.start(self, VERSION)
         
     def unpack(self, format):
         size = packer.calcsize(format)
@@ -666,14 +664,13 @@ class Decoder(Codec):
         return result
     
     def decode_packed32(self):
-        res = 0
-        i = 0
-        cont = True
-        while (cont):
-          c = self.decode_byte()
-          res |=  (c & 0x7f) << 7*i
-          cont = (c & 0x80) != 0;
-        return res
+        result = 0
+        while True:
+            tmp = self.decode_byte()
+            result = (result << 7) | (tmp & 0x7f)
+            if (tmp & 0x80) == 0:
+                break
+        return result
 
     def decode_type_number(self):
         return self.decode_packed32()
@@ -682,7 +679,7 @@ class Decoder(Codec):
         return self.unpack("!b") != 0
     
     def decode_byte(self):
-        return self.unpack("!b")
+        return self.unpack("!B")
     
     def decode_short(self):
         return self.unpack("!h")

@@ -1,0 +1,4 @@
+sample struct {
+  int decimation;
+  int signature_index;
+} set_decimation;

@@ -1,0 +1,9 @@
+typedef struct {
+  string says;
+} animal;
+
+sample animal cow;
+sample animal dog;
+sample struct {
+  string says;
+} duck;

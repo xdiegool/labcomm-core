@@ -1,3 +1,25 @@
+/*
+  labcomm_private.h -- semi private declarations for handling encoding and 
+                       decoding of labcomm samples.
+
+  Copyright 2006-2013 Anders Blomdell <anders.blomdell@control.lth.se>
+
+  This file is part of LabComm.
+
+  LabComm is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  LabComm is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifndef _LABCOMM_PRIVATE_H_
 #define _LABCOMM_PRIVATE_H_
 
@@ -8,8 +30,10 @@
   #include <stdio.h>
 #endif
 
-#include <stdlib.h>
+#include <stdint.h>
+//#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "labcomm.h"
 
 /*
@@ -38,73 +62,171 @@
 #define LABCOMM_USER     0x40
 
 /*
+ * Macro to automagically call constructors in modules compiled 
+ * with the labcomm compiler. If __attribute__((constructor)) is
+ * not supported, these calls has to be done first in main program.
+ */
+#ifndef LABCOMM_CONSTRUCTOR
+#define LABCOMM_CONSTRUCTOR __attribute__((constructor))
+#endif
+
+/*
+ * Semi private dynamic memory declarations
+ */
+
+struct labcomm_memory {
+  void *(*alloc)(struct labcomm_memory *m, int lifetime, size_t size);
+  void *(*realloc)(struct labcomm_memory *m, int lifetime, 
+		   void *ptr, size_t size);
+  void (*free)(struct labcomm_memory *m, int lifetime, void *ptr);
+  void *context;
+};
+
+/*
  * Semi private decoder declarations
  */
-typedef void (*labcomm_handler_typecast_t)(void *, void *);
+typedef void (*labcomm_handler_function)(void *value, void *context);
 
-typedef void (*labcomm_decoder_typecast_t)(
-  struct labcomm_decoder *,
-  labcomm_handler_typecast_t,
-  void *);
+typedef void (*labcomm_decoder_function)(
+  struct labcomm_reader *r,
+  labcomm_handler_function handler,
+  void *context);
 
-typedef struct labcomm_decoder {
-  void *context;
-  labcomm_reader_t reader;
-  void (*do_register)(struct labcomm_decoder *, 
-		      labcomm_signature_t *, 
-		      labcomm_decoder_typecast_t,
-		      labcomm_handler_typecast_t,
-		      void *context);
-  int (*do_decode_one)(struct labcomm_decoder *decoder);
-  labcomm_error_handler_callback on_error;
-  labcomm_handle_new_datatype_callback on_new_datatype;
-} labcomm_decoder_t;
+struct labcomm_reader_action_context;
+
+struct labcomm_reader_action {
+  /* 'alloc' is called at the first invocation of 'labcomm_decoder_decode_one' 
+     on the decoder containing the reader. If 'labcomm_version' != NULL
+     and non-empty the transport layer may use it to ensure that
+     compatible versions are used.
+
+     Returned value:
+       >  0    Number of bytes allocated for buffering
+       <= 0    Error
+  */
+  int (*alloc)(struct labcomm_reader *r, 
+	       struct labcomm_reader_action_context *action_context, 
+	       char *labcomm_version);
+  /* 'free' returns the resources claimed by 'alloc' and might have other
+     reader specific side-effects as well.
+
+     Returned value:
+       == 0    Success
+       != 0    Error
+  */
+  int (*free)(struct labcomm_reader *r, 
+	      struct labcomm_reader_action_context *action_context);
+  /* 'start' is called at the following instances:
+     1. When a sample is registered 
+          (local_index != 0, remote_index == 0, value == NULL)
+     2. When a sample definition is received 
+          (local_index != 0, remote_index != 0, value == NULL)
+     3. When a sample is received
+          (local_index != 0, remote_index != 0, value != NULL)
+   */
+  int (*start)(struct labcomm_reader *r, 
+	       struct labcomm_reader_action_context *action_context,
+	       int local_index, int remote_index,
+	       struct labcomm_signature *signature,
+	       void *value);
+  int (*end)(struct labcomm_reader *r, 
+	     struct labcomm_reader_action_context *action_context);
+  int (*fill)(struct labcomm_reader *r, 
+	      struct labcomm_reader_action_context *action_context);
+  int (*ioctl)(struct labcomm_reader *r, 
+	       struct labcomm_reader_action_context *action_context,
+	       int local_index, int remote_index,
+	       struct labcomm_signature *signature, 
+	       uint32_t ioctl_action, va_list args);
+};
+
+struct labcomm_reader_action_context {
+  struct labcomm_reader_action_context *next;
+  const struct labcomm_reader_action *action;
+  void *context;  
+};
+
+struct labcomm_reader {
+  struct labcomm_reader_action_context *action_context;
+  struct labcomm_memory *memory;
+  /* The following fields are initialized by labcomm_decoder_new */
+  struct labcomm_decoder *decoder;
+  unsigned char *data;
+  int data_size;
+  int count;
+  int pos;
+  int error;
+};
+
+int labcomm_reader_alloc(struct labcomm_reader *r, 
+			 struct labcomm_reader_action_context *action_context, 
+			 char *labcomm_version);
+int labcomm_reader_free(struct labcomm_reader *r, 
+			struct labcomm_reader_action_context *action_context);
+int labcomm_reader_start(struct labcomm_reader *r, 
+			 struct labcomm_reader_action_context *action_context,
+			 int local_index, int remote_index,
+			 struct labcomm_signature *signature,
+			 void *value);
+int labcomm_reader_end(struct labcomm_reader *r, 
+		       struct labcomm_reader_action_context *action_context);
+int labcomm_reader_fill(struct labcomm_reader *r, 
+			struct labcomm_reader_action_context *action_context);
+int labcomm_reader_ioctl(struct labcomm_reader *r, 
+			 struct labcomm_reader_action_context *action_context,
+			 int local_index, int remote_index,
+			 struct labcomm_signature *signature, 
+			 uint32_t ioctl_action, va_list args);
 
 /*
  * Non typesafe registration function to be called from
  * generated labcomm_decoder_register_* functions.
  */
-void labcomm_internal_decoder_register(
-  labcomm_decoder_t *, 
-  labcomm_signature_t *, 
-  labcomm_decoder_typecast_t,
-  labcomm_handler_typecast_t,
+int labcomm_internal_decoder_register(
+  struct labcomm_decoder *d, 
+  struct labcomm_signature *s, 
+  labcomm_decoder_function decoder,
+  labcomm_handler_function handler,
   void *context);
+
+int labcomm_internal_decoder_ioctl(struct labcomm_decoder *decoder, 
+				   struct labcomm_signature *signature,
+				   uint32_t ioctl_action, va_list args);
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 
 #define LABCOMM_DECODE(name, type)					\
-  static inline type labcomm_read_##name(labcomm_reader_t *r) {		\
+  static inline type labcomm_read_##name(struct labcomm_reader *r) {	\
     type result; int i;							\
     for (i = sizeof(type) - 1 ; i >= 0 ; i--) {				\
       if (r->pos >= r->count) {						\
-	r->read(r, labcomm_reader_continue);				\
+	labcomm_reader_fill(r, r->action_context);			\
+	if (r->error < 0) {						\
+	  return 0;							\
+	}								\
       }									\
       ((unsigned char*)(&result))[i] = r->data[r->pos];			\
       r->pos++;								\
     }									\
     return result;							\
-  }									\
-  static inline type labcomm_decode_##name(labcomm_decoder_t *d) {	\
-    return labcomm_read_##name(&d->reader);				\
   }
 
 #else
 
 #define LABCOMM_DECODE(name, type)					\
-  static inline type labcomm_read_##name(labcomm_reader_t *r) {		\
+  static inline type labcomm_read_##name(struct labcomm_reader *r) {	\
     type result; int i;							\
     for (i = 0 ; i < sizeof(type) ; i++) {				\
       if (r->pos >= r->count) {						\
-	r->read(r, labcomm_reader_continue);				\
+	labcomm_reader_fille(r, r->action_context);			\
+	if (r->error < 0) {						\
+	  return 0;							\
+	}								\
       }									\
       ((unsigned char*)(&result))[i] = r->data[r->pos];			\
       r->pos++;								\
     }									\
     return result;							\
-  }									\
-  static inline type labcomm_decode_##name(labcomm_decoder_t *d) {	\
-    return labcomm_read_##name(&d->reader);				\
   }
 
 #endif
@@ -117,160 +239,171 @@ LABCOMM_DECODE(long, long long)
 LABCOMM_DECODE(float, float)
 LABCOMM_DECODE(double, double)
 
-static inline unsigned int labcomm_unpack32(labcomm_reader_t *r)
+static inline unsigned int labcomm_read_packed32(struct labcomm_reader *r)
 {
-  unsigned int res=0;
-  unsigned char i=0;
-  unsigned char cont=1;
-  do {
-    if (r->pos >= r->count) {	
-      r->read(r, labcomm_reader_continue);
-    }
-#ifdef IDIOTDEBUG
-    {
-	int k;
-	for(k=0; k<=r->pos; k++) printf("%2x\n", r->data[k]);
-    }
-#endif
-    unsigned char c = r->data[r->pos];
-    res |= (c & 0x7f) << 7*i;
-    cont = c & 0x80;
-#ifdef IDIOTDEBUG
-    printf("unpack32: %x (%x, %d, %d)\n", res, c, i, cont);
-#endif
-    i++;
-    r->pos++;
-  } while(cont);
-  return res;
-}
-
-static inline unsigned int labcomm_decode_packed32(labcomm_decoder_t *d) 
-{
-    return labcomm_unpack32(&d->reader);
-}
-
-static inline char *labcomm_read_string(labcomm_reader_t *r)
-{
-  char *result;
-  int length, i; 
+  unsigned int result = 0;
   
-  length = labcomm_unpack32(r);
-  result = malloc(length + 1);
-  for (i = 0 ; i < length ; i++) {
+  while (1) {
+    unsigned char tmp;
+
     if (r->pos >= r->count) {	
-      r->read(r, labcomm_reader_continue);
+      labcomm_reader_fill(r, r->action_context);
+      if (r->error != 0) {
+	goto out;
+      }
     }
-    result[i] = r->data[r->pos];
+    tmp = r->data[r->pos];
     r->pos++;
+    result = (result << 7) | (tmp & 0x7f);
+    if ((tmp & 0x80) == 0) { 
+      break; 
+    }
   }
-  result[length] = 0;
+out:
   return result;
 }
-
-static inline char *labcomm_decode_string(labcomm_decoder_t *d)
+ 
+static inline char *labcomm_read_string(struct labcomm_reader *r)
 {
-  return labcomm_read_string(&d->reader);
-}
-
-static inline int labcomm_buffer_read(struct labcomm_reader *r, 
-				      labcomm_reader_action_t action)
-{
-  // If this gets called, it is an error, 
-  // so note error and let producer proceed
-  r->context = r;
-  r->pos = 0;
-  return 0;
-}
-
-static inline int labcomm_buffer_reader_error(struct labcomm_reader *r) 
-{
-  return r->context != NULL;
-} 
-
-static inline void labcomm_buffer_reader_setup(
-  labcomm_reader_t *r,
-  void *data,
-  int length)
-{
-  r->context = NULL; // Used as error flag
-  r->data = data;  
-  r->data_size = length;
-  r->count = length;
-  r->pos = 0;
-  r->read = labcomm_buffer_read;
+  char *result = NULL;
+  int length, pos; 
+  
+  length = labcomm_read_packed32(r);
+  result = labcomm_memory_alloc(r->memory, 1, length + 1);
+  for (pos = 0 ; pos < length ; pos++) {
+    if (r->pos >= r->count) {	
+      labcomm_reader_fill(r, r->action_context);
+      if (r->error < 0) {
+	goto out;
+      }
+    }
+    result[pos] = r->data[r->pos];
+    r->pos++;
+  }
+out:
+  result[pos] = 0;
+  return result;
 }
 
 /*
  * Semi private encoder declarations
  */
-typedef void (*labcomm_encode_typecast_t)(
-  struct labcomm_encoder *,
+typedef int (*labcomm_encoder_function)(struct labcomm_writer *,
+					void *value);
+struct labcomm_writer_action_context;
+
+struct labcomm_writer_action {
+  int (*alloc)(struct labcomm_writer *w, 
+	       struct labcomm_writer_action_context *action_context, 
+	       char *labcomm_version);
+  int (*free)(struct labcomm_writer *w, 
+	      struct labcomm_writer_action_context *action_context);
+  /* 'start' is called right before a sample is to be sent. In the 
+     case of a sample or typedef, 'value' == NULL.
+
+     Returned value:
+       == 0          Success -> continue sending the sample
+       == -EALREADY  Success -> silently skip sending the sample,
+                                'end' will not be called
+       < 0           Error
+   */
+  int (*start)(struct labcomm_writer *w, 
+	       struct labcomm_writer_action_context *action_context,
+	       int index, struct labcomm_signature *signature,
+	       void *value);
+  int (*end)(struct labcomm_writer *w, 
+	     struct labcomm_writer_action_context *action_context);
+  int (*flush)(struct labcomm_writer *w, 
+	       struct labcomm_writer_action_context *action_context); 
+  int (*ioctl)(struct labcomm_writer *w, 
+	       struct labcomm_writer_action_context *action_context, 
+	       int index, struct labcomm_signature *signature, 
+	       uint32_t ioctl_action, va_list args);
+};
+
+struct labcomm_writer_action_context {
+  struct labcomm_writer_action_context *next;
+  const struct labcomm_writer_action *action;
+  void *context;  
+};
+
+struct labcomm_writer {
+  struct labcomm_writer_action_context *action_context;
+  struct labcomm_memory *memory;
+  /* The following fields are initialized by labcomm_encoder_new */
+  struct labcomm_encoder *encoder;
+  unsigned char *data;
+  int data_size;
+  int count;
+  int pos;
+  int error;
+};
+
+int labcomm_writer_alloc(struct labcomm_writer *w, 
+			 struct labcomm_writer_action_context *action_context, 
+			 char *labcomm_version);
+int labcomm_writer_free(struct labcomm_writer *w, 
+			struct labcomm_writer_action_context *action_context);
+int labcomm_writer_start(struct labcomm_writer *w, 
+			 struct labcomm_writer_action_context *action_context,
+			 int index, struct labcomm_signature *signature,
+			 void *value);
+int labcomm_writer_end(struct labcomm_writer *w, 
+		       struct labcomm_writer_action_context *action_context);
+int labcomm_writer_flush(struct labcomm_writer *w, 
+			 struct labcomm_writer_action_context *action_context); 
+int labcomm_writer_ioctl(struct labcomm_writer *w, 
+			 struct labcomm_writer_action_context *action_context, 
+			 int index, struct labcomm_signature *signature, 
+			 uint32_t ioctl_action, va_list args);
+
+int labcomm_internal_encoder_register(
+  struct labcomm_encoder *encoder, 
+  struct labcomm_signature *signature, 
+  labcomm_encoder_function encode);
+
+int labcomm_internal_encode(
+  struct labcomm_encoder *encoder, 
+  struct labcomm_signature *signature, 
+  labcomm_encoder_function encode,
   void *value);
 
-typedef struct labcomm_encoder {
-  void *context;
-  labcomm_writer_t writer;
-  void (*do_register)(struct labcomm_encoder *encoder, 
-		      labcomm_signature_t *signature,
-		      labcomm_encode_typecast_t);
-  void (*do_encode)(struct labcomm_encoder *encoder, 
-		    labcomm_signature_t *signature, 
-		    void *value);
-  labcomm_error_handler_callback on_error;
-} labcomm_encoder_t;
-
-void labcomm_internal_encoder_register(
-  labcomm_encoder_t *encoder, 
-  labcomm_signature_t *signature, 
-  labcomm_encode_typecast_t encode);
-
-void labcomm_internal_encode(
-  labcomm_encoder_t *encoder, 
-  labcomm_signature_t *signature, 
-  void *value);
-
-/* Should these really be visible? */
-void labcomm_encoder_start(struct labcomm_encoder *e,
-                           labcomm_signature_t *s) ;
-
-//HERE BE DRAGONS: is the signature_t* needed here?
-void labcomm_encoder_end(struct labcomm_encoder *e,
-                           labcomm_signature_t *s) ;
-
-
+int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder, 
+				   struct labcomm_signature *signature,
+				   uint32_t ioctl_action, va_list args);
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 
 #define LABCOMM_ENCODE(name, type)					\
-  static inline void labcomm_write_##name(labcomm_writer_t *w, type data) { \
+  static inline int labcomm_write_##name(struct labcomm_writer *w, type data) { \
     int i;								\
     for (i = sizeof(type) - 1 ; i >= 0 ; i--) {				\
       if (w->pos >= w->count) { /*buffer is full*/			\
-	w->write(w, labcomm_writer_continue);				\
+        int err;							\
+	err = labcomm_writer_flush(w, w->action_context);		\
+	if (err != 0) { return err; }					\
       }									\
       w->data[w->pos] = ((unsigned char*)(&data))[i];			\
       w->pos++;								\
     }									\
-  }									\
-  static inline void labcomm_encode_##name(labcomm_encoder_t *e, type data) { \
-    labcomm_write_##name(&e->writer, data);				\
+    return 0;								\
   }
 
 #else
 
 #define LABCOMM_ENCODE(name, type)					\
-  static inline void labcomm_write_##name(labcomm_writer_t *w, type data) { \
+  static inline int labcomm_write_##name(struct labcomm_writer *w, type data) { \
     int i;								\
     for (i = 0 ; i < sizeof(type) ; i++) {				\
       if (w->pos >= w->count) {						\
-	w->write(w, labcomm_writer_continue);			\
+        int err;							\
+	err = labcomm_writer_flush(w, w->action_context);		\
+	if (err != 0) { return err; }					\
       }									\
       w->data[w->pos] = ((unsigned char*)(&data))[i];			\
       w->pos++;								\
     }									\
-  }									\
-  static inline void labcomm_encode_##name(labcomm_encoder_t *e, type data) { \
-    labcomm_write_##name(&e->writer, data);				\
+    return 0;								\
   }
 
 #endif
@@ -283,57 +416,105 @@ LABCOMM_ENCODE(long, long long)
 LABCOMM_ENCODE(float, float)
 LABCOMM_ENCODE(double, double)
 
-/* 
- * Pack the 32 bit number data as a sequence of 7 bit chunks, represented in bytes 
- * with the high bit meaning that more data is to come.
- *
- * The chunks are sent "little endian": each 7 bit chunk is more significant than
- * the previous.
- */ 
-static inline void labcomm_pack32(labcomm_writer_t *w, unsigned int data)
+static inline int labcomm_write_packed32(struct labcomm_writer *w, 
+					 unsigned int data)
 {
-  unsigned int tmp; 
-
-  tmp = data;
-
-  while (tmp >= 0x80) {
-    if (w->pos >= w->count) {	
-      w->write(w, labcomm_writer_continue);
+  unsigned char tmp[5];
+  int i;
+  
+  for (i = 0 ; i == 0 || data ; i++, data = (data >> 7)) {
+    tmp[i] = data & 0x7f;
+  }
+  for (i = i - 1 ; i >= 0 ; i--) {
+    if (w->pos >= w->count) {					
+      int err;
+      err = labcomm_writer_flush(w, w->action_context);	
+      if (err != 0) { return err; }
     }
-    w->data[w->pos] = (tmp & 0x7f) | 0x80;
-    w->pos++;
-    tmp >>= 7;
-  } 
-  w->data[w->pos] = tmp; 
-  w->pos++;
+    w->data[w->pos++] = tmp[i] | (i?0x80:0x00);
+  }
+  return 0;
 }
 
-static inline void labcomm_encode_packed32(labcomm_encoder_t *e, unsigned int data) 
-{ 
-    labcomm_pack32(&e->writer, data);				
-}
-
-static inline void labcomm_write_string(labcomm_writer_t *w, char *s)
+static inline int labcomm_write_string(struct labcomm_writer *w, char *s)
 {
-  int length, i; 
+  int length, i, err; 
 
   length = strlen((char*)s);
-  labcomm_pack32(w, length);
+  err = labcomm_write_packed32(w, length);
+  if (err != 0) { return err; }
   for (i = 0 ; i < length ; i++) {
     if (w->pos >= w->count) {	
-      w->write(w, labcomm_writer_continue);
+      int err;
+      err = labcomm_writer_flush(w, w->action_context);	
+      if (err != 0) { return err; }
     }
     w->data[w->pos] = s[i];
     w->pos++;
   }
+  return 0;
 }
 
-static inline void labcomm_encode_string(labcomm_encoder_t *e, 
-					 char *s)
+/* Size of packed32 variable */
+static inline int labcomm_size_packed32(unsigned int data)
 {
-  labcomm_write_string(&e->writer, s);
+  int result = 0;
+  int i;
+
+  for (i = 0 ; i == 0 || data ; i++, data = (data >> 7)) {
+    result++;
+  }
+  return result;
+
 }
 
-void labcomm_encode_type_index(labcomm_encoder_t *e, labcomm_signature_t *s);
+/*
+ * Macros for handling arrays indexed by signature index
+ */
+
+#define LABCOMM_SIGNATURE_ARRAY_DEF(name, kind)	\
+  struct {					\
+    int first;					\
+    int last;					\
+    kind *data;					\
+  } name
+
+#define LABCOMM_SIGNATURE_ARRAY_DEF_INIT(name, kind)		\
+  LABCOMM_SIGNATURE_ARRAY_DEF(name, kind) = { 0, 0, NULL }
+
+#define LABCOMM_SIGNATURE_ARRAY_INIT(name, kind)		\
+  name.first = 0; name.last = 0; name.data = NULL;		\
+  name.data = (kind *)name.data; /* typechecking no-op */
+
+#define LABCOMM_SIGNATURE_ARRAY_FREE(memory, name, kind)	\
+  if (name.data) { labcomm_memory_free(memory, 0, name.data); }	\
+  name.data = (kind *)NULL; /* typechecking */
+
+void *labcomm_signature_array_ref(struct labcomm_memory * memory,
+				  int *first, int *last, void **data,
+				  int size, int index);
+/*
+ * NB: the pointer returned by LABCOMM_SIGNATURE_ARRAY_REF might be
+ *     rendered invalid by a subsequent call to LABCOMM_SIGNATURE_ARRAY_REF
+ *     on the same SIGNATURE_ARRAY, so make sure not to use the result if 
+ *     any other code might have made a call to LABCOMM_SIGNATURE_ARRAY_REF
+ *     on the same SIGNATURE_ARRAY.
+ */
+#define LABCOMM_SIGNATURE_ARRAY_REF(memory, name, kind, index)		\
+  (name.data = (kind *)name.data, /* typechecking no-op */		\
+   (kind *)(labcomm_signature_array_ref(memory,				\
+					&name.first, &name.last,	\
+					(void **)&name.data,		\
+					sizeof(kind), index)))
+
+#define LABCOMM_SIGNATURE_ARRAY_FOREACH(name, kind, var)		\
+  for (name.data = (kind *)name.data, /* typechecking no-op */		\
+       var = name.first ; var < name.last ; var++)
+
+/* Give signature a free local index, this may not be used concurrently */
+void labcomm_set_local_index(struct labcomm_signature *signature);
+
+/* Get the local index for a signature */
+int labcomm_get_local_index(struct labcomm_signature *s);
 
 #endif
