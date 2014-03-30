@@ -25,3 +25,18 @@ sample struct {
   int a[2];
   int b[2,3];
 } TwoFixedArrays;
+
+typedef void avoid;
+
+sample avoid doavoid;
+
+// examples of errors: void may not be used
+// in structs or arrays
+//
+// sample struct {
+//  int a;
+//  avoid error;
+//} foo;
+//
+//sample void error2[2] ;
+//sample avoid error3[_];

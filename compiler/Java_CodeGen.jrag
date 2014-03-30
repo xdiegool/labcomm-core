@@ -196,6 +196,7 @@ aspect Java_StructName {
 aspect Java_Void {
 
   syn boolean Decl.isVoid() = getType().isVoid();
+  syn boolean UserType.isVoid() = decl().isVoid();
   syn boolean Type.isVoid() = false;
   syn boolean VoidType.isVoid() = true;
 
@@ -746,6 +747,10 @@ aspect Java_Class {
 		    " not declared");
   }
 
+  public boolean VoidType.Java_needInstance() {
+    return false;
+  }
+
   public boolean PrimType.Java_needInstance() {
     return false;
   }
@@ -864,13 +869,15 @@ aspect Java_Info {
 
   public void TypeDecl.Java_info(Java_env env) {
     env.print(",Java,typedef," + getName() + ",");
-    getType().Java_emitType(env);
+    getType().Java_emitType(env); 
+    env.print(",not_applicable_for_Java");
     env.println();
   }
 
   public void SampleDecl.Java_info(Java_env env) {
     env.print(",Java,sample," + getName() + ",");
     getType().Java_emitType(env);
+    env.print(",not_applicable_for_Java");
     env.println();
   }
 

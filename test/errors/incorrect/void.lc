@@ -1,0 +1,12 @@
+typedef void avoid;
+
+// examples of errors: void may not be used
+// in structs or arrays
+//
+sample struct {
+  int a;
+  avoid error_1;
+} foo;
+
+sample void error_2[2] ;
+sample avoid error_3[_];

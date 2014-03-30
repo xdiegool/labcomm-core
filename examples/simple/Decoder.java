@@ -5,7 +5,7 @@ import java.io.InputStream;
 import se.lth.control.labcomm.LabCommDecoderChannel;
 
 public class Decoder
-  implements theTwoInts.Handler, anotherTwoInts.Handler, IntString.Handler, TwoArrays.Handler, TwoFixedArrays.Handler
+  implements theTwoInts.Handler, anotherTwoInts.Handler, IntString.Handler, TwoArrays.Handler, TwoFixedArrays.Handler, doavoid.Handler
 
 {
 
@@ -20,6 +20,7 @@ public class Decoder
     IntString.register(decoder, this);
     TwoArrays.register(decoder, this);
     TwoFixedArrays.register(decoder, this);
+    doavoid.register(decoder, this);
 
     try {
       System.out.println("Running decoder.");
@@ -72,6 +73,10 @@ public class Decoder
     }
     System.out.println();
   }
+  public void handle_doavoid() throws java.io.IOException {
+    System.out.println("Got doavoid");
+  }
+
 
 
   public static void main(String[] arg) throws Exception {

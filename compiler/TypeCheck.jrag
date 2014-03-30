@@ -1,0 +1,36 @@
+aspect TypeCheck {
+  public void ASTNode.typeCheck() {
+      // calls to the different type checks to be performed
+      nullTypeCheck();
+  }
+
+// void is not allowed as a field in a struct or an array element
+  
+  syn boolean Type.isNull();
+  eq Type.isNull() = false;
+  eq VoidType.isNull() = true;
+  eq UserType.isNull() = decl().isNull();
+
+  syn boolean TypeDecl.isNull();
+  eq TypeDecl.isNull() = getType().isNull();
+  
+  public void ASTNode.nullTypeCheck() {}
+ 
+  public void Field.nullTypeCheck() {
+    if(getType().isNull()) {
+      error("field " + getName() + " of struct "+ declName()+ " may not be of type void");
+    }
+  }
+
+  public void ParseArrayType.nullTypeCheck() {
+    if(getType().isNull()) {
+      error("elements of array "+declName()+" may not be of type void");
+    }
+  }
+
+  public void ArrayType.nullTypeCheck() {
+    if(getType().isNull()) {
+      error("elements of array "+declName()+" may not be of type void");
+    }
+  }
+} 

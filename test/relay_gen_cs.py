@@ -16,7 +16,7 @@ if __name__ == '__main__':
     f = open(sys.argv[1])
     sample = []
     for l in map(lambda s: s.strip(), f):
-        lang,kind,func,arg = l[1:].split(l[0])
+        lang,kind,func,arg,dummy = l[1:].split(l[0])
         if lang == 'C#' and kind == 'sample':
             sample.append((func, arg))
             pass

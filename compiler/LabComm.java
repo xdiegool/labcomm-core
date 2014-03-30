@@ -249,6 +249,10 @@ public class LabComm {
 	if (prettyOnStdout) {
 	  ast.pp(System.out);
 	}
+      } else {
+          // Catch-all for compilation errors
+          System.err.println("Error in specification");
+          System.exit(3);
       }
     }
   } 

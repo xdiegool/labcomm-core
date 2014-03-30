@@ -645,6 +645,10 @@ aspect CS_Class {
 		    " not declared");
   }
 
+  public boolean VoidType.CS_needInstance() {
+    return false;
+  }
+
   public boolean PrimType.CS_needInstance() {
     return false;
   }
@@ -772,13 +776,15 @@ aspect CS_Info {
 
   public void TypeDecl.CS_info(CS_env env, String namespace) {
     env.print(";C#;typedef;" + namespace + getName() + ";");
-    getType().CS_emitType(env);
+    getType().CS_emitType(env) ;
+    env.print(";not_applicable_for_C#");
     env.println();
   }
 
   public void SampleDecl.CS_info(CS_env env, String namespace) {
     env.print(";C#;sample;" + namespace + getName() + ";");
     getType().CS_emitType(env);
+    env.print(";not_applicable_for_C#");
     env.println();
   }
 

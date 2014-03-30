@@ -1,12 +1,12 @@
 TESTS=basic simple nested
 LABCOMM_JAR=../compiler/labComm.jar
-LABCOMM=java -jar $(LABCOMM_JAR) 
+LABCOMM=java -jar $(LABCOMM_JAR)
 
 CFLAGS=-O3 -g -Wall -Werror
 
-all:	
+all:
 
-test: $(TESTS:%=test_%)
+test: $(TESTS:%=test_%) compiler_errors
 #	PYTHONPATH=../lib/python \
 #		./test_encoder_decoder.py --labcomm="$(LABCOMM)" basic.lc
 
@@ -14,12 +14,12 @@ test: $(TESTS:%=test_%)
 clean distclean:
 	rm -rf gen
 
-.PHONY: test_%
+.PHONY: test_% 
 test_%: gen/%/signatures.py \
 	gen/%/c_relay \
 	gen/%/cs_relay.exe \
 	gen/%/java_relay.class \
-	gen/%/java_code 
+	gen/%/java_code
 	PYTHONPATH=../lib/python ./test_encoder_decoder.py \
 		--signatures=gen/$*/signatures.py \
 		--test tee gen/$*/testdata \
@@ -27,6 +27,20 @@ test_%: gen/%/signatures.py \
 		--test mono gen/$*/cs_relay.exe /dev/stdin /dev/stdout \
 		--test java \\-cp gen/$*:../lib/java/labcomm.jar java_relay \
 			    /dev/stdin /dev/stdout
+
+# test cases for compiler error checking
+.PHONY: compiler_errors testErrorsOK testErrorsNOK
+
+compiler_errors: testErrorsOK testErrorsNOK
+
+# tests that should succeed
+testErrorsOK: $(wildcard errors/correct/*.lc)
+	./test_errors.py --labcomm="$(LABCOMM)" --testOK $^
+
+# tests that should fail
+testErrorsNOK: $(wildcard errors/incorrect/*.lc)
+	./test_errors.py --labcomm="$(LABCOMM)" --testNOK $^
+
 .PRECIOUS: gen/%/.dir
 gen/%/.dir:
 	mkdir -p gen/$*
@@ -52,7 +66,7 @@ gen/%/c_relay.c: gen/%/typeinfo relay_gen_c.py Makefile
 .PRECIOUS: gen/%/c_relay
 gen/%/c_relay: gen/%/c_relay.c gen/%/c_code.c Makefile
 	$(CC) $(CFLAGS) -o $@ $< -I../lib/c -I. -L..//lib/c \
-		gen/$*/c_code.c -llabcomm 
+		gen/$*/c_code.c -llabcomm
 
 # C# relay test rules
 .PRECIOUS: gen/%/cs_code.cs
