@@ -27,6 +27,6 @@ void labcomm_error_fatal_global(enum labcomm_error error,
 				char *format,
 				...)
 {
-  fprintf(stderr, "Fatal error %d\n", error);
+  printf("Fatal error %d\n", error);
   exit(1);
 }
