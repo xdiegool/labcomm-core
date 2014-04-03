@@ -93,8 +93,8 @@ static int collect_flat_signature(
   result = decoder->reader->error;
   if (result < 0) { goto out; }
   if (type >= LABCOMM_USER) {
-    decoder->on_error(LABCOMM_ERROR_UNIMPLEMENTED_FUNC, 3,
-			"Implement %s ... (1) for type 0x%x\n", __FUNCTION__, type);
+    /* decoder->on_error(LABCOMM_ERROR_UNIMPLEMENTED_FUNC, 3, */
+	  printf("Implement %s ... (1) for type 0x%x\n", __FUNCTION__, type);
   } else {
     labcomm_write_packed32(writer, type); 
     switch (type) {
@@ -134,8 +134,8 @@ static int collect_flat_signature(
       } break;
       default: {
 	result = -ENOSYS;
-        decoder->on_error(LABCOMM_ERROR_UNIMPLEMENTED_FUNC, 3,
-				"Implement %s (2) for type 0x%x...\n", __FUNCTION__, type);
+        /* decoder->on_error(LABCOMM_ERROR_UNIMPLEMENTED_FUNC, 3, */
+	printf("Implement %s (2) for type 0x%x...\n", __FUNCTION__, type);
       } break;
     }
   }
@@ -257,8 +257,8 @@ static int decode_typedef_or_sample(struct labcomm_decoder *d, int kind)
     d->on_new_datatype(d, &signature);
     result = -ENOENT;
   } else if (entry->index && entry->index != remote_index) {
-    d->on_error(LABCOMM_ERROR_DEC_INDEX_MISMATCH, 5, 
-		"%s(): index mismatch '%s' (id=0x%x != 0x%x)\n", 
+    /* d->on_error(LABCOMM_ERROR_DEC_INDEX_MISMATCH, 5,  */
+	  printf("%s(): index mismatch '%s' (id=0x%x != 0x%x)\n", 
 		__FUNCTION__, signature.name, entry->index, remote_index);
     result = -ENOENT;
 #endif
@@ -307,6 +307,7 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
   remote_index = labcomm_read_packed32(d->reader);
   if (d->reader->error < 0) {
     result = d->reader->error;
+	printf("FAIL labcomm_read_packed32()\n");
     goto out;
   }
   if (remote_index == LABCOMM_TYPEDEF || remote_index == LABCOMM_SAMPLE) {
@@ -344,8 +345,10 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
       do_decode(d->reader, call_handler, &wrap);
       if (d->reader->error < 0) {
 	result = d->reader->error;
+	printf("FAIL: reader error\n");
       }
     } else {
+		printf("FAIL: enoent (ri: %d [%x])\n", remote_index, remote_index);
       result = -ENOENT;
     }
   }
