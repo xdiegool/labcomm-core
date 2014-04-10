@@ -10,6 +10,7 @@
 #include <types.h>
 #include <timers.h>
 #include <stdio.h>
+#include <private/stdioP.h>
 
 #ifdef __INT64_MAX__
 #undef INT64_MAX
@@ -24,5 +25,6 @@
   #undef _BIG_ENDIAN
 #endif
 
-#endif
+extern unsigned int cpuFrequency;
 
+#endif
