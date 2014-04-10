@@ -307,7 +307,6 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
   remote_index = labcomm_read_packed32(d->reader);
   if (d->reader->error < 0) {
     result = d->reader->error;
-	/* printf("FAIL labcomm_read_packed32()\n"); */
     goto out;
   }
   if (remote_index == LABCOMM_TYPEDEF || remote_index == LABCOMM_SAMPLE) {
@@ -345,10 +344,8 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
       do_decode(d->reader, call_handler, &wrap);
       if (d->reader->error < 0) {
 	result = d->reader->error;
-	/* printf("FAIL: reader error\n"); */
       }
     } else {
-		/* printf("FAIL: enoent (ri: %d [%x])\n", remote_index, remote_index); */
       result = -ENOENT;
     }
   }
