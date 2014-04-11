@@ -67,6 +67,7 @@ struct labcomm_decoder *labcomm_decoder_new(
     result->error = error;
     result->memory = memory;
     result->scheduler = scheduler;
+    result->on_error = on_error_fprintf;
     LABCOMM_SIGNATURE_ARRAY_INIT(result->local, struct sample_entry);
     LABCOMM_SIGNATURE_ARRAY_INIT(result->remote_to_local, int);
   }
@@ -93,8 +94,9 @@ static int collect_flat_signature(
   result = decoder->reader->error;
   if (result < 0) { goto out; }
   if (type >= LABCOMM_USER) {
-    /* decoder->on_error(LABCOMM_ERROR_UNIMPLEMENTED_FUNC, 3, */
-	  printf("Implement %s ... (1) for type 0x%x\n", __FUNCTION__, type);
+    decoder->on_error(LABCOMM_ERROR_UNIMPLEMENTED_FUNC, 3,
+		      "Implement %s ... (1) for type 0x%x\n",
+		      __FUNCTION__, type);
   } else {
     labcomm_write_packed32(writer, type); 
     switch (type) {
@@ -134,8 +136,9 @@ static int collect_flat_signature(
       } break;
       default: {
 	result = -ENOSYS;
-        /* decoder->on_error(LABCOMM_ERROR_UNIMPLEMENTED_FUNC, 3, */
-	printf("Implement %s (2) for type 0x%x...\n", __FUNCTION__, type);
+	decoder->on_error(LABCOMM_ERROR_UNIMPLEMENTED_FUNC, 3,
+			  "Implement %s (2) for type 0x%x...\n",
+			  __FUNCTION__, type);
       } break;
     }
   }
@@ -257,8 +260,8 @@ static int decode_typedef_or_sample(struct labcomm_decoder *d, int kind)
     d->on_new_datatype(d, &signature);
     result = -ENOENT;
   } else if (entry->index && entry->index != remote_index) {
-    /* d->on_error(LABCOMM_ERROR_DEC_INDEX_MISMATCH, 5,  */
-	  printf("%s(): index mismatch '%s' (id=0x%x != 0x%x)\n", 
+    d->on_error(LABCOMM_ERROR_DEC_INDEX_MISMATCH, 5,
+		"%s(): index mismatch '%s' (id=0x%x != 0x%x)\n",
 		__FUNCTION__, signature.name, entry->index, remote_index);
     result = -ENOENT;
 #endif
