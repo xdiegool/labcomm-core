@@ -10,7 +10,7 @@ ifeq ($(UNAME_S),Linux)
     CC=i586-wrs-vxworks-gcc
     LD=i586-wrs-vxworks-ld
     ALL_DEPS:=$(filter-out %.so.1, $(ALL_DEPS))
-    CFLAGS:=$(CFLAGS) -DLABCOMM_COMPAT=\"labcomm_compat_vxworks.h\" -DLABCOMM_NO_STDIO
+    CFLAGS:=$(CFLAGS) -DLABCOMM_COMPAT=\"labcomm_compat_vxworks.h\"
   else
     @echo 'Invalid target.'
   endif

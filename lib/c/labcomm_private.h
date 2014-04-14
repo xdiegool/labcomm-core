@@ -270,6 +270,11 @@ static inline char *labcomm_read_string(struct labcomm_reader *r)
   
   length = labcomm_read_packed32(r);
   result = labcomm_memory_alloc(r->memory, 1, length + 1);
+  if (!result) {
+    on_error_fprintf(LABCOMM_ERROR_MEMORY, 4, "%d byte at %s:%d",
+		     length+1, __FUNCTION__, __LINE__);
+    return NULL;
+  }
   for (pos = 0 ; pos < length ; pos++) {
     if (r->pos >= r->count) {	
       labcomm_reader_fill(r, r->action_context);
