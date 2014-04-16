@@ -4,21 +4,14 @@ ALL_DEPS=liblabcomm.a liblabcomm.so.1
 
 ifeq ($(UNAME_S),Linux)
   CFLAGS=-std=c99 -g -Wall -Werror -O3  -I. -Itest
-  ifndef TARGET
-    CC=gcc	
-  else ifeq ($(TARGET),vx)
-    CC=i586-wrs-vxworks-gcc
-    LD=i586-wrs-vxworks-ld
-    ALL_DEPS:=$(filter-out %.so.1, $(ALL_DEPS))
-    CFLAGS:=$(CFLAGS) -DLABCOMM_COMPAT=\"labcomm_compat_vxworks.h\"
-  else
-    @echo 'Invalid target.'
-  endif
+  CC=$(CROSS_COMPILE)gcc
+  LD=$(CROSS_COMPILE)ld
   LDFLAGS=-L.
   LDLIBS=-llabcomm -lrt
   MAKESHARED=gcc -o $1 -shared -Wl,-soname,$2 $3 -lc -lrt
 else ifeq ($(UNAME_S),Darwin)
-  CC=clang
+  CC=$(CROSS_COMPILE)clang
+  LD=$(CROSS_COMPILE)ld
   CFLAGS=-g -Wall -Werror -O3  -I. -Itest \
 	 -DLABCOMM_COMPAT=\"labcomm_compat_osx.h\" \
 	 -Wno-tautological-compare -Wno-unused-function
@@ -28,6 +21,13 @@ else ifeq ($(UNAME_S),Darwin)
 else
   $(error Unknown system $(UNAME_S))
 endif
+# TODO: How to handle Cygwin?
+
+ifeq ($(CROSS_COMPILE),i586-wrs-vxworks-)
+  ALL_DEPS:=$(filter-out %.so.1, $(ALL_DEPS)) # PIC is only supported for RTPs
+  CFLAGS:=$(CFLAGS) -DLABCOMM_COMPAT=\"labcomm_compat_vxworks.h\"
+endif
+# TODO: Support for Codesourcery ARM toolchain.
 
 OBJS=labcomm_memory.o \
      labcomm_error.o \
