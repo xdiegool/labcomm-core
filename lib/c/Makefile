@@ -3,7 +3,7 @@ UNAME_S=$(shell uname -s)
 ALL_DEPS=liblabcomm.a liblabcomm.so.1
 
 ifeq ($(UNAME_S),Linux)
-  CFLAGS=-std=c99 -g -Wall -Werror -O3  -I. -Itest
+  CFLAGS=-std=c99 -g -Wall -Werror -O3  -I. -Itest -Wno-unused-function
   CC=$(CROSS_COMPILE)gcc
   LD=$(CROSS_COMPILE)ld
   LDFLAGS=-L.

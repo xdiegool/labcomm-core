@@ -1,4 +1,5 @@
 .PHONY: all
+
 all:
 	echo To be done...
 	$(MAKE) -C twoway all
