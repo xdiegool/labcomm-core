@@ -14,6 +14,7 @@
 #include "labcomm_fd_writer.h"
 #include "labcomm_fd_reader.h"
 #include "test/gen/generated_encoding.h"
+#include "test/gen/test_sample.h"
 
 #define DATA_FILE "copy_test.dat"
 
@@ -37,6 +38,11 @@ static void handle_p(generated_encoding_P *v, void *context)
   labcomm_copy_generated_encoding_P(labcomm_default_memory, context, v);
 }
 
+static void handle_test_var(test_sample_test_var *v, void *context)
+{
+  labcomm_copy_test_sample_test_var(labcomm_default_memory, context, v);
+}
+
 int main(int argc, char **argv)
 {
   struct labcomm_encoder *encoder;
@@ -50,6 +56,8 @@ int main(int argc, char **argv)
   generated_encoding_I cache_I;
   generated_encoding_P p;
   generated_encoding_P cache_p;
+  test_sample_test_var test_var;
+  test_sample_test_var cache_test_var;
 
   fd = open(DATA_FILE, O_RDWR | O_CREAT | O_TRUNC, 0644);
   if (fd == -1)
@@ -83,6 +91,15 @@ int main(int argc, char **argv)
     p.a[i].i = 8 + i;
   labcomm_encode_generated_encoding_P(encoder, &p);
 
+  labcomm_encoder_register_test_sample_test_var(encoder);
+  test_var.n_0 = 2;
+  test_var.n_1 = 7;
+  test_var.a = calloc(test_var.n_0 * test_var.n_1, sizeof(*test_var.a));
+  for (int i = 0; i < test_var.n_0; i++)
+    for (int j = 0; j < test_var.n_1; j++)
+      test_var.a[i] = 10 * i + j;
+  labcomm_encode_test_sample_test_var(encoder, &test_var);
+
   labcomm_encoder_free(encoder);
   encoder = NULL;
   lseek(fd, 0, SEEK_SET);
@@ -95,6 +112,8 @@ int main(int argc, char **argv)
   labcomm_decoder_register_generated_encoding_S1(decoder, handle_s1, &cache_s1);
   labcomm_decoder_register_generated_encoding_B(decoder, handle_b, &cache_b);
   labcomm_decoder_register_generated_encoding_I(decoder, handle_i, &cache_I);
+  labcomm_decoder_register_test_sample_test_var(decoder, handle_test_var,
+						&cache_test_var);
   labcomm_decoder_register_generated_encoding_P(decoder, handle_p, &cache_p);
   labcomm_decoder_decode_one(decoder); /* S1 */
   labcomm_decoder_decode_one(decoder);
@@ -103,6 +122,8 @@ int main(int argc, char **argv)
   labcomm_decoder_decode_one(decoder); /* I */
   labcomm_decoder_decode_one(decoder);
   labcomm_decoder_decode_one(decoder); /* P */
+  labcomm_decoder_decode_one(decoder);
+  labcomm_decoder_decode_one(decoder); /* test_var */
   labcomm_decoder_decode_one(decoder);
 
   assert(cache_s1.i == s1.i);
@@ -120,6 +141,14 @@ int main(int argc, char **argv)
     assert(cache_p.a[i].i == p.a[i].i);
   free(p.a);
   puts("P copied ok");
+  assert(cache_test_var.n_0 == test_var.n_0);
+  assert(cache_test_var.n_1 == test_var.n_1);
+  for (int i = 0; i < test_var.n_0; i++)
+    for (int j = 0; j < test_var.n_1; j++)
+      assert(cache_test_var.a[p.n_0 * i + j] == test_var.a[p.n_0 * i + j]);
+  free(test_var.a);
+  puts("test_var copied ok");
+
   labcomm_decoder_free(decoder);
   close(fd);
   unlink(DATA_FILE);
@@ -132,4 +161,6 @@ int main(int argc, char **argv)
   puts("I deallocated ok");
   labcomm_copy_free_generated_encoding_P(labcomm_default_memory, &cache_p);
   puts("P deallocated ok");
+  labcomm_copy_free_test_sample_test_var(labcomm_default_memory, &cache_test_var);
+  puts("test_var deallocated ok");
 }
