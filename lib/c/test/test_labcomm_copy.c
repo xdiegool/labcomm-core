@@ -120,9 +120,16 @@ int main(int argc, char **argv)
     assert(cache_p.a[i].i == p.a[i].i);
   free(p.a);
   puts("P copied ok");
-
   labcomm_decoder_free(decoder);
   close(fd);
   unlink(DATA_FILE);
-  /* TODO: Implement labcomm_free_x */
+
+  labcomm_copy_free_generated_encoding_S1(labcomm_default_memory, &cache_s1);
+  puts("S1 deallocated ok");
+  labcomm_copy_free_generated_encoding_B(labcomm_default_memory, &cache_b);
+  puts("B deallocated ok");
+  labcomm_copy_free_generated_encoding_I(labcomm_default_memory, &cache_I);
+  puts("I deallocated ok");
+  labcomm_copy_free_generated_encoding_P(labcomm_default_memory, &cache_p);
+  puts("P deallocated ok");
 }

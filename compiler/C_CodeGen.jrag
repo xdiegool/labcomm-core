@@ -219,6 +219,7 @@ aspect C_CodeGen {
       getDecl(i).C_emitEncoderDeclaration(env);
       getDecl(i).C_emitSizeofDeclaration(env);
       getDecl(i).C_emitCopyDeclaration(env);
+      getDecl(i).C_emitCopyDeallocationDeclaration(env);
       env.println("");
     }
     C_emitConstructorDeclaration(env);
@@ -236,6 +237,7 @@ aspect C_CodeGen {
       getDecl(i).C_emitEncoderIoctl(env);
       getDecl(i).C_emitSizeof(env);
       getDecl(i).C_emitCopy(env);
+      getDecl(i).C_emitCopyDeallocation(env);
     }
     C_emitConstructor(env);
   }
@@ -816,17 +818,68 @@ aspect C_copy {
     env_dst.println(");");
   }
 
-  // Code for deallocation of dynamically allocated data 
+  // Code for deallocation of dynamically allocated data in a copy.
+
+  private void SampleDecl.C_emitCopyDeallocationFunctionParam(C_env env,
+							      String par)
+  {
+    env.println("void labcomm_copy_free_" + env.prefix + getName() + "(");
+    env.indent();
+    env.println("struct labcomm_memory *mem,");
+    env.println(env.prefix + getName() + " *" + par);
+    env.unindent();
+    env.print(")");
+  }
+
+  public void Decl.C_emitCopyDeallocationDeclaration(C_env env) {
+  }
+
+  public void SampleDecl.C_emitCopyDeallocationDeclaration(C_env env) {
+    C_emitCopyDeallocationFunctionParam(env, "c");
+    env.println(";");
+  }
+
+  public void Decl.C_emitCopyDeallocation(C_env env) {
+    throw new Error(this.getClass().getName() +
+		    ".C_emitCopy(C_env env)" +
+		    " not declared");
+  }
+
+  public void TypeDecl.C_emitCopyDeallocation(C_env env) {
+  }
+
+  public void SampleDecl.C_emitCopyDeallocation(C_env env) {
+    String par = "par";
+    env = env.nestStruct(par).setPointer();
+
+    C_emitCopyDeallocationFunctionParam(env, par);
+    env.println("");
+    env.println("{");
+    env.indent();
+    getType().C_emitCopyDeallocation(env);
+    // if (C_isDynamic()) {
+    //   env.println("{");
+    //   env.indent();
+    //   getType().C_emitCopyDeallocation(env);
+    //   env.unindent();
+    //   env.println("}");
+    // }
+    env.unindent();
+    env.println("}");
+  }
 
   public void Type.C_emitCopyDeallocation(C_env env) {
-    throw new Error(this.getClass().getName() + 
-  		    ".C_emitCopyDeallocation(C_env env)" + 
+    throw new Error(this.getClass().getName() +
+  		    ".C_emitCopyDeallocation(C_env env)" +
   		    " not declared");
+  }
+
+  public void VoidType.C_emitCopyDeallocation(C_env env) {
   }
 
   public void PrimType.C_emitCopyDeallocation(C_env env) {
     if (C_isDynamic()) {
-      env.println("labcomm_memory_free(mem, 1, " + 
+      env.println("labcomm_memory_free(mem, 1, " +
                   env.qualid + ");");
     }
   }
@@ -872,12 +925,14 @@ aspect C_copy {
 
   public void VariableArrayType.C_emitCopyDeallocation(C_env env) {
     super.C_emitCopyDeallocation(env);
-    env.println("labcomm_memory_free(r->memory, 1, " + 
-                env.qualid + ".a);");
+    env.println("labcomm_memory_free(mem, 1, " + 
+                env.qualid + env.memberAccessor() + "a);");
   }
 
   public void Field.C_emitCopyDeallocation(C_env env) {
-    getType().C_emitCopyDeallocation(env.nestStruct("." + getName()));
+    //getType().C_emitCopyDeallocation(env.nestStruct("." + getName()));
+    getType().C_emitCopyDeallocation(env.nestStruct(env.memberAccessor()
+						    + getName()));
   }
 }
 
