@@ -117,8 +117,12 @@ aspect C_CodeGenEnv {
       return this;
     }
 
-    public String memeberAccessor() {
+    public String memberAccessor() {
       return (rootIsPointer && (nestedLevel == rootLevel)) ? "->" : ".";
+    }
+
+    public String accessor() {
+      return (rootIsPointer && (nestedLevel == rootLevel)) ? "*" : "";
     }
   }
 
@@ -129,7 +133,7 @@ aspect C_CodeGenEnv {
   }
 
   public C_env FixedArrayType.C_Nest(C_env env) {
-    String index = env.memeberAccessor() + "a";
+    String index = env.memberAccessor() + "a";
     for (int i = 0 ; i < getNumExp() ; i++) {
       index += "[i_" + env.depth + "_" + i + "]";
     }
@@ -137,7 +141,7 @@ aspect C_CodeGenEnv {
   }
 
   public C_env VariableArrayType.C_Nest(C_env env) {
-    return env.nestArray(env.memeberAccessor() + "a[i_" + env.depth + "]");
+    return env.nestArray(env.memberAccessor() + "a[i_" + env.depth + "]");
   }
 
 
@@ -214,6 +218,7 @@ aspect C_CodeGen {
       getDecl(i).C_emitDecoderDeclaration(env);
       getDecl(i).C_emitEncoderDeclaration(env);
       getDecl(i).C_emitSizeofDeclaration(env);
+      getDecl(i).C_emitCopyDeclaration(env);
       env.println("");
     }
     C_emitConstructorDeclaration(env);
@@ -425,7 +430,7 @@ aspect C_Limit {
   }
 
   public String VariableSize.C_getLimit(C_env env, int i) {
-    return env.qualid + env.memeberAccessor() + "n_" + i;
+    return env.qualid + env.memberAccessor() + "n_" + i;
   }
   
 }
@@ -675,6 +680,26 @@ aspect C_Decoder {
 
 aspect C_copy {
 
+  private void SampleDecl.C_emitCopyFunctionParam(C_env env_src, String src,
+						  String dst)
+  {
+    env_src.println("void labcomm_copy_" + env_src.prefix + getName() + "(");
+    env_src.indent();
+    env_src.println("struct labcomm_memory *mem,");
+    env_src.println(env_src.prefix + getName() + " *" + dst + ",");
+    env_src.println(env_src.prefix + getName() + " *" + src);
+    env_src.unindent();
+    env_src.print(")");
+  }
+
+  public void Decl.C_emitCopyDeclaration(C_env env) {
+  }
+
+  public void SampleDecl.C_emitCopyDeclaration(C_env env) {
+    C_emitCopyFunctionParam(env, "src", "dst");
+    env.println(";");
+  }
+
   public void Decl.C_emitCopy(C_env env) {
     throw new Error(this.getClass().getName() + 
 		    ".C_emitCopy(C_env env)" + 
@@ -687,16 +712,11 @@ aspect C_copy {
   public void SampleDecl.C_emitCopy(C_env env) {
     final String dst = "dst";
     final String src = "src";
-
     C_env env_src = env.nestStruct(src).setPointer();
     C_env env_dst = env.nestStruct(dst).setPointer();
-    env_src.println("static void copy_" + env_src.prefix + getName() + "(");
-    env_src.indent();
-    env_src.println("struct labcomm_memory *mem ,");
-    env_src.println(env_src.prefix + getName() + " *" + dst + ",");
-    env_src.println(env_src.prefix + getName() + " *" + src);
-    env_src.unindent();
-    env_src.println(")");
+
+    C_emitCopyFunctionParam(env_src, src, dst);
+    env_src.println("");
     env_src.println("{");
     env_src.indent();
     getType().C_emitCopy(env_src, env_dst);
@@ -721,7 +741,8 @@ aspect C_copy {
   }
 
   public void PrimType.C_emitCopy(C_env env_src, C_env env_dst) {
-    env_src.println(env_dst.qualid + " = " + env_src.qualid + ";");
+    env_src.println(env_dst.accessor() + env_dst.qualid + " = " +
+		    env_src.accessor() + env_src.qualid + ";");
   }
 
   public void UserType.C_emitCopy(C_env env_src, C_env env_dst) {
@@ -735,7 +756,7 @@ aspect C_copy {
   }
 
   public void ArrayType.C_emitCopy(C_env env_src, C_env env_dst) {
-    C_emitCopyDecodeLimit(env_src);
+    C_emitCopyDecodeLimit(env_src, env_dst);
     C_emitCopyArrayAllocate(env_src, env_dst);
     env_src.println("{");
     env_src.indent();
@@ -760,23 +781,23 @@ aspect C_copy {
   }
 
   public void Field.C_emitCopy(C_env env_src, C_env env_dst) {
-    String fnam = env_src.memeberAccessor() + getName();
+    String fnam = env_src.memberAccessor() + getName();
     getType().C_emitCopy(env_src.nestStruct(fnam), env_dst.nestStruct(fnam));
   }
 
-  public void Exp.C_emitCopyDecodeLimit(C_env env, int i) {
+  public void Exp.C_emitCopyDecodeLimit(C_env env_src, C_env env_dst, int i) {
+    // Ordinary array has no length-member.
   }
 
-  public void VariableSize.C_emitCopyDecodeLimit(C_env env_src, int i,
-						 C_env env_dst)
-  {
-    String index = ".n_" + i;
-    env_src.println(env_dst.qualid + index + " = " + env_src.qualid + index + ";");
+  public void VariableSize.C_emitCopyDecodeLimit(C_env env_src, C_env env_dst, int i) {
+    String src = env_src.qualid + env_src.memberAccessor() + "n_" + i;
+    String dst = env_dst.qualid + env_dst.memberAccessor() + "n_" + i;
+    env_src.println(dst + " = " + src + ";");
   }
 
-  public void ArrayType.C_emitCopyDecodeLimit(C_env env) {
+  public void ArrayType.C_emitCopyDecodeLimit(C_env env_src, C_env env_dst) {
     for (int i = 0 ; i < getNumExp() ; i++) {
-      getExp(i).C_emitCopyDecodeLimit(env, i);
+      getExp(i).C_emitCopyDecodeLimit(env_src, env_dst, i);
     }
   }
 
@@ -786,10 +807,9 @@ aspect C_copy {
   public void VariableArrayType.C_emitCopyArrayAllocate(C_env env_src,
 							C_env env_dst)
   {
-    String access = (env_dst.nestedLevel == 1) ? "->" : ".";
-    env_src.print(env_dst.qualid + env_dst.memeberAccessor() +
+    env_src.print(env_dst.qualid + env_dst.memberAccessor() +
 	      "a = labcomm_memory_alloc(mem, 1, sizeof(" +
-		  env_src.qualid + env_src.memeberAccessor() + "a[0])");
+		  env_src.qualid + env_src.memberAccessor() + "a[0])");
     for (int i = 0 ; i < getNumExp() ; i++) {
       env_src.print(" * " + getExp(i).C_getLimit(env_src, i));
     }

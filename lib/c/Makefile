@@ -49,6 +49,7 @@ TESTS=test_labcomm_basic_type_encoding test_labcomm_generated_encoding \
       test_signature_numbers \
       test_labcomm \
       test_labcomm_pthread_scheduler \
+      test_labcomm_copy
 #
 #FIXME: test_labcomm test_labcomm_errors
 TEST_DIR=test
@@ -150,6 +151,7 @@ $(TEST_DIR)/test_signature_numbers.c: $(TEST_DIR)/gen/another_encoding.h
 $(TEST_DIR)/test_signature_numbers.c: $(TEST_DIR)/gen/generated_encoding.h
 $(TEST_DIR)/test_signature_numbers: $(TEST_DIR)/gen/another_encoding.o
 $(TEST_DIR)/test_signature_numbers: $(TEST_DIR)/gen/generated_encoding.o
+$(TEST_DIR)/test_labcomm_copy:  $(TEST_DIR)/gen/generated_encoding.o
 labcomm_fd_reader.o: labcomm_private.h
 labcomm_fd_writer.o: labcomm_private.h
 labcomm_dynamic_buffer_writer.o: labcomm_private.h

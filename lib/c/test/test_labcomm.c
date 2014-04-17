@@ -218,7 +218,6 @@ int main(void)
 #include <labcomm_mem_reader.h>
 #include "test/testdata/gen/test_sample.h"
 
-#define TEST_BUFFER_SIZE (50)
 
 void test_error_handler(enum labcomm_error error_id, size_t nbr_va_args, ...);
 
@@ -352,6 +351,7 @@ void test_decode_unreg_signature_error()
 	labcomm_encoder_free(encoder);
 	free(enc_ctx.buf);
 }
+
 int main()
 {
 	CU_pSuite suite_decoder = NULL;
@@ -385,7 +385,7 @@ int main()
 
 	// Set verbosity.
 	CU_basic_set_mode(CU_BRM_VERBOSE);
-	/*CU_console_run_tests();*/
+	/* CU_console_run_tests(); */
 
 	// Run all test suites.
 	CU_basic_run_tests();
