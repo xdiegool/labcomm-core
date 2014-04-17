@@ -106,15 +106,20 @@ int main(int argc, char **argv)
   labcomm_decoder_decode_one(decoder);
 
   assert(cache_s1.i == s1.i);
+  puts("S1 copied ok");
   assert(cache_b == b);
+  puts("B copied ok");
   assert(cache_I.n_0 == I.n_0);
   assert(cache_I.a[0] == I.a[0]);
   assert(cache_I.a[1] == I.a[1]);
   assert(cache_I.a[2] == I.a[2]);
   free(I.a);
+  puts("I copied ok");
+  assert(cache_p.n_0 == p.n_0);
   for (int i = 0; i < p.n_0; i++)
     assert(cache_p.a[i].i == p.a[i].i);
   free(p.a);
+  puts("P copied ok");
 
   labcomm_decoder_free(decoder);
   close(fd);
