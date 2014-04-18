@@ -743,8 +743,20 @@ aspect C_copy {
   }
 
   public void PrimType.C_emitCopy(C_env env_src, C_env env_dst) {
-    env_src.println(env_dst.accessor() + env_dst.qualid + " = " +
-		    env_src.accessor() + env_src.qualid + ";");
+    if (C_isDynamic()) {
+      env_src.println(String.format(
+	  "%s%s = labcomm_memory_alloc(mem, 1, strlen(%s%s)+1);",
+	  env_dst.accessor(), env_dst.qualid,
+	  env_src.accessor(), env_src.qualid));
+      env_src.println(String.format(
+	  "memcpy(%s%s, %s%s, strlen(%s%s)+1);",
+	  env_dst.accessor(), env_dst.qualid,
+	  env_src.accessor(), env_src.qualid,
+	  env_src.accessor(), env_src.qualid));
+    } else {
+      env_src.println(env_dst.accessor() + env_dst.qualid + " = " +
+		      env_src.accessor() + env_src.qualid + ";");
+    }
   }
 
   public void UserType.C_emitCopy(C_env env_src, C_env env_dst) {
@@ -880,7 +892,7 @@ aspect C_copy {
   public void PrimType.C_emitCopyDeallocation(C_env env) {
     if (C_isDynamic()) {
       env.println("labcomm_memory_free(mem, 1, " +
-                  env.qualid + ");");
+                  env.accessor() + env.qualid + ");");
     }
   }
 

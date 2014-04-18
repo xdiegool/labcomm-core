@@ -3,7 +3,7 @@ UNAME_S=$(shell uname -s)
 ALL_DEPS=liblabcomm.a liblabcomm.so.1
 
 ifeq ($(UNAME_S),Linux)
-  CFLAGS=-std=c99 -g -Wall -Werror -O3  -I. -Itest -Wno-unused-function
+  CFLAGS=-std=c99 -g -Wall -Werror -O3  -I. -Itest
   CC=$(CROSS_COMPILE)gcc
   LD=$(CROSS_COMPILE)ld
   LDFLAGS=-L.
@@ -134,6 +134,7 @@ clean:
 	$(RM) test/testdata/gen/*.[cho]
 	$(RM) test/gen/*.[cho]
 	$(RM) $(TEST_DIR)/test_labcomm
+	$(RM) $(TEST_DIR)/test_labcomm_copy
 
 distclean: clean
 	$(RM) liblabcomm.so.1
@@ -151,7 +152,7 @@ $(TEST_DIR)/test_signature_numbers.c: $(TEST_DIR)/gen/another_encoding.h
 $(TEST_DIR)/test_signature_numbers.c: $(TEST_DIR)/gen/generated_encoding.h
 $(TEST_DIR)/test_signature_numbers: $(TEST_DIR)/gen/another_encoding.o
 $(TEST_DIR)/test_signature_numbers: $(TEST_DIR)/gen/generated_encoding.o
-$(TEST_DIR)/test_labcomm_copy:  $(TEST_DIR)/gen/generated_encoding.o $(TEST_DIR)/gen/test_sample.o
+$(TEST_DIR)/test_labcomm_copy:  $(TEST_DIR)/gen/generated_encoding.o $(TEST_DIR)/gen/test_sample.o $(TEST_DIR)/gen/more_types.o
 labcomm_fd_reader.o: labcomm_private.h
 labcomm_fd_writer.o: labcomm_private.h
 labcomm_dynamic_buffer_writer.o: labcomm_private.h
