@@ -59,6 +59,11 @@ static void handle_ns(more_types_NS *v, void *context)
   labcomm_copy_more_types_NS(labcomm_default_memory, context, v);
 }
 
+static void handle_as(more_types_AS *v, void *context)
+{
+  labcomm_copy_more_types_AS(labcomm_default_memory, context, v);
+}
+
 int main(int argc, char **argv)
 {
   struct labcomm_encoder *encoder;
@@ -80,6 +85,8 @@ int main(int argc, char **argv)
   more_types_S cache_s = NULL;
   more_types_NS ns;
   more_types_NS cache_ns;
+  more_types_AS as;
+  more_types_AS cache_as;
 
   fd = open(DATA_FILE, O_RDWR | O_CREAT | O_TRUNC, 0644);
   if (fd == -1)
@@ -132,8 +139,17 @@ int main(int argc, char **argv)
   labcomm_encode_more_types_S(encoder, &s);
 
   labcomm_encoder_register_more_types_NS(encoder);
-  ns.s = "this is a another string";
+  ns.s1 = "this is a string";
+  ns.s2 = "this is a another string";
   labcomm_encode_more_types_NS(encoder, &ns);
+
+  labcomm_encoder_register_more_types_AS(encoder);
+  as.n_0 = 3;
+  as.a = calloc(as.n_0, sizeof(as.a[0]));
+  as.a[0] = "string 0";
+  as.a[1] = "string 1";
+  as.a[2] = "string 2";
+  labcomm_encode_more_types_AS(encoder, &as);
 
   labcomm_encoder_free(encoder);
   encoder = NULL;
@@ -153,6 +169,7 @@ int main(int argc, char **argv)
   labcomm_decoder_register_more_types_A(decoder, handle_a, &cache_a);
   labcomm_decoder_register_more_types_S(decoder, handle_s, &cache_s);
   labcomm_decoder_register_more_types_NS(decoder, handle_ns, &cache_ns);
+  labcomm_decoder_register_more_types_AS(decoder, handle_as, &cache_as);
 
   while (labcomm_decoder_decode_one(decoder) > 0) ;
 
@@ -190,8 +207,14 @@ int main(int argc, char **argv)
   assert(!strcmp(cache_s, s));
   puts("S copied ok");
 
-  assert(!strcmp(cache_ns.s, ns.s));
+  assert(!strcmp(cache_ns.s1, ns.s1));
+  assert(!strcmp(cache_ns.s2, ns.s2));
   puts("NS copied ok");
+
+  for (int i = 0; i < as.n_0; i++)
+    assert(!strcmp(cache_as.a[i], as.a[i]));
+  free(as.a);
+  puts("AS copied ok");
 
   labcomm_decoder_free(decoder);
   close(fd);
@@ -213,4 +236,6 @@ int main(int argc, char **argv)
   puts("S deallocated ok");
   labcomm_copy_free_more_types_NS(labcomm_default_memory, &cache_ns);
   puts("NS deallocated ok");
+  labcomm_copy_free_more_types_AS(labcomm_default_memory, &cache_as);
+  puts("AS deallocated ok");
 }
