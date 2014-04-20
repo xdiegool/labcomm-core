@@ -18,6 +18,13 @@ else ifeq ($(UNAME_S),Darwin)
   LDFLAGS=-L.
   LDLIBS=-llabcomm
   MAKESHARED=clang -o $1 -shared -Wl,-install_name,$2 $3 -lc
+else if $(findstring(CYGWIN,$(UNAME_S))
+  CFLAGS=-std=c99 -g -Wall -Werror -O3  -I. -Itest
+  CC=$(CROSS_COMPILE)gcc
+  LD=$(CROSS_COMPILE)ld
+  LDFLAGS=-L.
+  LDLIBS=-llabcomm -lrt
+  ALL_DEPS:=$(filter-out %.so.1, $(ALL_DEPS)) # No -fPIC supported in windows?
 else
   $(error Unknown system $(UNAME_S))
 endif
