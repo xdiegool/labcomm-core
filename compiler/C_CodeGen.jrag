@@ -722,13 +722,6 @@ aspect C_copy {
     env_src.println("{");
     env_src.indent();
     getType().C_emitCopy(env_src, env_dst);
-    // if (C_isDynamic()) {
-    //   env_src.println("{");
-    //   env_src.indent();
-    //   getType().C_emitCopyDeallocation(env_src);
-    //   env_src.unindent();
-    //   env_src.println("}");
-    // }
     env_src.unindent();
     env_src.println("}");
   }
@@ -869,13 +862,6 @@ aspect C_copy {
     env.println("{");
     env.indent();
     getType().C_emitCopyDeallocation(env);
-    // if (C_isDynamic()) {
-    //   env.println("{");
-    //   env.indent();
-    //   getType().C_emitCopyDeallocation(env);
-    //   env.unindent();
-    //   env.println("}");
-    // }
     env.unindent();
     env.println("}");
   }
@@ -937,12 +923,11 @@ aspect C_copy {
 
   public void VariableArrayType.C_emitCopyDeallocation(C_env env) {
     super.C_emitCopyDeallocation(env);
-    env.println("labcomm_memory_free(mem, 1, " + 
+    env.println("labcomm_memory_free(mem, 1, " +
                 env.qualid + env.memberAccessor() + "a);");
   }
 
   public void Field.C_emitCopyDeallocation(C_env env) {
-    //getType().C_emitCopyDeallocation(env.nestStruct("." + getName()));
     getType().C_emitCopyDeallocation(env.nestStruct(env.memberAccessor()
 						    + getName()));
   }
