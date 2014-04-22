@@ -2,7 +2,7 @@ TESTS=basic simple nested
 LABCOMM_JAR=../compiler/labComm.jar
 LABCOMM=java -jar $(LABCOMM_JAR) 
 
-CFLAGS=-O3 -g -Wall -Werror
+CFLAGS=-O3 -g -Wall -Werror -Wno-unused-function
 
 all:	
 

@@ -18,6 +18,13 @@ else ifeq ($(UNAME_S),Darwin)
   LDFLAGS=-L.
   LDLIBS=-llabcomm
   MAKESHARED=clang -o $1 -shared -Wl,-install_name,$2 $3 -lc
+else ifneq ($(findstring CYGWIN,$(UNAME_S)),)
+  CFLAGS=-std=c99 -g -Wall -Werror -O3  -I. -Itest
+  CC=$(CROSS_COMPILE)gcc
+  LD=$(CROSS_COMPILE)ld
+  LDFLAGS=-L.
+  LDLIBS=-llabcomm -lrt
+  ALL_DEPS:=$(filter-out %.so.1, $(ALL_DEPS)) # No -fPIC supported in windows?
 else
   $(error Unknown system $(UNAME_S))
 endif
@@ -49,6 +56,7 @@ TESTS=test_labcomm_basic_type_encoding test_labcomm_generated_encoding \
       test_signature_numbers \
       test_labcomm \
       test_labcomm_pthread_scheduler \
+      test_labcomm_copy
 #
 #FIXME: test_labcomm test_labcomm_errors
 TEST_DIR=test
@@ -133,6 +141,7 @@ clean:
 	$(RM) test/testdata/gen/*.[cho]
 	$(RM) test/gen/*.[cho]
 	$(RM) $(TEST_DIR)/test_labcomm
+	$(RM) $(TEST_DIR)/test_labcomm_copy
 
 distclean: clean
 	$(RM) liblabcomm.so.1
@@ -150,6 +159,7 @@ $(TEST_DIR)/test_signature_numbers.c: $(TEST_DIR)/gen/another_encoding.h
 $(TEST_DIR)/test_signature_numbers.c: $(TEST_DIR)/gen/generated_encoding.h
 $(TEST_DIR)/test_signature_numbers: $(TEST_DIR)/gen/another_encoding.o
 $(TEST_DIR)/test_signature_numbers: $(TEST_DIR)/gen/generated_encoding.o
+$(TEST_DIR)/test_labcomm_copy:  $(TEST_DIR)/gen/generated_encoding.o $(TEST_DIR)/gen/test_sample.o $(TEST_DIR)/gen/more_types.o
 labcomm_fd_reader.o: labcomm_private.h
 labcomm_fd_writer.o: labcomm_private.h
 labcomm_dynamic_buffer_writer.o: labcomm_private.h
