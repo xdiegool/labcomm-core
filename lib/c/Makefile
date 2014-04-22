@@ -18,7 +18,7 @@ else ifeq ($(UNAME_S),Darwin)
   LDFLAGS=-L.
   LDLIBS=-llabcomm
   MAKESHARED=clang -o $1 -shared -Wl,-install_name,$2 $3 -lc
-else if $(findstring(CYGWIN,$(UNAME_S))
+else ifneq ($(findstring CYGWIN,$(UNAME_S)),)
   CFLAGS=-std=c99 -g -Wall -Werror -O3  -I. -Itest
   CC=$(CROSS_COMPILE)gcc
   LD=$(CROSS_COMPILE)ld
