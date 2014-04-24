@@ -21,7 +21,6 @@
 
 #include <stdlib.h>
 #include "labcomm.h"
-#include "labcomm_private.h"
 
 extern struct labcomm_memory *labcomm_default_memory;
 
