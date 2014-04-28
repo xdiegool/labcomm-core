@@ -21,12 +21,19 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include "labcomm_error.h"
- 
+
 void labcomm_error_fatal_global(enum labcomm_error error,
 				char *format,
 				...)
 {
+  va_list args;
+
   fprintf(stderr, "Fatal error %d\n", error);
+  va_start(args, format);
+  vprintf(format, args);
+  va_end(args);
+
   exit(1);
 }
