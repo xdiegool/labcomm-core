@@ -17,6 +17,7 @@ test: $(SUBDIRS:%=test-%)
 
 .PHONY: test-compiler
 test-compiler:
+	$(MAKE) -C test compiler_errors
 
 .PHONY: test-%
 test-%:
