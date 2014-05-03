@@ -161,6 +161,7 @@ $(LABCOMM_JAR):
 
 clean:
 	$(RM) *.o
+	$(RM) 2006/*.o
 	$(RM) experimental/*.o experimental/ThrottleDrv/*.o
 	$(RM) test/*.o
 	$(RM) test/*.gch
@@ -176,6 +177,8 @@ distclean: clean
 	$(RM) liblabcomm.a
 	$(RM) liblabcomm2006.so.1
 	$(RM) liblabcomm2006.a
+	$(RM) liblabcomm2013.so.1
+	$(RM) liblabcomm2013.a
 
 # Extra dependencies
 $(TEST_DIR)/test_labcomm_basic_type_encoding.o: labcomm_private.h
