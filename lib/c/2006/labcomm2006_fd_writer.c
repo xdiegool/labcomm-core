@@ -107,7 +107,7 @@ static int fd_flush(struct labcomm2006_writer *w,
   start = 0;
   err = 0;
   while (start < w->pos) {
-    err = write(fd_context->fd, &w->data[start], w->pos - start);
+    err = write(fd_context->fd, (char *) &w->data[start], w->pos - start);
     if (err <= 0) {
       break;
     }

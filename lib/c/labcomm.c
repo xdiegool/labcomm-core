@@ -246,7 +246,7 @@ void labcomm_set_local_index(struct labcomm_signature *signature)
 {
   if (signature->index != 0) {
     labcomm_error_fatal_global(LABCOMM_ERROR_SIGNATURE_ALREADY_SET,
-			       "%s", signature->name);
+			       "Signature already set: %s\n", signature->name);
   }
   signature->index = local_index;
   local_index++;
@@ -256,7 +256,7 @@ int labcomm_get_local_index(struct labcomm_signature *signature)
 {
   if (signature->index == 0) {
     labcomm_error_fatal_global(LABCOMM_ERROR_SIGNATURE_NOT_SET,
-			       "%s", signature->name);
+			       "Signature not set: %s\n", signature->name);
   }
   return signature->index;
 }

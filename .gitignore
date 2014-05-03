@@ -16,3 +16,7 @@ encoded_data06
 gen
 gen06
 *.pyc
+examples/twoway/gen/
+lib/csharp/labcomm.dll
+lib/java/gen/
+lib/java/labcomm*.jar

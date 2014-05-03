@@ -24,8 +24,14 @@
 #define _LABCOMM_H_
 
 #include <stdarg.h>
-#include <stdint.h>
-#include <unistd.h>
+
+#ifdef LABCOMM_COMPAT
+  #include LABCOMM_COMPAT
+#else
+  #include <stdint.h>
+  #include <unistd.h>
+#endif
+
 #include "labcomm_error.h"
 #include "labcomm_scheduler.h"
 

@@ -26,8 +26,13 @@
 #define LABCOMM_VERSION "LabComm2006"
 
 #include <stdarg.h>
-#include <stdint.h>
-#include <unistd.h>
+
+#ifdef LABCOMM_COMPAT
+  #include LABCOMM_COMPAT
+#else
+  #include <stdint.h>
+  #include <unistd.h>
+#endif
 #include "labcomm2006_error.h"
 #include "labcomm2006_scheduler.h"
 
