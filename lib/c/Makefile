@@ -167,8 +167,9 @@ clean:
 	$(RM) test/test_labcomm_errors
 	$(RM) test/testdata/gen/*.[cho]
 	$(RM) test/gen/*.[cho]
-	$(RM) $(TEST_DIR)/test_labcomm
-	$(RM) $(TEST_DIR)/test_labcomm_copy
+	for x in $(TESTS); do \
+		$(RM) $(TEST_DIR)/$$x ; \
+	done
 
 distclean: clean
 	$(RM) liblabcomm.so.1
