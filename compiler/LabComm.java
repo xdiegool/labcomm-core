@@ -31,7 +31,7 @@ public class LabComm {
     println(" -P                      Generates Python code in FILE.py");
     println(" --python=PFILE          Generates Python code in PFILE");
     println("[ RAPID options ]");
-    println(" --rapid=FILE            Generates RAPID code in FILE");
+    println(" --rapid                 Generates RAPID code in FILE.sys");
     println("[ Misc options ]");
     println(" --pretty                Pretty prints on standard output");
     println(" --typeinfo=TIFILE       Generates typeinfo in TIFILE");
