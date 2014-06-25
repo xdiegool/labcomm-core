@@ -1,0 +1,25 @@
+typedef struct {
+  int val;
+} coord;
+
+typedef struct {
+  coord x;
+  coord y;
+} point;
+
+typedef struct {
+  point start;
+  point end;
+} line;
+
+typedef struct {
+  int a;
+  int b;
+  boolean c;
+} foo;
+
+sample struct {
+  line l1;
+  line l2;
+  foo  f;
+} twoLines;
