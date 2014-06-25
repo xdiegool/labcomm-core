@@ -30,6 +30,8 @@ public class LabComm {
     println("[ Python options ]");
     println(" -P                      Generates Python code in FILE.py");
     println(" --python=PFILE          Generates Python code in PFILE");
+    println("[ RAPID options ]");
+    println(" --rapid=FILE            Generates RAPID code in FILE");
     println("[ Misc options ]");
     println(" --pretty                Pretty prints on standard output");
     println(" --typeinfo=TIFILE       Generates typeinfo in TIFILE");
@@ -92,7 +94,7 @@ public class LabComm {
     String pythonFile = null;
     String prettyFile = null;
     String typeinfoFile = null;
-	String rapidFile = null;
+    String rapidFile = null;
 
     for (int i = 0 ; i < args.length ; i++) {
       if (fileName == null ||
