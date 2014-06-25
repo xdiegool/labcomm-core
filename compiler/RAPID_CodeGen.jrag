@@ -194,7 +194,7 @@ aspect RAPID_CodeGen {
 	}
 
 	public String Type.RAPID_AddType(RAPID_env env, String name) {
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("RAPID_AddType not implemented for "+getClass().getSimpleName());
 	}
 
 	public String StructType.RAPID_AddType(RAPID_env env, String name) {
