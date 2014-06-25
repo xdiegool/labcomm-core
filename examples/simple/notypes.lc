@@ -6,17 +6,9 @@ sample struct {
 } IntString;
 
 sample struct {
-  double x;
-  double y;
-} TwoDoubles;
-
-sample struct {
-  int fixed[2];
-  int variable[2,_];
-} TwoArrays;
-
-sample struct {
-  int a[2];
-  int b[2,3];
-} TwoFixedArrays;
-
+  struct {
+    float x;
+    float y;
+  } point;
+  boolean b;
+} nestedStruct;

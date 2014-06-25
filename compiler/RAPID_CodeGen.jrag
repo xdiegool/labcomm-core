@@ -94,7 +94,7 @@ aspect RAPID_CodeGen {
 	}
 
 	public void Decl.RAPID_gen(RAPID_env env) {
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("RAPID code generation (currently) does not support "+getClass().getSimpleName());
 	}
 
 	public void SampleDecl.RAPID_gen(RAPID_env env) {
@@ -194,7 +194,7 @@ aspect RAPID_CodeGen {
 	}
 
 	public String Type.RAPID_AddType(RAPID_env env, String name) {
-		throw new UnsupportedOperationException("RAPID_AddType not implemented for "+getClass().getSimpleName());
+		throw new UnsupportedOperationException("RAPID code generation does (currently) not support "+getClass().getSimpleName());
 	}
 
 	public String StructType.RAPID_AddType(RAPID_env env, String name) {
@@ -212,7 +212,7 @@ aspect RAPID_CodeGen {
 	public String FixedArrayType.RAPID_AddType(RAPID_env env, String name) {
 		String typeName = getType().RAPID_AddType(env, name + "_e");
 		if (getNumExp() > 1) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("RAPID generation only (currently) supports one-dimensional arrays");
 		}
 		ArrayList<String> components = new ArrayList<String>();
 		for (int i = 1; i <= getExp(0).RAPID_getValue(); i++) {
@@ -236,13 +236,13 @@ aspect RAPID_CodeGen {
 		} else if (getToken() == LABCOMM_BYTE) {
 			return "byte";
 		}
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("RAPID code generation does not (currently) support "+getName());
 	}
 
 	public void Type.RAPID_AddDecodeInstr(RAPID_env env,
 			java.util.List<String> instrs,
 			String var_name, String stream_name) {
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("RAPID code generation does not (currently) support "+getClass().getSimpleName());
 	}
 
 	public void StructType.RAPID_AddDecodeInstr(RAPID_env env,
@@ -289,14 +289,14 @@ aspect RAPID_CodeGen {
 				instrs.add("Decode_String " + stream_name + "," + var_name + ";");
 				break;
 			default:
-				throw new UnsupportedOperationException();
+				throw new UnsupportedOperationException("RAPID code generation does not (currently) support "+getName());
 		}
 	}
 
 	public void Type.RAPID_AddEncodeInstr(RAPID_env env,
 			java.util.List<String> instrs,
 			String var_name, String stream_name) {
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("RAPID code generation does not (currently) support "+getClass().getSimpleName());
 	}
 
 	public void StructType.RAPID_AddEncodeInstr(RAPID_env env,
@@ -343,12 +343,12 @@ aspect RAPID_CodeGen {
 				instrs.add("Encode_String " + stream_name + "," + var_name + ";");
 				break;
 			default:
-				throw new UnsupportedOperationException();
+				throw new UnsupportedOperationException("RAPID code generation does not (currently) support "+getName());
 		}
 	}
 
 	public int Exp.RAPID_getValue() {
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("RAPID code generation does not (currently) support "+getClass().getSimpleName());
 	}
 
 	public int IntegerLiteral.RAPID_getValue() {
