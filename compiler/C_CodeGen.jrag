@@ -56,7 +56,10 @@ aspect C_CodeGenEnv {
       this.qualid = qualid;
       this.lcName = lcName;
       this.rawPrefix = rawPrefix;
-      if (rawPrefix.equals("")) {
+      if (rawPrefix == null) {
+        System.err.println("WARNING: prefix==null");
+        this.prefix = ""; 
+      } else if (rawPrefix.equals("")) {
         this.prefix = rawPrefix;
       } else {
         this.prefix = rawPrefix + "_";
