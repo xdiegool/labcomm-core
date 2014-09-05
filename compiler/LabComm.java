@@ -273,12 +273,12 @@ public class LabComm {
        cIncludes.add(hFile);
      }
      if (cFile != null) {
-       if (verbose) { System.err.println("Generating C: " + cFile); }
+       printStatus("C: " , cFile);
        genC(ast, cFile, cIncludes, coreName, cPrefix, ver);
        wroteFile = true;
      }
      if (hFile != null) {
-       if (verbose) { System.err.println("Generating H: " + hFile); }
+       printStatus("H: " , hFile);
        genH(ast, hFile, hIncludes, coreName, cPrefix, ver);
        wroteFile = true;
      }
@@ -288,7 +288,7 @@ public class LabComm {
    boolean generateCS(Program ast) {
      boolean wroteFile = false; 
      if (csFile != null) {
-       if (verbose) { System.err.println("Generating C#: " + csFile); }
+       printStatus("C#: " , csFile); 
        genCS(ast, csFile, csNamespace, ver);
        wroteFile = true;
      }
@@ -298,7 +298,7 @@ public class LabComm {
    boolean generateJava(Program ast) {
      boolean wroteFile = false; 
      if (javaDir != null) {
-       if (verbose) { System.err.println("Generating Java: " + javaDir); }
+       printStatus("Java: " , javaDir);
        genJava(ast, javaDir, javaPackage, ver);
        wroteFile = true;
      }
@@ -308,9 +308,7 @@ public class LabComm {
    boolean generatePython(Program ast) {
      boolean wroteFile = false; 
      if (pythonFile != null) {
-       if (verbose) { 
-         System.err.println("Generating Python: " + pythonFile); 
-       }
+       printStatus("Python: " , pythonFile); 
        genPython(ast, pythonFile, prefix, ver);
        wroteFile = true;
      }
@@ -320,9 +318,7 @@ public class LabComm {
    boolean generateRAPID(Program ast) {
      boolean wroteFile = false; 
      if (rapidFile != null) {
-       if (verbose) {
-         System.err.println("Generating RAPID: " + rapidFile);
-       }
+       printStatus("RAPID: " , rapidFile);
        genRAPID(ast, rapidFile, coreName, ver);
        wroteFile = true;
      }
@@ -331,9 +327,7 @@ public class LabComm {
    boolean generatePrettyPrint(Program ast) {
      boolean wroteFile = false; 
      if (prettyFile != null) {
-       if (verbose) { 
-         System.err.println("Generating Pretty: " + prettyFile); 
-       }
+       printStatus("Pretty: " , prettyFile); 
        try {
          FileOutputStream f = new FileOutputStream(prettyFile);
          PrintStream out = new PrintStream(f);
@@ -350,9 +344,7 @@ public class LabComm {
    boolean generateTypeinfo(Program ast) {
      boolean wroteFile = false; 
      if (typeinfoFile != null) {
-       if (verbose) { 
-         System.err.println("Generating TypeInfo: " + typeinfoFile); 
-       }
+       printStatus("TypeInfo: " , typeinfoFile); 
        try {
          FileOutputStream f = new FileOutputStream(typeinfoFile);
          PrintStream out = new PrintStream(f);
@@ -365,6 +357,12 @@ public class LabComm {
        }
      }
      return wroteFile;
+    }
+
+    private void printStatus(String kind, String filename){
+       if (verbose) { 
+         System.err.println("Generating "+kind+": " + filename); 
+       }
     }
   }
 
