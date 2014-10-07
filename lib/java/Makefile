@@ -4,10 +4,10 @@ MODULES=LabCommDispatcher \
 	LabCommSample \
 	LabCommHandler \
 	LabCommEncoderRegistry \
-	LabCommDecoder \
 	LabCommType \
-	LabCommEncoderChannel \
 	LabCommEncoder \
+	LabCommEncoderChannel \
+	LabCommDecoder \
 	LabCommDecoderChannel \
 	LabCommWriter \
 	LabCommReader \
