@@ -1,18 +1,25 @@
+SUBDIRS=duck_typing dynamic jgrafchart robot simple tcp \
+	twoway user_types wiki_example
+
 .PHONY: all
 
 all:
-	echo To be done...
+	echo More to be done...
 	$(MAKE) -C twoway all
 
 .PHONY: test
 test:
 	echo More to be done...
 	cd simple ; sh compile.sh && sh run.sh
-	$(MAKE) -C twoway test 
 	$(MAKE) -C duck_typing test
+	$(MAKE) -C twoway test 
 
-.PHONY: clean distclean
-clean distclean:
-	echo To be done...
-	$(MAKE) -C twoway clean
-	$(MAKE) -C duck_typing clean
+.PHONY: clean
+clean: $(SUBDIRS:%=clean-%)
+clean-%:
+	$(MAKE) -C $* clean 
+
+.PHONY: distclean
+distclean: $(SUBDIRS:%=distclean-%)
+distclean-%:
+	$(MAKE) -C $* distclean 

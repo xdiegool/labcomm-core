@@ -24,9 +24,11 @@ ${JAVA_PKG}/client/TestClient.class: ${JAVA_PKG}/client/TestClient.java ${JAVA_P
 	javac -cp ${CLASSPATH} $<
 
 
+.PHONY: runjavaserver
 runjavaserver : ${JAVA_PKG}/server/TestServer.class
 	java -cp ${CLASSPATH} $(<:.class=)
 
+.PHONY: runjavaclient 
 runjavaclient : ${JAVA_PKG}/client/TestClient.class
 	java -cp ${CLASSPATH} $(<:.class=)
 
@@ -47,16 +49,23 @@ ${TLCFILE}.c : ${TLCFILE}.lc
 
 all: client testserver ${JAVA_PKG}/server/TestServer.class ${JAVA_PKG}/client/TestClient.class turtleclient
 
-.PHONY: clean runclient runserver runjavaserver runjavaclient turtleclient
+.PHONY: clean
 clean :
-	rm ${LCFILE}.c ${LCFILE}.h client testserver turtleclient
-	rm  ${JAVA_PKG}/server/*.class ${JAVA_PKG}/client/*.class ${JAVA_PKG}/gen/* 
+	rm -f ${LCFILE}.c ${LCFILE}.h client testserver turtleclient
+	rm -f ${JAVA_PKG}/server/*.class ${JAVA_PKG}/client/*.class 
+	rm -f ${JAVA_PKG}/gen/* 
 
+.PHONY: distclean
+distclean: clean 
+
+.PHONY: runclient
 runclient : client
 	LD_LIBRARY_PATH=${LCLIBDIR} ./$< localhost 9999
 
+.PHONY: runserver
 runserver : testserver
 	LD_LIBRARY_PATH=${LCLIBDIR} ./$< 9999
 
+.PHONY: runtclient
 runtclient : turtleclient
 	LD_LIBRARY_PATH=${LCLIBDIR} ./$< localhost 8082

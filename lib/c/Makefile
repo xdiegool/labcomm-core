@@ -168,6 +168,7 @@ clean:
 	$(RM) test/test_labcomm_errors
 	$(RM) test/testdata/gen/*.[cho]
 	$(RM) test/gen/*.[cho]
+	-rmdir test/gen
 	for x in $(TESTS); do \
 		$(RM) $(TEST_DIR)/$$x ; \
 	done

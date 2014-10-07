@@ -51,4 +51,8 @@ runclient : ${JAVA_PKG}/client/TestClient.class
 	java -cp ${CLASSPATH} $(<:.class=)
 
 clean :
-	rm  ${JAVA_PKG}/server/*.class ${JAVA_PKG}/client/*.class ${JAVA_PKG}/gen/* 
+	rm -f ${JAVA_PKG}/server/*.class 
+	rm -f ${JAVA_PKG}/client/*.class 
+	rm -f ${JAVA_PKG}/gen/* 
+
+distclean: clean

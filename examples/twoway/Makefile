@@ -32,8 +32,8 @@ gen/server: server.c
 	$(CC) -o $@ $(CFLAGS) $^ -lpthread \
 		-L../../lib/c -llabcomm 
 
-.PHONY: clean
-clean:
+.PHONY: clean distclean
+clean distclean:
 	rm -rf gen
 
 gen/decimating.o: decimating.h
