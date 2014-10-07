@@ -7,7 +7,7 @@
 mkdir -p gen
 java -jar ../../compiler/labComm.jar --java=gen --c=gen/simple.c --h=gen/simple.h  --python=gen/simple.py simple.lc 
 
-javac -cp ../../lib/java:. gen/*.java Encoder.java Decoder.java
+javac -cp ../../lib/java/labcomm2013.jar:. gen/*.java Encoder.java Decoder.java
 
 gcc -Wall -Werror -Wno-unused-function \
     -I. -I../../lib/c -L../../lib/c \
@@ -22,7 +22,7 @@ gcc -Wall -Werror -I . -I ../../lib/c -L../../lib/c \
 mkdir -p gen06
 java -jar ../../compiler/labComm.jar --ver=2006 --java=gen06 --c=gen06/simple.c --h=gen06/simple.h  --python=gen06/simple.py simple.lc 
 
-javac -cp ../../lib/java:. gen06/*.java Encoder06.java Decoder06.java
+javac -cp ../../lib/java/labcomm2006.jar:. gen06/*.java Encoder06.java Decoder06.java
 
 gcc -Wall -Werror -I.  -I../../lib/c/2006 -L../../lib/c \
     -o example_encoder06 example_encoder06.c gen06/simple.c \
