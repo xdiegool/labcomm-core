@@ -9,7 +9,13 @@ aspect TypeCheck {
   syn boolean Type.isNull();
   eq Type.isNull() = false;
   eq VoidType.isNull() = true;
-  eq UserType.isNull() = decl().isNull();
+  eq UserType.isNull()  {
+    if (decl() != null) {
+      return decl().isNull();
+    } else {
+      return false;
+    }
+  }
 
   syn boolean TypeDecl.isNull();
   eq TypeDecl.isNull() = getType().isNull();
