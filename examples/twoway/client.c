@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
     }
   }
   printf("\n");
-  labcomm_encode_types_Terminate(encoder, LABCOMM_VOID);
+  labcomm_encode_types_Terminate(encoder);
 out:
   return 0;
   

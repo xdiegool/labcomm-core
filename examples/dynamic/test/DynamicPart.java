@@ -200,7 +200,7 @@ public class DynamicPart {
 	private static InRAMCompiler handleAst(Program lcAST, HashMap<String, String> handlers) {
 		Map<String, String> genCode = new HashMap<String, String>();
 		try {
-			lcAST.J_gen(genCode, "labcomm.generated");
+			lcAST.J_gen(genCode, "labcomm.generated", 2013);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

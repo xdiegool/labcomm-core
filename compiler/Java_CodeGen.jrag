@@ -8,6 +8,8 @@ aspect Java_CodeGenEnv {
 
   public class Java_env {
 
+    public final int version;  //labcomm version to generate code for
+    public final String verStr;
     private int indent;
     private int depth;
     private Java_printer printer;
@@ -75,18 +77,24 @@ aspect Java_CodeGenEnv {
       }
     }
 
-    private Java_env(int indent, Java_printer printer) {
+    private Java_env(int version, int indent) {
+      this.version = version; 
+      this.verStr = (version == 2006) ? "2006" : "";
       this.indent = indent;
+    }
+
+    private Java_env(int version, Java_printer printer) {
+      this(version, 0);
       this.printer = printer;
     }
 
-    public Java_env(File f) {
-      this.indent = 0;
+    public Java_env(int version, File f) {
+      this(version, 0);
       this.printer = new Java_printer(f);
     }
 
-    public Java_env(PrintStream out) {
-      this.indent = 0;
+    public Java_env(int version, PrintStream out) {
+      this(version, 0);
       this.printer = new Java_printer(out);
     }
 
@@ -188,6 +196,7 @@ aspect Java_StructName {
 aspect Java_Void {
 
   syn boolean Decl.isVoid() = getType().isVoid();
+  syn boolean UserType.isVoid() = decl().isVoid();
   syn boolean Type.isVoid() = false;
   syn boolean VoidType.isVoid() = true;
 
@@ -195,11 +204,11 @@ aspect Java_Void {
 
 aspect Java_CodeGen {
 
-  public void Program.J_gen(PrintStream ps, String pack) throws IOException {
+  public void Program.J_gen(PrintStream ps, String pack, int version) throws IOException {
     Java_env env;
 /*
     // Registration class
-    env = new Java_env(ps);
+    env = new Java_env(version, ps);
     if (pack != null && pack.length() > 0) {
       env.println("package " + pack + ";");
     }
@@ -212,7 +221,7 @@ aspect Java_CodeGen {
     env.println("}");
 //    env.close();
 */
-    env = new Java_env(ps);
+    env = new Java_env(version, ps);
     for (int i = 0; i < getNumDecl(); i++) {
       Decl d = getDecl(i);
       try {
@@ -225,11 +234,11 @@ aspect Java_CodeGen {
     env.close();
   }
 
-  public void Program.J_gen(String dir, String pack) throws IOException {
+  public void Program.J_gen(String dir, String pack, int version) throws IOException {
     Java_env env;
 /*
     // Registration class
-    env = new Java_env(new File(dir, "LabCommRegister.java"));
+    env = new Java_env(version, new File(dir, "LabCommRegister.java"));
     if (pack != null && pack.length() > 0) {
       env.println("package " + pack + ";");
     }
@@ -245,7 +254,7 @@ aspect Java_CodeGen {
     for (int i = 0; i < getNumDecl(); i++) {
       Decl d = getDecl(i);
       try {
-        env = new Java_env(new File(dir, d.getName() + ".java"));
+        env = new Java_env(version, new File(dir, d.getName() + ".java"));
         d.Java_emitClass(env, pack);
         env.close();
       } catch (Error e) {
@@ -257,7 +266,7 @@ aspect Java_CodeGen {
 
   /** Experimental method for generating code to a map <classname, source> 
     */
-  public void Program.J_gen(Map<String,String> src, String pack) throws IOException {
+  public void Program.J_gen(Map<String,String> src, String pack, int version) throws IOException {
     Java_env env;
 /*
     // Registration class was commented out, so got removed in this copy
@@ -267,7 +276,7 @@ aspect Java_CodeGen {
       try {
         ByteArrayOutputStream bs = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(bs);
-        env = new Java_env(out);
+        env = new Java_env(version, out);
         d.Java_emitClass(env, pack);
         env.close();
         src.put(d.getName(), bs.toString());
@@ -331,9 +340,9 @@ aspect Java_Class {
       }
 
       env.println("import java.io.IOException;");
-      env.println("import se.lth.control.labcomm.LabCommType;");
-      env.println("import se.lth.control.labcomm.LabCommEncoder;");
-      env.println("import se.lth.control.labcomm.LabCommDecoder;");
+      env.println("import se.lth.control.labcomm"+env.verStr+".LabCommType;");
+      env.println("import se.lth.control.labcomm"+env.verStr+".LabCommEncoder;");
+      env.println("import se.lth.control.labcomm"+env.verStr+".LabCommDecoder;");
       env.println();
       env.println("public class " + getName() + " implements LabCommType {");
       env.println();
@@ -371,11 +380,11 @@ aspect Java_Class {
     }
 
     env.println("import java.io.IOException;");
-    env.println("import se.lth.control.labcomm.LabCommDecoder;");
-    env.println("import se.lth.control.labcomm.LabCommDispatcher;");
-    env.println("import se.lth.control.labcomm.LabCommEncoder;");
-    env.println("import se.lth.control.labcomm.LabCommHandler;");
-    env.println("import se.lth.control.labcomm.LabCommSample;");
+    env.println("import se.lth.control.labcomm"+env.verStr+".LabCommDecoder;");
+    env.println("import se.lth.control.labcomm"+env.verStr+".LabCommDispatcher;");
+    env.println("import se.lth.control.labcomm"+env.verStr+".LabCommEncoder;");
+    env.println("import se.lth.control.labcomm"+env.verStr+".LabCommHandler;");
+    env.println("import se.lth.control.labcomm"+env.verStr+".LabCommSample;");
     env.println();
     env.print("public class " + getName());
 //    if(getType().isUserType()) {
@@ -449,7 +458,7 @@ aspect Java_Class {
     Java_emitDecoder(env);
     env.println("private static byte[] signature = new byte[] {");
     env.indent();
-    SignatureList signature = signature();
+    SignatureList signature = signature(env.version);
     for (int i = 0 ; i < signature.size() ; i++) {
       String comment = signature.getComment(i);
       if (comment != null) {
@@ -738,6 +747,10 @@ aspect Java_Class {
 		    " not declared");
   }
 
+  public boolean VoidType.Java_needInstance() {
+    return false;
+  }
+
   public boolean PrimType.Java_needInstance() {
     return false;
   }
@@ -841,8 +854,8 @@ aspect Java_Class {
 
 aspect Java_Info {
 
-  public void Program.Java_info(PrintStream out) {
-    Java_env env = new Java_env(out);
+  public void Program.Java_info(PrintStream out, int version) {
+    Java_env env = new Java_env(version, out);
     for (int i = 0; i < getNumDecl(); i++) {
       getDecl(i).Java_info(env);
     }
@@ -856,13 +869,15 @@ aspect Java_Info {
 
   public void TypeDecl.Java_info(Java_env env) {
     env.print(",Java,typedef," + getName() + ",");
-    getType().Java_emitType(env);
+    getType().Java_emitType(env); 
+    env.print(",not_applicable_for_Java");
     env.println();
   }
 
   public void SampleDecl.Java_info(Java_env env) {
     env.print(",Java,sample," + getName() + ",");
     getType().Java_emitType(env);
+    env.print(",not_applicable_for_Java");
     env.println();
   }
 

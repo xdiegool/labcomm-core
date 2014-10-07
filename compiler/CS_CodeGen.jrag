@@ -8,12 +8,13 @@ aspect CS_CodeGenEnv {
 
   public class CS_env {
 
+    public final int version;
     private int indent;
     private int depth;
     private CS_printer printer;
     private HashMap unique = new HashMap();
 
-    final private class CS_printer {
+    final private static class CS_printer {
       
       private boolean newline = true;
       private File file;
@@ -75,19 +76,18 @@ aspect CS_CodeGenEnv {
       }
     }
 
-    private CS_env(int indent, CS_printer printer) {
+    private CS_env(int indent, CS_printer printer, int version) {
+      this.version = version;
       this.indent = indent;
       this.printer = printer;
     }
 
-    public CS_env(File f) {
-      this.indent = 0;
-      this.printer = new CS_printer(f);
+    public CS_env(File f, int version) {
+      this(0, new CS_printer(f), version);
     }
 
-    public CS_env(PrintStream out) {
-      this.indent = 0;
-      this.printer = new CS_printer(out);
+    public CS_env(PrintStream out, int version) {
+      this(0, new CS_printer(out), version);
     }
 
     public void close() throws IOException {
@@ -196,9 +196,9 @@ aspect CS_Void {
 aspect CS_CodeGen {
 
   public void Program.CS_gen(String file, 
-			     String namespace) throws IOException {
+			     String namespace, int version) throws IOException {
     // Registration class
-    CS_env env = new CS_env(new File(file));
+    CS_env env = new CS_env(new File(file), version);
     if (namespace != null && namespace.length() > 0) {
       env.println("namespace " + namespace + "{");
       env.indent();
@@ -351,7 +351,7 @@ aspect CS_Class {
     CS_emitDecoder(env);
     env.println("private static byte[] signature = new byte[] {");
     env.indent();
-    SignatureList signature = signature();
+    SignatureList signature = signature(env.version);
     for (int i = 0 ; i < signature.size() ; i++) {
       String comment = signature.getComment(i);
       if (comment != null) {
@@ -645,6 +645,10 @@ aspect CS_Class {
 		    " not declared");
   }
 
+  public boolean VoidType.CS_needInstance() {
+    return false;
+  }
+
   public boolean PrimType.CS_needInstance() {
     return false;
   }
@@ -752,8 +756,8 @@ aspect CS_Class {
 
 aspect CS_Info {
 
-  public void Program.CS_info(PrintStream out, String namespace) {
-    CS_env env = new CS_env(out);
+  public void Program.CS_info(PrintStream out, String namespace, int version) {
+    CS_env env = new CS_env(out, version);
     if (namespace == null) {
       namespace = ""; 
     } else {
@@ -772,13 +776,15 @@ aspect CS_Info {
 
   public void TypeDecl.CS_info(CS_env env, String namespace) {
     env.print(";C#;typedef;" + namespace + getName() + ";");
-    getType().CS_emitType(env);
+    getType().CS_emitType(env) ;
+    env.print(";not_applicable_for_C#");
     env.println();
   }
 
   public void SampleDecl.CS_info(CS_env env, String namespace) {
     env.print(";C#;sample;" + namespace + getName() + ";");
     getType().CS_emitType(env);
+    env.print(";not_applicable_for_C#");
     env.println();
   }
 

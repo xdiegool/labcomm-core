@@ -64,5 +64,7 @@ LABCOMM_ERROR(LABCOMM_ERROR_MEMORY,
 	      "Could not allocate memory")
 LABCOMM_ERROR(LABCOMM_ERROR_USER_DEF,     
 	      "User defined error")
+LABCOMM_ERROR(LABCOMM_ERROR_BAD_WRITER,
+	      "Decoder: writer_ioctl() failed")
 
 #endif

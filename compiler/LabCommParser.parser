@@ -14,7 +14,7 @@
       s.append("  *** Syntactic error: unexpected token " + Terminals.NAMES[token.getId()]);
       throw new SourceError(s.toString());
         //super.syntaxError(token);
-        //throw new RuntimeException(token.getLine(token.getStart()) + ", " + 
+        //throw new RuntimeException(token.getLine(token.getStart()) + ", " +
 	// token.getColumn(token.getStart()) + ": Syntax Error");
     }
     public void scannerError(Scanner.Exception e) {
@@ -55,57 +55,60 @@ List var_decl_list =
 
 Field var_decl =
     type.t IDENTIFIER SEMICOLON     {: return new Field(t, IDENTIFIER); :}
-  | type.t IDENTIFIER dim_list.d SEMICOLON 
+  | type.t IDENTIFIER dim_list.d SEMICOLON
     {: return new Field(new ParseArrayType(t, d), IDENTIFIER); :}
   ;
 
-TypeDecl type_decl = 
+TypeDecl type_decl =
     TYPEDEF type.t IDENTIFIER SEMICOLON {: return new TypeDecl(t, IDENTIFIER); :}
-  | TYPEDEF type.t IDENTIFIER dim_list.d SEMICOLON 
+  | TYPEDEF type.t IDENTIFIER dim_list.d SEMICOLON
     {: return new TypeDecl(new ParseArrayType(t, d), IDENTIFIER); :}
   ;
 
-SampleDecl sample_decl = 
-    SAMPLE type.t IDENTIFIER SEMICOLON 
+SampleDecl sample_decl =
+    SAMPLE type.t IDENTIFIER SEMICOLON
       {: return new SampleDecl(t, IDENTIFIER); :}
-  | SAMPLE type.t IDENTIFIER dim_list.d SEMICOLON 
+  | SAMPLE type.t IDENTIFIER dim_list.d SEMICOLON
       {: return new SampleDecl(new ParseArrayType(t, d), IDENTIFIER); :}
-  | SAMPLE VOID IDENTIFIER SEMICOLON 
-      {: return new SampleDecl(new VoidType(), IDENTIFIER); :}
   ;
 
 Type type =
     prim_type.p                     {: return p; :}
   | user_type.u                     {: return u; :}
   | struct_type.s                   {: return s; :}
+  | void_type.v                     {: return v; :}
   ;
 
-PrimType prim_type =      
-    BOOLEAN                         
+PrimType prim_type =
+    BOOLEAN
       {: return new PrimType(BOOLEAN, ASTNode.LABCOMM_BOOLEAN); :}
-  | BYTE                            
+  | BYTE
       {: return new PrimType(BYTE, ASTNode.LABCOMM_BYTE); :}
-  | SHORT                           
+  | SHORT
       {: return new PrimType(SHORT, ASTNode.LABCOMM_SHORT); :}
-  | INT                             
+  | INT
       {: return new PrimType(INT, ASTNode.LABCOMM_INT); :}
-  | LONG                            
+  | LONG
       {: return new PrimType(LONG, ASTNode.LABCOMM_LONG); :}
-  | FLOAT                           
+  | FLOAT
       {: return new PrimType(FLOAT, ASTNode.LABCOMM_FLOAT); :}
-  | DOUBLE                          
+  | DOUBLE
       {: return new PrimType(DOUBLE, ASTNode.LABCOMM_DOUBLE); :}
-  | STRING                          
+  | STRING
       {: return new PrimType(STRING, ASTNode.LABCOMM_STRING); :}
   ;
 
-UserType user_type =      
+UserType user_type =
     IDENTIFIER                      {: return new UserType(IDENTIFIER); :}
   ;
 
 StructType struct_type =
     STRUCT LBRACE var_decl_list.l RBRACE {: return new StructType(l); :}
   ;
+
+VoidType void_type = 
+    VOID {: return new VoidType(); :} 
+;
 
 List dim_list =
     dim.d                           {: return new List().add(d); :}
@@ -121,7 +124,7 @@ List exp_list =
   | exp_list.l COMMA exp.e          {: return l.add(e); :}
   ;
 
-Exp exp = 
+Exp exp =
     INTEGER_LITERAL                 {: return new IntegerLiteral(INTEGER_LITERAL); :}
   | UNDERSCORE                      {: return new VariableSize(); :}
   ;

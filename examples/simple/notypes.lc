@@ -1,0 +1,14 @@
+sample int AnInt;
+
+sample struct {
+  int x;
+  string s;
+} IntString;
+
+sample struct {
+  struct {
+    float x;
+    float y;
+  } point;
+  boolean b;
+} nestedStruct;

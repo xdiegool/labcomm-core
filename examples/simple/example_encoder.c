@@ -20,9 +20,13 @@ int main(int argc, char *argv[]) {
 				labcomm_default_error_handler, 
 				labcomm_default_memory,
 				labcomm_default_scheduler);
+  labcomm_encoder_register_simple_doavoid(encoder);
   labcomm_encoder_register_simple_theTwoInts(encoder);
   labcomm_encoder_register_simple_anotherTwoInts(encoder);
   labcomm_encoder_register_simple_IntString(encoder);
+
+  labcomm_encode_simple_doavoid(encoder);
+
   simple_IntString is;
   is.x = 24;
   is.s = "Hello, LabComm!";

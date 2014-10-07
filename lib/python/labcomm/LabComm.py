@@ -96,7 +96,14 @@
 import types
 import struct as packer
 
-VERSION = "LabComm2013"
+#VERSION = "LabComm2013"
+
+# Version testing
+def sendVersionString(version):
+  return version == "LabComm2013" 
+
+def usePacked32(version):
+  return version == "LabComm2013"
 
 i_TYPEDEF = 0x01
 i_SAMPLE  = 0x02
@@ -546,10 +553,11 @@ class Codec(object):
         
 
 class Encoder(Codec):
-    def __init__(self, writer):
+    def __init__(self, writer, version="LabComm2013"):
         super(Encoder, self).__init__()
         self.writer = writer
-        self.writer.start(self, VERSION)
+        self.version = version
+        self.writer.start(self, self.version)
 
     def pack(self, format, *args):
         self.writer.write(packer.pack(format, *args))
@@ -575,14 +583,21 @@ class Encoder(Codec):
             decl.encode_decl(self)
             
     def encode_packed32(self, v):
-        v = v & 0xffffffff
-        tmp = [ v & 0x7f ]
-        v = v >> 7
-        while v:
-            tmp.append(v & 0x7f | 0x80)
+        #if usePacked32(self.version) :
+        if self.version == "LabComm2013" :
+            v = v & 0xffffffff
+            tmp = [ v & 0x7f ]
             v = v >> 7
-        for c in reversed(tmp):
-            self.encode_byte(c) 
+            while v:
+                tmp.append(v & 0x7f | 0x80)
+                v = v >> 7
+            for c in reversed(tmp):
+                self.encode_byte(c) 
+        elif self.version == "LabComm2006" :
+            v = v & 0xffffffff
+            self.encode_int(v)
+        else :
+            raise Exception("Unsupported labcomm version %s" % self.version)
 
     def encode_type(self, index):
         self.encode_packed32(index)
@@ -619,10 +634,11 @@ class Encoder(Codec):
 #        self.pack("!i%ds" % len(s), len(s), s)
 
 class Decoder(Codec):
-    def __init__(self, reader):
+    def __init__(self, reader, version="LabComm2013"):
         super(Decoder, self).__init__()
         self.reader = reader
-        self.reader.start(self, VERSION)
+        self.version = version
+        self.reader.start(self, version)
         
     def unpack(self, format):
         size = packer.calcsize(format)
@@ -664,13 +680,18 @@ class Decoder(Codec):
         return result
     
     def decode_packed32(self):
-        result = 0
-        while True:
-            tmp = self.decode_byte()
-            result = (result << 7) | (tmp & 0x7f)
-            if (tmp & 0x80) == 0:
-                break
-        return result
+        if self.version == "LabComm2013" :
+            result = 0
+            while True:
+                tmp = self.decode_byte()
+                result = (result << 7) | (tmp & 0x7f)
+                if (tmp & 0x80) == 0:
+                    break
+            return result
+        elif self.version == "LabComm2006" :
+            return self.decode_int()
+        else :
+            raise Exception("Unsupported labcomm version %s" % self.version)
 
     def decode_type_number(self):
         return self.decode_packed32()

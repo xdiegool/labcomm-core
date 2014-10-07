@@ -1,3 +1,5 @@
+import labcomm
+
 class StreamWriter:
     
     def __init__(self, stream):
@@ -5,8 +7,11 @@ class StreamWriter:
         pass
             
     def start(self, encoder, version):
-        encoder.encode_string(version)
-        pass
+        self.version = version;
+
+        if labcomm.LabComm.sendVersionString(version):
+          encoder.encode_string(version)
+          pass
     
     def write(self, data):
         self.stream.write(data)
