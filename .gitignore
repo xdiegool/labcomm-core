@@ -26,3 +26,7 @@ examples/twoway/gen/
 lib/csharp/labcomm.dll
 lib/java/gen/
 lib/java/labcomm*.jar
+examples/simple/example_decoder
+examples/simple/example_decoder06
+examples/simple/example_encoder
+examples/simple/example_encoder06
