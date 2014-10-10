@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#define LABCOMM_VERSION "LabComm2013"
+#define LABCOMM_VERSION "LabComm20141009"
 
 #include <errno.h>
 #include "labcomm.h"
@@ -166,7 +166,7 @@ out:
   return result;
 }
 
-static int decode_typedef_or_sample(struct labcomm_decoder *d, int kind)
+static int decode_sample(struct labcomm_decoder *d, int kind)
 {
   int result;
 
@@ -310,8 +310,8 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
     result = d->reader->error;
     goto out;
   }
-  if (remote_index == LABCOMM_TYPEDEF || remote_index == LABCOMM_SAMPLE) {
-    result = decode_typedef_or_sample(d, remote_index); 
+  if (remote_index == LABCOMM_SAMPLE) {
+    result = decode_sample(d, remote_index); 
   } else {
     int *local_index;
     struct call_handler_context wrap = {

@@ -6,9 +6,9 @@ lib/c/liblabcomm.so.1
 lib/c/liblabcomm2006.so.1
 lib/c/liblabcomm2006.so
 lib/c/liblabcomm2006.a
-lib/c/liblabcomm2013.so.1
-lib/c/liblabcomm2013.so
-lib/c/liblabcomm2013.a
+lib/c/liblabcomm20141009.so.1
+lib/c/liblabcomm20141009.so
+lib/c/liblabcomm20141009.a
 lib/c/test/test_labcomm
 lib/c/test/test_labcomm_basic_type_encoding
 lib/c/test/test_labcomm_copy

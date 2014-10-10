@@ -5,7 +5,7 @@ import sys
 import test
 
 if __name__ == '__main__':
-    version = sys.argv[2] if len(sys.argv) == 3 else "LabComm2013"
+    version = sys.argv[2] if len(sys.argv) == 3 else "LabComm20141009"
     encoder = labcomm.Encoder(labcomm.StreamWriter(open(sys.argv[1], 'w')), version)
     encoder.add_decl(test.twoLines.signature)
     l1 = test.line()

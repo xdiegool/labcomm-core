@@ -96,14 +96,41 @@
 import types
 import struct as packer
 
-#VERSION = "LabComm2013"
+DEFAULT_VERSION = "LabComm20141009"
 
 # Version testing
 def sendVersionString(version):
-  return version == "LabComm2013" 
+    return version in [ "LabComm2013", "LabComm20141009" ]
 
 def usePacked32(version):
-  return version == "LabComm2013"
+    return version in [ "LabComm2013", "LabComm20141009" ]
+
+def usePacketLength(version):
+    return version in [ "LabComm20141009" ]
+
+class length_encoder:
+    def __init__(self, encoder):
+        import sys
+        self.encoder = encoder
+        self.data = ""
+        print>>sys.stderr, "INIT", self, self.encoder, self.encoder.writer
+
+    def start(self, encoder, version):
+        self.version = version
+        pass
+    
+    def write(self, data):
+        import sys
+        print>>sys.stderr, [ data ]
+        print>>sys.stderr, "WRITE", self, self.encoder, self.encoder.writer
+
+    def __enter__(self):
+        return Encoder(self)
+
+    def __exit__(self, type, value, traceback):
+        print>>sys.stderr, "EXIT", value
+        
+        pass
 
 i_TYPEDEF = 0x01
 i_SAMPLE  = 0x02
@@ -269,6 +296,7 @@ class sample_or_typedef(object):
         self.decl = decl
 
     def encode_decl_tail(self, encoder):
+#        with length_encoder(encoder) as e:
         encoder.encode_type_number(self)
         encoder.encode_string(self.name)
         encoder.encode_type_number(self.decl)
@@ -298,6 +326,12 @@ class sample_or_typedef(object):
 
 class sample(sample_or_typedef):
     def encode_decl(self, encoder):
+#        with length_encoder(encoder) as e:
+#            e.encode_type(i_SAMPLE)
+#            self.encode_decl_tail(e)
+        import sys
+        print>>sys.stderr, "AFTER"
+ 
         encoder.encode_type(i_SAMPLE)
         self.encode_decl_tail(encoder)
 
@@ -553,7 +587,7 @@ class Codec(object):
         
 
 class Encoder(Codec):
-    def __init__(self, writer, version="LabComm2013"):
+    def __init__(self, writer, version=DEFAULT_VERSION):
         super(Encoder, self).__init__()
         self.writer = writer
         self.version = version
@@ -584,7 +618,7 @@ class Encoder(Codec):
             
     def encode_packed32(self, v):
         #if usePacked32(self.version) :
-        if self.version == "LabComm2013" :
+        if self.version in [ "LabComm2013",  "LabComm20141009" ]:
             v = v & 0xffffffff
             tmp = [ v & 0x7f ]
             v = v >> 7
@@ -634,7 +668,7 @@ class Encoder(Codec):
 #        self.pack("!i%ds" % len(s), len(s), s)
 
 class Decoder(Codec):
-    def __init__(self, reader, version="LabComm2013"):
+    def __init__(self, reader, version=DEFAULT_VERSION):
         super(Decoder, self).__init__()
         self.reader = reader
         self.version = version
@@ -659,7 +693,7 @@ class Decoder(Codec):
         value = None
         index = self.decode_type_number()
         decl = self.index_to_decl[index]
-        if index == i_TYPEDEF or index == i_SAMPLE:
+        if index == i_SAMPLE:
             decl = decl.decode_decl(self)
         else:
             value = decl.decode(self)
@@ -680,7 +714,7 @@ class Decoder(Codec):
         return result
     
     def decode_packed32(self):
-        if self.version == "LabComm2013" :
+        if self.version in [ "LabComm2013", "LabComm20141009" ] :
             result = 0
             while True:
                 tmp = self.decode_byte()

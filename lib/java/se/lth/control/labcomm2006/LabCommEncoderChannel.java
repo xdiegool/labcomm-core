@@ -94,7 +94,7 @@ public class LabCommEncoderChannel implements LabCommEncoder {
   }
 
   /**
-     method for API harmonization with labcomm2013.
+     method for API harmonization with labcomm20141009.
      Labcomm2006 encodes lengths etc as 32 bit ints.
   */
   public void encodePacked32(long value) throws IOException {

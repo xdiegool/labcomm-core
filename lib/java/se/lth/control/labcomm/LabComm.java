@@ -2,7 +2,7 @@ package se.lth.control.labcomm;
 
 public class LabComm {
 
-  public static final String VERSION = "LabComm2013";
+  public static final String VERSION = "LabComm20141009";
 
   /*
    * Predeclared aggregate type indices

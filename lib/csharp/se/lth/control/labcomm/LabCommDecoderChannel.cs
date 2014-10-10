@@ -25,7 +25,6 @@ namespace se.lth.control.labcomm {
       while (!done) {
 	int tag = decodePacked32();
 	switch (tag) {
-	case LabComm.TYPEDEF:
         case LabComm.SAMPLE: {
           int index = decodePacked32();
           String name = decodeString();

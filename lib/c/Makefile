@@ -1,6 +1,6 @@
 ## Macros
 UNAME_S=$(shell uname -s)
-ALL_DEPS=liblabcomm.a liblabcomm.so.1 liblabcomm2006.a liblabcomm2006.so.1  liblabcomm2013.a liblabcomm2013.so.1
+ALL_DEPS=liblabcomm.a liblabcomm.so.1 liblabcomm2006.a liblabcomm2006.so.1  liblabcomm20141009.a liblabcomm20141009.so.1
 
 ifeq ($(UNAME_S),Linux)
   CFLAGS=-std=c99 -g -Wall -Werror -O3  -I. -Itest -I2006
@@ -95,10 +95,10 @@ liblabcomm.a: $(OBJS) $(OBJS2006)
 liblabcomm.so.1: $(OBJS:%.o=%.pic.o) $(OBJS2006:%.o=%.pic.o)
 	$(call MAKESHARED,$@,$@,$^)
 
-liblabcomm2013.a: $(OBJS)
+liblabcomm20141009.a: $(OBJS)
 	ar -r $@ $^
 
-liblabcomm2013.so.1: $(OBJS:%.o=%.pic.o)
+liblabcomm20141009.so.1: $(OBJS:%.o=%.pic.o)
 	$(call MAKESHARED,$@,$@,$^)
 
 liblabcomm2006.a: $(OBJS2006)
@@ -178,8 +178,8 @@ distclean: clean
 	$(RM) liblabcomm.a
 	$(RM) liblabcomm2006.so.1
 	$(RM) liblabcomm2006.a
-	$(RM) liblabcomm2013.so.1
-	$(RM) liblabcomm2013.a
+	$(RM) liblabcomm20141009.so.1
+	$(RM) liblabcomm20141009.a
 
 # Extra dependencies
 $(TEST_DIR)/test_labcomm_basic_type_encoding.o: labcomm_private.h

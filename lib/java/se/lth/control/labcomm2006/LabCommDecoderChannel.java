@@ -20,7 +20,6 @@ public class LabCommDecoderChannel implements LabCommDecoder {
     while (!done) {
       int tag = decodePacked32();
       switch (tag) {
-	case LabComm.TYPEDEF:
 	case LabComm.SAMPLE: {
 	  int index = decodePacked32();
 	  String name = decodeString();
@@ -135,7 +134,7 @@ public class LabCommDecoderChannel implements LabCommDecoder {
   }
 
   /**
-     method for API harmonization with labcomm2013.
+     method for API harmonization with labcomm20141009.
      Labcomm2006 encodes lengths etc as 32 bit ints.
   */
   public int decodePacked32() throws IOException {

@@ -10,3 +10,4 @@ distclean:
 	rm -f example_encoder06
 	rm -f example_decoder
 	rm -f example_decoder06
+	rm -f encoded_data

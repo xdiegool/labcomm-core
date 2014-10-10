@@ -4,7 +4,7 @@ import labcomm
 import sys
 
 if __name__ == "__main__":
-    version = sys.argv[2] if len(sys.argv) == 3 else "LabComm2013"
+    version = sys.argv[2] if len(sys.argv) == 3 else "LabComm20141009"
     d = labcomm.Decoder(labcomm.StreamReader(open(sys.argv[1])), version)
 
     while True:
