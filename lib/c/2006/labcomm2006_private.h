@@ -377,6 +377,9 @@ int labcomm2006_internal_encoder_ioctl(struct labcomm2006_encoder *encoder,
 				   struct labcomm2006_signature *signature,
 				   uint32_t ioctl_action, va_list args);
 
+int labcomm2006_internal_sizeof(struct labcomm2006_signature *signature,
+                                void *v);
+
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 
 #define LABCOMM_ENCODE(name, type)					\

@@ -44,9 +44,8 @@ struct labcomm2006_decoder;
  * Signature entry
  */
 struct labcomm2006_signature {
-  int type;
   char *name;
-  int (*encoded_size)(struct labcomm2006_signature *, void *); // void * == encoded_sample *
+  int (*encoded_size)(void *); /* void* refers to sample_data */
   int size;
   unsigned char *signature; 
   int index;

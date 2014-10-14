@@ -190,7 +190,6 @@ static int decode_typedef_or_sample(struct labcomm2006_decoder *d, int kind)
   labcomm2006_writer_start(&writer, writer.action_context, 0, NULL, NULL);
   remote_index = labcomm2006_read_packed32(d->reader);
   signature.name = labcomm2006_read_string(d->reader);
-  signature.type = kind;
   collect_flat_signature(d, &writer);
   labcomm2006_writer_end(&writer, writer.action_context);
   err = writer_ioctl(&writer, 
@@ -221,7 +220,6 @@ static int decode_typedef_or_sample(struct labcomm2006_decoder *d, int kind)
       s = LABCOMM_SIGNATURE_ARRAY_REF(d->memory, 
 				      d->local,  struct sample_entry, i);
       if (s->signature &&
-	  s->signature->type == signature.type &&
 	  s->signature->size == signature.size &&
 	  strcmp(s->signature->name, signature.name) == 0 &&
 	  memcmp((void*)s->signature->signature, (void*)signature.signature,

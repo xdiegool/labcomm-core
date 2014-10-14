@@ -77,7 +77,6 @@ int labcomm2006_internal_encoder_register(
 
   index = labcomm2006_get_local_index(signature);
   labcomm2006_scheduler_writer_lock(e->scheduler);
-  if (signature->type != LABCOMM_SAMPLE) { goto out; }
   if (index <= 0) { goto out; }
   done = LABCOMM_SIGNATURE_ARRAY_REF(e->memory, e->registered, int, index);
   if (*done) { goto out; }
@@ -86,7 +85,7 @@ int labcomm2006_internal_encoder_register(
 			     index, signature, NULL);
   if (err == -EALREADY) { result = 0; goto out; }
   if (err != 0) { result = err; goto out; }
-  labcomm2006_write_packed32(e->writer, signature->type);
+  labcomm2006_write_packed32(e->writer, LABCOMM_SAMPLE);
   labcomm2006_write_packed32(e->writer, index);
   labcomm2006_write_string(e->writer, signature->name);
   for (i = 0 ; i < signature->size ; i++) {

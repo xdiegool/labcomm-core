@@ -1269,7 +1269,7 @@ aspect C_Sizeof {
 		"(" + env.prefix + getName() + " *v)");
     env.println("{");
     env.indent();
-    env.println("return labcomm_internal_sizeof(" +
+    env.println("return labcomm"+env.verStr+"_internal_sizeof(" +
                 "&labcomm" + env.verStr+"_signature_" + env.prefix + getName() +
                 ", v);");
     env.unindent();
@@ -1353,8 +1353,8 @@ aspect C_Sizeof {
   public void PrimType.C_emitSizeof(C_env env) {
     switch (getToken()) {
       case LABCOMM_STRING: { 
-        env.print("{ int length = strlen(" + env.qualid + "); ");
-	env.println("result += labcomm_size_packed32(length) + length; }"); 
+        env.print("{ int l = strlen(" + env.qualid + "); ");
+	env.println("result += labcomm"+env.verStr+"_size_packed32(l) + l; }"); 
       } break;
       default: { 
 	throw new Error(this.getClass().getName() + 
