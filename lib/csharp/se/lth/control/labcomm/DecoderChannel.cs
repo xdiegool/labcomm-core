@@ -5,18 +5,18 @@ namespace se.lth.control.labcomm {
   using System.Runtime.InteropServices;
   using System.Text;
 
-  public class LabCommDecoderChannel : LabCommDecoder {
+  public class DecoderChannel : Decoder {
 
     private Stream stream;
-    private LabCommDecoderRegistry registry = new LabCommDecoderRegistry();
+    private DecoderRegistry registry = new DecoderRegistry();
     byte[] buf = new byte[8];
 
-    public LabCommDecoderChannel(Stream stream) {
+    public DecoderChannel(Stream stream) {
       this.stream = stream;
       String version = decodeString();
-      if (version != LabComm.VERSION) {
+      if (version != Constant.VERSION) {
 	throw new IOException("LabComm version mismatch " +
-			      version + " != " + LabComm.VERSION);
+			      version + " != " + Constant.VERSION);
       }
     }
 
@@ -26,7 +26,7 @@ namespace se.lth.control.labcomm {
 	int tag = decodePacked32();
         int length = decodePacked32();
 	switch (tag) {
-        case LabComm.SAMPLE: {
+        case Constant.SAMPLE: {
           int index = decodePacked32();
           String name = decodeString();
           int signature_length = decodePacked32();
@@ -35,15 +35,15 @@ namespace se.lth.control.labcomm {
 	  registry.add(index, name, signature);
         } break;
         default: {
-          LabCommDecoderRegistry.Entry e = registry.get(tag);
+          DecoderRegistry.Entry e = registry.get(tag);
           if (e == null) {
             throw new IOException("Unhandled tag " + tag);
           }
-          LabCommDispatcher d = e.getDispatcher();
+          SampleDispatcher d = e.getSampleDispatcher();
           if (d == null) {
             throw new IOException("No dispatcher for '" + e.getName() + "'" + e.getSignature());
           }
-          LabCommHandler h = e.getHandler();
+          SampleHandler h = e.getHandler();
           if (h == null) {
             throw new IOException("No handler for '" + e.getName() +"'");
           }
@@ -60,8 +60,8 @@ namespace se.lth.control.labcomm {
       }
     }
 
-    public void register(LabCommDispatcher dispatcher, 
-			 LabCommHandler handler) {
+    public void register(SampleDispatcher dispatcher, 
+			 SampleHandler handler) {
       registry.add(dispatcher, handler);
     }
 

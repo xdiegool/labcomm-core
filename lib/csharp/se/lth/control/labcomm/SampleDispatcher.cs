@@ -2,7 +2,7 @@ namespace se.lth.control.labcomm {
 
   using System;
 
-  public interface LabCommDispatcher {
+  public interface SampleDispatcher {
     
     Type getSampleClass();
     
@@ -10,8 +10,8 @@ namespace se.lth.control.labcomm {
     
     byte[] getSignature();
     
-    void decodeAndHandle(LabCommDecoder decoder,
-			 LabCommHandler handler);
+    void decodeAndHandle(Decoder decoder,
+			 SampleHandler handler);
 
   }
 

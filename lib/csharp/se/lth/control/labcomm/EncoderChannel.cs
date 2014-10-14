@@ -5,30 +5,30 @@ namespace se.lth.control.labcomm {
   using System.Text;
   using System.Runtime.InteropServices;
 
-  public class LabCommEncoderChannel : LabCommEncoder {
+  public class EncoderChannel : Encoder {
 
     private Stream writer;
     private MemoryStream bytes = new MemoryStream();
-    private LabCommEncoderRegistry registry = new LabCommEncoderRegistry();
+    private EncoderRegistry registry = new EncoderRegistry();
     byte[] buf = new byte[8];
     private int current_tag; 
 
-    public LabCommEncoderChannel(Stream writer, bool emitVersion) {
+    public EncoderChannel(Stream writer, bool emitVersion) {
       this.writer = writer;
       if (emitVersion) {
-	encodeString(LabComm.VERSION);
+	encodeString(Constant.VERSION);
         bytes.WriteTo(writer);
         bytes.SetLength(0);
         writer.Flush();
       }
     }
 
-    public LabCommEncoderChannel(Stream writer) : this(writer, true) {
+    public EncoderChannel(Stream writer) : this(writer, true) {
     }
 
-    public void register(LabCommDispatcher dispatcher) {
+    public void register(SampleDispatcher dispatcher) {
       int index = registry.add(dispatcher);
-      begin(LabComm.SAMPLE);
+      begin(Constant.SAMPLE);
       encodePacked32(index);
       encodeString(dispatcher.getName());
       byte[] signature = dispatcher.getSignature();

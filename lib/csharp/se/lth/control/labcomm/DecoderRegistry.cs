@@ -3,18 +3,18 @@ namespace se.lth.control.labcomm {
   using System;
   using System.Collections.Generic;
 
-  public class LabCommDecoderRegistry {
+  public class DecoderRegistry {
 
     public class Entry {
     
-      private LabCommDispatcher dispatcher;
-      private LabCommHandler handler;
+      private SampleDispatcher dispatcher;
+      private SampleHandler handler;
       private int index;
       private String name;
       private byte[] signature;
 
-      public Entry(LabCommDispatcher dispatcher,
-		   LabCommHandler handler) {
+      public Entry(SampleDispatcher dispatcher,
+		   SampleHandler handler) {
 	this.dispatcher = dispatcher;
 	this.name = dispatcher.getName();
 	this.signature = dispatcher.getSignature();
@@ -27,19 +27,19 @@ namespace se.lth.control.labcomm {
 	this.signature = signature;
       }
 
-      public LabCommDispatcher getDispatcher() {
+      public SampleDispatcher getSampleDispatcher() {
 	return dispatcher;
       }
 
-      public void setDispatcher(LabCommDispatcher dispatcher) {
+      public void setSampleDispatcher(SampleDispatcher dispatcher) {
 	this.dispatcher = dispatcher;
       }
 
-      public LabCommHandler getHandler() {
+      public SampleHandler getHandler() {
 	return handler;
       }
 
-      public void setHandler(LabCommHandler handler) {
+      public void setHandler(SampleHandler handler) {
 	this.handler = handler;
       }
 
@@ -93,13 +93,13 @@ namespace se.lth.control.labcomm {
     private Dictionary<Type, Entry> byClass;
     private Dictionary<int, Entry> byIndex;
 
-    public LabCommDecoderRegistry() {
+    public DecoderRegistry() {
       byClass = new Dictionary<Type, Entry>();
       byIndex = new Dictionary<int, Entry>();
     }
 
-    public void add(LabCommDispatcher dispatcher,
-		    LabCommHandler handler) {
+    public void add(SampleDispatcher dispatcher,
+		    SampleHandler handler) {
       lock(this) {
 	Entry e;
 	byClass.TryGetValue(dispatcher.getSampleClass(), out e);
@@ -109,7 +109,7 @@ namespace se.lth.control.labcomm {
 	} else {
 	  foreach (Entry e2 in byIndex.Values) {
 	    if (e2.match(dispatcher.getName(), dispatcher.getSignature())) {
-	      e2.setDispatcher(dispatcher);
+	      e2.setSampleDispatcher(dispatcher);
 	      e2.setHandler(handler);
 	      e = e2;
 	      break;

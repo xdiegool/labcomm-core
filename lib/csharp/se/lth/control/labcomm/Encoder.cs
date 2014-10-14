@@ -2,9 +2,9 @@ namespace se.lth.control.labcomm {
 
   using System;
 
-  public interface LabCommEncoder {
+  public interface Encoder {
     
-    void register(LabCommDispatcher dispatcher);
+    void register(SampleDispatcher dispatcher);
     void begin(Type c);
     void end(Type c);
 

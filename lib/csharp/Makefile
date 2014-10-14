@@ -1,14 +1,14 @@
-MODULES=LabCommDispatcher \
-	LabCommDecoderRegistry \
-	LabComm \
-	LabCommSample \
-	LabCommHandler \
-	LabCommEncoderRegistry \
-	LabCommDecoder \
-	LabCommType \
-	LabCommEncoderChannel \
-	LabCommEncoder \
-	LabCommDecoderChannel \
+MODULES=Constant\
+	Decoder \
+	DecoderChannel \
+	DecoderRegistry \
+	Encoder \
+	EncoderChannel \
+	EncoderRegistry \
+	Sample \
+	SampleDispatcher \
+	SampleHandler \
+	SampleType 
 
 all: labcomm.dll
 

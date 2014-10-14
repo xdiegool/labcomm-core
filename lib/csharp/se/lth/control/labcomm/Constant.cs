@@ -1,6 +1,6 @@
 namespace se.lth.control.labcomm {
 
-  public class LabComm {
+  public class Constant {
 
    public const string VERSION = "LabComm20141009";
 

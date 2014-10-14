@@ -3,19 +3,19 @@ namespace se.lth.control.labcomm {
   using System;
   using System.Collections.Generic;
 
-  public class LabCommEncoderRegistry {
+  public class EncoderRegistry {
 
     public class Entry {
     
-      private LabCommDispatcher dispatcher;
+      private SampleDispatcher dispatcher;
       private int index;
 
-      public Entry(LabCommDispatcher dispatcher, int index) {
+      public Entry(SampleDispatcher dispatcher, int index) {
 	this.dispatcher = dispatcher;
 	this.index = index;
       }
 
-      public LabCommDispatcher getDispatcher() {
+      public SampleDispatcher getSampleDispatcher() {
 	return dispatcher;
       }
 
@@ -25,14 +25,14 @@ namespace se.lth.control.labcomm {
 
     }
 
-    private int userIndex = LabComm.FIRST_USER_INDEX;
+    private int userIndex = Constant.FIRST_USER_INDEX;
     private Dictionary<Type, Entry> byClass;
 
-    public LabCommEncoderRegistry() {
+    public EncoderRegistry() {
       byClass = new Dictionary<Type, Entry>();
     }
 
-    public int add(LabCommDispatcher dispatcher) {
+    public int add(SampleDispatcher dispatcher) {
       lock(this) {
 	Entry e;
 	byClass.TryGetValue(dispatcher.getSampleClass(), out e);

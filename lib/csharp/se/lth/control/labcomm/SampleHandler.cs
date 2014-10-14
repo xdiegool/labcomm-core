@@ -1,6 +1,6 @@
 namespace se.lth.control.labcomm {
 
-  public interface LabCommHandler {
+  public interface SampleHandler {
   }
 
 }

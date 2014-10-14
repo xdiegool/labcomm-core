@@ -2,10 +2,10 @@ using System;
 
 namespace se.lth.control.labcomm {
 
-  public interface LabCommDecoder {
+  public interface Decoder {
 
-    void register(LabCommDispatcher dispatcher, 
-		  LabCommHandler handler);
+    void register(SampleDispatcher dispatcher, 
+		  SampleHandler handler);
 
     bool decodeBoolean();
     byte decodeByte();
