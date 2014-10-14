@@ -206,21 +206,6 @@ aspect Java_CodeGen {
 
   public void Program.J_gen(PrintStream ps, String pack, int version) throws IOException {
     Java_env env;
-/*
-    // Registration class
-    env = new Java_env(version, ps);
-    if (pack != null && pack.length() > 0) {
-      env.println("package " + pack + ";");
-    }
-    env.println("public class LabCommRegister {");
-    env.println();
-    env.indent();
-    Java_emitTypeRegister(env);
-    env.unindent();
-    env.println();
-    env.println("}");
-//    env.close();
-*/
     env = new Java_env(version, ps);
     for (int i = 0; i < getNumDecl(); i++) {
       Decl d = getDecl(i);
@@ -236,21 +221,6 @@ aspect Java_CodeGen {
 
   public void Program.J_gen(String dir, String pack, int version) throws IOException {
     Java_env env;
-/*
-    // Registration class
-    env = new Java_env(version, new File(dir, "LabCommRegister.java"));
-    if (pack != null && pack.length() > 0) {
-      env.println("package " + pack + ";");
-    }
-    env.println("public class LabCommRegister {");
-    env.println();
-    env.indent();
-    Java_emitTypeRegister(env);
-    env.unindent();
-    env.println();
-    env.println("}");
-    env.close();
-*/
     for (int i = 0; i < getNumDecl(); i++) {
       Decl d = getDecl(i);
       try {
@@ -286,38 +256,6 @@ aspect Java_CodeGen {
       }
     }
   }
-
-}
-
-aspect Java_Register {
-
-  public void Program.Java_emitTypeRegister(Java_env env) {
-    /*
-    env.println("static void register(Channel c) {");
-    env.indent();
-    for (int i = 0; i < getNumDecl(); i++) {
-      getDecl(i).Java_emitTypeRegister(env);
-    }
-    env.unindent();
-    env.println("}");
-*/
-
-  }
-
-  public void Decl.Java_emitTypeRegister(Java_env env) {
-    throw new Error(this.getClass().getName() + 
-		    ".Java_emitTypeRegister(Java_env env)" + 
-		    " not declared");
-  }
-
-  public void SampleDecl.Java_emitTypeRegister(Java_env env) {
-    env.println(getName() + ".register(c);");
-  }
-
-  public void TypeDecl.Java_emitTypeRegister(Java_env env) {
-    // TODO
-  }
-
 }
 
 aspect Java_Class {
