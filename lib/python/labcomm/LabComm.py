@@ -1,32 +1,56 @@
 #!/usr/bin/python
 #
-# All packets follows the following layout
+# LabComm20141009 packet has the following layout
 #
 #   +----+----+----+----+
-#   | id              |
+#   | id                    (packed32)
+#   +----+----+----+----+
+#   | length                (packed32)
 #   +----+----+----+----+
 #   | data
 #   | ...
 #   +----+--
 #
-# Data layouts for packets
-#
-# TYPEDEF:
+# LabComm220141009 SAMPLE:
 #
 #   +----+----+----+----+
-#   | id = 0x00000001   |
+#   | id = 0x02             (packed32)
 #   +----+----+----+----+
-#   | type number       |
+#   | length                (packed32)
+#   +----+----+----+----+
+#   | type number           (packed32)
 #   +----+----+----+----+
 #   | type name (UTF8)
 #   | ...
 #   +----+----+----+----+
-#   | type
+#   | signature length      (packed32)
+#   +----+----+----+----+
+#   | type signature
 #   | ...
 #   +----+--
 #
+# LabComm20141009 User data:
 #
-# SAMPLE:
+#   +----+----+----+----+
+#   | id >= 0x00000040      (packed32)
+#   +----+----+----+----+
+#   | length                (packed32)
+#   +----+----+----+----+
+#   | user data
+#   | ...
+#   +----+--
+#   
+#
+# LabComm2006 packets has the following layout
+#
+#   +----+----+----+----+
+#   | id                |
+#   +----+----+----+----+
+#   | data
+#   | ...
+#   +----+--
+#
+# LabComm2006 SAMPLE:
 #
 #   +----+----+----+----+
 #   | id = 0x00000002   |
@@ -36,15 +60,15 @@
 #   | type name (UTF8)
 #   | ...
 #   +----+----+----+----+
-#   | type
+#   | type signature
 #   | ...
 #   +----+--
 #
 #
-# User data:
+# LabComm2006 User data:
 #
 #   +----+----+----+----+
-#   | id >= 0x00000060  |
+#   | id >= 0x00000040  |
 #   +----+----+----+----+
 #   | user data
 #   | ...
