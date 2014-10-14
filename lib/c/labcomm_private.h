@@ -377,6 +377,9 @@ int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder,
 				   struct labcomm_signature *signature,
 				   uint32_t ioctl_action, va_list args);
 
+int labcomm_internal_sizeof(struct labcomm_signature *signature,
+                            void *v);
+
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 
 #define LABCOMM_ENCODE(name, type)					\
@@ -445,7 +448,7 @@ static inline int labcomm_write_string(struct labcomm_writer *w, char *s)
 {
   int length, i, err; 
 
-  length = strlen((char*)s);
+  length = strlen(s);
   err = labcomm_write_packed32(w, length);
   if (err != 0) { return err; }
   for (i = 0 ; i < length ; i++) {
@@ -471,6 +474,13 @@ static inline int labcomm_size_packed32(unsigned int data)
   }
   return result;
 
+}
+
+static inline int labcomm_size_string(char *s)
+{
+  int length = strlen(s);
+  
+  return labcomm_size_packed32(length) + length;
 }
 
 /*

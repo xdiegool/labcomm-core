@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.InputStream;
 import java.io.IOException;
+import java.io.EOFException;
 
 public class LabCommDecoderChannel implements LabCommDecoder {
 
@@ -25,13 +26,18 @@ public class LabCommDecoderChannel implements LabCommDecoder {
     boolean done = false;
     while (!done) {
       int tag = decodePacked32();
+      int length = decodePacked32();
       switch (tag) {
 	case LabComm.SAMPLE: {
 	  int index = decodePacked32();
 	  String name = decodeString();
-	  ByteArrayOutputStream signature = new ByteArrayOutputStream();
-	  collectFlatSignature(new LabCommEncoderChannel(signature, false));
-	  registry.add(index, name, signature.toByteArray());
+          int signature_length = decodePacked32();
+//	  ByteArrayOutputStream signature = new ByteArrayOutputStream();
+          byte[] signature = new byte[signature_length];
+//	  collectFlatSignature(new LabCommEncoderChannel(signature, false));
+          ReadBytes(signature, signature_length);
+//	  registry.add(index, name, signature.toByteArray());
+	  registry.add(index, name, signature);
 	} break;
 	default: {
 	  LabCommDecoderRegistry.Entry e = registry.get(tag);
@@ -99,6 +105,19 @@ public class LabCommDecoderChannel implements LabCommDecoder {
                        LabCommHandler handler) throws IOException {
     registry.add(dispatcher, handler);
   }
+
+  private void ReadBytes(byte[] result, int length) throws IOException {
+      int offset = 0;
+      while (offset < length) {
+	int count = in.read(result, offset, length - offset);
+	if (count <= 0) {
+	  throw new EOFException(
+	    "End of stream reached with " +
+            (length - offset) + " bytes left to read");
+        }
+	offset += count;
+      }
+    }
 
   public boolean decodeBoolean() throws IOException {
     return in.readBoolean();

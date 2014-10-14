@@ -187,7 +187,7 @@ static int decode_sample(struct labcomm_decoder *d, int kind)
     .error = 0,
   };
   struct labcomm_signature signature, *local_signature;
-  int remote_index, local_index, err;
+  int remote_index, local_index, err, length;
   
   local_signature = NULL;
   local_index = 0;
@@ -195,7 +195,8 @@ static int decode_sample(struct labcomm_decoder *d, int kind)
   labcomm_writer_start(&writer, writer.action_context, 0, NULL, NULL);
   remote_index = labcomm_read_packed32(d->reader);
   signature.name = labcomm_read_string(d->reader);
-  signature.type = kind;
+  length = labcomm_read_packed32(d->reader);
+  fprintf(stderr, "SIGNATURE_LENGTH=%d\n", length);
   collect_flat_signature(d, &writer);
   labcomm_writer_end(&writer, writer.action_context);
   err = writer_ioctl(&writer, 
@@ -228,7 +229,6 @@ static int decode_sample(struct labcomm_decoder *d, int kind)
       s = LABCOMM_SIGNATURE_ARRAY_REF(d->memory, 
 				      d->local,  struct sample_entry, i);
       if (s->signature &&
-	  s->signature->type == signature.type &&
 	  s->signature->size == signature.size &&
 	  strcmp(s->signature->name, signature.name) == 0 &&
 	  memcmp((void*)s->signature->signature, (void*)signature.signature,
@@ -302,7 +302,7 @@ static void reader_alloc(struct labcomm_decoder *d)
 
 int labcomm_decoder_decode_one(struct labcomm_decoder *d)
 {
-  int result, remote_index;
+  int result, remote_index, length;
 
   reader_alloc(d);
   remote_index = labcomm_read_packed32(d->reader);
@@ -310,6 +310,12 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
     result = d->reader->error;
     goto out;
   }
+  length = labcomm_read_packed32(d->reader);
+  if (d->reader->error < 0) {
+    result = d->reader->error;
+    goto out;
+  }
+  fprintf(stderr, "LENGTH=%d\n", length);
   if (remote_index == LABCOMM_SAMPLE) {
     result = decode_sample(d, remote_index); 
   } else {

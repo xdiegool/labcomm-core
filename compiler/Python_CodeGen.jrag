@@ -83,6 +83,7 @@ aspect Python_CodeGen {
     env.println("import labcomm");
     env.println();
     Python_genTypes(env);
+/* Typedefs curenntly disabled
     env.println("typedef = [");
     env.indent();
     for (int i = 0 ; i < getNumDecl() ; i++) {
@@ -90,6 +91,7 @@ aspect Python_CodeGen {
     }
     env.unindent();
     env.println("]");
+*/
     env.println("sample = [");
     env.indent();
     for (int i = 0 ; i < getNumDecl() ; i++) {
@@ -105,11 +107,7 @@ aspect PythonTypes {
   
   public void Program.Python_genTypes(Python_env env) {
     for (int i = 0 ; i < getNumDecl() ; i++) {
-      env.println("class " + getDecl(i).getName() + "(object):");
-      env.indent();
       getDecl(i).Python_genSignature(env);
-      env.unindent();
-      env.println();
     }
   }
 
@@ -120,19 +118,29 @@ aspect PythonTypes {
   }
 
   public void TypeDecl.Python_genSignature(Python_env env) {
+/*
+    env.println("class " + getName() + "(object):");
+    env.indent();
     env.println("signature = labcomm.typedef('" + getName() + "',");
     env.indent();
     getType().Python_genSignature(env);
     env.unindent();
     env.println(")");
+    env.unindent();
+    env.println();
+*/
   }
 
   public void SampleDecl.Python_genSignature(Python_env env) {
+    env.println("class " + getName() + "(object):");
+    env.indent();
     env.println("signature = labcomm.sample('" + getName() + "', ");
     env.indent();
     getType().Python_genSignature(env);
     env.unindent();
     env.println(")");
+    env.unindent();
+    env.println();
   }
 
   public void UserType.Python_genSignature(Python_env env) {

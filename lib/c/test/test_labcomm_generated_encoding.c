@@ -190,23 +190,25 @@ int main(void)
     labcomm_pthread_scheduler_new(labcomm_default_memory));
 
   labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
+  /* Register twice to make sure that only one registration gets encoded */
   labcomm_encoder_register_generated_encoding_V(encoder);
   labcomm_encoder_register_generated_encoding_V(encoder);
-  EXPECT({ 0x02, -1, 0x01, 'V', 0x11, 0x00 });
+  EXPECT({ 0x02, 0x06, -1, 0x01, 'V', 0x02, 0x11, 0x00 });
 
   labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
+  /* Register twice to make sure that only one registration gets encoded */
   labcomm_encoder_register_generated_encoding_B(encoder);
   labcomm_encoder_register_generated_encoding_B(encoder);
-  EXPECT({0x02, -1, 0x01, 'B', 0x21});
+  EXPECT({0x02, 0x05, -1, 0x01, 'B',0x01, 0x21});
 
   labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   // was: labcomm_encode_generated_encoding_V(encoder, &V);
   labcomm_encode_generated_encoding_V(encoder);
-  EXPECT({-1});
+  EXPECT({-1, 0x00 });
 
   labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   labcomm_encode_generated_encoding_B(encoder, &B);
-  EXPECT({-1, 1});
+  EXPECT({-1, 0x01, 1});
 
   return 0;
 }

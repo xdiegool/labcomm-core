@@ -110,27 +110,24 @@ def usePacketLength(version):
 
 class length_encoder:
     def __init__(self, encoder):
-        import sys
         self.encoder = encoder
         self.data = ""
-        print>>sys.stderr, "INIT", self, self.encoder, self.encoder.writer
 
     def start(self, encoder, version):
         self.version = version
-        pass
     
     def write(self, data):
-        import sys
-        print>>sys.stderr, [ data ]
-        print>>sys.stderr, "WRITE", self, self.encoder, self.encoder.writer
+        self.data += data
 
     def __enter__(self):
         return Encoder(self)
 
     def __exit__(self, type, value, traceback):
-        print>>sys.stderr, "EXIT", value
-        
-        pass
+        import sys
+        print>>sys.stderr, [ len(self.data), self.data ]
+        if usePacketLength(self.version):
+             self.encoder.encode_packed32(len(self.data))
+        self.encoder.pack("%ds" % len(self.data), self.data)
 
 i_TYPEDEF = 0x01
 i_SAMPLE  = 0x02
@@ -290,16 +287,20 @@ class STRING(primitive):
 #
 # Aggregate types
 #
-class sample_or_typedef(object):
+class sample(object):
     def __init__(self, name, decl):
         self.name = name
         self.decl = decl
 
-    def encode_decl_tail(self, encoder):
-#        with length_encoder(encoder) as e:
-        encoder.encode_type_number(self)
-        encoder.encode_string(self.name)
-        encoder.encode_type_number(self.decl)
+    def encode_decl(self, encoder):
+#        encoder.encode_type(i_SAMPLE)
+#        self.encode_decl_tail(encoder)
+        encoder.encode_type(i_SAMPLE)
+        with length_encoder(encoder) as e1:
+            e1.encode_type(encoder.decl_to_index[self])
+            e1.encode_string(self.name)
+            with length_encoder(e1) as e2:
+                self.decl.encode_decl(e2)
 
     def encode(self, encoder, object):
         self.decl.encode(encoder, object)
@@ -307,6 +308,8 @@ class sample_or_typedef(object):
     def decode_decl(self, decoder):
         index = decoder.decode_type_number()
         name = decoder.decode_string()
+        if usePacketLength(decoder.version):
+            length = decoder.decode_packed32()
         decl = decoder.decode_decl()
         result = self.__class__.__new__(self.__class__)
         result.__init__(name, decl)
@@ -322,30 +325,9 @@ class sample_or_typedef(object):
         return self.decl.new_instance()
 
     def __repr__(self):
-        return "'%s', %s" % (self.name, self.decl)
+        return "sample('%s', %s)" % (self.name, self.decl)
 
-class sample(sample_or_typedef):
-    def encode_decl(self, encoder):
-#        with length_encoder(encoder) as e:
-#            e.encode_type(i_SAMPLE)
-#            self.encode_decl_tail(e)
-        import sys
-        print>>sys.stderr, "AFTER"
- 
-        encoder.encode_type(i_SAMPLE)
-        self.encode_decl_tail(encoder)
 
-    def __repr__(self):
-        return "labcomm.sample(%s)" % super(sample, self).__repr__()
-        
-class typedef(sample_or_typedef):
-    def encode_decl(self, encoder):
-        encoder.encode_type(i_TYPEDEF)
-        self.encode_decl_tail(encoder)
-
-    def __repr__(self):
-        return "labcomm.typedef(%s)" % super(typedef, self).__repr__()
-        
 class array(object):
     def __init__(self, indices, decl):
         self.indices = indices
@@ -516,7 +498,6 @@ class struct:
         return result
 
 SAMPLE = sample(None, None)
-TYPEDEF = typedef(None, None)
 
 ARRAY = array(None, None)
 STRUCT = struct({})
@@ -545,7 +526,6 @@ class Codec(object):
         self.predefined_types()
 
     def predefined_types(self):
-        self.add_decl(TYPEDEF, i_TYPEDEF)
         self.add_decl(SAMPLE, i_SAMPLE)
 
         self.add_decl(ARRAY, i_ARRAY)
@@ -607,7 +587,9 @@ class Encoder(Codec):
             name = self.type_to_name[object.__class__]
             decl = self.name_to_decl[name]
         self.encode_type_number(decl)
-        decl.encode(self, object)
+        with length_encoder(self) as e:
+            decl.encode(e, object)
+#        decl.encode(self, object)
         self.writer.mark()
 
     def encode_type_number(self, decl):
@@ -687,15 +669,19 @@ class Decoder(Codec):
         result = self.index_to_decl[index]
         if index < i_USER:
             result = result.decode_decl(self)
+        else:
+            raise Exception('Should not be used')
         return result
 
     def decode(self):
-        value = None
         index = self.decode_type_number()
-        decl = self.index_to_decl[index]
+        if usePacketLength(self.version):
+            length = self.decode_packed32()
         if index == i_SAMPLE:
-            decl = decl.decode_decl(self)
+            decl = self.index_to_decl[index].decode_decl(self)
+            value = None
         else:
+            decl = self.index_to_decl[index]
             value = decl.decode(self)
         self.reader.mark(value, decl)
         return (value, decl)

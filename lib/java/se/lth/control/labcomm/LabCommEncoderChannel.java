@@ -11,6 +11,7 @@ public class LabCommEncoderChannel implements LabCommEncoder {
   private ByteArrayOutputStream bytes;
   private DataOutputStream data;
   private LabCommEncoderRegistry registry;
+  private int current_tag; 
 
   public LabCommEncoderChannel(LabCommWriter writer, 
 			       boolean emitVersion) throws IOException {
@@ -20,6 +21,9 @@ public class LabCommEncoderChannel implements LabCommEncoder {
     registry = new LabCommEncoderRegistry();
     if (emitVersion) {
       encodeString(LabComm.VERSION);
+      data.flush();
+      writer.write(bytes.toByteArray());
+      bytes.reset();
     }
   }
 
@@ -38,26 +42,51 @@ public class LabCommEncoderChannel implements LabCommEncoder {
 
   public void register(LabCommDispatcher dispatcher) throws IOException {
     int index = registry.add(dispatcher);
-    encodePacked32(LabComm.SAMPLE);
+    begin(LabComm.SAMPLE);
     encodePacked32(index);
     encodeString(dispatcher.getName());
     byte[] signature = dispatcher.getSignature();
+    encodePacked32(signature.length);
     for (int i = 0 ; i < signature.length ; i++) {
       encodeByte(signature[i]);
     }
     end(null);
   }
 
+  private void begin(int tag) {
+    current_tag = tag;
+    bytes.reset();
+    System.err.println("BEGIN CURRENT=" + current_tag + " TAG=" + tag + 
+                       "LENGTH=" + bytes.size());
+  }
+
   public void begin(Class<? extends LabCommSample> c) throws IOException {
-    encodePacked32(registry.getTag(c));
+    begin(registry.getTag(c));
   }
 
   public void end(Class<? extends LabCommSample> c) throws IOException {
     data.flush();
-    //XXX when writer was a stream, it was probably a bit more GC efficient:
-    //bytes.writeTo(writer);
+    System.err.println("END CURRENT=" + current_tag + " " + 
+                       "LENGTH=" + bytes.size());
+    WritePacked32(writer, current_tag);
+    WritePacked32(writer, bytes.size());
     writer.write(bytes.toByteArray());
     bytes.reset();
+  }
+
+  private void WritePacked32(LabCommWriter s, long value) throws IOException {
+    byte[] tmp1 = new byte[5];
+    byte[] tmp2 = new byte[1];
+    long v = value & 0xffffffff;
+    int i;
+    
+    for (i = 0 ; i == 0 || v != 0 ; i++, v = (v >> 7)) {
+      tmp1[i] = (byte)(v & 0x7f | (i!=0?0x80:0x00));
+    }
+    for (i = i - 1 ; i >= 0 ; i--) {
+      tmp2[0] = tmp1[i];
+      writer.write(tmp2);
+    }      
   }
 
   public void encodeBoolean(boolean value) throws IOException{

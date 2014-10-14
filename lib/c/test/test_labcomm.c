@@ -193,19 +193,19 @@ int main(void)
   labcomm_encoder_register_test_sample_test_var(encoder);
   err = test_decode_one(decoder);
   fprintf(stderr, "decode of register -> index %d\n", err);
-  test_encode_decode(encoder, decoder, 7, 1, 1);
+  test_encode_decode(encoder, decoder, 8, 1, 1);
   if (decoder_var.a[0] != encoder_var.a[0]) {
     fprintf(stderr, "Failed to decode correct value %d != %d\n", 
 	    encoder_var.a[0], decoder_var.a[0]);
     exit(1);
   }
-  test_encode_decode(encoder, decoder, 19, 2, 2);
-  test_encode_decode(encoder, decoder, 3, 0, 0);
+  test_encode_decode(encoder, decoder, 20, 2, 2);
+  test_encode_decode(encoder, decoder, 4, 0, 0);
   for (i = 1 ; i <= 4 ; i++) {
-    test_encode_decode(encoder, decoder, 2+i, 0, (1<<(7*i))-1);
-    test_encode_decode(encoder, decoder, 3+i, 0, (1<<(7*i)));
+    test_encode_decode(encoder, decoder, 3+i, 0, (1<<(7*i))-1);
+    test_encode_decode(encoder, decoder, 4+i, 0, (1<<(7*i)));
   }
-  test_encode_decode(encoder, decoder, 7, 0, 4294967295);
+  test_encode_decode(encoder, decoder, 8, 0, 4294967295);
   return 0;
 }
 

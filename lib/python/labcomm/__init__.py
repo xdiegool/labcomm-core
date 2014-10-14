@@ -7,7 +7,6 @@ Decoder = labcomm.LabComm.Decoder
 Encoder = labcomm.LabComm.Encoder
 
 sample = labcomm.LabComm.sample
-typedef = labcomm.LabComm.typedef
 
 array = labcomm.LabComm.array
 struct = labcomm.LabComm.struct

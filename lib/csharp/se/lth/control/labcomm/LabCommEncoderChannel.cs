@@ -11,11 +11,15 @@ namespace se.lth.control.labcomm {
     private MemoryStream bytes = new MemoryStream();
     private LabCommEncoderRegistry registry = new LabCommEncoderRegistry();
     byte[] buf = new byte[8];
+    private int current_tag; 
 
     public LabCommEncoderChannel(Stream writer, bool emitVersion) {
       this.writer = writer;
       if (emitVersion) {
 	encodeString(LabComm.VERSION);
+        bytes.WriteTo(writer);
+        bytes.SetLength(0);
+        writer.Flush();
       }
     }
 
@@ -24,24 +28,49 @@ namespace se.lth.control.labcomm {
 
     public void register(LabCommDispatcher dispatcher) {
       int index = registry.add(dispatcher);
-      encodePacked32(LabComm.SAMPLE);
+      begin(LabComm.SAMPLE);
       encodePacked32(index);
       encodeString(dispatcher.getName());
       byte[] signature = dispatcher.getSignature();
+      encodePacked32(signature.Length);
       for (int i = 0 ; i < signature.Length ; i++) {
 	encodeByte(signature[i]);
       }
       end(null);
     }
 
+    private void begin(int tag) {
+      current_tag = tag;
+      bytes.SetLength(0);
+      Console.Error.WriteLine("BEGIN CURRENT=" + current_tag + " TAG=" + tag + 
+                              "LENGTH=" + bytes.Length);
+    }
+
     public void begin(Type c) {
-      encodePacked32(registry.getTag(c));
+      begin(registry.getTag(c));
     }
 
     public void end(Type c) {
+      Console.Error.WriteLine("END CURRENT=" + current_tag + 
+                              "LENGTH=" + bytes.Length);
+      WritePacked32(writer, current_tag);
+      WritePacked32(writer, bytes.Length);
       bytes.WriteTo(writer);
       bytes.SetLength(0);
       writer.Flush();
+    }
+
+    private void WritePacked32(Stream s, Int64 value) {
+      Console.Error.WriteLine("PACKED=" + value);
+      Int64 v = value & 0xffffffff;
+      int i;
+  
+      for (i = 0 ; i == 0 || v != 0 ; i++, v = (v >> 7)) {
+        buf[i] = (byte)(v & 0x7f | (i!=0?0x80:0x00));
+      }
+      for (i = i - 1 ; i >= 0 ; i--) {
+        s.WriteByte(buf[i]);
+      }      
     }
 
     private void WriteInt(Int64 value, int length) {
@@ -96,16 +125,7 @@ namespace se.lth.control.labcomm {
     }
 
     public void encodePacked32(Int64 value) {
-      byte[] tmp = new byte[5];
-      Int64 v = value & 0xffffffff;
-      int i;
-  
-      for (i = 0 ; i == 0 || v != 0 ; i++, v = (v >> 7)) {
-        tmp[i] = (byte)(v & 0x7f);
-      }
-      for (i = i - 1 ; i >= 0 ; i--) {
-        encodeByte((byte)(tmp[i] | (i!=0?0x80:0x00)));
-      }
+      WritePacked32(bytes, value);
     }
   }
 }

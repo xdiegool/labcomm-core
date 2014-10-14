@@ -24,13 +24,22 @@ namespace se.lth.control.labcomm {
       bool done = false;
       while (!done) {
 	int tag = decodePacked32();
+        int length = decodePacked32();
+        Console.Error.WriteLine(" tag=" + tag + "length=" + length);
 	switch (tag) {
         case LabComm.SAMPLE: {
           int index = decodePacked32();
           String name = decodeString();
-	  MemoryStream signature = new MemoryStream();
-	  collectFlatSignature(new LabCommEncoderChannel(signature, false));
-	  registry.add(index, name, signature.ToArray());
+          int signature_length = decodePacked32();
+//	  MemoryStream signature = new MemoryStream();
+          byte[] signature = new byte[signature_length];
+//	  collectFlatSignature(new LabCommEncoderChannel(signature, false));
+          ReadBytes(signature, signature_length);
+          Console.Error.WriteLine("REMOTE:" + name + " " + 
+                                   signature_length + " " + 
+                                   signature);
+//	  registry.add(index, name, signature.ToArray());
+	  registry.add(index, name, signature);
         } break;
         default: {
           LabCommDecoderRegistry.Entry e = registry.get(tag);

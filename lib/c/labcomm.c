@@ -260,3 +260,18 @@ int labcomm_get_local_index(struct labcomm_signature *signature)
   }
   return signature->index;
 }
+
+int labcomm_internal_sizeof(struct labcomm_signature *signature,
+                            void *v)
+{
+  int length = signature->encoded_size(v);
+  fprintf(stderr, "SIZEOF(%s) = %d %d %d\n",
+          signature->name, 
+          labcomm_size_packed32(signature->index),
+          labcomm_size_packed32(length),
+          length);
+  return (labcomm_size_packed32(signature->index) +
+          labcomm_size_packed32(length) +
+          length);
+}
+
