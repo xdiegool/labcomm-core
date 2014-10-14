@@ -123,8 +123,6 @@ class length_encoder:
         return Encoder(self)
 
     def __exit__(self, type, value, traceback):
-        import sys
-        print>>sys.stderr, [ len(self.data), self.data ]
         if usePacketLength(self.version):
              self.encoder.encode_packed32(len(self.data))
         self.encoder.pack("%ds" % len(self.data), self.data)

@@ -25,20 +25,13 @@ namespace se.lth.control.labcomm {
       while (!done) {
 	int tag = decodePacked32();
         int length = decodePacked32();
-        Console.Error.WriteLine(" tag=" + tag + "length=" + length);
 	switch (tag) {
         case LabComm.SAMPLE: {
           int index = decodePacked32();
           String name = decodeString();
           int signature_length = decodePacked32();
-//	  MemoryStream signature = new MemoryStream();
           byte[] signature = new byte[signature_length];
-//	  collectFlatSignature(new LabCommEncoderChannel(signature, false));
           ReadBytes(signature, signature_length);
-          Console.Error.WriteLine("REMOTE:" + name + " " + 
-                                   signature_length + " " + 
-                                   signature);
-//	  registry.add(index, name, signature.ToArray());
 	  registry.add(index, name, signature);
         } break;
         default: {
@@ -65,42 +58,6 @@ namespace se.lth.control.labcomm {
       while (true) {
 	runOne();
       }
-    }
-
-    private void collectFlatSignature(LabCommEncoder e) {
-      int type = decodePacked32();
-      e.encodePacked32(type);
-      switch (type) {
-      case LabComm.ARRAY: {
-        int dimensions = decodePacked32();
-        e.encodePacked32(dimensions);
-        for (int i = 0 ; i < dimensions ; i++) {
-          e.encodePacked32(decodePacked32());
-        }
-        collectFlatSignature(e);
-      } break;
-      case LabComm.STRUCT: {
-        int fields = decodePacked32();
-        e.encodePacked32(fields);
-        for (int i = 0 ; i < fields ; i++) {
-          e.encodeString(decodeString());
-          collectFlatSignature(e);
-        }
-      } break;
-      case LabComm.BOOLEAN:
-      case LabComm.BYTE:
-      case LabComm.SHORT:
-      case LabComm.INT:
-      case LabComm.LONG:
-      case LabComm.FLOAT:
-      case LabComm.DOUBLE:
-      case LabComm.STRING: {
-      } break;
-      default: {
-        throw new IOException("Unimplemented type=" + type);
-      }
-      }
-      e.end(null);
     }
 
     public void register(LabCommDispatcher dispatcher, 

@@ -92,17 +92,6 @@ int labcomm_internal_encoder_register(
             labcomm_size_string(signature->name) +
             labcomm_size_packed32(signature->size) +
             signature->size);
-  {
-    fprintf(stderr, "LENGTH(%s, %d)=%d %d %d %d -> %d\n", 
-            signature->name, index,
-            labcomm_size_packed32(index),
-            labcomm_size_string(signature->name),
-            labcomm_size_packed32(signature->size),
-            signature->size,
-            length);
-
-  }
-
   labcomm_write_packed32(e->writer, length);
   labcomm_write_packed32(e->writer, index);
   labcomm_write_string(e->writer, signature->name);
@@ -130,15 +119,7 @@ int labcomm_internal_encode(
   int result, index, length;
 
   index = labcomm_get_local_index(signature);
-  /* FIXME: try to gt rid of labcomm_size_packed32(index) in 
-            labcomm_sizeof_* (since that calculation is currently
-            wrong [length field not accounted for]) */
   length = (signature->encoded_size(value));
-  {
-    fprintf(stderr, "LENGTH(%s, %d)=%d\n", 
-            signature->name, index,
-            length);
-  }
   labcomm_scheduler_writer_lock(e->scheduler);
   result = labcomm_writer_start(e->writer, e->writer->action_context, 
 				index, signature, value);

@@ -32,11 +32,8 @@ public class LabCommDecoderChannel implements LabCommDecoder {
 	  int index = decodePacked32();
 	  String name = decodeString();
           int signature_length = decodePacked32();
-//	  ByteArrayOutputStream signature = new ByteArrayOutputStream();
           byte[] signature = new byte[signature_length];
-//	  collectFlatSignature(new LabCommEncoderChannel(signature, false));
           ReadBytes(signature, signature_length);
-//	  registry.add(index, name, signature.toByteArray());
 	  registry.add(index, name, signature);
 	} break;
 	default: {
@@ -63,42 +60,6 @@ public class LabCommDecoderChannel implements LabCommDecoder {
     while (true) {
       runOne();
     }
-  }
-
-  private void collectFlatSignature(LabCommEncoder out) throws IOException {
-    int type = decodePacked32();
-    out.encodePacked32(type);
-    switch (type) {
-      case LabComm.ARRAY: {
-	int dimensions = decodePacked32();
-	out.encodePacked32(dimensions);
-	for (int i = 0 ; i < dimensions ; i++) {
-	  out.encodePacked32(decodePacked32());
-	}
-	collectFlatSignature(out);
-      } break;
-      case LabComm.STRUCT: {
-	int fields = decodePacked32();
-	out.encodePacked32(fields);
-	for (int i = 0 ; i < fields ; i++) {
-	  out.encodeString(decodeString());
-	  collectFlatSignature(out);
-	}
-      } break;
-      case LabComm.BOOLEAN:
-      case LabComm.BYTE:
-      case LabComm.SHORT:
-      case LabComm.INT:
-      case LabComm.LONG:
-      case LabComm.FLOAT:
-      case LabComm.DOUBLE:
-      case LabComm.STRING: {
-      } break;
-      default: {
-	throw new IOException("Unimplemented type=" + type);
-      }
-    }
-    out.end(null);
   }
 
   public void register(LabCommDispatcher dispatcher, 

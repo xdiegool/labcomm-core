@@ -56,8 +56,6 @@ public class LabCommEncoderChannel implements LabCommEncoder {
   private void begin(int tag) {
     current_tag = tag;
     bytes.reset();
-    System.err.println("BEGIN CURRENT=" + current_tag + " TAG=" + tag + 
-                       "LENGTH=" + bytes.size());
   }
 
   public void begin(Class<? extends LabCommSample> c) throws IOException {
@@ -66,8 +64,6 @@ public class LabCommEncoderChannel implements LabCommEncoder {
 
   public void end(Class<? extends LabCommSample> c) throws IOException {
     data.flush();
-    System.err.println("END CURRENT=" + current_tag + " " + 
-                       "LENGTH=" + bytes.size());
     WritePacked32(writer, current_tag);
     WritePacked32(writer, bytes.size());
     writer.write(bytes.toByteArray());

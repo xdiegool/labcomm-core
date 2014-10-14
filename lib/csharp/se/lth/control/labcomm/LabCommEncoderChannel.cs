@@ -42,8 +42,6 @@ namespace se.lth.control.labcomm {
     private void begin(int tag) {
       current_tag = tag;
       bytes.SetLength(0);
-      Console.Error.WriteLine("BEGIN CURRENT=" + current_tag + " TAG=" + tag + 
-                              "LENGTH=" + bytes.Length);
     }
 
     public void begin(Type c) {
@@ -51,8 +49,6 @@ namespace se.lth.control.labcomm {
     }
 
     public void end(Type c) {
-      Console.Error.WriteLine("END CURRENT=" + current_tag + 
-                              "LENGTH=" + bytes.Length);
       WritePacked32(writer, current_tag);
       WritePacked32(writer, bytes.Length);
       bytes.WriteTo(writer);
@@ -61,7 +57,6 @@ namespace se.lth.control.labcomm {
     }
 
     private void WritePacked32(Stream s, Int64 value) {
-      Console.Error.WriteLine("PACKED=" + value);
       Int64 v = value & 0xffffffff;
       int i;
   
