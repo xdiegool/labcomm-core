@@ -1,16 +1,16 @@
-MODULES=LabCommDispatcher \
-	LabCommDecoderRegistry \
-	LabComm \
-	LabCommSample \
-	LabCommHandler \
-	LabCommEncoderRegistry \
-	LabCommType \
-	LabCommEncoder \
-	LabCommEncoderChannel \
-	LabCommDecoder \
-	LabCommDecoderChannel \
-	LabCommWriter \
-	LabCommReader \
+MODULES=Constant \
+	Decoder \
+	DecoderChannel \
+	DecoderRegistry \
+	Encoder \
+	EncoderChannel \
+	EncoderRegistry \
+	Reader \
+	Sample \
+	SampleDispatcher \
+	SampleHandler \
+	Type \
+	Writer \
 	WriterWrapper
 
 all: labcomm.jar labcomm20141009.jar labcomm2006.jar

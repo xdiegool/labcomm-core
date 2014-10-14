@@ -6,16 +6,16 @@ import gen.bar;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import se.lth.control.labcomm.LabCommDecoderChannel;
+import se.lth.control.labcomm.DecoderChannel;
 
 
 public class StaticDecoder implements foo.Handler, bar.Handler
 {
 
-  LabCommDecoderChannel decoder;
+  DecoderChannel decoder;
 
   public StaticDecoder(InputStream in) throws Exception {
-    decoder = new LabCommDecoderChannel(in);
+    decoder = new DecoderChannel(in);
     foo.register(decoder, this);
     bar.register(decoder, this);
 

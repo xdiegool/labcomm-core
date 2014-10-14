@@ -1,8 +1,8 @@
-package se.lth.control.labcomm;
+package se.lth.control.labcomm2006;
 
-public class LabComm {
+public class Constant {
 
-  public static final String VERSION = "LabComm20141009";
+  public static final String VERSION = "LabComm2006";
 
   /*
    * Predeclared aggregate type indices
@@ -27,6 +27,6 @@ public class LabComm {
   /*
    * Start of user declared types
    */
-  public static final int FIRST_USER_INDEX = 0x40;
+  public static final int FIRST_USER_INDEX = 0x80;
 
 }

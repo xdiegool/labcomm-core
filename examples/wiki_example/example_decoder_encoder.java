@@ -4,24 +4,24 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import se.lth.control.labcomm.LabCommDecoderChannel;
-import se.lth.control.labcomm.LabCommEncoderChannel;
+import se.lth.control.labcomm.DecoderChannel;
+import se.lth.control.labcomm.EncoderChannel;
 
 public class example_decoder_encoder 
   implements data.Handler, log_message.Handler 
 {
 
-  LabCommDecoderChannel decoder;
-  LabCommEncoderChannel encoder;
+  DecoderChannel decoder;
+  EncoderChannel encoder;
 
   public example_decoder_encoder(InputStream in, OutputStream out) 
     throws Exception 
   {
-    decoder = new LabCommDecoderChannel(in);
+    decoder = new DecoderChannel(in);
     log_message.register(decoder, this);
     data.register(decoder, this);
 
-    encoder = new LabCommEncoderChannel(out);
+    encoder = new EncoderChannel(out);
     log_message.register(encoder);
     data.register(encoder);
  

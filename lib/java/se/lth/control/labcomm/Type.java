@@ -1,5 +1,5 @@
 package se.lth.control.labcomm;
 
-public interface LabCommType {
+public interface Type {
 
 }

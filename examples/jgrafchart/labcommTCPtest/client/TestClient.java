@@ -6,8 +6,8 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-import se.lth.control.labcomm.LabCommDecoderChannel;
-import se.lth.control.labcomm.LabCommEncoderChannel;
+import se.lth.control.labcomm.DecoderChannel;
+import se.lth.control.labcomm.EncoderChannel;
 import labcommTCPtest.gen.foo;
 import labcommTCPtest.gen.foo.Handler;
 
@@ -25,7 +25,7 @@ public class TestClient implements Handler {
 	public void test() {
 		
 		try {
-			LabCommEncoderChannel e = new LabCommEncoderChannel(out );
+			EncoderChannel e = new EncoderChannel(out );
 			foo.register(e);
 			foo sample = new foo();
 			sample.c = 17;
@@ -36,7 +36,7 @@ public class TestClient implements Handler {
 			printSample("Client sending", sample);
 			foo.encode(e, sample);
 
-			LabCommDecoderChannel c = new LabCommDecoderChannel(in);
+			DecoderChannel c = new DecoderChannel(in);
 			foo.register(c,this);
 			c.run();
 		} catch (Exception e) {

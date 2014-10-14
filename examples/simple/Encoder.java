@@ -2,7 +2,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
-import se.lth.control.labcomm.LabCommEncoderChannel;
+import se.lth.control.labcomm.EncoderChannel;
 
 /**
  * Simple encoder 
@@ -10,12 +10,12 @@ import se.lth.control.labcomm.LabCommEncoderChannel;
 public class Encoder 
 {
 
-  LabCommEncoderChannel encoder;
+  EncoderChannel encoder;
 
   public Encoder(OutputStream out) 
     throws Exception 
   {
-    encoder = new LabCommEncoderChannel(out);
+    encoder = new EncoderChannel(out);
     theTwoInts.register(encoder);
     IntString.register(encoder);
     TwoArrays.register(encoder);

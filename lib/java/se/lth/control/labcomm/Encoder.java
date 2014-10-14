@@ -1,12 +1,12 @@
-package se.lth.control.labcomm2006;
+package se.lth.control.labcomm;
 
 import java.io.IOException;
 
-public interface LabCommEncoder {
+public interface Encoder {
 
-  public void register(LabCommDispatcher dispatcher) throws IOException;
-  public void begin(Class<? extends LabCommSample> c) throws IOException;
-  public void end(Class<? extends LabCommSample> c) throws IOException;
+  public void register(SampleDispatcher dispatcher) throws IOException;
+  public void begin(Class<? extends Sample> c) throws IOException;
+  public void end(Class<? extends Sample> c) throws IOException;
   public void encodeBoolean(boolean value) throws IOException;
   public void encodeByte(byte value) throws IOException;
   public void encodeShort(short value) throws IOException;

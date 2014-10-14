@@ -5,44 +5,44 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class LabCommEncoderChannel implements LabCommEncoder {
+public class EncoderChannel implements Encoder {
 
-  private LabCommWriter writer;
+  private Writer writer;
   private ByteArrayOutputStream bytes;
   private DataOutputStream data;
-  private LabCommEncoderRegistry registry;
+  private EncoderRegistry registry;
   private int current_tag; 
 
-  public LabCommEncoderChannel(LabCommWriter writer, 
-			       boolean emitVersion) throws IOException {
+  public EncoderChannel(Writer writer, 
+                        boolean emitVersion) throws IOException {
     this.writer = writer;
     bytes = new ByteArrayOutputStream();
     data = new DataOutputStream(bytes);
-    registry = new LabCommEncoderRegistry();
+    registry = new EncoderRegistry();
     if (emitVersion) {
-      encodeString(LabComm.VERSION);
+      encodeString(Constant.VERSION);
       data.flush();
       writer.write(bytes.toByteArray());
       bytes.reset();
     }
   }
 
-  public LabCommEncoderChannel(LabCommWriter writer) throws IOException {
+  public EncoderChannel(Writer writer) throws IOException {
     this(writer, true);
   }
 
-  public LabCommEncoderChannel(OutputStream writer, 
-			       boolean emitVersion) throws IOException {
+  public EncoderChannel(OutputStream writer, 
+                        boolean emitVersion) throws IOException {
     this(new WriterWrapper(writer), emitVersion);
   }
 
-  public LabCommEncoderChannel(OutputStream writer) throws IOException {
+  public EncoderChannel(OutputStream writer) throws IOException {
     this(new WriterWrapper(writer), true);
   }
 
-  public void register(LabCommDispatcher dispatcher) throws IOException {
+  public void register(SampleDispatcher dispatcher) throws IOException {
     int index = registry.add(dispatcher);
-    begin(LabComm.SAMPLE);
+    begin(Constant.SAMPLE);
     encodePacked32(index);
     encodeString(dispatcher.getName());
     byte[] signature = dispatcher.getSignature();
@@ -58,11 +58,11 @@ public class LabCommEncoderChannel implements LabCommEncoder {
     bytes.reset();
   }
 
-  public void begin(Class<? extends LabCommSample> c) throws IOException {
+  public void begin(Class<? extends Sample> c) throws IOException {
     begin(registry.getTag(c));
   }
 
-  public void end(Class<? extends LabCommSample> c) throws IOException {
+  public void end(Class<? extends Sample> c) throws IOException {
     data.flush();
     WritePacked32(writer, current_tag);
     WritePacked32(writer, bytes.size());
@@ -70,7 +70,7 @@ public class LabCommEncoderChannel implements LabCommEncoder {
     bytes.reset();
   }
 
-  private void WritePacked32(LabCommWriter s, long value) throws IOException {
+  private void WritePacked32(Writer s, long value) throws IOException {
     byte[] tmp1 = new byte[5];
     byte[] tmp2 = new byte[1];
     long v = value & 0xffffffff;

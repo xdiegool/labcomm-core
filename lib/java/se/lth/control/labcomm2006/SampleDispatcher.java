@@ -1,6 +1,6 @@
 package se.lth.control.labcomm2006;
 
-public interface LabCommDispatcher {
+public interface SampleDispatcher {
     
   public Class getSampleClass();
     
@@ -8,8 +8,8 @@ public interface LabCommDispatcher {
 
   public byte[] getSignature();
 
-  public void decodeAndHandle(LabCommDecoder decoder,
-			      LabCommHandler handler) throws Exception;
+  public void decodeAndHandle(Decoder decoder,
+			      SampleHandler handler) throws Exception;
 
 }
 

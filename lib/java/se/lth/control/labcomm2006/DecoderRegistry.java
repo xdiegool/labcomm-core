@@ -1,20 +1,20 @@
-package se.lth.control.labcomm;
+package se.lth.control.labcomm2006;
 
 import java.io.IOException;
 import java.util.HashMap;
 
-public class LabCommDecoderRegistry {
+public class DecoderRegistry {
 
   public static class Entry {
     
-    private LabCommDispatcher dispatcher;
-    private LabCommHandler handler;
+    private SampleDispatcher dispatcher;
+    private SampleHandler handler;
     private int index;
     private String name;
     private byte[] signature;
 
-    public Entry(LabCommDispatcher dispatcher,
-		 LabCommHandler handler) {
+    public Entry(SampleDispatcher dispatcher,
+		 SampleHandler handler) {
       this.dispatcher = dispatcher;
       this.name = dispatcher.getName();
       this.signature = dispatcher.getSignature();
@@ -27,19 +27,19 @@ public class LabCommDecoderRegistry {
       this.signature = signature;
     }
 
-    public LabCommDispatcher getDispatcher() {
+    public SampleDispatcher getDispatcher() {
       return dispatcher;
     }
 
-    public void setDispatcher(LabCommDispatcher dispatcher) {
+    public void setDispatcher(SampleDispatcher dispatcher) {
       this.dispatcher = dispatcher;
     }
 
-    public LabCommHandler getHandler() {
+    public SampleHandler getHandler() {
       return handler;
     }
 
-    public void setHandler(LabCommHandler handler) {
+    public void setHandler(SampleHandler handler) {
       this.handler = handler;
     }
 
@@ -89,13 +89,13 @@ public class LabCommDecoderRegistry {
   private HashMap<Class, Entry> byClass;
   private HashMap<Integer, Entry> byIndex;
 
-  public LabCommDecoderRegistry() {
+  public DecoderRegistry() {
     byClass = new HashMap<Class, Entry>();
     byIndex = new HashMap<Integer, Entry>();
   }
 
-  public synchronized void add(LabCommDispatcher dispatcher,
-			       LabCommHandler handler) throws IOException{
+  public synchronized void add(SampleDispatcher dispatcher,
+			       SampleHandler handler) throws IOException{
     Entry e = byClass.get(dispatcher.getSampleClass());
     if (e != null) {
       e.check(dispatcher.getName(), dispatcher.getSignature());

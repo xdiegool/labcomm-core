@@ -2,10 +2,10 @@ package se.lth.control.labcomm2006;
 
 import java.io.IOException;
 
-public interface LabCommDecoder {
+public interface Decoder {
   
-  public void register(LabCommDispatcher dispatcher, 
-		       LabCommHandler handler) throws IOException;
+  public void register(SampleDispatcher dispatcher, 
+		       SampleHandler handler) throws IOException;
   public boolean decodeBoolean() throws IOException;
   public byte decodeByte() throws IOException;
   public short decodeShort() throws IOException;

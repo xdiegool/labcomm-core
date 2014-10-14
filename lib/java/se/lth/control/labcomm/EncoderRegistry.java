@@ -3,19 +3,19 @@ package se.lth.control.labcomm;
 import java.io.IOException;
 import java.util.HashMap;
 
-public class LabCommEncoderRegistry {
+public class EncoderRegistry {
 
   public static class Entry {
     
-    private LabCommDispatcher dispatcher;
+    private SampleDispatcher dispatcher;
     private int index;
 
-    public Entry(LabCommDispatcher dispatcher, int index) {
+    public Entry(SampleDispatcher dispatcher, int index) {
       this.dispatcher = dispatcher;
       this.index = index;
     }
 
-    public LabCommDispatcher getDispatcher() {
+    public SampleDispatcher getDispatcher() {
       return dispatcher;
     }
 
@@ -25,14 +25,14 @@ public class LabCommEncoderRegistry {
 
   }
 
-  private int userIndex = LabComm.FIRST_USER_INDEX;
+  private int userIndex = Constant.FIRST_USER_INDEX;
   private HashMap<Class, Entry> byClass;
 
-  public LabCommEncoderRegistry() {
+  public EncoderRegistry() {
     byClass = new HashMap<Class, Entry>();
   }
 
-  public synchronized int add(LabCommDispatcher dispatcher) {
+  public synchronized int add(SampleDispatcher dispatcher) {
     Entry e = byClass.get(dispatcher.getSampleClass());
     if (e == null) {
       e = new Entry(dispatcher, userIndex);
@@ -42,7 +42,7 @@ public class LabCommEncoderRegistry {
     return e.getIndex();
   }
   
-  public int getTag(Class<? extends LabCommSample> sample) throws IOException {
+  public int getTag(Class<? extends Sample> sample) throws IOException {
     Entry e = byClass.get(sample);
     if (e == null) {
       throw new IOException("'" + 

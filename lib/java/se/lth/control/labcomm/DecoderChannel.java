@@ -1,42 +1,51 @@
-package se.lth.control.labcomm2006;
+package se.lth.control.labcomm;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.InputStream;
 import java.io.IOException;
+import java.io.EOFException;
 
-public class LabCommDecoderChannel implements LabCommDecoder {
+public class DecoderChannel implements Decoder {
 
   private DataInputStream in;
-  private LabCommDecoderRegistry registry;
+  private DecoderRegistry registry;
 
-  public LabCommDecoderChannel(InputStream in) throws IOException {
+  public DecoderChannel(InputStream in) throws IOException {
     this.in = new DataInputStream(in);
-    registry = new LabCommDecoderRegistry();
+    registry = new DecoderRegistry();
+    String version = decodeString();
+    if (! version.equals(Constant.VERSION)) {
+      throw new IOException("LabComm version mismatch " +
+			    version + " != " + Constant.VERSION);
+    }
+    System.err.println(Constant.VERSION);
   }
 
   public void runOne() throws Exception {
     boolean done = false;
     while (!done) {
       int tag = decodePacked32();
+      int length = decodePacked32();
       switch (tag) {
-	case LabComm.SAMPLE: {
+	case Constant.SAMPLE: {
 	  int index = decodePacked32();
 	  String name = decodeString();
-	  ByteArrayOutputStream signature = new ByteArrayOutputStream();
-	  collectFlatSignature(new LabCommEncoderChannel(signature, false));
-	  registry.add(index, name, signature.toByteArray());
+          int signature_length = decodePacked32();
+          byte[] signature = new byte[signature_length];
+          ReadBytes(signature, signature_length);
+	  registry.add(index, name, signature);
 	} break;
 	default: {
-	  LabCommDecoderRegistry.Entry e = registry.get(tag);
+	  DecoderRegistry.Entry e = registry.get(tag);
 	  if (e == null) {
 	    throw new IOException("Unhandled tag " + tag);
 	  }
-	  LabCommDispatcher d = e.getDispatcher();
+	  SampleDispatcher d = e.getDispatcher();
 	  if (d == null) {
 	    throw new IOException("No dispatcher for '" + e.getName() + "'");
 	  }
-	  LabCommHandler h = e.getHandler();
+	  SampleHandler h = e.getHandler();
 	  if (h == null) {
 	    throw new IOException("No handler for '" + e.getName() +"'");
 	  }
@@ -53,46 +62,23 @@ public class LabCommDecoderChannel implements LabCommDecoder {
     }
   }
 
-  private void collectFlatSignature(LabCommEncoder out) throws IOException {
-    int type = decodePacked32();
-    out.encodePacked32(type);
-    switch (type) {
-      case LabComm.ARRAY: {
-	int dimensions = decodePacked32();
-	out.encodePacked32(dimensions);
-	for (int i = 0 ; i < dimensions ; i++) {
-	  out.encodePacked32(decodePacked32());
-	}
-	collectFlatSignature(out);
-      } break;
-      case LabComm.STRUCT: {
-	int fields = decodePacked32();
-	out.encodePacked32(fields);
-	for (int i = 0 ; i < fields ; i++) {
-	  out.encodeString(decodeString());
-	  collectFlatSignature(out);
-	}
-      } break;
-      case LabComm.BOOLEAN:
-      case LabComm.BYTE:
-      case LabComm.SHORT:
-      case LabComm.INT:
-      case LabComm.LONG:
-      case LabComm.FLOAT:
-      case LabComm.DOUBLE:
-      case LabComm.STRING: {
-      } break;
-      default: {
-	throw new IOException("Unimplemented type=" + type);
-      }
-    }
-    out.end(null);
-  }
-
-  public void register(LabCommDispatcher dispatcher, 
-                       LabCommHandler handler) throws IOException {
+  public void register(SampleDispatcher dispatcher, 
+                       SampleHandler handler) throws IOException {
     registry.add(dispatcher, handler);
   }
+
+  private void ReadBytes(byte[] result, int length) throws IOException {
+      int offset = 0;
+      while (offset < length) {
+	int count = in.read(result, offset, length - offset);
+	if (count <= 0) {
+	  throw new EOFException(
+	    "End of stream reached with " +
+            (length - offset) + " bytes left to read");
+        }
+	offset += count;
+      }
+    }
 
   public boolean decodeBoolean() throws IOException {
     return in.readBoolean();
@@ -133,12 +119,19 @@ public class LabCommDecoderChannel implements LabCommDecoder {
     return new String(chars);
   }
 
-  /**
-     method for API harmonization with labcomm20141009.
-     Labcomm2006 encodes lengths etc as 32 bit ints.
-  */
   public int decodePacked32() throws IOException {
-    return in.readInt();
+    long res=0;
+    byte i=0;
+    boolean cont=true;
+
+    do {
+      byte c = in.readByte();
+      res = (res << 7) | (c & 0x7f);
+      cont = (c & 0x80) != 0;
+      i++;
+    } while(cont);
+
+    return (int) (res & 0xffffffff);
   }
 }
 

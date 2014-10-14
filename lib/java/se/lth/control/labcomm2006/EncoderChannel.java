@@ -5,40 +5,40 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class LabCommEncoderChannel implements LabCommEncoder {
+public class EncoderChannel implements Encoder {
 
-  private LabCommWriter writer;
+  private Writer writer;
   private ByteArrayOutputStream bytes;
   private DataOutputStream data;
-  private LabCommEncoderRegistry registry;
+  private EncoderRegistry registry;
 
-  public LabCommEncoderChannel(LabCommWriter writer, 
-			       boolean emitVersion) throws IOException {
+  public EncoderChannel(Writer writer, 
+                        boolean emitVersion) throws IOException {
     this.writer = writer;
     bytes = new ByteArrayOutputStream();
     data = new DataOutputStream(bytes);
-    registry = new LabCommEncoderRegistry();
+    registry = new EncoderRegistry();
     if (emitVersion) {
         throw new IllegalArgumentException("Labcomm 2006 does not support emitVersion");
     }
   }
 
-  public LabCommEncoderChannel(LabCommWriter writer) throws IOException {
+  public EncoderChannel(Writer writer) throws IOException {
     this(writer, false);
   }
 
-  public LabCommEncoderChannel(OutputStream writer, 
-			       boolean emitVersion) throws IOException {
+  public EncoderChannel(OutputStream writer, 
+                        boolean emitVersion) throws IOException {
     this(new WriterWrapper(writer), emitVersion);
   }
 
-  public LabCommEncoderChannel(OutputStream writer) throws IOException {
+  public EncoderChannel(OutputStream writer) throws IOException {
     this(new WriterWrapper(writer), false);
   }
 
-  public void register(LabCommDispatcher dispatcher) throws IOException {
+  public void register(SampleDispatcher dispatcher) throws IOException {
     int index = registry.add(dispatcher);
-    encodePacked32(LabComm.SAMPLE);
+    encodePacked32(Constant.SAMPLE);
     encodePacked32(index);
     encodeString(dispatcher.getName());
     byte[] signature = dispatcher.getSignature();
@@ -48,11 +48,11 @@ public class LabCommEncoderChannel implements LabCommEncoder {
     end(null);
   }
 
-  public void begin(Class<? extends LabCommSample> c) throws IOException {
+  public void begin(Class<? extends Sample> c) throws IOException {
     encodePacked32(registry.getTag(c));
   }
 
-  public void end(Class<? extends LabCommSample> c) throws IOException {
+  public void end(Class<? extends Sample> c) throws IOException {
     data.flush();
     //XXX when writer was a stream, it was probably a bit more GC efficient:
     //bytes.writeTo(writer);

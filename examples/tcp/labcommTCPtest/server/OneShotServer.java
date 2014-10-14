@@ -6,8 +6,8 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.net.ServerSocket;
 
-import se.lth.control.labcomm.LabCommDecoderChannel;
-import se.lth.control.labcomm.LabCommEncoderChannel;
+import se.lth.control.labcomm.DecoderChannel;
+import se.lth.control.labcomm.EncoderChannel;
 import labcommTCPtest.gen.FooSample;
 
 public class OneShotServer {//implements Handler {
@@ -21,7 +21,7 @@ public class OneShotServer {//implements Handler {
 	public void test() {
 		
 		try {
-			LabCommEncoderChannel e = new LabCommEncoderChannel(out );
+			EncoderChannel e = new EncoderChannel(out );
 			FooSample.register(e);
 			FooSample sample = new FooSample();
 			sample.s = "OneShotServer message";
