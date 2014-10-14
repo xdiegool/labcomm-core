@@ -13,31 +13,20 @@ public class EncoderChannel implements Encoder {
   private EncoderRegistry registry;
   private int current_tag; 
 
-  public EncoderChannel(Writer writer, 
-                        boolean emitVersion) throws IOException {
+  public EncoderChannel(Writer writer) throws IOException {
     this.writer = writer;
     bytes = new ByteArrayOutputStream();
     data = new DataOutputStream(bytes);
     registry = new EncoderRegistry();
-    if (emitVersion) {
-      encodeString(Constant.VERSION);
-      data.flush();
-      writer.write(bytes.toByteArray());
-      bytes.reset();
-    }
-  }
 
-  public EncoderChannel(Writer writer) throws IOException {
-    this(writer, true);
-  }
-
-  public EncoderChannel(OutputStream writer, 
-                        boolean emitVersion) throws IOException {
-    this(new WriterWrapper(writer), emitVersion);
+    encodeString(Constant.VERSION);
+    data.flush();
+    writer.write(bytes.toByteArray());
+    bytes.reset();
   }
 
   public EncoderChannel(OutputStream writer) throws IOException {
-    this(new WriterWrapper(writer), true);
+    this(new WriterWrapper(writer));
   }
 
   public void register(SampleDispatcher dispatcher) throws IOException {

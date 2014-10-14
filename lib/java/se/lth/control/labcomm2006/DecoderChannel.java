@@ -24,7 +24,7 @@ public class DecoderChannel implements Decoder {
 	  int index = decodePacked32();
 	  String name = decodeString();
 	  ByteArrayOutputStream signature = new ByteArrayOutputStream();
-	  collectFlatSignature(new EncoderChannel(signature, false));
+	  collectFlatSignature(new EncoderChannel(signature));
 	  registry.add(index, name, signature.toByteArray());
 	} break;
 	default: {

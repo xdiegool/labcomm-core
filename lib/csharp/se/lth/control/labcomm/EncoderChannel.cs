@@ -13,17 +13,13 @@ namespace se.lth.control.labcomm {
     byte[] buf = new byte[8];
     private int current_tag; 
 
-    public EncoderChannel(Stream writer, bool emitVersion) {
+    public EncoderChannel(Stream writer) {
       this.writer = writer;
-      if (emitVersion) {
-	encodeString(Constant.VERSION);
-        bytes.WriteTo(writer);
-        bytes.SetLength(0);
-        writer.Flush();
-      }
-    }
 
-    public EncoderChannel(Stream writer) : this(writer, true) {
+      encodeString(Constant.VERSION);
+      bytes.WriteTo(writer);
+      bytes.SetLength(0);
+      writer.Flush();
     }
 
     public void register(SampleDispatcher dispatcher) {
