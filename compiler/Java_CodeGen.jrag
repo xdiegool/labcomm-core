@@ -278,11 +278,11 @@ aspect Java_Class {
       }
 
       env.println("import java.io.IOException;");
-      env.println("import se.lth.control.labcomm"+env.verStr+".Type;");
+      env.println("import se.lth.control.labcomm"+env.verStr+".SampleType;");
       env.println("import se.lth.control.labcomm"+env.verStr+".Encoder;");
       env.println("import se.lth.control.labcomm"+env.verStr+".Decoder;");
       env.println();
-      env.println("public class " + getName() + " implements Type {");
+      env.println("public class " + getName() + " implements SampleType {");
       env.println();
       env.indent();
       getType().Java_emitInstance(env);

@@ -1,5 +1,5 @@
 package se.lth.control.labcomm;
 
-public interface Type {
+public interface SampleType {
 
 }

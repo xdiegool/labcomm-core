@@ -9,7 +9,7 @@ MODULES=Constant \
 	Sample \
 	SampleDispatcher \
 	SampleHandler \
-	Type \
+	SampleType \
 	Writer \
 	WriterWrapper
 
