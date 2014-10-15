@@ -37,8 +37,7 @@ struct labcomm_writer *writer;
 
 static int buf_writer_alloc(
   struct labcomm_writer *w, 
-  struct labcomm_writer_action_context *action_context,
-  char *labcomm_version)
+  struct labcomm_writer_action_context *action_context)
 {
   writer = w; /* Hack */
   w->data_size = sizeof(buffer);

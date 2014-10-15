@@ -13,11 +13,6 @@ namespace se.lth.control.labcomm {
 
     public DecoderChannel(Stream stream) {
       this.stream = stream;
-      String version = decodeString();
-      if (version != Constant.VERSION) {
-	throw new IOException("LabComm version mismatch " +
-			      version + " != " + Constant.VERSION);
-      }
     }
 
     public void runOne() {
@@ -26,6 +21,13 @@ namespace se.lth.control.labcomm {
 	int tag = decodePacked32();
         int length = decodePacked32();
 	switch (tag) {
+        case Constant.VERSION: {
+          String version = decodeString();
+          if (version != Constant.CURRENT_VERSION) {
+  	    throw new IOException("LabComm version mismatch " +
+			          version + " != " + Constant.CURRENT_VERSION);
+          }
+        } break;
         case Constant.SAMPLE: {
           int index = decodePacked32();
           String name = decodeString();

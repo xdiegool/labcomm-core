@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#define LABCOMM_VERSION "LabComm20141009"
+#define CURRENT_VERSION "LabComm20141009"
 
 #include <errno.h>
 #include "labcomm.h"
@@ -43,6 +43,8 @@ struct labcomm_encoder *labcomm_encoder_new(
 
   result = labcomm_memory_alloc(memory, 0, sizeof(*result));
   if (result) {
+    int length;
+
     result->writer = writer;
     result->writer->encoder = result;
     result->writer->data = NULL;
@@ -55,7 +57,16 @@ struct labcomm_encoder *labcomm_encoder_new(
     result->scheduler = scheduler;
     LABCOMM_SIGNATURE_ARRAY_INIT(result->registered, int);
     labcomm_writer_alloc(result->writer,
-			 result->writer->action_context, LABCOMM_VERSION);
+			 result->writer->action_context);
+    labcomm_writer_start(result->writer, 
+                         result->writer->action_context, 
+                         LABCOMM_VERSION, NULL, CURRENT_VERSION);
+    labcomm_write_packed32(result->writer, LABCOMM_VERSION);
+    length = (labcomm_size_packed32(LABCOMM_VERSION) +
+              labcomm_size_string(CURRENT_VERSION));
+    labcomm_write_packed32(result->writer, length);
+    labcomm_write_string(result->writer, CURRENT_VERSION);
+    labcomm_writer_end(result->writer, result->writer->action_context);
   }
   return result;
 }

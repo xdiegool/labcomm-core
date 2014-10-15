@@ -16,10 +16,9 @@ namespace se.lth.control.labcomm {
     public EncoderChannel(Stream writer) {
       this.writer = writer;
 
-      encodeString(Constant.VERSION);
-      bytes.WriteTo(writer);
-      bytes.SetLength(0);
-      writer.Flush();
+      begin(Constant.VERSION);
+      encodeString(Constant.CURRENT_VERSION);
+      end(null);
     }
 
     public void register(SampleDispatcher dispatcher) {

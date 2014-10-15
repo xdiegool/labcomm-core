@@ -19,10 +19,9 @@ public class EncoderChannel implements Encoder {
     data = new DataOutputStream(bytes);
     registry = new EncoderRegistry();
 
-    encodeString(Constant.VERSION);
-    data.flush();
-    writer.write(bytes.toByteArray());
-    bytes.reset();
+    begin(Constant.VERSION);
+    encodeString(Constant.CURRENT_VERSION);
+    end(null);
   }
 
   public EncoderChannel(OutputStream writer) throws IOException {

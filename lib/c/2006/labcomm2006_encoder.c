@@ -53,7 +53,7 @@ struct labcomm2006_encoder *labcomm2006_encoder_new(
     result->scheduler = scheduler;
     LABCOMM_SIGNATURE_ARRAY_INIT(result->registered, int);
     labcomm2006_writer_alloc(result->writer,
-			 result->writer->action_context, LABCOMM_VERSION);
+			 result->writer->action_context);
   }
   return result;
 }

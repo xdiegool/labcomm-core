@@ -2,13 +2,19 @@ namespace se.lth.control.labcomm {
 
   public class Constant {
 
-   public const string VERSION = "LabComm20141009";
+    public const string CURRENT_VERSION = "LabComm20141009";
 
-   /*
-     * Predeclared aggregate type indices
+    /*
+     * Allowed packet tags
      */
-    public const int TYPEDEF          = 0x01;
+    public const int VERSION          = 0x01;
     public const int SAMPLE           = 0x02;
+    public const int PRAGMA           = 0x3f;
+    public const int FIRST_USER_INDEX = 0x40; /* ..0xffffffff */
+
+    /*
+     * Predefined aggregate type indices
+     */
     public const int ARRAY            = 0x10;
     public const int STRUCT           = 0x11;
     
@@ -24,11 +30,6 @@ namespace se.lth.control.labcomm {
     public const int DOUBLE           = 0x26;
     public const int STRING           = 0x27;
     
-    /*
-     * start of user defined types 
-     */
-    public const int FIRST_USER_INDEX = 0x40;
-
   }
 
 }

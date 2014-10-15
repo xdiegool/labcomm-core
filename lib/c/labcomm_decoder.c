@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#define LABCOMM_VERSION "LabComm20141009"
+#define CURRENT_VERSION "LabComm20141009"
 
 #include <errno.h>
 #include "labcomm.h"
@@ -37,6 +37,7 @@ struct sample_entry {
 struct labcomm_decoder {
   struct labcomm_reader *reader;
   int reader_allocated;
+  int version_ok;
   struct labcomm_error_handler *error;
   struct labcomm_memory *memory;
   struct labcomm_scheduler *scheduler;
@@ -64,6 +65,7 @@ struct labcomm_decoder *labcomm_decoder_new(
     result->reader->pos = 0;
     result->reader->error = 0;
     result->reader_allocated = 0;
+    result->version_ok = 0;
     result->error = error;
     result->memory = memory;
     result->scheduler = scheduler;
@@ -105,7 +107,7 @@ static int decode_sample(struct labcomm_decoder *d, int kind)
   signature.size = labcomm_read_packed32(d->reader);
   if (d->reader->error < 0) {
     result = d->reader->error;
-    goto out;
+    goto free_signature_name;
   }
   signature.signature = labcomm_memory_alloc(d->memory, 1,  signature.size);
   if (d->reader->error < 0) {
@@ -184,14 +186,13 @@ static void reader_alloc(struct labcomm_decoder *d)
 {
   if (!d->reader_allocated) {
     d->reader_allocated = 1;
-    labcomm_reader_alloc(d->reader, d->reader->action_context,
-			 LABCOMM_VERSION);
+    labcomm_reader_alloc(d->reader, d->reader->action_context);
   }
 }
 
 int labcomm_decoder_decode_one(struct labcomm_decoder *d)
 {
-  int result, remote_index, length __attribute__((__unused__));
+  int result, remote_index, length;
 
   reader_alloc(d);
   remote_index = labcomm_read_packed32(d->reader);
@@ -204,8 +205,30 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
     result = d->reader->error;
     goto out;
   }
-  if (remote_index == LABCOMM_SAMPLE) {
+  if (remote_index == LABCOMM_VERSION) {
+    char *version = labcomm_read_string(d->reader);
+    if (d->reader->error < 0) {
+      result = d->reader->error;
+      goto out;
+    }
+    if (strcmp(version, CURRENT_VERSION) == 0) {
+      result = LABCOMM_VERSION;
+      d->version_ok = 1;
+    } else {
+      result = -ECONNRESET;
+    }  
+    fprintf(stderr, "VERSION %s %d\n", version, result);
+    labcomm_memory_free(d->memory, 1,  version);
+  } else if (! d->version_ok) {
+    fprintf(stderr, "No VERSION %d %d\n", remote_index, length);
+    result = -ECONNRESET;
+  } else if (remote_index == LABCOMM_SAMPLE) {
     result = decode_sample(d, remote_index); 
+  } else if (remote_index == LABCOMM_PRAGMA && 0 /* d->pragma_handler*/) {
+    /* d->prama_handler(...); */
+  } else if (remote_index < LABCOMM_USER) {
+    fprintf(stderr, "SKIP %d %d\n", remote_index, length);
+    result = remote_index;
   } else {
     int *local_index;
     struct call_handler_context wrap = {
@@ -244,7 +267,7 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
       result = -ENOENT;
     }
   }
-out:
+out:   
   return result;
 }
 

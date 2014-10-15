@@ -37,15 +37,22 @@
 #include "labcomm.h"
 
 /*
- * Predeclared aggregate type indices
+ * Allowed packet tags
  */
-#define LABCOMM_TYPEDEF  0x01
+#define LABCOMM_VERSION  0x01
 #define LABCOMM_SAMPLE   0x02
+#define LABCOMM_PRAGMA   0x3f
+#define LABCOMM_USER     0x40 /* ..0xffffffff */
+
+
+/*
+ * Predefined aggregate type indices
+ */
 #define LABCOMM_ARRAY    0x10
 #define LABCOMM_STRUCT   0x11
 
 /*
- * Predeclared primitive type indices
+ * Predefined primitive type indices
  */
 #define LABCOMM_BOOLEAN  0x20 
 #define LABCOMM_BYTE     0x21
@@ -56,10 +63,6 @@
 #define LABCOMM_DOUBLE   0x26
 #define LABCOMM_STRING   0x27
 
-/*
- * Start index for user defined types
- */
-#define LABCOMM_USER     0x40
 
 /*
  * Macro to automagically call constructors in modules compiled 
@@ -96,17 +99,14 @@ struct labcomm_reader_action_context;
 
 struct labcomm_reader_action {
   /* 'alloc' is called at the first invocation of 'labcomm_decoder_decode_one' 
-     on the decoder containing the reader. If 'labcomm_version' != NULL
-     and non-empty the transport layer may use it to ensure that
-     compatible versions are used.
+     on the decoder containing the reader.
 
      Returned value:
        >  0    Number of bytes allocated for buffering
        <= 0    Error
   */
   int (*alloc)(struct labcomm_reader *r, 
-	       struct labcomm_reader_action_context *action_context, 
-	       char *labcomm_version);
+	       struct labcomm_reader_action_context *action_context);
   /* 'free' returns the resources claimed by 'alloc' and might have other
      reader specific side-effects as well.
 
@@ -159,8 +159,7 @@ struct labcomm_reader {
 };
 
 int labcomm_reader_alloc(struct labcomm_reader *r, 
-			 struct labcomm_reader_action_context *action_context, 
-			 char *labcomm_version);
+			 struct labcomm_reader_action_context *action_context);
 int labcomm_reader_free(struct labcomm_reader *r, 
 			struct labcomm_reader_action_context *action_context);
 int labcomm_reader_start(struct labcomm_reader *r, 
@@ -299,8 +298,7 @@ struct labcomm_writer_action_context;
 
 struct labcomm_writer_action {
   int (*alloc)(struct labcomm_writer *w, 
-	       struct labcomm_writer_action_context *action_context, 
-	       char *labcomm_version);
+	       struct labcomm_writer_action_context *action_context);
   int (*free)(struct labcomm_writer *w, 
 	      struct labcomm_writer_action_context *action_context);
   /* 'start' is called right before a sample is to be sent. In the 
@@ -345,8 +343,7 @@ struct labcomm_writer {
 };
 
 int labcomm_writer_alloc(struct labcomm_writer *w, 
-			 struct labcomm_writer_action_context *action_context, 
-			 char *labcomm_version);
+			 struct labcomm_writer_action_context *action_context);
 int labcomm_writer_free(struct labcomm_writer *w, 
 			struct labcomm_writer_action_context *action_context);
 int labcomm_writer_start(struct labcomm_writer *w, 

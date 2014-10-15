@@ -186,7 +186,7 @@ static int decode_typedef_or_sample(struct labcomm2006_decoder *d, int kind)
   
   local_signature = NULL;
   local_index = 0;
-  labcomm2006_writer_alloc(&writer, writer.action_context, "");
+  labcomm2006_writer_alloc(&writer, writer.action_context);
   labcomm2006_writer_start(&writer, writer.action_context, 0, NULL, NULL);
   remote_index = labcomm2006_read_packed32(d->reader);
   signature.name = labcomm2006_read_string(d->reader);
@@ -286,8 +286,7 @@ static void reader_alloc(struct labcomm2006_decoder *d)
 {
   if (!d->reader_allocated) {
     d->reader_allocated = 1;
-    labcomm2006_reader_alloc(d->reader, d->reader->action_context,
-			 LABCOMM_VERSION);
+    labcomm2006_reader_alloc(d->reader, d->reader->action_context);
   }
 }
 

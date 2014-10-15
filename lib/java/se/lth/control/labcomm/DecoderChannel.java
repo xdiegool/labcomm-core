@@ -14,12 +14,6 @@ public class DecoderChannel implements Decoder {
   public DecoderChannel(InputStream in) throws IOException {
     this.in = new DataInputStream(in);
     registry = new DecoderRegistry();
-    String version = decodeString();
-    if (! version.equals(Constant.VERSION)) {
-      throw new IOException("LabComm version mismatch " +
-			    version + " != " + Constant.VERSION);
-    }
-    System.err.println(Constant.VERSION);
   }
 
   public void runOne() throws Exception {
@@ -28,6 +22,13 @@ public class DecoderChannel implements Decoder {
       int tag = decodePacked32();
       int length = decodePacked32();
       switch (tag) {
+        case Constant.VERSION: {
+          String version = decodeString();
+          if (! version.equals(Constant.CURRENT_VERSION)) {
+            throw new IOException("LabComm version mismatch " +
+			          version + " != " + Constant.CURRENT_VERSION);
+          }
+        } break;
 	case Constant.SAMPLE: {
 	  int index = decodePacked32();
 	  String name = decodeString();

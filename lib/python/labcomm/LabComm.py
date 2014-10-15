@@ -122,38 +122,13 @@ import struct as packer
 
 DEFAULT_VERSION = "LabComm20141009"
 
-# Version testing
-def sendVersionString(version):
-    return version in [ "LabComm2013", "LabComm20141009" ]
-
-def usePacked32(version):
-    return version in [ "LabComm2013", "LabComm20141009" ]
-
-def usePacketLength(version):
-    return version in [ "LabComm20141009" ]
-
-class length_encoder:
-    def __init__(self, encoder):
-        self.encoder = encoder
-        self.data = ""
-
-    def start(self, encoder, version):
-        self.version = version
-    
-    def write(self, data):
-        self.data += data
-
-    def __enter__(self):
-        return Encoder(self)
-
-    def __exit__(self, type, value, traceback):
-        if usePacketLength(self.version):
-             self.encoder.encode_packed32(len(self.data))
-        self.encoder.pack("%ds" % len(self.data), self.data)
-
-i_TYPEDEF = 0x01
+# Allowed packet tags
+i_VERSION = 0x01
 i_SAMPLE  = 0x02
+i_PRAGMA  = 0x3f
+i_USER    = 0x40 # ..0xffffffff
 
+# Predefined types
 i_ARRAY   = 0x10
 i_STRUCT  = 0x11
 
@@ -166,7 +141,27 @@ i_FLOAT   = 0x25
 i_DOUBLE  = 0x26
 i_STRING  = 0x27
 
-i_USER    = 0x40
+
+# Version testing
+def usePacketLength(version):
+    return version in [ None, "LabComm20141009" ]
+
+class length_encoder:
+    def __init__(self, encoder):
+        self.encoder = encoder
+        self.version = encoder.version
+        self.data = ""
+
+    def write(self, data):
+        self.data += data
+
+    def __enter__(self):
+        return Encoder(self, None)
+
+    def __exit__(self, type, value, traceback):
+        if usePacketLength(self.version):
+             self.encoder.encode_packed32(len(self.data))
+        self.encoder.pack("%ds" % len(self.data), self.data)
 
 def indent(i, s):
     return ("\n%s" % (" " * i)).join(s.split("\n"))
@@ -315,8 +310,6 @@ class sample(object):
         self.decl = decl
 
     def encode_decl(self, encoder):
-#        encoder.encode_type(i_SAMPLE)
-#        self.encode_decl_tail(encoder)
         encoder.encode_type(i_SAMPLE)
         with length_encoder(encoder) as e1:
             e1.encode_type(encoder.decl_to_index[self])
@@ -593,7 +586,14 @@ class Encoder(Codec):
         super(Encoder, self).__init__()
         self.writer = writer
         self.version = version
-        self.writer.start(self, self.version)
+        if self.version in [ "LabComm20141009" ]:
+            self.encode_type(i_VERSION)
+            with length_encoder(self) as e:
+                e.encode_string(version)
+        elif self.version in [ None,  "LabComm2006" ]:
+            pass
+        else:
+            raise Exception("Unsupported labcomm version %s" % self.version)    
 
     def pack(self, format, *args):
         self.writer.write(packer.pack(format, *args))
@@ -621,8 +621,7 @@ class Encoder(Codec):
             decl.encode_decl(self)
             
     def encode_packed32(self, v):
-        #if usePacked32(self.version) :
-        if self.version in [ "LabComm2013",  "LabComm20141009" ]:
+        if self.version in [ None, "LabComm20141009" ]:
             v = v & 0xffffffff
             tmp = [ v & 0x7f ]
             v = v >> 7
@@ -676,7 +675,6 @@ class Decoder(Codec):
         super(Decoder, self).__init__()
         self.reader = reader
         self.version = version
-        self.reader.start(self, version)
         
     def unpack(self, format):
         size = packer.calcsize(format)
@@ -696,9 +694,17 @@ class Decoder(Codec):
         return result
 
     def decode(self):
-        index = self.decode_type_number()
-        if usePacketLength(self.version):
-            length = self.decode_packed32()
+        while True:
+            index = self.decode_type_number()
+            if usePacketLength(self.version):
+                length = self.decode_packed32()
+            if index != i_VERSION:
+                break
+            else:
+                other_version = self.decode_string()  
+                if self.version != other_version:
+                    raise Exception("LabComm version mismatch %s != %s" %
+                                    (version, other_version))
         if index == i_SAMPLE:
             decl = self.index_to_decl[index].decode_decl(self)
             value = None

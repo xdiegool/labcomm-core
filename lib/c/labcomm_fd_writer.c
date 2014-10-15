@@ -40,8 +40,7 @@ static int fd_flush(struct labcomm_writer *w,
 		    struct labcomm_writer_action_context *action_context);
 
 static int fd_alloc(struct labcomm_writer *w, 
-		    struct labcomm_writer_action_context *action_context, 
-		    char *version)
+		    struct labcomm_writer_action_context *action_context)
 {
   w->data = labcomm_memory_alloc(w->memory, 0, BUFFER_SIZE);
   if (! w->data) {
@@ -53,10 +52,6 @@ static int fd_alloc(struct labcomm_writer *w,
     w->data_size = BUFFER_SIZE;
     w->count = BUFFER_SIZE;
     w->pos = 0;
-    if (version && version[0]) {
-      labcomm_write_string(w, version);
-      fd_flush(w, action_context);
-    }
   }
 
   return w->error;
