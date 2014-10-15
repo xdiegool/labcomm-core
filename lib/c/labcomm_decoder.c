@@ -217,7 +217,6 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
     } else {
       result = -ECONNRESET;
     }  
-    fprintf(stderr, "VERSION %s %d\n", version, result);
     labcomm_memory_free(d->memory, 1,  version);
   } else if (! d->version_ok) {
     fprintf(stderr, "No VERSION %d %d\n", remote_index, length);
