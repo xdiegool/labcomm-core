@@ -11,9 +11,43 @@ public class DecoderChannel implements Decoder {
   private DataInputStream in;
   private DecoderRegistry registry;
 
-  public DecoderChannel(InputStream in) throws IOException {
+  private DecoderChannel(InputStream in, DecoderRegistry reg) throws IOException {
     this.in = new DataInputStream(in);
-    registry = new DecoderRegistry();
+    registry = reg;
+  }
+  public DecoderChannel(InputStream in) throws IOException {
+    this(in, new DecoderRegistry());
+  }
+
+  private void processSampleDef() throws IOException {
+    int index = decodePacked32();
+    String name = decodeString();
+    int signature_length = decodePacked32();
+    byte[] signature = new byte[signature_length];
+    ReadBytes(signature, signature_length);
+    registry.add(index, name, signature);
+  }	   
+
+
+  private void processTypeDef(int len) throws IOException {
+       System.out.println("Got TypeDef: skipping "+len+" bytes"); 
+       for(int i=0; i<len; i++) {
+           decodeByte();		  
+       }
+  }
+
+  private void processTypeBinding(int len) throws IOException {
+       System.out.println("Got TypeBinding: skipping "+len+" bytes"); 
+       for(int i=0; i<len; i++) {
+           decodeByte();		  
+       }
+  }
+
+  private void processPragma(int len) throws IOException {
+       System.out.println("Got Pragma: skipping "+len+" bytes"); 
+       for(int i=0; i<len; i++) {
+           decodeByte();		  
+       }
   }
 
   public void runOne() throws Exception {
@@ -29,13 +63,17 @@ public class DecoderChannel implements Decoder {
 			          version + " != " + Constant.CURRENT_VERSION);
           }
         } break;
-	case Constant.SAMPLE: {
-	  int index = decodePacked32();
-	  String name = decodeString();
-          int signature_length = decodePacked32();
-          byte[] signature = new byte[signature_length];
-          ReadBytes(signature, signature_length);
-	  registry.add(index, name, signature);
+	case Constant.SAMPLE_DEF: {
+          processSampleDef();
+	} break;
+	case Constant.TYPE_DEF: {
+          processTypeDef(length);
+	} break;
+	case Constant.TYPE_BINDING: {
+          processTypeBinding(length);
+	} break;
+	case Constant.PRAGMA: {
+          processPragma(length);
 	} break;
 	default: {
 	  DecoderRegistry.Entry e = registry.get(tag);

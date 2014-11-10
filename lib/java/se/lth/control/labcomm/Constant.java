@@ -11,7 +11,9 @@ public class Constant {
    * Predeclared aggregate type indices
    */
   public static final int VERSION          = 0x01;
-  public static final int SAMPLE           = 0x02;
+  public static final int SAMPLE_DEF       = 0x02;
+  public static final int TYPE_DEF         = 0x03;
+  public static final int TYPE_BINDING     = 0x04;
   public static final int PRAGMA           = 0x3f;
   public static final int FIRST_USER_INDEX = 0x40; /* ..0xffffffff */
 

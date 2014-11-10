@@ -30,7 +30,7 @@ public class EncoderChannel implements Encoder {
 
   public void register(SampleDispatcher dispatcher) throws IOException {
     int index = registry.add(dispatcher);
-    begin(Constant.SAMPLE);
+    begin(Constant.SAMPLE_DEF);
     encodePacked32(index);
     encodeString(dispatcher.getName());
     byte[] signature = dispatcher.getSignature();

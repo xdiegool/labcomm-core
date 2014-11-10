@@ -11,7 +11,7 @@
 #   | ...
 #   +----+--
 #
-# LabComm22014 SAMPLE:
+# LabComm2014 SAMPLE_DEF:
 #
 #   +----+----+----+----+
 #   | id = 0x02             (packed32)
@@ -28,6 +28,37 @@
 #   | type signature
 #   | ...
 #   +----+--
+#
+# LabComm2014 TYPE_DEF: (as SAMPLE_DEF, but signatures are hierarchical,
+#                         i.e., may contain references to other types
+#
+#   +----+----+----+----+
+#   | id = 0x03             (packed32)
+#   +----+----+----+----+
+#   | length                (packed32)
+#   +----+----+----+----+
+#   | type number           (packed32)
+#   +----+----+----+----+
+#   | type name (UTF8)
+#   | ...
+#   +----+----+----+----+
+#   | signature length      (packed32)
+#   +----+----+----+----+
+#   | type signature
+#   | ...
+#   +----+--
+#
+# LabComm2014 TYPE_BINDING
+#
+#   +----+----+----+----+
+#   | id = 0x04             (packed32)
+#   +----+----+----+----+
+#   | length                (packed32)
+#   +----+----+----+----+
+#   | sample number         (packed32)
+#   +----+----+----+----+
+#   | type number           (packed32)
+#   +----+----+----+----+
 #
 # LabComm2014 User data:
 #
@@ -123,10 +154,12 @@ import struct as packer
 DEFAULT_VERSION = "LabComm2014"
 
 # Allowed packet tags
-i_VERSION = 0x01
-i_SAMPLE  = 0x02
-i_PRAGMA  = 0x3f
-i_USER    = 0x40 # ..0xffffffff
+i_VERSION     = 0x01
+i_SAMPLE_DEF  = 0x02
+i_TYPE_DEF    = 0x03
+i_TYPE_BINDING= 0x04
+i_PRAGMA      = 0x3f
+i_USER        = 0x40 # ..0xffffffff
 
 # Predefined types
 i_ARRAY   = 0x10
@@ -310,7 +343,7 @@ class sample(object):
         self.decl = decl
 
     def encode_decl(self, encoder):
-        encoder.encode_type(i_SAMPLE)
+        encoder.encode_type(i_SAMPLE_DEF)
         with length_encoder(encoder) as e1:
             e1.encode_type(encoder.decl_to_index[self])
             e1.encode_string(self.name)
@@ -512,7 +545,7 @@ class struct:
         result += "\n])"
         return result
 
-SAMPLE = sample(None, None)
+SAMPLE_DEF = sample(None, None)
 
 ARRAY = array(None, None)
 STRUCT = struct({})
@@ -541,7 +574,7 @@ class Codec(object):
         self.predefined_types()
 
     def predefined_types(self):
-        self.add_decl(SAMPLE, i_SAMPLE)
+        self.add_decl(SAMPLE_DEF, i_SAMPLE_DEF)
 
         self.add_decl(ARRAY, i_ARRAY)
         self.add_decl(STRUCT, i_STRUCT)
@@ -693,6 +726,10 @@ class Decoder(Codec):
             raise Exception('Should not be used')
         return result
 
+    def skip(self, length):
+        for _ in xrange(length):
+            self.decode_byte()
+
     def decode(self):
         while True:
             index = self.decode_type_number()
@@ -705,9 +742,15 @@ class Decoder(Codec):
                 if self.version != other_version:
                     raise Exception("LabComm version mismatch %s != %s" %
                                     (version, other_version))
-        if index == i_SAMPLE:
+        if index == i_SAMPLE_DEF:
             decl = self.index_to_decl[index].decode_decl(self)
             value = None
+        elif index == i_TYPE_DEF:
+            print "Got type_def, skipping %d bytes" % length
+            self.skip(length)
+        elif index == i_TYPE_BINDING:
+            print "Got type_binding, skipping %d bytes" % length
+            self.skip(length)
         else:
             decl = self.index_to_decl[index]
             value = decl.decode(self)

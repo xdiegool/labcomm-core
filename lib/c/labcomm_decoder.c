@@ -190,6 +190,96 @@ static void reader_alloc(struct labcomm_decoder *d)
   }
 }
 
+static int decoder_skip(struct labcomm_decoder *d, int len, int tag)
+{
+  int i;
+  printf("got tag 0x%x, skipping %d bytes\n", tag, len);
+  for(i = 0; i <len; i++){
+    labcomm_read_byte(d->reader);
+    if (d->reader->error < 0) {
+      return d->reader->error;
+    }
+  }
+  return tag;
+}
+/* d        - decoder to read from
+   registry - decoder to lookup signatures (registry != d only if
+                nesting decoders, e.g., when decoding pragma)
+   len      - length of the labcomm packet )
+*/
+static int decode_pragma(struct labcomm_decoder *d,
+		         struct labcomm_decoder *registry,
+		         int len)
+{
+  char *pragma_type;
+  int result;
+  pragma_type = labcomm_read_string(d->reader);
+  if (d->reader->error < 0) {
+    result = d->reader->error;
+    goto out;
+  }
+  int bytes = labcomm_size_string(pragma_type);
+  int psize = len-bytes;
+  result = decoder_skip(d, psize, LABCOMM_PRAGMA);
+out:
+  return result;
+}
+
+static labcomm_decoder_function lookup_h(struct labcomm_decoder *d,
+		                         struct call_handler_context *wrap,
+		                         int remote_index,
+					 int **local_index)
+{
+  labcomm_decoder_function do_decode = NULL;
+  labcomm_scheduler_data_lock(d->scheduler);
+  *local_index = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
+      				      d->remote_to_local, int,
+      				      remote_index);
+  if (**local_index != 0) {
+    struct sample_entry *entry;
+
+    entry = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
+      				  d->local, struct sample_entry,
+      				  **local_index);
+    wrap->local_index = **local_index;
+    wrap->signature = entry->signature;
+    wrap->handler = entry->handler;
+    wrap->context = entry->context;
+    do_decode = entry->decode;
+  }
+  labcomm_scheduler_data_unlock(d->scheduler);
+  return do_decode;
+}
+/* d            - decoder to read from
+   registry     - decoder to lookup signatures (registry != d only if
+                    nesting decoders, e.g., when decoding pragma)
+   remote_index -  received type index )
+*/
+static int decode_and_handle(struct labcomm_decoder *d,
+		             struct labcomm_decoder *registry,
+		             int remote_index)
+{
+  int result;
+  int *local_index;
+  struct call_handler_context wrap = {
+    .reader = d->reader,
+    .remote_index = remote_index,
+    .signature = NULL,
+    .handler = NULL,
+    .context = NULL,
+  };
+  labcomm_decoder_function do_decode = lookup_h(registry, &wrap, remote_index, &local_index);
+  result = *local_index;
+  if (do_decode) {
+    do_decode(d->reader, call_handler, &wrap);
+    if (d->reader->error < 0) {
+      result = d->reader->error;
+    }
+  } else {
+    result = -ENOENT;
+  }
+  return result;
+}
 int labcomm_decoder_decode_one(struct labcomm_decoder *d)
 {
   int result, remote_index, length;
@@ -223,48 +313,13 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
     result = -ECONNRESET;
   } else if (remote_index == LABCOMM_SAMPLE) {
     result = decode_sample(d, remote_index); 
-  } else if (remote_index == LABCOMM_PRAGMA && 0 /* d->pragma_handler*/) {
-    /* d->prama_handler(...); */
+  } else if (remote_index == LABCOMM_PRAGMA) {
+    result = decode_pragma(d, d, length);
   } else if (remote_index < LABCOMM_USER) {
     fprintf(stderr, "SKIP %d %d\n", remote_index, length);
     result = remote_index;
   } else {
-    int *local_index;
-    struct call_handler_context wrap = {
-      .reader = d->reader,
-      .remote_index = remote_index,
-      .signature = NULL,
-      .handler = NULL,
-      .context = NULL,
-    };
-    labcomm_decoder_function do_decode = NULL;
-
-    labcomm_scheduler_data_lock(d->scheduler);
-    local_index = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
-					      d->remote_to_local, int,
-					      remote_index);
-    if (*local_index != 0) {
-      struct sample_entry *entry;
-
-      entry = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
-					  d->local, struct sample_entry,
-					  *local_index);
-      wrap.local_index = *local_index;
-      wrap.signature = entry->signature;
-      wrap.handler = entry->handler;
-      wrap.context = entry->context;
-      do_decode = entry->decode;
-      result = *local_index;
-    }
-    labcomm_scheduler_data_unlock(d->scheduler);
-    if (do_decode) {
-      do_decode(d->reader, call_handler, &wrap);
-      if (d->reader->error < 0) {
-	result = d->reader->error;
-      }
-    } else {
-      result = -ENOENT;
-    }
+    result = decode_and_handle(d, d, remote_index);
   }
 out:   
   return result;
