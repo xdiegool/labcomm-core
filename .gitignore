@@ -6,9 +6,9 @@ lib/c/liblabcomm.so.1
 lib/c/liblabcomm2006.so.1
 lib/c/liblabcomm2006.so
 lib/c/liblabcomm2006.a
-lib/c/liblabcomm2013.so.1
-lib/c/liblabcomm2013.so
-lib/c/liblabcomm2013.a
+lib/c/liblabcomm2014.so.1
+lib/c/liblabcomm2014.so
+lib/c/liblabcomm2014.a
 lib/c/test/test_labcomm
 lib/c/test/test_labcomm_basic_type_encoding
 lib/c/test/test_labcomm_copy
@@ -26,3 +26,7 @@ examples/twoway/gen/
 lib/csharp/labcomm.dll
 lib/java/gen/
 lib/java/labcomm*.jar
+examples/simple/example_decoder
+examples/simple/example_decoder06
+examples/simple/example_encoder
+examples/simple/example_encoder06

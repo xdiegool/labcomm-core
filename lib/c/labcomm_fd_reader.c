@@ -36,8 +36,7 @@ struct labcomm_fd_reader {
 };
 
 static int fd_alloc(struct labcomm_reader *r,
-		    struct labcomm_reader_action_context *action_context, 
-		    char *version)
+		    struct labcomm_reader_action_context *action_context)
 {
   int result = 0;
   
@@ -51,17 +50,6 @@ static int fd_alloc(struct labcomm_reader *r,
 
     r->data_size = BUFFER_SIZE;
     result = r->data_size;
-    if (version && version[0]) {
-      char *tmp;
-      
-      tmp = labcomm_read_string(r);
-      if (strcmp(tmp, version) != 0) {
-	result = -EINVAL;
-      } else {
-	result = r->data_size;
-      }
-      labcomm_memory_free(r->memory, 1, tmp);
-    }
   }
   return result;
 }

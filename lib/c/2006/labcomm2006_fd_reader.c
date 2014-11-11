@@ -36,19 +36,9 @@ struct labcomm2006_fd_reader {
 };
 
 static int fd_alloc(struct labcomm2006_reader *r,
-		    struct labcomm2006_reader_action_context *action_context, 
-		    char *version)
+		    struct labcomm2006_reader_action_context *action_context)
 {
   int result = 0;
-// in-band version is not included in version 2006.
-// This may be a place for version checking and/or printing
-// a warning message
-  if (version && version[0]) {
-    if (strcmp(LABCOMM_VERSION, version) != 0) {
-      fprintf(stderr, "ERROR: version mismatch: %s != %s\n", version, LABCOMM_VERSION);
-      return -EINVAL;
-    } 
-  }
   
   r->count = 0;
   r->pos = 0;

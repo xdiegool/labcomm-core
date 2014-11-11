@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#define LABCOMM_VERSION "LabComm2013"
+#define CURRENT_VERSION "LabComm2014"
 
 #include <errno.h>
 #include "labcomm.h"
@@ -37,6 +37,7 @@ struct sample_entry {
 struct labcomm_decoder {
   struct labcomm_reader *reader;
   int reader_allocated;
+  int version_ok;
   struct labcomm_error_handler *error;
   struct labcomm_memory *memory;
   struct labcomm_scheduler *scheduler;
@@ -64,6 +65,7 @@ struct labcomm_decoder *labcomm_decoder_new(
     result->reader->pos = 0;
     result->reader->error = 0;
     result->reader_allocated = 0;
+    result->version_ok = 0;
     result->error = error;
     result->memory = memory;
     result->scheduler = scheduler;
@@ -84,188 +86,77 @@ void labcomm_decoder_free(struct labcomm_decoder* d)
   labcomm_memory_free(memory, 0, d);
 }
 
-static int collect_flat_signature(
-  struct labcomm_decoder *decoder,
-  struct labcomm_writer *writer)
-{
-  int result, type;
-
-  type = labcomm_read_packed32(decoder->reader); 
-  result = decoder->reader->error;
-  if (result < 0) { goto out; }
-  if (type >= LABCOMM_USER) {
-    decoder->on_error(LABCOMM_ERROR_UNIMPLEMENTED_FUNC, 3,
-		      "Implement %s ... (1) for type 0x%x\n",
-		      __FUNCTION__, type);
-  } else {
-    labcomm_write_packed32(writer, type); 
-    switch (type) {
-      case LABCOMM_ARRAY: {
-	int dimensions, i;
-
-	dimensions = labcomm_read_packed32(decoder->reader);
-	labcomm_write_packed32(writer, dimensions);
-	for (i = 0 ; i < dimensions ; i++) {
-	  int n = labcomm_read_packed32(decoder->reader);
-	  labcomm_write_packed32(writer, n);
-	}
-	result = collect_flat_signature(decoder, writer);
-	if (result < 0) { goto out; }
-      } break;
-      case LABCOMM_STRUCT: {
-	int fields, i;
-
-	fields = labcomm_read_packed32(decoder->reader); 
-	labcomm_write_packed32(writer, fields); 
-	for (i = 0 ; i < fields ; i++) {
-	  char *name = labcomm_read_string(decoder->reader);
-	  labcomm_write_string(writer, name);
-	  labcomm_memory_free(decoder->memory, 1, name);
-	  result = collect_flat_signature(decoder, writer);
-	  if (result < 0) { goto out; }
-	}
-      } break;
-      case LABCOMM_BOOLEAN:
-      case LABCOMM_BYTE:
-      case LABCOMM_SHORT:
-      case LABCOMM_INT:
-      case LABCOMM_LONG:
-      case LABCOMM_FLOAT:
-      case LABCOMM_DOUBLE:
-      case LABCOMM_STRING: {
-      } break;
-      default: {
-	result = -ENOSYS;
-	decoder->on_error(LABCOMM_ERROR_UNIMPLEMENTED_FUNC, 3,
-			  "Implement %s (2) for type 0x%x...\n",
-			  __FUNCTION__, type);
-      } break;
-    }
-  }
-out:
-  return result;
-}
-
-static int writer_ioctl(struct labcomm_writer *writer,
-			uint32_t action,
-			...)
+static int decode_sample(struct labcomm_decoder *d, int kind)
 {
   int result;
-  va_list va;
-
-  if (LABCOMM_IOC_SIG(action) != LABCOMM_IOC_NOSIG) {
-    result = -EINVAL;
-    goto out;
-  }
-  
-  va_start(va, action);
-  result = labcomm_writer_ioctl(writer, writer->action_context, 
-				0, NULL, action, va);
-  va_end(va);
-out:
-  return result;
-}
-
-static int decode_typedef_or_sample(struct labcomm_decoder *d, int kind)
-{
-  int result;
-
-  /* TODO: should the labcomm_dynamic_buffer_writer be 
-     a permanent part of labcomm_decoder? */
-  struct labcomm_writer_action_context action_context = {
-    .next = NULL,
-    .action = labcomm_dynamic_buffer_writer_action,
-    .context = NULL
-  };
-  struct labcomm_writer writer = {
-    .action_context = &action_context,
-    .memory = d->memory,
-    .data = NULL,
-    .data_size = 0,
-    .count = 0,
-    .pos = 0,
-    .error = 0,
-  };
   struct labcomm_signature signature, *local_signature;
-  int remote_index, local_index, err;
+  int remote_index, local_index, i;
   
   local_signature = NULL;
   local_index = 0;
-  labcomm_writer_alloc(&writer, writer.action_context, "");
-  labcomm_writer_start(&writer, writer.action_context, 0, NULL, NULL);
   remote_index = labcomm_read_packed32(d->reader);
+  if (d->reader->error < 0) {
+    result = d->reader->error;
+    goto out;
+  }
   signature.name = labcomm_read_string(d->reader);
-  signature.type = kind;
-  collect_flat_signature(d, &writer);
-  labcomm_writer_end(&writer, writer.action_context);
-  err = writer_ioctl(&writer, 
-		     LABCOMM_IOCTL_WRITER_GET_BYTES_WRITTEN,
-		     &signature.size);
-  if (err < 0) {
-    d->on_error(LABCOMM_ERROR_BAD_WRITER, 2,
-		"Failed to get size: %s\n", strerror(-err));
-    result = -ENOENT;
+  if (d->reader->error < 0) {
+    result = d->reader->error;
+    goto out;
+  }
+  signature.size = labcomm_read_packed32(d->reader);
+  if (d->reader->error < 0) {
+    result = d->reader->error;
     goto free_signature_name;
   }
-  err = writer_ioctl(&writer, 
-		     LABCOMM_IOCTL_WRITER_GET_BYTE_POINTER,
-		     &signature.signature);
-  if (err < 0) {
-    d->on_error(LABCOMM_ERROR_BAD_WRITER, 2,
-		"Failed to get pointer: %s\n", strerror(-err));
-    result = -ENOENT;
+  signature.signature = labcomm_memory_alloc(d->memory, 1,  signature.size);
+  if (d->reader->error < 0) {
+    result = d->reader->error;
     goto free_signature_name;
   }
-  {
-    int i;
-
-    labcomm_scheduler_data_lock(d->scheduler);
-    LABCOMM_SIGNATURE_ARRAY_FOREACH(d->local, struct sample_entry, i) {
-      struct sample_entry *s;
-      int *remote_to_local;
+  for (i = 0 ; i < signature.size ; i++) {
+    signature.signature[i] = labcomm_read_byte(d->reader);
+    if (d->reader->error < 0) {
+      result = d->reader->error;
+      goto free_signature_signature;
+    }
+  }
+  labcomm_scheduler_data_lock(d->scheduler);
+  LABCOMM_SIGNATURE_ARRAY_FOREACH(d->local, struct sample_entry, i) {
+    struct sample_entry *s;
+    int *remote_to_local;
       
-      result = -ENOENT;
-      s = LABCOMM_SIGNATURE_ARRAY_REF(d->memory, 
+    result = -ENOENT;
+    s = LABCOMM_SIGNATURE_ARRAY_REF(d->memory, 
 				      d->local,  struct sample_entry, i);
-      if (s->signature &&
-	  s->signature->type == signature.type &&
-	  s->signature->size == signature.size &&
-	  strcmp(s->signature->name, signature.name) == 0 &&
-	  memcmp((void*)s->signature->signature, (void*)signature.signature,
+    if (s->signature &&
+        s->signature->size == signature.size &&
+        strcmp(s->signature->name, signature.name) == 0 &&
+        memcmp((void*)s->signature->signature, (void*)signature.signature,
 	       signature.size) == 0) {
-	s->remote_index = remote_index;
-	local_signature = s->signature;
-	local_index = i;
-	remote_to_local = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
-						      d->remote_to_local, int,
-						      remote_index);
-	*remote_to_local = i;
-	result = remote_index;
-	break;
-      }
-    }
-    labcomm_scheduler_data_unlock(d->scheduler);
-    if (local_signature) {
-      labcomm_reader_start(d->reader, d->reader->action_context,
-			   local_index, remote_index, local_signature,
-			   NULL);
-      labcomm_reader_end(d->reader, d->reader->action_context);
+      s->remote_index = remote_index;
+      local_signature = s->signature;
+      local_index = i;
+      remote_to_local = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
+                                                    d->remote_to_local, int,
+                                                    remote_index);
+      *remote_to_local = i;
+      result = remote_index;
+      break;
     }
   }
-#if 0
-  if (! entry) {
-    /* Unknown datatype, bail out */
-    d->on_new_datatype(d, &signature);
-    result = -ENOENT;
-  } else if (entry->index && entry->index != remote_index) {
-    d->on_error(LABCOMM_ERROR_DEC_INDEX_MISMATCH, 5,
-		"%s(): index mismatch '%s' (id=0x%x != 0x%x)\n",
-		__FUNCTION__, signature.name, entry->index, remote_index);
-    result = -ENOENT;
-#endif
+  labcomm_scheduler_data_unlock(d->scheduler);
+  if (local_signature) {
+    labcomm_reader_start(d->reader, d->reader->action_context,
+                         local_index, remote_index, local_signature,
+                         NULL);
+    labcomm_reader_end(d->reader, d->reader->action_context);
+  }
+free_signature_signature:
+  labcomm_memory_free(d->memory, 1,  signature.signature);
 free_signature_name:
   labcomm_memory_free(d->memory, 0, signature.name);
-  labcomm_writer_free(&writer, writer.action_context);
+out:
   return result;
 }
 
@@ -295,14 +186,13 @@ static void reader_alloc(struct labcomm_decoder *d)
 {
   if (!d->reader_allocated) {
     d->reader_allocated = 1;
-    labcomm_reader_alloc(d->reader, d->reader->action_context,
-			 LABCOMM_VERSION);
+    labcomm_reader_alloc(d->reader, d->reader->action_context);
   }
 }
 
 int labcomm_decoder_decode_one(struct labcomm_decoder *d)
 {
-  int result, remote_index;
+  int result, remote_index, length;
 
   reader_alloc(d);
   remote_index = labcomm_read_packed32(d->reader);
@@ -310,8 +200,34 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
     result = d->reader->error;
     goto out;
   }
-  if (remote_index == LABCOMM_TYPEDEF || remote_index == LABCOMM_SAMPLE) {
-    result = decode_typedef_or_sample(d, remote_index); 
+  length = labcomm_read_packed32(d->reader);
+  if (d->reader->error < 0) {
+    result = d->reader->error;
+    goto out;
+  }
+  if (remote_index == LABCOMM_VERSION) {
+    char *version = labcomm_read_string(d->reader);
+    if (d->reader->error < 0) {
+      result = d->reader->error;
+      goto out;
+    }
+    if (strcmp(version, CURRENT_VERSION) == 0) {
+      result = LABCOMM_VERSION;
+      d->version_ok = 1;
+    } else {
+      result = -ECONNRESET;
+    }  
+    labcomm_memory_free(d->memory, 1,  version);
+  } else if (! d->version_ok) {
+    fprintf(stderr, "No VERSION %d %d\n", remote_index, length);
+    result = -ECONNRESET;
+  } else if (remote_index == LABCOMM_SAMPLE) {
+    result = decode_sample(d, remote_index); 
+  } else if (remote_index == LABCOMM_PRAGMA && 0 /* d->pragma_handler*/) {
+    /* d->prama_handler(...); */
+  } else if (remote_index < LABCOMM_USER) {
+    fprintf(stderr, "SKIP %d %d\n", remote_index, length);
+    result = remote_index;
   } else {
     int *local_index;
     struct call_handler_context wrap = {
@@ -350,7 +266,7 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
       result = -ENOENT;
     }
   }
-out:
+out:   
   return result;
 }
 

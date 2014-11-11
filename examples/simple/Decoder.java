@@ -2,19 +2,19 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 
-import se.lth.control.labcomm.LabCommDecoderChannel;
+import se.lth.control.labcomm.DecoderChannel;
 
 public class Decoder
   implements theTwoInts.Handler, anotherTwoInts.Handler, IntString.Handler, TwoArrays.Handler, TwoFixedArrays.Handler, doavoid.Handler
 
 {
 
-  LabCommDecoderChannel decoder;
+  DecoderChannel decoder;
 
   public Decoder(InputStream in) 
     throws Exception 
   {
-    decoder = new LabCommDecoderChannel(in);
+    decoder = new DecoderChannel(in);
     theTwoInts.register(decoder, this);
     anotherTwoInts.register(decoder, this);
     IntString.register(decoder, this);

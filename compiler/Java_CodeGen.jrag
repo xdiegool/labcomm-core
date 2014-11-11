@@ -206,21 +206,6 @@ aspect Java_CodeGen {
 
   public void Program.J_gen(PrintStream ps, String pack, int version) throws IOException {
     Java_env env;
-/*
-    // Registration class
-    env = new Java_env(version, ps);
-    if (pack != null && pack.length() > 0) {
-      env.println("package " + pack + ";");
-    }
-    env.println("public class LabCommRegister {");
-    env.println();
-    env.indent();
-    Java_emitTypeRegister(env);
-    env.unindent();
-    env.println();
-    env.println("}");
-//    env.close();
-*/
     env = new Java_env(version, ps);
     for (int i = 0; i < getNumDecl(); i++) {
       Decl d = getDecl(i);
@@ -236,21 +221,6 @@ aspect Java_CodeGen {
 
   public void Program.J_gen(String dir, String pack, int version) throws IOException {
     Java_env env;
-/*
-    // Registration class
-    env = new Java_env(version, new File(dir, "LabCommRegister.java"));
-    if (pack != null && pack.length() > 0) {
-      env.println("package " + pack + ";");
-    }
-    env.println("public class LabCommRegister {");
-    env.println();
-    env.indent();
-    Java_emitTypeRegister(env);
-    env.unindent();
-    env.println();
-    env.println("}");
-    env.close();
-*/
     for (int i = 0; i < getNumDecl(); i++) {
       Decl d = getDecl(i);
       try {
@@ -286,38 +256,6 @@ aspect Java_CodeGen {
       }
     }
   }
-
-}
-
-aspect Java_Register {
-
-  public void Program.Java_emitTypeRegister(Java_env env) {
-    /*
-    env.println("static void register(LabCommChannel c) {");
-    env.indent();
-    for (int i = 0; i < getNumDecl(); i++) {
-      getDecl(i).Java_emitTypeRegister(env);
-    }
-    env.unindent();
-    env.println("}");
-*/
-
-  }
-
-  public void Decl.Java_emitTypeRegister(Java_env env) {
-    throw new Error(this.getClass().getName() + 
-		    ".Java_emitTypeRegister(Java_env env)" + 
-		    " not declared");
-  }
-
-  public void SampleDecl.Java_emitTypeRegister(Java_env env) {
-    env.println(getName() + ".register(c);");
-  }
-
-  public void TypeDecl.Java_emitTypeRegister(Java_env env) {
-    // TODO
-  }
-
 }
 
 aspect Java_Class {
@@ -340,11 +278,11 @@ aspect Java_Class {
       }
 
       env.println("import java.io.IOException;");
-      env.println("import se.lth.control.labcomm"+env.verStr+".LabCommType;");
-      env.println("import se.lth.control.labcomm"+env.verStr+".LabCommEncoder;");
-      env.println("import se.lth.control.labcomm"+env.verStr+".LabCommDecoder;");
+      env.println("import se.lth.control.labcomm"+env.verStr+".SampleType;");
+      env.println("import se.lth.control.labcomm"+env.verStr+".Encoder;");
+      env.println("import se.lth.control.labcomm"+env.verStr+".Decoder;");
       env.println();
-      env.println("public class " + getName() + " implements LabCommType {");
+      env.println("public class " + getName() + " implements SampleType {");
       env.println();
       env.indent();
       getType().Java_emitInstance(env);
@@ -380,21 +318,21 @@ aspect Java_Class {
     }
 
     env.println("import java.io.IOException;");
-    env.println("import se.lth.control.labcomm"+env.verStr+".LabCommDecoder;");
-    env.println("import se.lth.control.labcomm"+env.verStr+".LabCommDispatcher;");
-    env.println("import se.lth.control.labcomm"+env.verStr+".LabCommEncoder;");
-    env.println("import se.lth.control.labcomm"+env.verStr+".LabCommHandler;");
-    env.println("import se.lth.control.labcomm"+env.verStr+".LabCommSample;");
+    env.println("import se.lth.control.labcomm"+env.verStr+".Decoder;");
+    env.println("import se.lth.control.labcomm"+env.verStr+".SampleDispatcher;");
+    env.println("import se.lth.control.labcomm"+env.verStr+".Encoder;");
+    env.println("import se.lth.control.labcomm"+env.verStr+".SampleHandler;");
+    env.println("import se.lth.control.labcomm"+env.verStr+".Sample;");
     env.println();
     env.print("public class " + getName());
 //    if(getType().isUserType()) {
 //        env.print(" extends "+getType().getTypeName());
 //    }
-    env.println(" implements LabCommSample {");
+    env.println(" implements Sample {");
     env.println();
     env.indent();
     getType().Java_emitInstance(env);
-    env.println("public interface Handler extends LabCommHandler {");
+    env.println("public interface Handler extends SampleHandler {");
     env.print("  public void handle_" + getName() + "(");
     if (!isVoid()) {
       getType().Java_emitType(env);
@@ -403,21 +341,21 @@ aspect Java_Class {
     env.println(") throws Exception;");
     env.println("}");
     env.println();
-    env.println("public static void register(LabCommDecoder d, Handler h) throws IOException {");
+    env.println("public static void register(Decoder d, SampleHandler h) throws IOException {");
     env.indent();
     env.println("d.register(new Dispatcher(), h);");
     env.unindent();
     env.println("}");
     env.println();
 
-    env.println("public static void register(LabCommEncoder e) throws IOException {");
+    env.println("public static void register(Encoder e) throws IOException {");
     env.indent();
     env.println("e.register(new Dispatcher());");
     env.unindent();
     env.println("}");
     env.println(); 
 
-    env.println("private static class Dispatcher implements LabCommDispatcher {");
+    env.println("private static class Dispatcher implements SampleDispatcher {");
     env.indent();
     env.println(); 
     env.println("public Class getSampleClass() {");
@@ -438,8 +376,8 @@ aspect Java_Class {
     env.unindent();
     env.println("}");
     env.println(); 
-    env.println("public void decodeAndHandle(LabCommDecoder d,");
-    env.println("                            LabCommHandler h) throws Exception {");
+    env.println("public void decodeAndHandle(Decoder d,");
+    env.println("                            SampleHandler h) throws Exception {");
     env.indent();
     if (isVoid()) {
       env.println(getName() + ".decode(d);");
@@ -481,7 +419,7 @@ aspect Java_Class {
   }
 
   public void TypeDecl.Java_emitEncoder(Java_env env) {
-    env.print("public static void encode(LabCommEncoder e");
+    env.print("public static void encode(Encoder e");
     if (!isVoid()) {
       env.print(", ");
       getType().Java_emitType(env);
@@ -496,7 +434,7 @@ aspect Java_Class {
   }
 
   public void SampleDecl.Java_emitEncoder(Java_env env) {
-    env.print("public static void encode(LabCommEncoder e");
+    env.print("public static void encode(Encoder e");
     if (!isVoid()) {
       env.print(", ");
       getType().Java_emitType(env);
@@ -588,7 +526,7 @@ aspect Java_Class {
   public void Decl.Java_emitDecoder(Java_env env) {
     env.print("public static ");
     getType().Java_emitType(env);
-    env.println(" decode(LabCommDecoder d) throws IOException {");
+    env.println(" decode(Decoder d) throws IOException {");
     env.indent();
     if (!isVoid()) {
       getType().Java_emitType(env);

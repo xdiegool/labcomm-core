@@ -3,7 +3,7 @@ package se.lth.control.labcomm;
 import java.io.OutputStream;
 import java.io.IOException;
 
-class WriterWrapper implements LabCommWriter{
+class WriterWrapper implements Writer{
 
   private OutputStream os;
 

@@ -37,7 +37,7 @@
 #include "labcomm_ioctl.h"
 #include "labcomm_dynamic_buffer_writer.h"
 
-#define LABCOMM_VERSION "LabComm2013"
+#define CURRENT_VERSION "LabComm2014"
 
 /* Unwrapping reader/writer functions */
 #define UNWRAP_ac(rw, ac, ...) ac
@@ -50,10 +50,9 @@
   }
 
 int labcomm_reader_alloc(struct labcomm_reader *r, 
-                         struct labcomm_reader_action_context *action_context, 
-                         char *labcomm_version)
+                         struct labcomm_reader_action_context *action_context)
 {
-  UNWRAP(alloc, r, action_context, labcomm_version);
+  UNWRAP(alloc, r, action_context);
 }
 
 int labcomm_reader_free(struct labcomm_reader *r, 
@@ -94,10 +93,9 @@ int labcomm_reader_ioctl(struct labcomm_reader *r,
 }
 
 int labcomm_writer_alloc(struct labcomm_writer *w, 
-                         struct labcomm_writer_action_context *action_context, 
-                         char *labcomm_version)
+                         struct labcomm_writer_action_context *action_context)
 {
-  UNWRAP(alloc, w, action_context, labcomm_version);
+  UNWRAP(alloc, w, action_context);
 }
 
 int labcomm_writer_free(struct labcomm_writer *w, 
@@ -260,3 +258,13 @@ int labcomm_get_local_index(struct labcomm_signature *signature)
   }
   return signature->index;
 }
+
+int labcomm_internal_sizeof(struct labcomm_signature *signature,
+                            void *v)
+{
+  int length = signature->encoded_size(v);
+  return (labcomm_size_packed32(signature->index) +
+          labcomm_size_packed32(length) +
+          length);
+}
+

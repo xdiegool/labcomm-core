@@ -16,18 +16,18 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
-import se.lth.control.labcomm.LabCommDecoder;
-import se.lth.control.labcomm.LabCommDecoderChannel;
-import se.lth.control.labcomm.LabCommEncoder;
-import se.lth.control.labcomm.LabCommEncoderChannel;
-import AST.LabCommParser;
-import AST.LabCommScanner;
+import se.lth.control.labcomm.Decoder;
+import se.lth.control.labcomm.DecoderChannel;
+import se.lth.control.labcomm.Encoder;
+import se.lth.control.labcomm.EncoderChannel;
+import AST.Parser;
+import AST.Scanner;
 import AST.Program;
 import beaver.Parser.Exception;
 
 
 
-public class TestLabCommCompiler {
+public class TestCompiler {
 
 	private static final String BAR = "bar";
 	private static final String FOO = "foo";
@@ -73,7 +73,7 @@ public class TestLabCommCompiler {
 	private static void decodeTest(InRAMCompiler irc, String tmpFile) {
 		try {
 			FileInputStream in = new FileInputStream(tmpFile);
-			LabCommDecoderChannel dec = new LabCommDecoderChannel(in);
+			DecoderChannel dec = new DecoderChannel(in);
 	
 			Class fc = irc.load(FOO);
 			Class hc = irc.load("gen_"+FOO+"Handler");
@@ -81,7 +81,7 @@ public class TestLabCommCompiler {
 
 			Object h = hc.newInstance(); 
 		
-			Method reg = fc.getDeclaredMethod("register", LabCommDecoder.class, hi);
+			Method reg = fc.getDeclaredMethod("register", Decoder.class, hi);
 			reg.invoke(fc, dec, h);
 			
 			dec.runOne();
@@ -106,11 +106,11 @@ public class TestLabCommCompiler {
 			z.setInt(f, 12);
 			
 			FileOutputStream out = new FileOutputStream(tmpFile);
-			LabCommEncoderChannel enc = new LabCommEncoderChannel(out);
-			Method reg = fc.getDeclaredMethod("register", LabCommEncoder.class);
+			EncoderChannel enc = new EncoderChannel(out);
+			Method reg = fc.getDeclaredMethod("register", Encoder.class);
 			reg.invoke(fc, enc);
 			
-			Method doEncode = fc.getDeclaredMethod("encode", LabCommEncoder.class, fc);
+			Method doEncode = fc.getDeclaredMethod("encode", Encoder.class, fc);
 			doEncode.invoke(fc, enc, f);
 			
 			out.close();
@@ -123,8 +123,8 @@ public class TestLabCommCompiler {
 	public static InRAMCompiler generateCode(String lcDecl, HashMap<String, String> handlers) {
 		Program ast = null;
 		InputStream in = new ByteArrayInputStream(lcDecl.getBytes());
-		LabCommScanner scanner = new LabCommScanner(in);
-		LabCommParser parser = new LabCommParser();
+		Scanner scanner = new Scanner(in);
+		Parser parser = new Parser();
 		Collection errors = new LinkedList();
 
 		InRAMCompiler irc = null;

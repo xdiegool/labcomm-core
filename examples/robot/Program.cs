@@ -24,7 +24,7 @@ namespace RobotCtrl
             try
             {
                 client.Connect(serverEndPoint);
-                LabCommEncoder enc = new LabCommEncoderChannel(client.GetStream(), true);
+                Encoder enc = new EncoderChannel(client.GetStream(), true);
                 jointtarget.register(enc);
                 jointtarget.encode(enc, val);
                 for (int i = 0; i < 10; i++)

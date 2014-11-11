@@ -6,16 +6,6 @@ class StreamReader:
         self.stream = stream
         pass
 
-    def start(self, decoder, version):
-        self.version = version;
-        if labcomm.LabComm.sendVersionString(version):
-          other_version = decoder.decode_string()
-          if version != other_version:
-              raise Exception("LabComm version mismatch %s != %s" %
-                              (version, other_version))
-          pass
-        pass
-
     def read(self, count):
         result = self.stream.read(count)
         if len(result) == 0:

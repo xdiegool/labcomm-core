@@ -1188,12 +1188,12 @@ aspect C_Signature {
       }
     }
     env.println("};");
+    C_emitSizeofValue(env);
     env.println("struct labcomm"+env.verStr+"_signature labcomm"+env.verStr+"_signature_" + 
 		env.prefix + getName() + " = {");
     env.indent();
-    env.println("LABCOMM_SAMPLE, \"" + getName() + "\",");
-    env.println("(int (*)(struct labcomm"+env.verStr+"_signature *, void *))labcomm"+env.verStr+"_sizeof_" + 
-		env.prefix + getName() + ",");
+    env.println("\"" + getName() + "\",");
+    env.println("sizeof_" + env.prefix + getName() + ",");
     env.println("sizeof(signature_bytes_" + env.prefix + getName() + "),");
     env.println("signature_bytes_" + env.prefix + getName() + ",");
     env.println("0");
@@ -1260,6 +1260,22 @@ aspect C_Sizeof {
     return getType().C_fixedSizeof();
   }
 
+  public void Decl.C_emitSizeof(C_env env) {
+  }
+
+  public void SampleDecl.C_emitSizeof(C_env env) {
+    env = env.nestStruct("(*v)");
+    env.println("int labcomm"+env.verStr+"_sizeof_" + env.prefix + getName() +
+		"(" + env.prefix + getName() + " *v)");
+    env.println("{");
+    env.indent();
+    env.println("return labcomm"+env.verStr+"_internal_sizeof(" +
+                "&labcomm" + env.verStr+"_signature_" + env.prefix + getName() +
+                ", v);");
+    env.unindent();
+    env.println("}");
+  }
+
   public int Type.C_fixedSizeof() {
     throw new Error(this.getClass().getName() + 
 		    ".C_fixedSizeof()" + 
@@ -1308,18 +1324,17 @@ aspect C_Sizeof {
     return getType().C_fixedSizeof() * elements;
   }
 
-  public void Decl.C_emitSizeof(C_env env) {
+  public void Decl.C_emitSizeofValue(C_env env) {
   }
 
-  public void SampleDecl.C_emitSizeof(C_env env) {
+  public void SampleDecl.C_emitSizeofValue(C_env env) {
     env = env.nestStruct("(*v)");
-    env.println("int labcomm"+env.verStr+"_sizeof_" + env.prefix + getName() +
-		"(" + env.prefix + getName() + " *v)");
+    env.println("static int sizeof_" + env.prefix + getName() + "(void *vv)");
     env.println("{");
     env.indent();
-    env.println("int result = labcomm"+env.verStr+"_size_packed32(labcomm"+env.verStr+"_signature_" + 
-                env.prefix + getName() +".index);");
+    env.println("int result = 0;");
     if (C_isDynamic()) {
+      env.println(env.prefix + getName() + " *v = vv;");
       getType().C_emitSizeof(env);
     } else {
       env.println("result += " + C_fixedSizeof() + ";");
@@ -1338,7 +1353,8 @@ aspect C_Sizeof {
   public void PrimType.C_emitSizeof(C_env env) {
     switch (getToken()) {
       case LABCOMM_STRING: { 
-	env.println("result += 0 + strlen(" + env.qualid + ");"); 
+        env.print("{ int l = strlen(" + env.qualid + "); ");
+	env.println("result += labcomm"+env.verStr+"_size_packed32(l) + l; }"); 
       } break;
       default: { 
 	throw new Error(this.getClass().getName() + 

@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#define LABCOMM_VERSION "LabComm2013"
+#define CURRENT_VERSION "LabComm2014"
 
 #include <errno.h>
 #include "labcomm.h"
@@ -43,6 +43,8 @@ struct labcomm_encoder *labcomm_encoder_new(
 
   result = labcomm_memory_alloc(memory, 0, sizeof(*result));
   if (result) {
+    int length;
+
     result->writer = writer;
     result->writer->encoder = result;
     result->writer->data = NULL;
@@ -55,7 +57,16 @@ struct labcomm_encoder *labcomm_encoder_new(
     result->scheduler = scheduler;
     LABCOMM_SIGNATURE_ARRAY_INIT(result->registered, int);
     labcomm_writer_alloc(result->writer,
-			 result->writer->action_context, LABCOMM_VERSION);
+			 result->writer->action_context);
+    labcomm_writer_start(result->writer, 
+                         result->writer->action_context, 
+                         LABCOMM_VERSION, NULL, CURRENT_VERSION);
+    labcomm_write_packed32(result->writer, LABCOMM_VERSION);
+    length = (labcomm_size_packed32(LABCOMM_VERSION) +
+              labcomm_size_string(CURRENT_VERSION));
+    labcomm_write_packed32(result->writer, length);
+    labcomm_write_string(result->writer, CURRENT_VERSION);
+    labcomm_writer_end(result->writer, result->writer->action_context);
   }
   return result;
 }
@@ -75,11 +86,10 @@ int labcomm_internal_encoder_register(
   labcomm_encoder_function encode)
 {
   int result = -EINVAL;
-  int index, *done, err, i;
+  int index, *done, err, i, length;
 
   index = labcomm_get_local_index(signature);
   labcomm_scheduler_writer_lock(e->scheduler);
-  if (signature->type != LABCOMM_SAMPLE) { goto out; }
   if (index <= 0) { goto out; }
   done = LABCOMM_SIGNATURE_ARRAY_REF(e->memory, e->registered, int, index);
   if (*done) { goto out; }
@@ -88,9 +98,15 @@ int labcomm_internal_encoder_register(
 			     index, signature, NULL);
   if (err == -EALREADY) { result = 0; goto out; }
   if (err != 0) { result = err; goto out; }
-  labcomm_write_packed32(e->writer, signature->type);
+  labcomm_write_packed32(e->writer, LABCOMM_SAMPLE);
+  length = (labcomm_size_packed32(index) +
+            labcomm_size_string(signature->name) +
+            labcomm_size_packed32(signature->size) +
+            signature->size);
+  labcomm_write_packed32(e->writer, length);
   labcomm_write_packed32(e->writer, index);
   labcomm_write_string(e->writer, signature->name);
+  labcomm_write_packed32(e->writer, signature->size);
   for (i = 0 ; i < signature->size ; i++) {
     if (e->writer->pos >= e->writer->count) {
       labcomm_writer_flush(e->writer, e->writer->action_context);
@@ -111,16 +127,17 @@ int labcomm_internal_encode(
   labcomm_encoder_function encode,
   void *value)
 {
-  int result;
-  int index;
+  int result, index, length;
 
   index = labcomm_get_local_index(signature);
+  length = (signature->encoded_size(value));
   labcomm_scheduler_writer_lock(e->scheduler);
   result = labcomm_writer_start(e->writer, e->writer->action_context, 
 				index, signature, value);
   if (result == -EALREADY) { result = 0; goto no_end; }
   if (result != 0) { goto out; }
   result = labcomm_write_packed32(e->writer, index);
+  result = labcomm_write_packed32(e->writer, length);
   if (result != 0) { goto out; }
   result = encode(e->writer, value);
 out:

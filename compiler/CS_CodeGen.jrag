@@ -268,7 +268,7 @@ aspect CS_Class {
       pp(env.getPrintStream());
       env.println("*/");
       env.println();
-      env.println("public class " + getName() + " : LabCommType {");
+      env.println("public class " + getName() + " : SampleType {");
       env.println();
       env.indent();
       getType().CS_emitInstance(env);
@@ -284,11 +284,11 @@ aspect CS_Class {
     pp(env.getPrintStream());
     env.println("*/");
     env.println();
-    env.println("public class " + getName() + " : LabCommSample {");
+    env.println("public class " + getName() + " : Sample {");
     env.println();
     env.indent();
     getType().CS_emitInstance(env);
-    env.println("public interface Handler : LabCommHandler {");
+    env.println("public interface Handler : SampleHandler {");
     env.print("  void handle(");
     if (!isVoid()) {
       getType().CS_emitType(env);
@@ -297,21 +297,21 @@ aspect CS_Class {
     env.println(");");
     env.println("}");
     env.println();
-    env.println("public static void register(LabCommDecoder d, Handler h) {");
+    env.println("public static void register(Decoder d, Handler h) {");
     env.indent();
     env.println("d.register(new Dispatcher(), h);");
     env.unindent();
     env.println("}");
     env.println();
 
-    env.println("public static void register(LabCommEncoder e) {");
+    env.println("public static void register(Encoder e) {");
     env.indent();
     env.println("e.register(new Dispatcher());");
     env.unindent();
     env.println("}");
     env.println(); 
 
-    env.println("private class Dispatcher : LabCommDispatcher {");
+    env.println("private class Dispatcher : SampleDispatcher {");
     env.indent();
     env.println(); 
     env.println("public Type getSampleClass() {");
@@ -332,7 +332,7 @@ aspect CS_Class {
     env.unindent();
     env.println("}");
     env.println(); 
-    env.println("public void decodeAndHandle(LabCommDecoder d, LabCommHandler h) {");
+    env.println("public void decodeAndHandle(Decoder d, SampleHandler h) {");
     env.indent();
     if (isVoid()) {
       env.println(getName() + ".decode(d);");
@@ -374,7 +374,7 @@ aspect CS_Class {
   }
 
   public void TypeDecl.CS_emitEncoder(CS_env env) {
-    env.print("public static void encode(LabCommEncoder e");
+    env.print("public static void encode(Encoder e");
     if (!isVoid()) {
       env.print(", ");
       getType().CS_emitType(env);
@@ -389,7 +389,7 @@ aspect CS_Class {
   }
 
   public void SampleDecl.CS_emitEncoder(CS_env env) {
-    env.print("public static void encode(LabCommEncoder e");
+    env.print("public static void encode(Encoder e");
     if (!isVoid()) {
       env.print(", ");
       getType().CS_emitType(env);
@@ -485,7 +485,7 @@ aspect CS_Class {
   public void Decl.CS_emitDecoder(CS_env env) {
     env.print("public static ");
     getType().CS_emitType(env);
-    env.println(" decode(LabCommDecoder d) {");
+    env.println(" decode(Decoder d) {");
     env.indent();
     if (!isVoid()) {
       getType().CS_emitType(env);

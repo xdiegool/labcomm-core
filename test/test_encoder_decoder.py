@@ -81,7 +81,7 @@ def generate(decl):
     elif decl.__class__ == labcomm.STRING:
         return ['string', u'sträng' ]
 
-    print decl
+    print>>sys.stderr, decl
     raise Exception("unhandled decl %s" % decl.__class__)
 
 def labcomm_compile(lc, name, args):
@@ -118,7 +118,7 @@ class Test:
         pass
 
     def run(self):
-        print 'Testing', self.program
+        print>>sys.stderr, 'Testing', self.program
         p = subprocess.Popen(self.program, 
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE)
@@ -132,8 +132,7 @@ class Test:
             encoder.add_decl(signature)
             pass
         for name,signature in self.signatures:
-            print "Checking", name,
-            sys.stdout.flush()
+            print>>sys.stderr, "Checking", name,
             for decl,value in generate(signature):
                 sys.stdout.write('.')
                 #print name,decl,value,value.__class__
@@ -144,7 +143,7 @@ class Test:
                     p.terminate()
                     exit(1)
                 pass
-            print
+            print>>sys.stderr
             pass
         p.stdin.close()
         if p.wait() != 0:
@@ -159,7 +158,7 @@ class Test:
                 value,decl = decoder.decode()
                 if value != None:
                     if value != self.expected:
-                        print "Coding error", value, self.expected, decl
+                        print>>sys.stderr, "Coding error", value, self.expected, decl
                         self.failed = True
                     self.next.release()
                 pass

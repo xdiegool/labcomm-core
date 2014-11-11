@@ -8,8 +8,8 @@ import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import se.lth.control.labcomm.LabCommDecoderChannel;
-import se.lth.control.labcomm.LabCommEncoderChannel;
+import se.lth.control.labcomm.DecoderChannel;
+import se.lth.control.labcomm.EncoderChannel;
 import labcommTCPtest.gen.FooSample;
 import labcommTCPtest.gen.FooSample.Handler;
 
@@ -38,7 +38,7 @@ public class TestServer implements Handler {
 	public void runOne() {
 		
 		try {
-			LabCommDecoderChannel c = new LabCommDecoderChannel(in);
+			DecoderChannel c = new DecoderChannel(in);
 			FooSample.register(c,this);
 			c.runOne();
 		} catch (Exception e) {
@@ -47,7 +47,7 @@ public class TestServer implements Handler {
 	}
 
 	public void handle_FooSample(FooSample sample) throws Exception {
-		LabCommEncoderChannel e = new LabCommEncoderChannel(out );
+		EncoderChannel e = new EncoderChannel(out );
 		FooSample.register(e);
 		System.out.println("TestServer.handle_FooSample: "+sample.s);
 		int tmp[] = new int[2*sample.a.length];

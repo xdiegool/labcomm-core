@@ -35,7 +35,7 @@ if __name__ == '__main__':
     result.append('  %s.Handler' % sample[-1][0])
     result.extend(split_match('^[^|]*\|(.*)$', """
       |{
-      |  LabCommEncoderChannel encoder;
+      |  EncoderChannel encoder;
     """))
     for func,arg in sample:
         if arg == 'void':
@@ -58,11 +58,11 @@ if __name__ == '__main__':
       |    FileStream InFile = new FileStream(InName,
       |                                       FileMode.Open,
       |                                       FileAccess.Read);
-      |    LabCommDecoderChannel d = new LabCommDecoderChannel(InFile);
+      |    DecoderChannel d = new DecoderChannel(InFile);
       |    FileStream OutFile = new FileStream(OutName,
       |                                        FileMode.OpenOrCreate,
       |                                        FileAccess.Write);
-      |    encoder = new LabCommEncoderChannel(OutFile);
+      |    encoder = new EncoderChannel(OutFile);
       |
     """))
     for func,arg in sample:

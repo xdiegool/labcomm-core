@@ -18,12 +18,12 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
-import se.lth.control.labcomm.LabCommDecoder;
-import se.lth.control.labcomm.LabCommDecoderChannel;
-import se.lth.control.labcomm.LabCommEncoder;
-import se.lth.control.labcomm.LabCommEncoderChannel;
-import AST.LabCommParser;
-import AST.LabCommScanner;
+import se.lth.control.labcomm.Decoder;
+import se.lth.control.labcomm.DecoderChannel;
+import se.lth.control.labcomm.Encoder;
+import se.lth.control.labcomm.EncoderChannel;
+import AST.Parser;
+import AST.Scanner;
 import AST.Program;
 import beaver.Parser.Exception;
 
@@ -163,8 +163,8 @@ public class TestLabcommGen {
 	public static InRAMCompiler generateCode(String lcDecl, HashMap<String, String> handlers) {
 		Program ast = null;
 		InputStream in = new ByteArrayInputStream(lcDecl.getBytes());
-		LabCommScanner scanner = new LabCommScanner(in);
-		LabCommParser parser = new LabCommParser();
+		Scanner scanner = new Scanner(in);
+		Parser parser = new Parser();
 		Collection errors = new LinkedList();
 
 		InRAMCompiler irc = null;
@@ -332,7 +332,7 @@ public class TestLabcommGen {
 	private static void decodeTest(InRAMCompiler irc, String tmpFile, String... sampleNames) {
 		try {
 			FileInputStream in = new FileInputStream(tmpFile);
-			LabCommDecoderChannel dec = new LabCommDecoderChannel(in);
+			DecoderChannel dec = new DecoderChannel(in);
 			Class handlerClass =  irc.load(handlerClassName);
 			Constructor hcc = handlerClass.getDeclaredConstructor(Object.class);
 //			Object handler = handlerClass.newInstance(); 
@@ -344,7 +344,7 @@ public class TestLabcommGen {
 				Class sampleClass = irc.load(sampleName);
 				Class handlerInterface = irc.load(sampleName+"$Handler");
 
-				Method reg = sampleClass.getDeclaredMethod("register", LabCommDecoder.class, handlerInterface);
+				Method reg = sampleClass.getDeclaredMethod("register", Decoder.class, handlerInterface);
 				reg.invoke(sampleClass, dec, handler);
 			}
 
@@ -389,20 +389,20 @@ public class TestLabcommGen {
 
 
 			FileOutputStream out = new FileOutputStream(tmpFile);
-			LabCommEncoderChannel enc = new LabCommEncoderChannel(out);
+			EncoderChannel enc = new EncoderChannel(out);
 
 			/* register and send foo */
-			Method regFoo = fc.getDeclaredMethod("register", LabCommEncoder.class);
+			Method regFoo = fc.getDeclaredMethod("register", Encoder.class);
 			regFoo.invoke(fc, enc);
 
-			Method doEncodeFoo = fc.getDeclaredMethod("encode", LabCommEncoder.class, ft);
+			Method doEncodeFoo = fc.getDeclaredMethod("encode", Encoder.class, ft);
 			doEncodeFoo.invoke(fc, enc, f);
 
 			/* register and send bar (NB! uses primitive type int) */
-			Method regBar = bc.getDeclaredMethod("register", LabCommEncoder.class);
+			Method regBar = bc.getDeclaredMethod("register", Encoder.class);
 			regBar.invoke(bc, enc);
 
-			Method doEncodeBar = bc.getDeclaredMethod("encode", LabCommEncoder.class, Integer.TYPE);
+			Method doEncodeBar = bc.getDeclaredMethod("encode", Encoder.class, Integer.TYPE);
 			doEncodeBar.invoke(bc, enc, 42);
 
 			out.close();
@@ -475,7 +475,7 @@ public class TestLabcommGen {
 	private static void decodeTestSeparate(InRAMCompiler irc, String tmpFile, String... sampleNames) {
 		try {
 			FileInputStream in = new FileInputStream(tmpFile);
-			LabCommDecoderChannel dec = new LabCommDecoderChannel(in);
+			DecoderChannel dec = new DecoderChannel(in);
 			for (String sampleName : sampleNames) {
 				System.out.println("registering handler for "+sampleName);
 				Class sampleClass = irc.load(sampleName);
@@ -484,7 +484,7 @@ public class TestLabcommGen {
 
 				Object handler = handlerClass.newInstance(); 
 
-				Method reg = sampleClass.getDeclaredMethod("register", LabCommDecoder.class, handlerInterface);
+				Method reg = sampleClass.getDeclaredMethod("register", Decoder.class, handlerInterface);
 				reg.invoke(sampleClass, dec, handler);
 			}
 

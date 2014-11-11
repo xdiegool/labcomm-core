@@ -34,7 +34,7 @@ or
 	$ VAR Encoder e;
 	$ Init_Encoder e, st;
 This will read/write the version of LabComm to ensure compatibility, current
-version is "LabComm2013".
+version is "LabComm2014".
 
 # Initiate the labcomm samples:
 LabComm trusts the application to manage each sample. It requests the samples,

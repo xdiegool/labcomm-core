@@ -48,10 +48,9 @@
   }
 
 int labcomm2006_reader_alloc(struct labcomm2006_reader *r, 
-                         struct labcomm2006_reader_action_context *action_context, 
-                         char *labcomm2006_version)
+                         struct labcomm2006_reader_action_context *action_context)
 {
-  UNWRAP(alloc, r, action_context, labcomm2006_version);
+  UNWRAP(alloc, r, action_context);
 }
 
 int labcomm2006_reader_free(struct labcomm2006_reader *r, 
@@ -92,10 +91,9 @@ int labcomm2006_reader_ioctl(struct labcomm2006_reader *r,
 }
 
 int labcomm2006_writer_alloc(struct labcomm2006_writer *w, 
-                         struct labcomm2006_writer_action_context *action_context, 
-                         char *labcomm2006_version)
+                         struct labcomm2006_writer_action_context *action_context)
 {
-  UNWRAP(alloc, w, action_context, labcomm2006_version);
+  UNWRAP(alloc, w, action_context);
 }
 
 int labcomm2006_writer_free(struct labcomm2006_writer *w, 
@@ -259,4 +257,12 @@ int labcomm2006_get_local_index(struct labcomm2006_signature *signature)
 			       "%s", signature->name);
   }
   return signature->index;
+}
+
+int labcomm2006_internal_sizeof(struct labcomm2006_signature *signature,
+                            void *v)
+{
+  int length = signature->encoded_size(v);
+  return (labcomm2006_size_packed32(signature->index) +
+          length);
 }

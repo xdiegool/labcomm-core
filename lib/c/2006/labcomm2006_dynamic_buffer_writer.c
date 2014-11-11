@@ -28,8 +28,7 @@
 #include "labcomm2006_dynamic_buffer_writer.h"
 
 static int dyn_alloc(struct labcomm2006_writer *w, 
-		     struct labcomm2006_writer_action_context *action_context,
-		     char *labcomm2006_version)
+		     struct labcomm2006_writer_action_context *action_context)
 {
   w->data_size = 1000;
   w->count = w->data_size;

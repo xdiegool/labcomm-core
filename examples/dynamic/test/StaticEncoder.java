@@ -2,19 +2,19 @@ package test;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import se.lth.control.labcomm.LabCommEncoderChannel;
+import se.lth.control.labcomm.EncoderChannel;
 
 import gen.foo;
 import gen.bar;
 
 public class StaticEncoder {
 
-  LabCommEncoderChannel encoder;
+  EncoderChannel encoder;
 
   public StaticEncoder(OutputStream out) 
     throws Exception 
   {
-    encoder = new LabCommEncoderChannel(out);
+    encoder = new EncoderChannel(out);
     foo.register(encoder);
     bar.register(encoder);
   }

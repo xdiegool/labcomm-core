@@ -62,14 +62,13 @@ static void set_decimation(
 
 static int wrap_reader_alloc(
   struct labcomm_reader *r, 
-  struct labcomm_reader_action_context *action_context, 
-  char *labcomm_version)
+  struct labcomm_reader_action_context *action_context)
 {
   struct decimating_private *decimating = action_context->context;
   
   labcomm_decoder_register_decimating_messages_set_decimation(
     r->decoder, set_decimation, decimating);
-  return labcomm_reader_alloc(r, action_context->next, labcomm_version);
+  return labcomm_reader_alloc(r, action_context->next);
 }
 
 struct send_set_decimation {
@@ -186,14 +185,13 @@ static void register_signatures(void *context)
 
 static int wrap_writer_alloc(
   struct labcomm_writer *w, 
-  struct labcomm_writer_action_context *action_context, 
-  char *labcomm_version)
+  struct labcomm_writer_action_context *action_context)
 {
   struct decimating_private *decimating = action_context->context;
 
   labcomm_scheduler_enqueue(decimating->scheduler, 
 			    0, register_signatures, decimating);
-  return labcomm_writer_alloc(w, action_context->next, labcomm_version);
+  return labcomm_writer_alloc(w, action_context->next);
 }
 
 static int wrap_writer_start(
@@ -206,20 +204,22 @@ static int wrap_writer_start(
   struct decimation *decimation;
   int result;
 
-  labcomm_scheduler_data_lock(decimating->scheduler);
-
-  decimation = LABCOMM_SIGNATURE_ARRAY_REF(decimating->memory, 
-					   decimating->writer_decimation, 
-					   struct decimation, index);
-  decimation->current++;
-  if (decimation->current < decimation->n) {
-    result = -EALREADY;
-  } else {
-    decimation->current = 0;
+  if (index < LABCOMM_USER) {
     result = 0;
+  } else {
+    labcomm_scheduler_data_lock(decimating->scheduler);
+    decimation = LABCOMM_SIGNATURE_ARRAY_REF(decimating->memory, 
+                                             decimating->writer_decimation, 
+                                             struct decimation, index);
+    decimation->current++;
+    if (decimation->current < decimation->n) {
+      result = -EALREADY;
+    } else {
+      decimation->current = 0;
+      result = 0;
+    }
+    labcomm_scheduler_data_unlock(decimating->scheduler);
   }
-  labcomm_scheduler_data_unlock(decimating->scheduler);
-
   if (result == 0) {
     result = labcomm_writer_start(w, action_context->next,
 				 index, signature, value);

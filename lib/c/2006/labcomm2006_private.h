@@ -96,17 +96,14 @@ struct labcomm2006_reader_action_context;
 
 struct labcomm2006_reader_action {
   /* 'alloc' is called at the first invocation of 'labcomm2006_decoder_decode_one' 
-     on the decoder containing the reader. If 'labcomm2006_version' != NULL
-     and non-empty the transport layer may use it to ensure that
-     compatible versions are used.
+     on the decoder containing the reader.
 
      Returned value:
        >  0    Number of bytes allocated for buffering
        <= 0    Error
   */
   int (*alloc)(struct labcomm2006_reader *r, 
-	       struct labcomm2006_reader_action_context *action_context, 
-	       char *labcomm2006_version);
+	       struct labcomm2006_reader_action_context *action_context);
   /* 'free' returns the resources claimed by 'alloc' and might have other
      reader specific side-effects as well.
 
@@ -159,8 +156,7 @@ struct labcomm2006_reader {
 };
 
 int labcomm2006_reader_alloc(struct labcomm2006_reader *r, 
-			 struct labcomm2006_reader_action_context *action_context, 
-			 char *labcomm2006_version);
+			 struct labcomm2006_reader_action_context *action_context);
 int labcomm2006_reader_free(struct labcomm2006_reader *r, 
 			struct labcomm2006_reader_action_context *action_context);
 int labcomm2006_reader_start(struct labcomm2006_reader *r, 
@@ -299,8 +295,7 @@ struct labcomm2006_writer_action_context;
 
 struct labcomm2006_writer_action {
   int (*alloc)(struct labcomm2006_writer *w, 
-	       struct labcomm2006_writer_action_context *action_context, 
-	       char *labcomm2006_version);
+	       struct labcomm2006_writer_action_context *action_context);
   int (*free)(struct labcomm2006_writer *w, 
 	      struct labcomm2006_writer_action_context *action_context);
   /* 'start' is called right before a sample is to be sent. In the 
@@ -345,8 +340,7 @@ struct labcomm2006_writer {
 };
 
 int labcomm2006_writer_alloc(struct labcomm2006_writer *w, 
-			 struct labcomm2006_writer_action_context *action_context, 
-			 char *labcomm_version);
+			 struct labcomm2006_writer_action_context *action_context);
 int labcomm2006_writer_free(struct labcomm2006_writer *w, 
 			struct labcomm2006_writer_action_context *action_context);
 int labcomm2006_writer_start(struct labcomm2006_writer *w, 
@@ -376,6 +370,9 @@ int labcomm2006_internal_encode(
 int labcomm2006_internal_encoder_ioctl(struct labcomm2006_encoder *encoder, 
 				   struct labcomm2006_signature *signature,
 				   uint32_t ioctl_action, va_list args);
+
+int labcomm2006_internal_sizeof(struct labcomm2006_signature *signature,
+                                void *v);
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 

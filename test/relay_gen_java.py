@@ -26,8 +26,8 @@ if __name__ == '__main__':
       |import java.io.FileInputStream;
       |import java.io.FileOutputStream;
       |import java.io.IOException;
-      |import se.lth.control.labcomm.LabCommDecoderChannel;
-      |import se.lth.control.labcomm.LabCommEncoderChannel;
+      |import se.lth.control.labcomm.DecoderChannel;
+      |import se.lth.control.labcomm.EncoderChannel;
       |
       |public class java_relay implements
     """))
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     result.append('  %s.Handler' % sample[-1][0])
     result.extend(split_match('^[^|]*\|(.*)$', """
       |{
-      |  LabCommEncoderChannel encoder;
+      |  EncoderChannel encoder;
     """))
     for func,arg in sample:
         if arg == 'void':
@@ -58,9 +58,9 @@ if __name__ == '__main__':
     result.extend(split_match('^[^|]*\|(.*)$', """
       |  public java_relay(String InName, String OutName) throws Exception {
       |    FileInputStream InFile = new FileInputStream(InName);
-      |    LabCommDecoderChannel d = new LabCommDecoderChannel(InFile);
+      |    DecoderChannel d = new DecoderChannel(InFile);
       |    FileOutputStream OutFile = new FileOutputStream(OutName);
-      |    encoder = new LabCommEncoderChannel(OutFile);
+      |    encoder = new EncoderChannel(OutFile);
       |
     """))
     for func,arg in sample:

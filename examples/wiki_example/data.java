@@ -2,27 +2,27 @@
 sample float data;
 */
 import java.io.IOException;
-import se.lth.control.labcomm.LabCommDecoder;
-import se.lth.control.labcomm.LabCommDispatcher;
-import se.lth.control.labcomm.LabCommEncoder;
-import se.lth.control.labcomm.LabCommHandler;
-import se.lth.control.labcomm.LabCommSample;
+import se.lth.control.labcomm.Decoder;
+import se.lth.control.labcomm.Dispatcher;
+import se.lth.control.labcomm.Encoder;
+import se.lth.control.labcomm.Handler;
+import se.lth.control.labcomm.Sample;
 
-public class data implements LabCommSample {
+public class data implements Sample {
 
-  public interface Handler extends LabCommHandler {
+  public interface Handler extends Handler {
     public void handle_data(float value) throws Exception;
   }
   
-  public static void register(LabCommDecoder d, Handler h) throws IOException {
+  public static void register(Decoder d, Handler h) throws IOException {
     d.register(new Dispatcher(), h);
   }
   
-  public static void register(LabCommEncoder e) throws IOException {
+  public static void register(Encoder e) throws IOException {
     e.register(new Dispatcher());
   }
   
-  private static class Dispatcher implements LabCommDispatcher {
+  private static class Dispatcher implements Dispatcher {
     
     public Class getSampleClass() {
       return data.class;
@@ -36,20 +36,20 @@ public class data implements LabCommSample {
       return signature;
     }
     
-    public void decodeAndHandle(LabCommDecoder d,
-                                LabCommHandler h) throws Exception {
+    public void decodeAndHandle(Decoder d,
+                                Handler h) throws Exception {
       ((Handler)h).handle_data(data.decode(d));
     }
     
   }
   
-  public static void encode(LabCommEncoder e, float value) throws IOException {
+  public static void encode(Encoder e, float value) throws IOException {
     e.begin(data.class);
     e.encodeFloat(value);
     e.end(data.class);
   }
   
-  public static float decode(LabCommDecoder d) throws IOException {
+  public static float decode(Decoder d) throws IOException {
     float result;
     result = d.decodeFloat();
     return result;
