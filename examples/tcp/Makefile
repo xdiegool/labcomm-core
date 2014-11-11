@@ -1,5 +1,6 @@
 LCDIR=../..
-LCCJAR=${LCDIR}/compiler/labComm.jar  # the LabComm compiler
+LABCOMM_JAR=../../compiler/labcomm_compiler.jar
+LABCOMM=java -jar $(LABCOMM_JAR)
 LCLJAR=${LCDIR}/lib/java/labcomm.jar  # the LabComm library
 JAVA_PKG=labcommTCPtest
 
@@ -14,17 +15,16 @@ run : ${JAVA_PKG}/Example.class ${JAVA_PKG}/server/TestServer.class ${JAVA_PKG}/
 ### dependencies and parts ####################
 ###############################################
 
-LCC=java -jar ${LCCJAR}
 CLASSPATH=.:${LCLJAR}
 
-${LCCJAR} :
+${LABCOMM_JAR} :
 	cd ${LCDIR} && make make-compiler
 
 ${LCLJAR} :
 	cd ${LCDIR}/lib/java && make labcomm.jar
 
 ${JAVA_PKG}/gen/FooSample.java: test.lc ${LCCJAR}
-	${LCC} --javapackage=${JAVA_PKG}.gen --java=${JAVA_PKG}/gen $<
+	${LABCOMM} --javapackage=${JAVA_PKG}.gen --java=${JAVA_PKG}/gen $<
 
 ${JAVA_PKG}/gen/FooSample.class: ${JAVA_PKG}/gen/FooSample.java test.lc ${LCLJAR}   
 	javac -cp ${CLASSPATH} $<

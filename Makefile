@@ -1,5 +1,5 @@
 SUBDIRS=compiler lib test examples
-export LABCOMM_JAR=$(shell pwd)/compiler/labComm.jar
+export LABCOMM_JAR=$(shell pwd)/compiler/labcomm_compiler.jar
 export LABCOMM=java -jar $(LABCOMM_JAR) 
 
 all: $(SUBDIRS:%=make-%)

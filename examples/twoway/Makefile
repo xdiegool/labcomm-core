@@ -1,5 +1,5 @@
 TARGETS=client server
-LABCOMM_JAR=../../compiler/labComm.jar
+LABCOMM_JAR=../../compiler/labcomm_compiler.jar
 LABCOMM=java -jar $(LABCOMM_JAR) 
 
 CFLAGS=-O3 -g -Wall -Werror -I../../lib/c -I. -Wno-unused-function

@@ -16,7 +16,7 @@ lib/c/test/test_labcomm_generated_encoding
 lib/c/test/test_labcomm_pthread_scheduler
 lib/c/test/test_signature_numbers
 compiler/AST/
-compiler/labComm.jar
+compiler/labcomm_compiler.jar
 encoded_data
 encoded_data06
 gen

@@ -5,7 +5,7 @@
 (cd ../..; make all)
 
 mkdir -p gen
-java -jar ../../compiler/labComm.jar --java=gen --c=gen/test.c --h=gen/test.h  --python=gen/test.py test.lc 
+java -jar ../../compiler/labcomm_compiler.jar --java=gen --c=gen/test.c --h=gen/test.h  --python=gen/test.py test.lc 
 
 javac -cp ../../lib/java/labcomm2014.jar:. gen/*.java Encoder.java Decoder.java
 

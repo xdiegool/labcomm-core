@@ -5,7 +5,7 @@
 (cd ../..; make all)
 
 mkdir -p gen
-java -jar ../../compiler/labComm.jar --java=gen --c=gen/simple.c --h=gen/simple.h  --python=gen/simple.py simple.lc 
+java -jar ../../compiler/labcomm_compiler.jar --java=gen --c=gen/simple.c --h=gen/simple.h  --python=gen/simple.py simple.lc 
 
 javac -cp ../../lib/java/labcomm2014.jar:. gen/*.java Encoder.java Decoder.java
 
@@ -20,7 +20,7 @@ gcc -Wall -Werror -I . -I ../../lib/c -L../../lib/c \
 # For version 2006
 
 mkdir -p gen06
-java -jar ../../compiler/labComm.jar --ver=2006 --java=gen06 --c=gen06/simple.c --h=gen06/simple.h  --python=gen06/simple.py simple.lc 
+java -jar ../../compiler/labcomm_compiler.jar --ver=2006 --java=gen06 --c=gen06/simple.c --h=gen06/simple.h  --python=gen06/simple.py simple.lc 
 
 javac -cp ../../lib/java/labcomm2006.jar:. gen06/*.java Encoder06.java Decoder06.java
 

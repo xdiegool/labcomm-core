@@ -77,7 +77,7 @@ classpath="tools/jastadd2.jar"/>
      <!-- delete all .class files recursively -->
     <delete>
       <fileset dir="." includes="**/*.class"/>
-      <fileset dir="." includes="labComm.jar"/>
+      <fileset dir="." includes="labcomm_compiler.jar"/>
     </delete>
 
 </target>
@@ -90,7 +90,7 @@ classpath="tools/jastadd2.jar"/>
 
 
 <target name="jar" depends="build">
-  <jar destfile="labComm.jar">
+  <jar destfile="labcomm_compiler.jar">
     <fileset dir="." includes="LabComm*.class"/>
     <fileset dir="." includes="AST/*.class"/>
     <zipfileset src="tools/beaver-rt.jar" includes="beaver/*.class"/>

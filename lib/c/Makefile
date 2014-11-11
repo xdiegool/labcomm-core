@@ -60,7 +60,7 @@ OBJS=labcomm_memory.o \
      labcomm_pthread_scheduler.o 
 
 #FIXME: labcomm_mem_reader.o labcomm_mem_writer.o
-LABCOMM_JAR=../../compiler/labComm.jar
+LABCOMM_JAR=../../compiler/labcomm_compiler.jar
 LABCOMM=java -jar $(LABCOMM_JAR) 
 
 TESTS=test_labcomm_basic_type_encoding test_labcomm_generated_encoding \
