@@ -47,6 +47,10 @@ aspect C_CodeGenEnv {
     private boolean rootIsPointer;
     private int rootLevel;
 
+    public boolean versionHasMetaData() {
+      return version != 2006;
+    }
+
     private C_env(String qualid, String lcName, String rawPrefix, 
 		  int indent, int depth, C_printer printer,
                   int nestedLevel, int version)
@@ -105,6 +109,10 @@ aspect C_CodeGenEnv {
 
     public void print(String s) {
       printer.print(this, s);
+    }
+
+    public void println() {
+      printer.println(this, "");
     }
 
     public void println(String s) {
@@ -392,7 +400,7 @@ aspect C_Declarations {
   
   public void Decl.C_emitEncoderDeclaration(C_env env) {
   }
-
+//
   public void SampleDecl.C_emitEncoderDeclaration(C_env env) {
     env.println("int labcomm"+env.verStr+"_encoder_register_" + 
 		env.prefix + getName() + "(");
@@ -978,13 +986,13 @@ aspect C_DecoderIoctl {
 aspect C_Encoder {
 
   public void Decl.C_emitEncoder(C_env env) {
-    throw new Error(this.getClass().getName() + 
-		    ".C_emitEncoder()" + 
-		    " not declared");
+  //XXX  throw new Error(this.getClass().getName() + 
+//		    ".C_emitEncoder()" + 
+//		    " not declared");
   }
 
-  public void TypeDecl.C_emitEncoder(C_env env) {
-  }
+//  public void TypeDecl.C_emitEncoder(C_env env) {
+//  }
 
   public void SampleDecl.C_emitEncoder(C_env env) {
     env = env.nestStruct("(*v)");
@@ -1091,14 +1099,15 @@ aspect C_Encoder {
   }
 
   public void Decl.C_emitEncoderRegisterHandler(C_env env) {
-    throw new Error(this.getClass().getName() + 
-		    ".C_emitEncoderRegisterHandler(C_env env)" + 
-		    " not declared");
+  //XXX
+  //  throw new Error(this.getClass().getName() + 
+  //		    ".C_emitEncoderRegisterHandler(C_env env)" + 
+  //		    " not declared");
   }
-
-  public void TypeDecl.C_emitEncoderRegisterHandler(C_env env) {
-  }
-
+  //
+  //public void TypeDecl.C_emitEncoderRegisterHandler(C_env env) {
+  //}
+  //
   public void SampleDecl.C_emitEncoderRegisterHandler(C_env env) {
     env.println("int labcomm"+env.verStr+"_encoder_register_" + 
 		env.prefix + getName() + "(");
@@ -1108,6 +1117,9 @@ aspect C_Encoder {
     env.println(")");
     env.println("{");
     env.indent();
+    C_emitUserTypeDeps(env, null, false); //XXX HERE BE DRAGONS
+                                          //set to false to turn off
+                                          //outputting of code
     env.println("return labcomm"+env.verStr+"_internal_encoder_register(");
     env.indent();
     env.println("e,");
@@ -1158,6 +1170,43 @@ aspect C_EncoderIoctl {
 
 }
 
+aspect C_TypeDependencies {
+  public void Decl.C_emitUserTypeDeps(C_env env, String via, boolean outputCode) {
+    if( hasDependencies() ) {
+        Iterator<Decl> it = type_dependencies().iterator();
+        while(it.hasNext()) {
+            Decl t = it.next();
+
+            t.C_emitUserTypeDeps(env, t.getName(), outputCode);
+            if(outputCode) {
+               System.out.println("Decl.C_emitUserTypeDeps registering "+t.getName());
+               env.println("labcomm"+env.verStr+"_encoder_register_"+env.prefix + t.getName()+"(e);");
+            } else {  // Just output a comment
+	        String refpath = (via == null) ? "directly" : "indirectly via "+via;
+	       //env.println(" //Depends ("+refpath+") on "+t.getName() + " (" + t +") " );
+	       env.println(" //Depends ("+refpath+") on "+t.getName() );
+            }
+        }
+    } 
+  }
+  public void Decl.C_emitUserTypeRefs(C_env env, String via, boolean outputCode) {
+    if( isReferenced() ) {
+        Iterator<Decl> it = type_references().iterator();
+        while(it.hasNext()) {
+            Decl t = it.next();
+
+            t.C_emitUserTypeRefs(env, t.getName(), outputCode);
+            if(outputCode) {
+               env.println("labcomm"+env.verStr+"_encoder_register_"+env.prefix + t.getName()+"(e);");
+            } else {  // Just output a comment
+	        String refpath = (via == null) ? "directly" : "indirectly via "+via;
+	       env.println(" //Is referenced ("+refpath+")  by "+t.getName() );
+            }
+        }
+    } 
+  }
+}
+
 aspect C_Signature {
 
   public void ASTNode.C_emitSignature(C_env env) {
@@ -1166,19 +1215,56 @@ aspect C_Signature {
 		    " not declared");
   }
 
+  syn String Decl.C_DeclTypeString();
+  eq SampleDecl.C_DeclTypeString() = "LABCOMM_SAMPLE";
+  eq TypeDecl.C_DeclTypeString() = "LABCOMM_TYPEDEF";
+
   public void Decl.C_emitSignature(C_env env) {
+    //always emit the flat signature, as it is needed
+    //for matching at the decoder side (which cannot know
+    //the type_ids of dependent types. Therefore, flat sigs
+    //are used for matching
+    C_emitFlatSignature(env);
+/*
+    if( false && (isReferenced() || isSampleDecl())){ 
+      Signature signature = getSignature();
+      signature.C_emitSignature(env, !isSampleDecl());
+    } else {
+      env.println("// not emitting signature for "+getName()+isReferenced()+isSampleDecl());  
+    }
+    if(env.versionHasMetaData()) { 
+      if(isReferenced() || isSampleDecl()){
+          env.println("(int (*)(void *))labcomm"+env.verStr+"_signature_" + 
+  	 	env.prefix + getName() + "_emit_signature");
+      } else {
+          env.println("NULL");  // HERE BE DRAGONS! Is it worth the size saving to skip emitting the emit_signature function for unused types?
+                                //                  The code won't likely end up in a target system anyway?
+      }
+    }
+    env.unindent();
+    env.println(" };");
+*/
   }
 
-  public void SampleDecl.C_emitSignature(C_env env) {
+  public void ASTNode.C_emitFlatSignature(C_env env) {
+    throw new Error(this.getClass().getName() + 
+                    ".C_emitFlatSignature(C_env env)" + 
+                    " not declared");
+  }
+
+  public void Decl.C_emitFlatSignature(C_env env) {
+  }
+
+  public void SampleDecl.C_emitFlatSignature(C_env env){
     env.println("static unsigned char signature_bytes_" + 
-		       env.prefix + getName() + "[] = {");
-    SignatureList signature = signature(env.version);
+  	        env.prefix + getName() + "[] = {");
+    SignatureList signature = flatSignature(env.version);
     for (int i = 0 ; i < signature.size() ; i++) {
       String comment = signature.getComment(i);
       if (comment != null) {
         env.println(signature.getIndent(i) + "// " + comment);
       }
-      byte[] data = signature.getData(i);
+      byte[] data = signature.getData(i, env.version);
       if (data != null) {
         env.print(signature.getIndent(i));
         for (int j = 0 ; j < data.length ; j++) {
@@ -1188,9 +1274,10 @@ aspect C_Signature {
       }
     }
     env.println("};");
+
     C_emitSizeofValue(env);
     env.println("struct labcomm"+env.verStr+"_signature labcomm"+env.verStr+"_signature_" + 
-		env.prefix + getName() + " = {");
+        env.prefix + getName() + " = {");
     env.indent();
     env.println("\"" + getName() + "\",");
     env.println("sizeof_" + env.prefix + getName() + ",");
@@ -1201,6 +1288,109 @@ aspect C_Signature {
     env.println(" };");
   }
 
+    public void Signature.C_emitSignature(C_env env, boolean decl){
+      getSignatureList().C_emitSignature(env, decl);
+    }
+
+    public abstract void SignatureLine.C_emitSignature(C_env env, boolean decl);
+
+    public void TypeRefSignatureLine.C_emitSignature(C_env env, boolean isDecl){ 
+      //env.print(getIndentString());
+      //env.println("LABCOMM_SIGDEF_SIGNATURE(labcomm"+env.verStr+"_signature_" + env.prefix + decl.getName() +"),");
+    }
+
+    public void DataSignatureLine.C_emitSignature(C_env env, boolean decl){ 
+       //   String comment = getComment();
+       //   if (comment != null && comment.length() > 0) {
+       //     env.println(getIndentString() + "// " + comment);
+       //   }
+       //   byte[] data = getData(env.version);
+       //   if (data != null && data.length > 0) {
+       //     env.print(getIndentString());
+       //     env.print("LABCOMM_SIGDEF_BYTES("+data.length+", \"");
+       //     for (int j = 0 ; j < data.length ; j++) {
+       //       byte d = data[j];
+       //       //if(d>='a'&&d<='z' || d>='A'&&d<='Z'|| d>='0'&&d<='9'  )
+       //       //  env.print(""+(char)d);
+       //       //else
+       //       env.print("\\x"+Integer.toHexString(d));
+       //     }
+       //     env.println("\"),");
+       // }
+    }
+/*
+
+        byte[] data = getData(env.version);
+          if (data != null) {
+              for (int j = 0 ; j < data.length ; j++) {
+                  env.print(getIndentString());
+                  //env.print("printf(\"labcomm"+env.verStr+"_write_byte( w, (unsigned char)"+ String.format("0x%02X ", data[j]) +")\\n\"); ");
+                  env.print("labcomm"+env.verStr+"_write_byte( w, (unsigned char)"+ String.format("0x%02X ", data[j]) +"); ");
+                  env.println("if (result != 0) { return result; }");
+              }
+              env.println();
+          }
+*/
+  //}
+/**
+static int encode_test_twoLines(
+struct labcomm_writer *w
+, test_twoLines *v
+)
+{
+result = labcomm_write_int(w, (*v).l1.start.x.val);
+**/
+  public void SignatureList.C_emitSignature(C_env env, boolean decl) { 
+    env.println("static struct labcomm_signature_data signature_tree_" + 
+		 env.prefix + parentDecl().getName() + "[] = {");
+    env.indent();
+    for (int i = 0 ; i < size() ; i++) {
+      SignatureLine l = getSignatureLine(i);
+      l.C_emitSignature(env, decl);
+    }
+    
+    env.println("LABCOMM_SIGDEF_END");
+    env.println("};");
+    env.unindent();
+    env.println();
+  }
+
+
+
+//  public void SampleDecl.C_emitSignature(C_env env) {
+//    env.println("static unsigned char signature_bytes_" + 
+//		       env.prefix + getName() + "[] = {");
+//    SignatureList signature = signature(env.version);
+//    for (int i = 0 ; i < signature.size() ; i++) {
+//      String comment = signature.getComment(i);
+//      if (comment != null) {
+//        env.println(signature.getIndent(i) + "// " + comment);
+//      }
+//      byte[] data = signature.getData(i);
+//      if (data != null) {
+//        env.print(signature.getIndent(i));
+//        for (int j = 0 ; j < data.length ; j++) {
+//          env.print(data[j] + ", ");
+//        }
+//        env.println("");
+//      }
+//    }
+//    env.println("};");
+//    env.println("struct labcomm"+env.verStr+"_signature labcomm"+env.verStr+"_signature_" + 
+//		env.prefix + getName() + " = {");
+//    env.indent();
+//    env.println("LABCOMM_SAMPLE, \"" + getName() + "\",");
+//    env.println("(int (*)(struct labcomm"+env.verStr+"_signature *, void *))labcomm"+env.verStr+"_sizeof_" + 
+//		env.prefix + getName() + ",");
+//    env.println("sizeof(signature_bytes_" + env.prefix + getName() + "),");
+//    env.println("signature_bytes_" + env.prefix + getName() + ",");
+//    env.println("0");
+//    env.unindent();
+//    env.println(" };");
+//  }
+
+}
+aspect C_Constructor {
   public void ASTNode.C_emitConstructor(C_env env) {
     throw new Error(this.getClass().getName() + 
 		    ".C_emitConstructor(C_env env)" + 
@@ -1227,7 +1417,7 @@ aspect C_Signature {
 
   public void Decl.C_emitConstructor(C_env env) {
   }
-
+//XXX
   public void SampleDecl.C_emitConstructor(C_env env) {
     env.println("labcomm"+env.verStr+"_set_local_index(&labcomm"+env.verStr+"_signature_" + 
 		env.prefix + getName() + ");");
@@ -1247,13 +1437,12 @@ aspect C_Signature {
 }
 
 aspect C_Sizeof {
-
-  public void Decl.C_emitSizeofDeclaration(C_env env) {
+ public void Decl.C_emitSizeofDeclaration(C_env env) {
   }
 
   public void SampleDecl.C_emitSizeofDeclaration(C_env env) {
     env.println("extern int labcomm"+env.verStr+"_sizeof_" + env.prefix + getName() +
-		"(" + env.prefix + getName() + " *v);");
+        "(" + env.prefix + getName() + " *v);");
   }
 
   public int Decl.C_fixedSizeof() {
@@ -1266,7 +1455,7 @@ aspect C_Sizeof {
   public void SampleDecl.C_emitSizeof(C_env env) {
     env = env.nestStruct("(*v)");
     env.println("int labcomm"+env.verStr+"_sizeof_" + env.prefix + getName() +
-		"(" + env.prefix + getName() + " *v)");
+        "(" + env.prefix + getName() + " *v)");
     env.println("{");
     env.indent();
     env.println("return labcomm"+env.verStr+"_internal_sizeof(" +
@@ -1278,8 +1467,8 @@ aspect C_Sizeof {
 
   public int Type.C_fixedSizeof() {
     throw new Error(this.getClass().getName() + 
-		    ".C_fixedSizeof()" + 
-		    " not declared");
+            ".C_fixedSizeof()" + 
+            " not declared");
   }
 
   public int VoidType.C_fixedSizeof() {
@@ -1296,9 +1485,9 @@ aspect C_Sizeof {
       case LABCOMM_FLOAT: { return 4; }
       case LABCOMM_DOUBLE: { return 8; }
       default: { 
-	throw new Error(this.getClass().getName() + 
-			".C_fixedSizeof()" + 
-			" unknown size (" + getName() + ")"); 
+    throw new Error(this.getClass().getName() + 
+            ".C_fixedSizeof()" + 
+            " unknown size (" + getName() + ")"); 
       } 
     }
   }
@@ -1346,20 +1535,20 @@ aspect C_Sizeof {
 
   public void Type.C_emitSizeof(C_env env) {
     throw new Error(this.getClass().getName() + 
-		    ".C_emitSizeof(C_env env)" + 
-		    " not declared");
+            ".C_emitSizeof(C_env env)" + 
+            " not declared");
   }
 
   public void PrimType.C_emitSizeof(C_env env) {
     switch (getToken()) {
       case LABCOMM_STRING: { 
         env.print("{ int l = strlen(" + env.qualid + "); ");
-	env.println("result += labcomm"+env.verStr+"_size_packed32(l) + l; }"); 
+    env.println("result += labcomm"+env.verStr+"_size_packed32(l) + l; }"); 
       } break;
       default: { 
-	throw new Error(this.getClass().getName() + 
-			".C_emitSizeof(C_env env)" + 
-			" known size (" + getName() + ")"); 
+    throw new Error(this.getClass().getName() + 
+            ".C_emitSizeof(C_env env)" + 
+            " known size (" + getName() + ")"); 
       } 
     }
   }
@@ -1372,10 +1561,10 @@ aspect C_Sizeof {
     int fixed = 0;
     for (int i = 0 ; i < getNumField() ; i++) {
       if (getField(i).getType().C_isDynamic()) {
-	getField(i).getType().C_emitSizeof(
-	  env.nestStruct("." + getField(i).getName()));
+    getField(i).getType().C_emitSizeof(
+      env.nestStruct("." + getField(i).getName()));
       } else {
-	fixed += getField(i).getType().C_fixedSizeof();
+    fixed += getField(i).getType().C_fixedSizeof();
       }
     }
     if (fixed > 0) {
@@ -1389,35 +1578,34 @@ aspect C_Sizeof {
       env.indent();
       C_emitLoopVariables(env);
       for (int i = 0 ; i < getNumExp() ; i++) {
-	String iterator = "i_" + env.depth + "_" + i;
-	env.println("for (" + iterator + " = 0" +
-		    " ; " +
-		    iterator + " < " + getExp(i).C_getLimit(env, i) +
-		    " ; " +
-		    iterator + "++) {");
-	env.indent();
+    String iterator = "i_" + env.depth + "_" + i;
+    env.println("for (" + iterator + " = 0" +
+            " ; " +
+            iterator + " < " + getExp(i).C_getLimit(env, i) +
+            " ; " +
+            iterator + "++) {");
+    env.indent();
       }
       C_emitCalcIndex(env);
       getType().C_emitSizeof(C_Nest(env));
       for (int i = 0 ; i < getNumExp() ; i++) {
-	env.unindent();
-	env.println("}");
+    env.unindent();
+    env.println("}");
       }
       env.unindent();
       env.println("}");
     } else {
       for (int i = 0 ; i < getNumExp() ; i++) {
-      	env.println("result += labcomm"+env.verStr+"_size_packed32(" + 
-	            getExp(i).C_getLimit(env, i) + ");");
+        env.println("result += labcomm"+env.verStr+"_size_packed32(" + 
+                getExp(i).C_getLimit(env, i) + ");");
       }
       env.print("result += " + getType().C_fixedSizeof());
       for (int i = 0 ; i < getNumExp() ; i++) {
-	env.print(" * " + getExp(i).C_getLimit(env, i));
+    env.print(" * " + getExp(i).C_getLimit(env, i));
       }
       env.println(";");      
     }
   }
-
 }
 
 aspect C_forAll {

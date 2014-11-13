@@ -23,7 +23,7 @@ namespace se.lth.control.labcomm {
 
     public void register(SampleDispatcher dispatcher) {
       int index = registry.add(dispatcher);
-      begin(Constant.SAMPLE);
+      begin(Constant.SAMPLE_DEF);
       encodePacked32(index);
       encodeString(dispatcher.getName());
       byte[] signature = dispatcher.getSignature();

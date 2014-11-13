@@ -2,54 +2,92 @@ import java.util.*;
 
 aspect Signature {  
 
-  public class SignatureLine {
-  
-    private int indent;
-    private byte[] data;
-    private String comment;
+  syn boolean Decl.isSampleDecl();
+  eq TypeDecl.isSampleDecl() = false;
+  eq SampleDecl.isSampleDecl() = true;
 
-    public SignatureLine(int indent, byte[] data, String comment) {
-      this.indent = indent;
-      this.data = data;
-      this.comment = comment;
-    }
+  syn boolean Decl.sendOnlyFlatSignatures(Java_env env) = (env.version==2006);
 
-    public int getIndent() {
-      return indent;
-    }
+  eq Decl.getSignature().parentDecl() = this;
+  eq Signature.getSignatureList().parentDecl() = parentDecl();
 
-    public byte[] getData() {
-      return data;
-    }
+  inh Decl Signature.parentDecl();
+  inh Decl SignatureList.parentDecl();
 
-    public String getComment() {
-      return comment;
-    }
 
+  syn nta Signature Decl.getSignature() { 
+    SignatureList sl = new SignatureList();
+    genSigLineForDecl(sl, true);
+    SignatureList fsl = new SignatureList();
+    flatSignature(fsl);
+    Signature sig = new Signature();
+    sig.setSignatureList(sl);
+    sig.setFlatSignatureList(fsl);
+    // HERE BE DRAGONS. Is this correct for a NTA?
+    setSignature(sig);
+    return sig;
   }
 
-  public class SignatureList {
+  //syn nta SignatureList Signature.getSignatureList() {
+  //  SignatureList result = new SignatureList();
+  //  genSigLineForDecl(result, true);
+  //  return result;
+  //}
 
-    private int indent;
-    private final int ver;
-    private ArrayList list = new ArrayList();
-    
-    public SignatureList(int version) {
-      this.ver = version; 
+    public String SignatureLine.getIndentString() {
+      StringBuffer result = new StringBuffer();
+      int indent = getIndent();
+      for (int i = 0 ; i < indent ; i++) {
+        result.append("  ");
+      }
+      return result.toString();
     }
 
-    public void add(byte[] data, String comment) {
-      list.add(new SignatureLine(indent, data, comment));
+    //Very temporary kludge: the flat signature generation 
+    //predates the SignatureLine class hierarchy. This hack
+    //returns size zero arrays, which doesn't break the sig
+    //generation
+    //public byte[] getData() {
+    syn byte[] SignatureLine.getData(int version) {
+      return new byte[0];
     }
 
-    public void addInt(int value, String comment) {
-      switch(ver) {
+    private Decl TypeRefSignatureLine.decl;
+    public TypeRefSignatureLine.TypeRefSignatureLine(int indent, Decl decl, String comment) {
+      super(indent, comment);
+      this.decl = decl;
+    }
+    public void SignatureList.addTypeRef(Decl type, String comment) {
+        addSignatureLine(new TypeRefSignatureLine(indent, type, comment));
+    }
+
+    public ByteArraySignatureLine.ByteArraySignatureLine(int indent, byte[] data, String comment) {
+      super(indent, comment);
+      setData(data);
+    }
+
+    public IntSignatureLine.IntSignatureLine(int indent, int data, String comment) {
+      super(indent, comment);
+      setData(data);
+    }
+
+    public void SignatureList.add(byte[] data, String comment) {
+      addSignatureLine(new ByteArraySignatureLine(indent, data, comment));
+    }
+
+    public void SignatureList.addInt(int data, String comment) {
+      addSignatureLine(new IntSignatureLine(indent, data, comment));
+    }
+
+    protected byte[] DataSignatureLine.getIntBytes(int value, int version) {
+      byte data[];
+      switch(version) {
         case 2006:             // Use old encoding with 32 bit integers
-	    byte[] data = new byte[4];
+	    data = new byte[4];
 	    for (int i = 0 ; i < 4 ; i++) {
 	        data[3 - i] = (byte)((value >> (8 * i)) & 0xff);
 	    }
-	    add(data, comment);
+	    //add(data, comment);
         break;
         case 2013:             // Use new encoding with varints
 	    byte[] tmp = new byte[5];
@@ -62,162 +100,146 @@ aspect Signature {
             for (i = i - 1, j = 0 ; i >= 0 ; i--, j++) {
 		packed[j] = (byte)(tmp[i] | (i!=0?0x80:0x00));
             }
-	    add(packed, comment);
+	    //add(packed, comment);
+            data = packed;
         break;
         default: 
-            throw new RuntimeException("Version = "+ver+". This should never happen.");
+            throw new RuntimeException("Unsupported version = "+version+". This should never happen.");
       }
+      return data;
     }
 
-    public void addString(String value, String comment) {
-      addInt(value.length(), comment);
-      byte[] data = new byte[value.length()];
-      for (int i = 0 ; i < value.length() ; i++) {
-        data[i] = (byte)(value.charAt(i) & 0xff);
+    eq IntSignatureLine.getData(int version) {
+      return getIntBytes(getData(), version);
+    }
+
+    public void SignatureList.addString(String data, String comment) {
+      addSignatureLine(new StringSignatureLine(indent, comment, data));
+    }
+    eq StringSignatureLine.getData(int version) {
+      byte[] lenBytes = getIntBytes(getData().length(), version);
+      byte[] data = new byte[lenBytes.length+getData().length()];
+
+      // first add the encoded length
+      for (int i = 0 ; i < lenBytes.length ; i++) {
+        data[i] = lenBytes[i];
       }
-      add(data, null);
+      // and then the actual chars
+      for (int i = 0 ; i < getData().length() ; i++) {
+        int idx = lenBytes.length + i;
+        data[idx] = (byte)(getData().charAt(i) & 0xff);
+      }
+      return data;
     }
 
-    public int size() {
-      return list.size();
+    public int SignatureList.size() {
+      return getNumSignatureLine();
     }
 
-    public String getIndent(int i) {
+    public String SignatureList.getIndent(int i) {
       StringBuffer result = new StringBuffer();
-      int indent = ((SignatureLine)list.get(i)).getIndent();
+      int indent = getSignatureLine(i).getIndent();
       for (i = 0 ; i < indent ; i++) {
         result.append("  ");
       }
       return result.toString();
     }
 
-    public byte[] getData(int i) {
-      return ((SignatureLine)list.get(i)).getData();
+    public byte[] SignatureList.getData(int i, int version) {
+      return getSignatureLine(i).getData(version);
     }
 
-    public String getComment(int i) {
-      return ((SignatureLine)list.get(i)).getComment();
+    public String SignatureList.getComment(int i) {
+      return getSignatureLine(i).getComment();
     }
 
-    public void indent() {
+    private int SignatureList.indent;
+
+    public void SignatureList.indent() {
       indent++;
     }
 
-    public void unindent() {
+    public void SignatureList.unindent() {
       indent--;
     }
 
-  }
 
-  public SignatureList Decl.signature(int version) {
-    SignatureList result = new SignatureList(version);
-    flatSignature(result);
-    return result;
-  }
-
-  public void ASTNode.flatSignature(SignatureList list) {
+  public void ASTNode.genSigLineForDecl(SignatureList list, boolean decl) {
     throw new Error(this.getClass().getName() + 
-                    ".flatSignature(SignatureList list)" + 
+                    ".genSigLineForDecl(SignatureList list)" + 
                     " not declared");
   }
 
-  public void TypeDecl.flatSignature(SignatureList list) {
-    getType().flatSignature(list);
+  public void TypeDecl.genSigLineForDecl(SignatureList list, boolean decl) {
+     System.out.println("************ TypeDecl.genSigLine("+decl+").... for "+getName());
+    if(decl){
+      getType().genSigLineForDecl(list, decl);
+    }else{
+      list.addTypeRef(this, "//TODO (from list.addTypeRef)");
+    }
   }
 
-  public void SampleDecl.flatSignature(SignatureList list) {
-    getType().flatSignature(list);
+  public void SampleDecl.genSigLineForDecl(SignatureList list, boolean decl) {
+     System.out.println("************ SampleDecl.genSigLine("+decl+").... for "+getName());
+    getType().genSigLineForDecl(list, decl);
   }
 
-  public void VoidType.flatSignature(SignatureList list) {
+  public void VoidType.genSigLineForDecl(SignatureList list, boolean decl) {
     list.addInt(LABCOMM_STRUCT, "void");
     list.addInt(0, null);
   }
 
-  public void PrimType.flatSignature(SignatureList list) {
+  public void PrimType.genSigLineForDecl(SignatureList list, boolean decl) {
     list.addInt(getToken(), null);
   }
 
-  public void UserType.flatSignature(SignatureList list) {
-    lookupType(getName()).flatSignature(list);
+  public void UserType.genSigLineForDecl(SignatureList list, boolean decl) {
+    if(decl){
+     System.out.println("************ UserType.genSigLine("+decl+").... for "+getName());
+      TypeDecl thet=lookupType(getName());
+      System.out.println("************ thet: "+thet.getName() +":"+thet.getType());
+      thet.genSigLineForDecl(list, decl);
+    }else{
+     //System.out.println("************ UserType.genSigLine("+decl+").... for "+getName());
+      TypeDecl thet = lookupType(getName());
+     // System.out.println("************ thet: "+thet.getName() +":"+thet.getType());
+      list.addTypeRef(thet, null);
+    }
   }
 
-  public void ArrayType.flatSignature(SignatureList list) {
+  public void ArrayType.genSigLineForDecl(SignatureList list, boolean decl) {
     list.addInt(LABCOMM_ARRAY, signatureComment());
     list.indent();
     list.addInt(getNumExp(), null);
     for (int i = 0 ; i < getNumExp() ; i++) {
-      getExp(i).flatSignature(list);
+      getExp(i).genSigLineForDecl(list, false);
     }
-    getType().flatSignature(list);
+    getType().genSigLineForDecl(list, false);
     list.unindent();
     list.add(null, "}");
   }
 
-  public void StructType.flatSignature(SignatureList list) {
+  public void StructType.genSigLineForDecl(SignatureList list, boolean decl) {
     list.addInt(LABCOMM_STRUCT, "struct { " + getNumField() + " fields");
     list.indent();
     list.addInt(getNumField(), null);
     for (int i = 0 ; i < getNumField() ; i++) {
-      getField(i).flatSignature(list);
+      getField(i).genSigLineForDecl(list, false);
     }
     list.unindent();
     list.add(null, "}");
   }
 
-  public void Field.flatSignature(SignatureList list) {
+  public void Field.genSigLineForDecl(SignatureList list, boolean decl) {
     list.addString(getName(), signatureComment());
-    getType().flatSignature(list);
+    getType().genSigLineForDecl(list, decl);
   }
 
-  public void IntegerLiteral.flatSignature(SignatureList list) {
+  public void IntegerLiteral.genSigLineForDecl(SignatureList list, boolean decl) {
     list.addInt(Integer.parseInt(getValue()), null);
   }
 
-  public void VariableSize.flatSignature(SignatureList list) {
+  public void VariableSize.genSigLineForDecl(SignatureList list, boolean decl) {
     list.addInt(0, null);
   }
-
-  public String ArrayType.signatureComment() {
-    StringBuffer result = new StringBuffer("array [");
-    for (int i = 0 ; i < getNumExp() ; i++) {
-      if (i > 0) {
-	result.append(", ");
-      }
-      result.append(getExp(i).signatureComment());
-    }
-    result.append("]");
-    return result.toString();
-  }
-
-  public String ASTNode.signatureComment() {
-    throw new Error(this.getClass().getName() + 
-                    ".signatureComment()" + 
-                    " not declared");
-  }
-
-  public String Field.signatureComment() {
-    return getType().signatureComment() + " '" + getName() +"'";
-  }
-
-  public String PrimType.signatureComment() {
-    return getName();
-  }
-
-  public String UserType.signatureComment() {
-    return getName();
-  }
-
-  public String StructType.signatureComment() {
-    return "struct";
-  }
-
-  public String IntegerLiteral.signatureComment() {
-    return getValue();
-  }
-
-  public String VariableSize.signatureComment() {
-    return "_";
-  }
-
 }

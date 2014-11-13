@@ -4,7 +4,7 @@ import java.util.*;
 aspect Java_CodeGenEnv {
 
   // Environment wrapper for Java-code generation
-  // handles indentation, file writing, 
+  // handles indentation, file writing,
 
   public class Java_env {
 
@@ -15,13 +15,17 @@ aspect Java_CodeGenEnv {
     private Java_printer printer;
     private HashMap unique = new HashMap();
 
+    public boolean versionHasMetaData() {
+      return version != 2006;
+    }
+
     final private class Java_printer {
-      
+
       private boolean newline = true;
       private File file;
       private PrintStream out;
       private IOException exception;
-      
+
 
       public Java_printer(File f) {
   	file = f;
@@ -78,7 +82,7 @@ aspect Java_CodeGenEnv {
     }
 
     private Java_env(int version, int indent) {
-      this.version = version; 
+      this.version = version;
       this.verStr = (version == 2006) ? "2006" : "";
       this.indent = indent;
     }
@@ -234,13 +238,10 @@ aspect Java_CodeGen {
     }
   }
 
-  /** Experimental method for generating code to a map <classname, source> 
+  /** Experimental method for generating code to a map <classname, source>
     */
   public void Program.J_gen(Map<String,String> src, String pack, int version) throws IOException {
     Java_env env;
-/*
-    // Registration class was commented out, so got removed in this copy
-*/
     for (int i = 0; i < getNumDecl(); i++) {
       Decl d = getDecl(i);
       try {
@@ -256,68 +257,159 @@ aspect Java_CodeGen {
       }
     }
   }
+
 }
 
 aspect Java_Class {
 
   public void Decl.Java_emitClass(Java_env env, String pack) {
-    throw new Error(this.getClass().getName() + 
-		    ".Java_emitClass(Java_env env, String pack)" + 
+    throw new Error(this.getClass().getName() +
+		    ".Java_emitClass(Java_env env, String pack)" +
 		    " not declared");
   }
 
-  public void TypeDecl.Java_emitClass(Java_env env, String pack) {
-    if (getType().Java_needInstance()) {
+  public void Decl.Java_emitDeclPP(Java_env env) {
       // Hackish prettyprint preamble
       env.println("/* ");
       pp(env.getPrintStream());
+
+      Java_emitUserTypeDeps(env, null, false);
+      Java_emitUserTypeRefs(env, null, false);
       env.println("*/");
 
-      if (pack != null && pack.length() > 0) {
-        env.println("package " + pack + ";");
-      }
-
-      env.println("import java.io.IOException;");
-      env.println("import se.lth.control.labcomm"+env.verStr+".SampleType;");
-      env.println("import se.lth.control.labcomm"+env.verStr+".Encoder;");
-      env.println("import se.lth.control.labcomm"+env.verStr+".Decoder;");
-      env.println();
-      env.println("public class " + getName() + " implements SampleType {");
-      env.println();
-      env.indent();
-      getType().Java_emitInstance(env);
-      Java_emitEncoder(env);
-      Java_emitDecoder(env);
-      env.unindent();
-      env.println("}");
-    }
   }
 
-//  TODO: ?
-//  Code snippet for making samples of user types extend their type 
-//  currently commented out. Is this a good idea?
-//
-//  syn String Type.getTypeName();
-//  eq Type.getTypeName() = getClass().getName();
-//  eq PrimType.getTypeName() = getName();
-//  eq UserType.getTypeName() = getName();
+  public void Decl.Java_emitUserTypeDeps(Java_env env, String via, boolean outputCode) {
+  // XXX TODO will generate unnecessary recursion for types. fix this per commented out code
+  // XXX      but ensure that types with references actually register themselves.. (i.e., add "nested" argument)
+  //public abstract void Decl.Java_emitUserTypeDeps(Java_env env, String via, boolean outputCode);
 
-//  syn boolean Type.isUserType();
-//  eq Type.isUserType() = false;
-//  eq UserType.isUserType() = true;
+  //public void TypeDecl.Java_emitUserTypeDeps(Java_env env, String via, boolean outputCode) {
+  //  // do nothing for type decls; sampledecl iterates over all dependencies and outputs
+  //  // all type decls
+  //}
+  //public void SampleDecl.Java_emitUserTypeDeps(Java_env env, String via, boolean outputCode) {
+    if(env.versionHasMetaData() && hasDependencies() || isReferenced() ) {
+        if(env.versionHasMetaData() && isSampleDecl() && outputCode) {
+           env.println("if(sendMetaData){");
+           env.indent();
+        }
+        Iterator<Decl> it = type_dependencies().iterator();
+        while(it.hasNext()) {
+            Decl t = it.next();
+
+            t.Java_emitUserTypeDeps(env, t.getName(), outputCode);
+            if( outputCode){// && t.getType().isUserType() ) {
+               env.println(t.getName()+".register(e);");
+            } else {  // Just output a comment
+	        String refpath = (via == null) ? "directly" : "indirectly via "+via;
+	       //env.println(" //Depends ("+refpath+") on "+t.getName() + " (" + t +") " );
+	       //env.println(" //Depends ("+refpath+") on "+t.getName() );
+	       env.println(" //Depends ("+refpath+") on "+t.getName()+" -- "+t.getType() );
+            }
+        }
+        if(env.versionHasMetaData() && isSampleDecl() && outputCode) {
+           env.unindent();
+           env.println("}");
+        }
+    }
+  }
+  public void Decl.Java_emitUserTypeRefs(Java_env env, String via, boolean outputCode) {
+    if( isReferenced() ) {
+        Iterator<Decl> it = type_references().iterator();
+        while(it.hasNext()) {
+            Decl t = it.next();
+
+            t.Java_emitUserTypeRefs(env, t.getName(), outputCode);
+            if(outputCode) {
+               env.println(t.getName()+".register(e);");
+            } else {  // Just output a comment
+	        String refpath = (via == null) ? "directly" : "indirectly via "+via;
+	       env.println(" //Is referenced ("+refpath+")  by "+t.getName() );
+            }
+        }
+    }
+ }
+
+
+  public void Decl.Java_emitRegisterEncoder(Java_env env) {
+    env.println("public static void register(Encoder e) throws IOException {");
+    env.indent();
+    env.println("register(e, true);");
+    env.unindent();
+    env.println("}");
+
+    env.println();
+    env.println("public static void register(Encoder e, boolean sendMetaData) throws IOException {");
+    env.indent();
+
+    Java_emitUserTypeDeps(env, null, true);
+    if(env.versionHasMetaData()) {
+        env.println("e.register(Dispatcher.singleton());");
+    } else {
+        env.println("e.register(Dispatcher.singleton());");
+    }
+    env.unindent();
+    env.println("}");
+    env.println();
+  }
+
+  public void TypeDecl.Java_emitClass(Java_env env, String pack) {
+      Java_emitDeclPP(env);
+      if (pack != null && pack.length() > 0) {
+          env.println("package " + pack + ";");
+      }
+
+      env.println("import se.lth.control.labcomm"+env.verStr+".Constant;");
+      env.println("import se.lth.control.labcomm"+env.verStr+".SampleType;");
+
+      if (getType().Java_needInstance() || hasDependencies() || isReferenced()) {
+          env.println("import se.lth.control.labcomm"+env.verStr+".Encoder;");
+          env.println("import se.lth.control.labcomm"+env.verStr+".SampleDispatcher;");
+          env.println("import se.lth.control.labcomm"+env.verStr+".SampleHandler;");
+//          env.println();
+//      }
 //
-// plus use some lines down
+//      if (getType().Java_needInstance()) {
+          env.println("import java.io.IOException;");
+          env.println("import se.lth.control.labcomm"+env.verStr+".Decoder;");
+      }
+      // For types without type_dependencies and not needing an instance,
+      // currently just an empty class is generated
+
+      env.println("public class " + getName() + " implements SampleType {");
+      env.println();
+
+      env.indent();
+      if (getType().Java_needInstance()) {
+        getType().Java_emitInstance(env);
+        Java_emitEncoder(env);
+        Java_emitDecoder(env);
+      }
+
+      //if(hasDependencies() || isReferenced()) {
+      //if( getType().isUserType() && isReferenced()) {
+      if( isReferenced()) {
+        Java_emitRegisterEncoder(env);
+        Java_emitDispatcher(env, false);
+      }
+      Java_emitSignature(env);
+
+      env.println("}");
+      env.unindent();
+      env.println();
+  }
+
 
   public void SampleDecl.Java_emitClass(Java_env env, String pack) {
-    env.println("/* ");
-    pp(env.getPrintStream());
-    env.println("*/");
+    Java_emitDeclPP(env);
 
     if (pack != null && pack.length() > 0) {
       env.println("package " + pack + ";");
     }
 
     env.println("import java.io.IOException;");
+    env.println("import se.lth.control.labcomm"+env.verStr+".Constant;");
     env.println("import se.lth.control.labcomm"+env.verStr+".Decoder;");
     env.println("import se.lth.control.labcomm"+env.verStr+".SampleDispatcher;");
     env.println("import se.lth.control.labcomm"+env.verStr+".Encoder;");
@@ -325,6 +417,10 @@ aspect Java_Class {
     env.println("import se.lth.control.labcomm"+env.verStr+".Sample;");
     env.println();
     env.print("public class " + getName());
+//  TODO: ?
+//  Code for making samples of user types extend their type
+//  currently commented out. Is this a good idea or not?
+//
 //    if(getType().isUserType()) {
 //        env.print(" extends "+getType().getTypeName());
 //    }
@@ -341,72 +437,56 @@ aspect Java_Class {
     env.println(") throws Exception;");
     env.println("}");
     env.println();
-    env.println("public static void register(Decoder d, SampleHandler h) throws IOException {");
+    env.println("public static void register(Decoder d, Handler h) throws IOException {");
     env.indent();
-    env.println("d.register(new Dispatcher(), h);");
+    env.println("d.register(Dispatcher.singleton(), h);");
     env.unindent();
     env.println("}");
     env.println();
 
-    env.println("public static void register(Encoder e) throws IOException {");
-    env.indent();
-    env.println("e.register(new Dispatcher());");
-    env.unindent();
-    env.println("}");
-    env.println(); 
 
-    env.println("private static class Dispatcher implements SampleDispatcher {");
-    env.indent();
-    env.println(); 
-    env.println("public Class getSampleClass() {");
-    env.indent();
-    env.println("return " + getName() + ".class;");
-    env.unindent();
-    env.println("}");
-    env.println(); 
-    env.println("public String getName() {");
-    env.indent();
-    env.println("return \"" + getName() + "\";");
-    env.unindent();
-    env.println("}");
-    env.println(); 
-    env.println("public byte[] getSignature() {");
-    env.indent();
-    env.println("return signature;");
-    env.unindent();
-    env.println("}");
-    env.println(); 
-    env.println("public void decodeAndHandle(Decoder d,");
-    env.println("                            SampleHandler h) throws Exception {");
-    env.indent();
-    if (isVoid()) {
-      env.println(getName() + ".decode(d);");
-      env.println("((Handler)h).handle_" + getName() + "();"); 
-    } else {
-      env.println("((Handler)h).handle_" + getName() + "(" + getName() + ".decode(d));"); 
-    }
-    env.unindent();
-    env.println("}");
-    env.println("");
-    env.unindent();
-    env.println("}");
-    env.println("");
-
+    Java_emitRegisterEncoder(env);
+    Java_emitDispatcher(env, true);
     Java_emitEncoder(env);
     Java_emitDecoder(env);
+
+    Java_emitSignature(env);
+    env.unindent();
+    env.println("}");
+    env.println();
+  }
+
+  //public void TypeDecl.Java_emitSignature(Java_env env) {
+  //  Signature signature = getSignature();
+  //  signature.Java_emitSignature(env, true);
+  //}
+
+  public void Decl.Java_emitSignature(Java_env env) {
+    //always emit the flat signature, as it is needed
+    //for matching at the decoder side (which cannot know
+    //the type_ids of dependent types. Therefore, flat sigs
+    //are used for matching
+    Java_emitFlatSignature(env);
+    //if(isReferenced() || isSampleDecl()){
+    //  Signature signature = getSignature();
+    //  signature.Java_emitSignature(env, !isSampleDecl());
+    //}
+  }
+
+  public void Decl.Java_emitFlatSignature(Java_env env){
     env.println("private static byte[] signature = new byte[] {");
-    env.indent();
-    SignatureList signature = signature(env.version);
-    for (int i = 0 ; i < signature.size() ; i++) {
-      String comment = signature.getComment(i);
-      if (comment != null) {
-        env.println(signature.getIndent(i) + "// " + comment);
-      }
-      byte[] data = signature.getData(i);
-      if (data != null) {
-        env.print(signature.getIndent(i));
-        for (int j = 0 ; j < data.length ; j++) {
-	  env.print(data[j] + ", ");
+      env.indent();
+      SignatureList signature = flatSignature(env.version);
+      for (int i = 0 ; i < signature.size() ; i++) {
+        String comment = signature.getComment(i);
+        if (comment != null) {
+          env.println(signature.getIndent(i) + "// " + comment);
+        }
+        byte[] data = signature.getData(i, env.version);
+        if (data != null) {
+          env.print(signature.getIndent(i));
+          for (int j = 0 ; j < data.length ; j++) {
+          env.print(data[j] + ", ");
         }
         env.println();
       }
@@ -415,8 +495,114 @@ aspect Java_Class {
     env.println("};");
     env.unindent();
     env.println();
-    env.println("}");
   }
+
+  //XXX TODO: refactor: split into a static class ("TypeDefSingleton"?)and a (smaller) dispatcher
+  public void Decl.Java_emitDispatcher(Java_env env, boolean isSample) {
+    String genericStr = env.versionHasMetaData()?"<"+getName()+">":""; 
+    env.println("private static class Dispatcher implements SampleDispatcher "+genericStr+"{");
+    env.indent();
+    env.println();
+    env.println("private static Dispatcher singleton;");
+    env.println();
+    env.println("public synchronized static Dispatcher singleton() {");
+    env.indent();
+    env.println("if(singleton==null) singleton=new Dispatcher();");
+    env.println("return singleton;");
+    env.unindent();
+    env.println("}");
+    env.println();
+    env.println("public Class"+genericStr+" getSampleClass() {");
+    env.indent();
+    env.println("return " + getName() + ".class;");
+    env.unindent();
+    env.println("}");
+    env.println();
+    env.println("public String getName() {");
+    env.indent();
+    env.println("return \"" + getName() + "\";");
+    env.unindent();
+    env.println("}");
+    env.println();
+    env.println("public byte getTypeDeclTag() {");
+    env.indent();
+    if(env.version == 2006) {
+      if(isSample) {
+        env.println("return Constant.SAMPLE;");
+      } else {
+        env.println("return Constant.TYPEDEF;");
+      }
+    } else {
+      if(isSample) {
+        env.println("return Constant.SAMPLE_DEF;");
+      } else {
+        env.println("return Constant.TYPE_DEF;");
+      }
+    }
+    env.unindent();
+    env.println("}");
+    env.println();
+    env.println("public boolean isSample() {");
+    env.indent();
+    env.println("return "+isSample+";");
+    env.unindent();
+    env.println("}");
+    env.println("public boolean hasStaticSignature() {");
+    env.indent();
+    env.println("return "+!hasDependencies()+";");
+    env.unindent();
+    env.println("}");
+    env.println();
+    env.println("/** return the flat signature. Intended use is on decoder side */");
+    env.println("public byte[] getSignature() {");
+    env.indent();
+    env.println("return signature;");
+    env.unindent();
+    env.println("}");
+    env.println();
+//    env.println("public void encodeSignature(Encoder e) throws IOException{");
+//    env.indent();
+//    env.println("emitSignature(e);");
+//    env.unindent();
+//    env.println("}");
+//    env.println();
+//    env.println("public void encodeSignatureMetadata(Encoder e, int index) throws IOException{");
+//    env.indent();
+//    env.println("e.encodePacked32(Constant.TYPE_DEF);");
+//    env.println("e.encodePacked32(index);");
+//    env.println("e.encodeString(getName());");
+//    env.println("emitSignature(e);");
+//    env.unindent();
+//    env.println("}");
+//    env.println();
+    env.println("public boolean canDecodeAndHandle() {");
+    env.indent();
+    env.println("return "+isSample+";");
+    env.unindent();
+    env.println("}");
+    env.println();
+    env.println("public void decodeAndHandle(Decoder d,");
+    env.println("                            SampleHandler h) throws Exception {");
+    env.indent();
+    if( isSample) {
+        if (isVoid()) {
+          env.println(getName() + ".decode(d);");
+          env.println("((Handler)h).handle_" + getName() + "();");
+        } else {
+          env.println("((Handler)h).handle_" + getName() + "(" + getName() + ".decode(d));");
+        }
+    } else {
+        env.println("throw new Exception(\"A typedef has no handler, the corresponding method on the sample class should be called.\");");
+    }
+    env.unindent();
+    env.println("}");
+    env.println("");
+    env.unindent();
+    env.println("}");
+    env.println("");
+
+ }
+
 
   public void TypeDecl.Java_emitEncoder(Java_env env) {
     env.print("public static void encode(Encoder e");
@@ -451,8 +637,8 @@ aspect Java_Class {
   }
 
   public void Type.Java_emitEncoder(Java_env env, String name) {
-    throw new Error(this.getClass().getName() + 
-		    ".Java_emitEncoder(Java_env env, String name)" + 
+    throw new Error(this.getClass().getName() +
+		    ".Java_emitEncoder(Java_env env, String name)" +
 		    " not declared");
   }
 
@@ -492,10 +678,10 @@ aspect Java_Class {
       env.print_block_end();
     }
   }
-  
+
   public String Exp.Java_emitEncoder(Java_env env, String name) {
-    throw new Error(this.getClass().getName() + 
-		    ".Java_emitEncoder(Java_env env, String name)" + 
+    throw new Error(this.getClass().getName() +
+		    ".Java_emitEncoder(Java_env env, String name)" +
 		    " not declared");
   }
 
@@ -540,8 +726,8 @@ aspect Java_Class {
   }
 
   public void Type.Java_emitDecoder(Java_env env, String name) {
-    throw new Error(this.getClass().getName() + 
-		    ".Java_emitDecoder(Java_env env, String name)" + 
+    throw new Error(this.getClass().getName() +
+		    ".Java_emitDecoder(Java_env env, String name)" +
 		    " not declared");
   }
 
@@ -573,7 +759,7 @@ aspect Java_Class {
     }
     for (int i = 0 ; i < getNumExp() ; i++) {
       String limit = "i_" + (baseDepth + i) + "_max";
-      env.print(name + " = "); 
+      env.print(name + " = ");
       Java_emitNew(env, limit, getNumExp() - i);
       env.println(";");
       name = name + env.print_for_begin(limit);
@@ -587,8 +773,8 @@ aspect Java_Class {
   }
 
   public void Exp.Java_emitDecoder(Java_env env) {
-    throw new Error(this.getClass().getName() + 
-		    ".Java_emitDecoder(Java_env env)" + 
+    throw new Error(this.getClass().getName() +
+		    ".Java_emitDecoder(Java_env env)" +
 		    " not declared");
   }
 
@@ -619,8 +805,8 @@ aspect Java_Class {
   }
 
   public void Type.Java_emitNew(Java_env env, String size) {
-    throw new Error(this.getClass().getName() + 
-		    ".Java_emitNew(Java_env env, String size)" + 
+    throw new Error(this.getClass().getName() +
+		    ".Java_emitNew(Java_env env, String size)" +
 		    " not declared");
   }
 
@@ -635,8 +821,8 @@ aspect Java_Class {
   }
 
   public void Type.Java_emitTypePrefix(Java_env env) {
-    throw new Error(this.getClass().getName() + 
-		    ".Java_emitTypePrefix(Java_env env)" + 
+    throw new Error(this.getClass().getName() +
+		    ".Java_emitTypePrefix(Java_env env)" +
 		    " not declared");
   }
 
@@ -652,7 +838,7 @@ aspect Java_Class {
       env.print(getName());
     } else {
       decl().getType().Java_emitTypePrefix(env);
-    } 
+    }
   }
 
   public void ArrayType.Java_emitTypePrefix(Java_env env){
@@ -669,7 +855,7 @@ aspect Java_Class {
   public void UserType.Java_emitTypeSuffix(Java_env env) {
     if (! Java_needInstance()) {
       decl().getType().Java_emitTypeSuffix(env);
-    } 
+    }
   }
 
   public void ArrayType.Java_emitTypeSuffix(Java_env env){
@@ -680,8 +866,8 @@ aspect Java_Class {
   }
 
   public boolean Type.Java_needInstance() {
-    throw new Error(this.getClass().getName() + 
-		    ".Java_needInstance()" + 
+    throw new Error(this.getClass().getName() +
+		    ".Java_needInstance()" +
 		    " not declared");
   }
 
@@ -714,8 +900,8 @@ aspect Java_Class {
   }
 
   public void Type.Java_emitInstance(Java_env env) {
-    throw new Error(this.getClass().getName() + 
-		    ".Java_emitInstance(Java_env env)" + 
+    throw new Error(this.getClass().getName() +
+		    ".Java_emitInstance(Java_env env)" +
 		    " not declared");
   }
 
@@ -753,12 +939,12 @@ aspect Java_Class {
   public void Field.Java_emitField(Java_env env) {
     env.print("public ");
     getType().Java_emitType(env);
-    env.println(" " + getName() + ";");    
+    env.println(" " + getName() + ";");
   }
 
   public void Type.Java_emitType(Java_env env) {
-    throw new Error(this.getClass().getName() + 
-		    ".Java_emitType(Java_env env)" + 
+    throw new Error(this.getClass().getName() +
+		    ".Java_emitType(Java_env env)" +
 		    " not declared");
   }
 
@@ -787,6 +973,53 @@ aspect Java_Class {
   public void StructType.Java_emitType(Java_env env){
     env.print(Java_structName());
   }
+}
+
+aspect Java_Signature {
+    public void Signature.Java_emitSignature(Java_env env, boolean decl){
+      // XXX should sendOnlyFlatSignatures be kept somewhere?
+      //SignatureList sl = (parentDecl().sendOnlyFlatSignatures(env)) ? getFlatSignatureList() : getSignatureList();
+      SignatureList sl = getSignatureList();
+      sl.Java_emitSignature(env, decl);
+    }
+
+//    public void Signature.Java_emitHierarchicalSignature(Java_env env, boolean decl){
+//      SignatureList sl = getSignatureList();
+//      sl.Java_emitSignature(env, decl);
+//    }
+//
+    public abstract void SignatureLine.Java_emitSignature(Java_env env, boolean decl);
+
+    public void TypeRefSignatureLine.Java_emitSignature(Java_env env, boolean isDecl){
+      env.print(getIndentString());
+      env.println("e.encodePacked32(e.getTypeId("+decl.getName()+".class));");
+    }
+
+    public void DataSignatureLine.Java_emitSignature(Java_env env, boolean decl){
+        byte[] data = getData(env.version);
+          if (data != null) {
+              env.print(getIndentString());
+              for (int j = 0 ; j < data.length ; j++) {
+                  //env.print("e.encodeByte((byte)"+data[j]+");");
+                  env.print("e.encodeByte((byte)"+ String.format("0x%02X ", data[j]) +"); ");
+              }
+              env.println();
+          }
+  }
+    public void SignatureList.Java_emitSignature(Java_env env, boolean decl) {
+      env.println("private static void emitSignature(Encoder e) throws IOException{");
+      env.indent();
+      for (int i = 0 ; i < size() ; i++) {
+        String comment = getComment(i);
+        if (comment != null && comment.length() > 0) {
+            env.println(getIndent(i) + "// " + comment);
+        }
+        SignatureLine l = getSignatureLine(i);
+        l.Java_emitSignature(env, decl);
+      }
+      env.println("}");
+      env.unindent();
+  }
 
 }
 
@@ -800,14 +1033,14 @@ aspect Java_Info {
   }
 
   public void Decl.Java_info(Java_env env) {
-    throw new Error(this.getClass().getName() + 
-		    ".Java_info(Java_env env)" + 
+    throw new Error(this.getClass().getName() +
+		    ".Java_info(Java_env env)" +
 		    " not declared");
   }
 
   public void TypeDecl.Java_info(Java_env env) {
     env.print(",Java,typedef," + getName() + ",");
-    getType().Java_emitType(env); 
+    getType().Java_emitType(env);
     env.print(",not_applicable_for_Java");
     env.println();
   }

@@ -28,7 +28,7 @@ namespace se.lth.control.labcomm {
 			          version + " != " + Constant.CURRENT_VERSION);
           }
         } break;
-        case Constant.SAMPLE: {
+        case Constant.SAMPLE_DEF: {
           int index = decodePacked32();
           String name = decodeString();
           int signature_length = decodePacked32();

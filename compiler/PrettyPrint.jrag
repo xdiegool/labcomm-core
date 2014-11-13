@@ -68,6 +68,10 @@ aspect PrettyPrint {
     out.print("void");
   }
 
+  public String PrimType.toString() {
+    return getName();
+  }
+
   public void PrimType.ppPrefix(PrintStream out) { 
     out.print(getName());
   }

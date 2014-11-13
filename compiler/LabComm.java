@@ -78,6 +78,7 @@ public class LabComm {
   }
 
   private static void genCS(Program p, String csName, String csNamespace, int ver) {
+//      throw new Error("C# generation currently disabled");
     try {
       p.CS_gen(csName, csNamespace, ver);
     } catch (IOException e) {

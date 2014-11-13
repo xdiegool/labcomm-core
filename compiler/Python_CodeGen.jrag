@@ -81,17 +81,16 @@ aspect Python_CodeGen {
     env.println("# Auto generated " + baseName);
     env.println();
     env.println("import labcomm");
+    env.println("import StringIO");
     env.println();
     Python_genTypes(env);
-/* Typedefs curenntly disabled
-    env.println("typedef = [");
-    env.indent();
-    for (int i = 0 ; i < getNumDecl() ; i++) {
-      getDecl(i).Python_genTypedefListEntry(env);
-    }
-    env.unindent();
-    env.println("]");
-*/
+    //env.println("typedef = [");
+    //env.indent();
+    //for (int i = 0 ; i < getNumDecl() ; i++) {
+    //  getDecl(i).Python_genTypedefListEntry(env);
+    //}
+    //env.unindent();
+    //env.println("]");
     env.println("sample = [");
     env.indent();
     for (int i = 0 ; i < getNumDecl() ; i++) {
@@ -229,3 +228,4 @@ aspect PythonTypes {
   }
 
 }
+

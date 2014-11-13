@@ -39,29 +39,31 @@
 /*
  * Allowed packet tags
  */
-#define LABCOMM_VERSION  0x01
-#define LABCOMM_SAMPLE   0x02
-#define LABCOMM_PRAGMA   0x3f
-#define LABCOMM_USER     0x40 /* ..0xffffffff */
+#define LABCOMM_VERSION     0x01
+#define LABCOMM_SAMPLE      0x02
+#define LABCOMM_TYPEDEF     0x03
+#define LABCOMM_TYPEBINDING 0x04
+#define LABCOMM_PRAGMA      0x3f
+#define LABCOMM_USER        0x40 /* ..0xffffffff */
 
 
 /*
  * Predefined aggregate type indices
  */
-#define LABCOMM_ARRAY    0x10
-#define LABCOMM_STRUCT   0x11
+#define LABCOMM_ARRAY       0x10
+#define LABCOMM_STRUCT      0x11
 
 /*
  * Predefined primitive type indices
  */
-#define LABCOMM_BOOLEAN  0x20 
-#define LABCOMM_BYTE     0x21
-#define LABCOMM_SHORT    0x22
-#define LABCOMM_INT      0x23
-#define LABCOMM_LONG     0x24
-#define LABCOMM_FLOAT    0x25
-#define LABCOMM_DOUBLE   0x26
-#define LABCOMM_STRING   0x27
+#define LABCOMM_BOOLEAN     0x20 
+#define LABCOMM_BYTE        0x21
+#define LABCOMM_SHORT       0x22
+#define LABCOMM_INT         0x23
+#define LABCOMM_LONG        0x24
+#define LABCOMM_FLOAT       0x25
+#define LABCOMM_DOUBLE      0x26
+#define LABCOMM_STRING      0x27
 
 
 /*

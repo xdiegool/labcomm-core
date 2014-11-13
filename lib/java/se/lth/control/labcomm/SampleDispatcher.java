@@ -1,6 +1,6 @@
 package se.lth.control.labcomm;
 
-public interface SampleDispatcher {
+public interface SampleDispatcher <T> {
     
   public Class getSampleClass();
     

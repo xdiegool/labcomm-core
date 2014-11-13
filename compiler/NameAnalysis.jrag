@@ -34,7 +34,11 @@ aspect NameAnalysis {
     return null;
   }
 
-  syn TypeDecl UserType.decl() = lookupType(getName());
+  //syn TypeDecl UserType.decl() = lookupType(getName());
+  syn TypeDecl Type.decl(); 
+  eq Type.decl() = null;
+  eq UserType.decl() = lookupType(getName());
+  eq PrimType.decl() = null; //HERE BE DRAGONS XXX
   
   
   public void ASTNode.nameCheck() {

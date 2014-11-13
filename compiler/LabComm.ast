@@ -1,6 +1,21 @@
 Program ::= Decl*;
 
-abstract Decl ::= Type <Name:String>;
+//TODO: Add signatures to the abstract grammar, so that
+//they can be extended and refined by more than one aspect.
+//sketch:
+Signature		::= SignatureList FlatSignatureList:SignatureList; 
+SignatureList		::= SignatureLine*;
+abstract SignatureLine 	::= <Indent:int> <Comment:String>; 
+abstract DataSignatureLine : SignatureLine;
+ByteArraySignatureLine : DataSignatureLine ::= <Data:byte[]>;
+IntSignatureLine : DataSignatureLine ::= <Data:int>;
+StringSignatureLine : DataSignatureLine ::= <Data:String>;
+TypeRefSignatureLine   	: SignatureLine ::= Decl;
+
+
+//abstract Decl ::= Type <Name:String>;
+// the signature list be defined as  a non-terminal attribute:
+abstract Decl ::= Type <Name:String> /Signature/;
 TypeDecl : Decl;
 SampleDecl : Decl;
 

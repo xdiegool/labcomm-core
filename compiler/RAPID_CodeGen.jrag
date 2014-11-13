@@ -97,19 +97,21 @@ aspect RAPID_CodeGen {
 		throw new UnsupportedOperationException("RAPID code generation (currently) does not support "+getClass().getSimpleName());
 	}
 
-	public void SampleDecl.RAPID_gen(RAPID_env env) {
-		// Add type declarations
-		String fullName = getType().RAPID_AddType(env, getName());
-		// Add signature constants
-		String sig_len_name = "signature_len_" + getName();
-		String sig_name = "signature_" + getName();
-		SignatureList sig = signature(env.version);
+	public void TypeDecl.RAPID_gen(RAPID_env env) {
+		System.out.println("***WARNING! TypeDecl.RapidGen(.) a NOP after sig reorganization.");
+		System.out.println("            (Tell a developer to) remove this warning when tested");
+	}
+
+	public void Decl.RAPID_emitFlatSignature(RAPID_env env, String sig_len_name, String sig_name) {
+		System.out.println("***WARNING! Code not tested after reorganization of signatures.");
+		System.out.println("            (Tell a developer to) remove this warning when tested");
+		SignatureList sig = flatSignature(env.version);
 		StringBuilder sb = new StringBuilder();
 		sb.append("[");
 		byte[] d = null;
 		int sig_len = 0;
 		for (int i = 0; i < sig.size(); i++) {
-			d = sig.getData(i);
+			d = sig.getData(i, env.version);
 			for (int j = 0; d != null && j < d.length; j++) {
 				sb.append(d[j] + ",");
 				sig_len++;
@@ -119,8 +121,18 @@ aspect RAPID_CodeGen {
 		sb.append("]");
 		env.addConstant("num", sig_len_name, "" + sig_len);
 		env.addConstant("byte", sig_name + "{" + sig_len_name + "}",
-			sb.toString());
-		
+		sb.toString());
+	} 
+
+	public void SampleDecl.RAPID_gen(RAPID_env env) {
+		// Add type declarations
+		String fullName = getType().RAPID_AddType(env, getName());
+		// Add signature constants
+		String sig_len_name = "signature_len_" + getName();
+		String sig_name = "signature_" + getName();
+
+		RAPID_emitFlatSignature(env, sig_len_name, sig_name);
+
 		// Add decode procedures
 		ArrayList<String> params = new ArrayList<String>();
 		ArrayList<String> stmts = new ArrayList<String>();

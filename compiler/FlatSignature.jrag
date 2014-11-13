@@ -1,0 +1,115 @@
+import java.util.*;
+
+aspect FlatSignature {  
+
+  public SignatureList Decl.flatSignature(int version) {
+    SignatureList result = getSignature().getFlatSignatureList();
+    return result;
+  }
+  
+  public void ASTNode.flatSignature(SignatureList list) {
+    throw new Error(this.getClass().getName() + 
+                    ".flatSignature(SignatureList list)" + 
+                    " not declared");
+  }
+
+  public void TypeDecl.flatSignature(SignatureList list) {
+    getType().flatSignature(list);
+  }
+
+  public void SampleDecl.flatSignature(SignatureList list) {
+    getType().flatSignature(list);
+  }
+
+  public void VoidType.flatSignature(SignatureList list) {
+    list.addInt(LABCOMM_STRUCT, "void");
+    list.addInt(0, null);
+  }
+
+  public void PrimType.flatSignature(SignatureList list) {
+    list.addInt(getToken(), null);
+  }
+
+  public void UserType.flatSignature(SignatureList list) {
+    lookupType(getName()).flatSignature(list);
+  }
+
+  public void ArrayType.flatSignature(SignatureList list) {
+    list.addInt(LABCOMM_ARRAY, signatureComment());
+    list.indent();
+    list.addInt(getNumExp(), null);
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      getExp(i).flatSignature(list);
+    }
+    getType().flatSignature(list);
+    list.unindent();
+    list.add(null, "}");
+  }
+
+  public void StructType.flatSignature(SignatureList list) {
+    list.addInt(LABCOMM_STRUCT, "struct { " + getNumField() + " fields");
+    list.indent();
+    list.addInt(getNumField(), null);
+    for (int i = 0 ; i < getNumField() ; i++) {
+      getField(i).flatSignature(list);
+    }
+    list.unindent();
+    list.add(null, "}");
+  }
+
+  public void Field.flatSignature(SignatureList list) {
+    list.addString(getName(), signatureComment());
+    getType().flatSignature(list);
+  }
+
+  public void IntegerLiteral.flatSignature(SignatureList list) {
+    list.addInt(Integer.parseInt(getValue()), null);
+  }
+
+  public void VariableSize.flatSignature(SignatureList list) {
+    list.addInt(0, null);
+  }
+
+  public String ArrayType.signatureComment() {
+    StringBuffer result = new StringBuffer("array [");
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      if (i > 0) {
+	result.append(", ");
+      }
+      result.append(getExp(i).signatureComment());
+    }
+    result.append("]");
+    return result.toString();
+  }
+
+  public String ASTNode.signatureComment() {
+    throw new Error(this.getClass().getName() + 
+                    ".signatureComment()" + 
+                    " not declared");
+  }
+
+  public String Field.signatureComment() {
+    return getType().signatureComment() + " '" + getName() +"'";
+  }
+
+  public String PrimType.signatureComment() {
+    return getName();
+  }
+
+  public String UserType.signatureComment() {
+    return getName();
+  }
+
+  public String StructType.signatureComment() {
+    return "struct";
+  }
+
+  public String IntegerLiteral.signatureComment() {
+    return getValue();
+  }
+
+  public String VariableSize.signatureComment() {
+    return "_";
+  }
+
+}
