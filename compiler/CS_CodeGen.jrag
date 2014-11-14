@@ -720,6 +720,10 @@ aspect CS_Class {
 		    " not declared");
   }
 
+  public void SampleRefType.CS_emitTypePrefix(CS_env env) {
+    env.print("Sample");
+  }
+
   public void PrimType.CS_emitTypePrefix(CS_env env) {
     switch (getToken()) {
       case LABCOMM_STRING: { env.print("String"); } break;
@@ -842,6 +846,10 @@ aspect CS_Class {
     throw new Error(this.getClass().getName() + 
 		    ".CS_emitType(CS_env env)" + 
 		    " not declared");
+  }
+
+  public void SampleRefType.CS_emitType(CS_env env) {
+    env.print("Sample");
   }
 
   public void VoidType.CS_emitType(CS_env env) {

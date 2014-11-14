@@ -938,6 +938,10 @@ aspect Java_Class {
 		    " not declared");
   }
 
+  public void SampleRefType.Java_emitType(Java_env env) {
+    env.print("Sample");
+  }
+
   public void VoidType.Java_emitType(Java_env env) {
     env.print("void");
   }

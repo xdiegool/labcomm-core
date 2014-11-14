@@ -152,6 +152,10 @@ aspect PythonTypes {
                     " not declared");
   }
 
+  public void SampleRefType.Python_genSignature(Python_env env) {
+    env.print("labcomm.SAMPLE_REF()");
+  }
+
   public void PrimType.Python_genSignature(Python_env env) {
     switch (getToken()) {
       case LABCOMM_BOOLEAN: { env.print("labcomm.BOOLEAN()"); } break;
