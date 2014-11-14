@@ -39,31 +39,31 @@
 /*
  * Allowed packet tags
  */
-#define LABCOMM_VERSION     0x01
-#define LABCOMM_SAMPLE      0x02
-#define LABCOMM_TYPEDEF     0x03
-#define LABCOMM_TYPEBINDING 0x04
-#define LABCOMM_PRAGMA      0x3f
-#define LABCOMM_USER        0x40 /* ..0xffffffff */
-
+#define LABCOMM_VERSION      0x01
+#define LABCOMM_SAMPLE_DEF   0x02
+#define LABCOMM_SAMPLE_REF   0x03
+#define LABCOMM_TYPEDEF      0x04
+#define LABCOMM_TYPEBINDING  0x05
+#define LABCOMM_PRAGMA       0x3f
+#define LABCOMM_USER         0x40 /* ..0xffffffff */
 
 /*
  * Predefined aggregate type indices
  */
-#define LABCOMM_ARRAY       0x10
-#define LABCOMM_STRUCT      0x11
+#define LABCOMM_ARRAY        0x10
+#define LABCOMM_STRUCT       0x11
 
 /*
  * Predefined primitive type indices
  */
-#define LABCOMM_BOOLEAN     0x20 
-#define LABCOMM_BYTE        0x21
-#define LABCOMM_SHORT       0x22
-#define LABCOMM_INT         0x23
-#define LABCOMM_LONG        0x24
-#define LABCOMM_FLOAT       0x25
-#define LABCOMM_DOUBLE      0x26
-#define LABCOMM_STRING      0x27
+#define LABCOMM_BOOLEAN      0x20 
+#define LABCOMM_BYTE         0x21
+#define LABCOMM_SHORT        0x22
+#define LABCOMM_INT          0x23
+#define LABCOMM_LONG         0x24
+#define LABCOMM_FLOAT        0x25
+#define LABCOMM_DOUBLE       0x26
+#define LABCOMM_STRING       0x27
 
 
 /*
@@ -129,7 +129,7 @@ struct labcomm_reader_action {
   int (*start)(struct labcomm_reader *r, 
 	       struct labcomm_reader_action_context *action_context,
 	       int local_index, int remote_index,
-	       struct labcomm_signature *signature,
+	       const struct labcomm_signature *signature,
 	       void *value);
   int (*end)(struct labcomm_reader *r, 
 	     struct labcomm_reader_action_context *action_context);
@@ -138,7 +138,7 @@ struct labcomm_reader_action {
   int (*ioctl)(struct labcomm_reader *r, 
 	       struct labcomm_reader_action_context *action_context,
 	       int local_index, int remote_index,
-	       struct labcomm_signature *signature, 
+	       const struct labcomm_signature *signature, 
 	       uint32_t ioctl_action, va_list args);
 };
 
@@ -167,7 +167,7 @@ int labcomm_reader_free(struct labcomm_reader *r,
 int labcomm_reader_start(struct labcomm_reader *r, 
 			 struct labcomm_reader_action_context *action_context,
 			 int local_index, int remote_index,
-			 struct labcomm_signature *signature,
+			 const struct labcomm_signature *signature,
 			 void *value);
 int labcomm_reader_end(struct labcomm_reader *r, 
 		       struct labcomm_reader_action_context *action_context);
@@ -176,7 +176,7 @@ int labcomm_reader_fill(struct labcomm_reader *r,
 int labcomm_reader_ioctl(struct labcomm_reader *r, 
 			 struct labcomm_reader_action_context *action_context,
 			 int local_index, int remote_index,
-			 struct labcomm_signature *signature, 
+			 const struct labcomm_signature *signature, 
 			 uint32_t ioctl_action, va_list args);
 
 /*
@@ -185,14 +185,17 @@ int labcomm_reader_ioctl(struct labcomm_reader *r,
  */
 int labcomm_internal_decoder_register(
   struct labcomm_decoder *d, 
-  struct labcomm_signature *s, 
+  const struct labcomm_signature *s, 
   labcomm_decoder_function decoder,
   labcomm_handler_function handler,
   void *context);
 
 int labcomm_internal_decoder_ioctl(struct labcomm_decoder *decoder, 
-				   struct labcomm_signature *signature,
+				   const struct labcomm_signature *signature,
 				   uint32_t ioctl_action, va_list args);
+
+const struct labcomm_signature *labcomm_internal_decoder_index_to_signature(
+  struct labcomm_decoder *decoder, int index);
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 
@@ -314,7 +317,7 @@ struct labcomm_writer_action {
    */
   int (*start)(struct labcomm_writer *w, 
 	       struct labcomm_writer_action_context *action_context,
-	       int index, struct labcomm_signature *signature,
+	       int index, const struct labcomm_signature *signature,
 	       void *value);
   int (*end)(struct labcomm_writer *w, 
 	     struct labcomm_writer_action_context *action_context);
@@ -322,7 +325,7 @@ struct labcomm_writer_action {
 	       struct labcomm_writer_action_context *action_context); 
   int (*ioctl)(struct labcomm_writer *w, 
 	       struct labcomm_writer_action_context *action_context, 
-	       int index, struct labcomm_signature *signature, 
+	       int index, const struct labcomm_signature *signature, 
 	       uint32_t ioctl_action, va_list args);
 };
 
@@ -350,7 +353,7 @@ int labcomm_writer_free(struct labcomm_writer *w,
 			struct labcomm_writer_action_context *action_context);
 int labcomm_writer_start(struct labcomm_writer *w, 
 			 struct labcomm_writer_action_context *action_context,
-			 int index, struct labcomm_signature *signature,
+			 int index, const struct labcomm_signature *signature,
 			 void *value);
 int labcomm_writer_end(struct labcomm_writer *w, 
 		       struct labcomm_writer_action_context *action_context);
@@ -358,26 +361,30 @@ int labcomm_writer_flush(struct labcomm_writer *w,
 			 struct labcomm_writer_action_context *action_context); 
 int labcomm_writer_ioctl(struct labcomm_writer *w, 
 			 struct labcomm_writer_action_context *action_context, 
-			 int index, struct labcomm_signature *signature, 
+			 int index, const struct labcomm_signature *signature, 
 			 uint32_t ioctl_action, va_list args);
 
 int labcomm_internal_encoder_register(
   struct labcomm_encoder *encoder, 
-  struct labcomm_signature *signature, 
+  const struct labcomm_signature *signature, 
   labcomm_encoder_function encode);
 
 int labcomm_internal_encode(
   struct labcomm_encoder *encoder, 
-  struct labcomm_signature *signature, 
+  const struct labcomm_signature *signature, 
   labcomm_encoder_function encode,
   void *value);
 
 int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder, 
-				   struct labcomm_signature *signature,
+				   const struct labcomm_signature *signature,
 				   uint32_t ioctl_action, va_list args);
 
-int labcomm_internal_sizeof(struct labcomm_signature *signature,
+int labcomm_internal_encoder_signature_to_index(
+  struct labcomm_encoder *encoder, const struct labcomm_signature *signature);
+
+int labcomm_internal_sizeof(const struct labcomm_signature *signature,
                             void *v);
+
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 
@@ -521,6 +528,11 @@ void *labcomm_signature_array_ref(struct labcomm_memory * memory,
 					(void **)&name.data,		\
 					sizeof(kind), index)))
 
+#define LABCOMM_SIGNATURE_ARRAY_GET(name, kind, index, nomatch)         \
+  (name.data = (kind *)name.data, /* typechecking no-op */		\
+   (name.first <= index &&                                              \
+    index < name.last) ? name.data[index - name.first] : nomatch)
+
 #define LABCOMM_SIGNATURE_ARRAY_FOREACH(name, kind, var)		\
   for (name.data = (kind *)name.data, /* typechecking no-op */		\
        var = name.first ; var < name.last ; var++)
@@ -529,6 +541,6 @@ void *labcomm_signature_array_ref(struct labcomm_memory * memory,
 void labcomm_set_local_index(struct labcomm_signature *signature);
 
 /* Get the local index for a signature */
-int labcomm_get_local_index(struct labcomm_signature *s);
+int labcomm_get_local_index(const struct labcomm_signature *s);
 
 #endif
