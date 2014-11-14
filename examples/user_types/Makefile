@@ -32,11 +32,11 @@ cleanbuild: clean build
 labcomm.dll:
 	ln -sf ../../lib/csharp/labcomm.dll $@
 
-Encoder.exe: Encoder.cs gen/test.cs labcomm.dll Makefile
+ExampleEncoder.exe: ExampleEncoder.cs gen/test.cs labcomm.dll Makefile
 	mcs -out:$@ $(filter %.cs, $^) -lib:../../lib/csharp/ -r:labcomm
 	chmod a+x $@
 
-Decoder.exe: Decoder.cs gen/test.cs labcomm.dll Makefile
+ExampleDecoder.exe: ExampleDecoder.cs gen/test.cs labcomm.dll Makefile
 	mcs -out:$@ $(filter %.cs, $^) -lib:../../lib/csharp/ -r:labcomm
 	chmod a+x $@
 
@@ -100,7 +100,7 @@ run:
 	@echo "************ running python decoder (from wiki_example):"
 	PYTHONPATH=${LCDIR}/lib/python ../wiki_example/example_decoder.py encoded_data_p LabComm2014
 
-runwcs: Encoder.exe Decoder.exe
+runwcs: ExampleEncoder.exe ExampleDecoder.exe
 	export LD_LIBRARY_PATH=${LCDIR}/lib/c/
 	@echo
 	@echo "********************************************"
@@ -120,7 +120,7 @@ runwcs: Encoder.exe Decoder.exe
 	@PYTHONPATH=${LCDIR}/lib/python ../wiki_example/example_decoder.py encoded_data_j LabComm2014
 
 	@echo "************ running C# decoder: *****************"
-	@./Decoder.exe encoded_data_j
+	@./ExampleDecoder.exe encoded_data_j
 
 	@echo "************ running C encoder: *****************"
 	@./example_encoder encoded_data_c
@@ -135,7 +135,7 @@ runwcs: Encoder.exe Decoder.exe
 	@PYTHONPATH=${LCDIR}/lib/python ../wiki_example/example_decoder.py encoded_data_c LabComm2014
 
 	@echo "************ running C# decoder: *****************"
-	@./Decoder.exe encoded_data_c
+	@./ExampleDecoder.exe encoded_data_c
 
 	@echo "************ running python encoder: *****************"
 	@PYTHONPATH=${LCDIR}/lib/python:${GENDIR} ./example_encoder.py encoded_data_p LabComm2014
@@ -150,10 +150,10 @@ runwcs: Encoder.exe Decoder.exe
 	PYTHONPATH=${LCDIR}/lib/python ../wiki_example/example_decoder.py encoded_data_p LabComm2014
 
 	@echo "************ running C# decoder: *****************"
-	@./Decoder.exe encoded_data_p
+	@./ExampleDecoder.exe encoded_data_p
 
 	@echo "************ running C# encoder: *****************"
-	@./Encoder.exe encoded_data_cs
+	@./ExampleEncoder.exe encoded_data_cs
 
 	@echo "************ running Java  decoder: *****************"
 	@java -cp .:${LCDIR}/lib/java/labcomm.jar:${GENDIR} Decoder encoded_data_cs
@@ -165,7 +165,7 @@ runwcs: Encoder.exe Decoder.exe
 	@PYTHONPATH=${LCDIR}/lib/python ../wiki_example/example_decoder.py encoded_data_cs LabComm2014
 
 	@echo "************ running C# decoder: *****************"
-	@./Decoder.exe encoded_data_cs
+	@./ExampleDecoder.exe encoded_data_cs
 
 
 
