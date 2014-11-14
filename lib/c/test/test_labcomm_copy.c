@@ -40,6 +40,11 @@ static void handle_p(generated_encoding_P *v, void *context)
   labcomm_copy_generated_encoding_P(labcomm_default_memory, context, v);
 }
 
+static void handle_r(generated_encoding_R *v, void *context)
+{
+  labcomm_copy_generated_encoding_R(labcomm_default_memory, context, v);
+}
+
 static void handle_test_var(test_sample_test_var *v, void *context)
 {
   labcomm_copy_test_sample_test_var(labcomm_default_memory, context, v);
@@ -88,6 +93,8 @@ int main(int argc, char **argv)
   more_types_NS cache_ns;
   more_types_AS as;
   more_types_AS cache_as;
+  generated_encoding_R r;
+  generated_encoding_R cache_r;
 
   fd = open(DATA_FILE, O_RDWR | O_CREAT | O_TRUNC, 0644);
   if (fd == -1)
@@ -152,6 +159,17 @@ int main(int argc, char **argv)
   as.a[2] = "string 2";
   labcomm_encode_more_types_AS(encoder, &as);
 
+  labcomm_encoder_register_generated_encoding_R(encoder);
+  labcomm_encoder_sample_ref_register(encoder, labcomm_signature_generated_encoding_V);
+  labcomm_encoder_sample_ref_register(encoder, 
+                                      labcomm_signature_generated_encoding_UnusedD);
+  labcomm_encoder_sample_ref_register(encoder, labcomm_signature_generated_encoding_R);
+  r.a[0] = labcomm_signature_generated_encoding_V;
+  r.a[1] = labcomm_signature_generated_encoding_UnusedE;
+  r.a[2] = labcomm_signature_generated_encoding_UnusedD;
+  r.a[3] = labcomm_signature_generated_encoding_R;
+  labcomm_encode_generated_encoding_R(encoder, &r);
+
   labcomm_encoder_free(encoder);
   encoder = NULL;
   lseek(fd, 0, SEEK_SET);
@@ -171,6 +189,11 @@ int main(int argc, char **argv)
   labcomm_decoder_register_more_types_S(decoder, handle_s, &cache_s);
   labcomm_decoder_register_more_types_NS(decoder, handle_ns, &cache_ns);
   labcomm_decoder_register_more_types_AS(decoder, handle_as, &cache_as);
+  labcomm_decoder_register_generated_encoding_R(decoder, handle_r, &cache_r);
+  labcomm_decoder_sample_ref_register(decoder, labcomm_signature_generated_encoding_V);
+  labcomm_decoder_sample_ref_register(decoder, 
+                                      labcomm_signature_generated_encoding_UnusedE);
+  labcomm_decoder_sample_ref_register(decoder, labcomm_signature_generated_encoding_R);
 
   while (labcomm_decoder_decode_one(decoder) > 0) ;
 
@@ -216,6 +239,16 @@ int main(int argc, char **argv)
     assert(!strcmp(cache_as.a[i], as.a[i]));
   free(as.a);
   puts("AS copied ok");
+
+  fprintf(stderr, "%p %p\n", r.a[0], cache_r.a[0]);
+  fprintf(stderr, "%p %p\n", r.a[1], cache_r.a[1]);
+  fprintf(stderr, "%p %p\n", r.a[2], cache_r.a[2]);
+  fprintf(stderr, "%p %p\n", r.a[3], cache_r.a[3]);
+  assert(cache_r.a[0] == r.a[0]);
+  assert(cache_r.a[1] == NULL); /* UnusedE */
+  assert(cache_r.a[2] == NULL); /* UnusedD */
+  assert(cache_r.a[3] == r.a[3]);
+  puts("R copied ok");
 
   labcomm_decoder_free(decoder);
   close(fd);

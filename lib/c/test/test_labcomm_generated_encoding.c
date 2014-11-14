@@ -59,7 +59,7 @@ static int buf_writer_start(
   struct labcomm_writer *w,
   struct labcomm_writer_action_context *action_context,
   int index,
-  struct labcomm_signature *signature,
+  const struct labcomm_signature *signature,
   void *value)
 {
   return 0;
@@ -85,7 +85,7 @@ static int buf_writer_flush(
 static int buf_writer_ioctl(
   struct labcomm_writer *w, 
   struct labcomm_writer_action_context *action_context,
-  int signature_index, struct labcomm_signature *signature,
+  int signature_index, const struct labcomm_signature *signature,
   uint32_t action, va_list arg)
 {
   int result = -ENOTSUP;
@@ -178,9 +178,8 @@ void dump_encoder(struct labcomm_encoder *encoder)
 
 int main(void)
 {
-  //no longer used
-  //generated_encoding_V V;
   generated_encoding_B B = 1;
+  generated_encoding_R R;
 
   struct labcomm_encoder *encoder = labcomm_encoder_new(
     &buffer_writer, 
@@ -198,7 +197,31 @@ int main(void)
   /* Register twice to make sure that only one registration gets encoded */
   labcomm_encoder_register_generated_encoding_B(encoder);
   labcomm_encoder_register_generated_encoding_B(encoder);
-  EXPECT({0x02, 0x05, -1, 0x01, 'B',0x01, 0x21});
+  EXPECT({0x02, 0x05, -1, 0x01, 'B', 0x01, 0x21});
+
+  labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
+  /* Register twice to make sure that only one registration gets encoded */
+  labcomm_encoder_sample_ref_register(encoder, 
+                                      labcomm_signature_generated_encoding_V);
+  labcomm_encoder_sample_ref_register(encoder, 
+                                      labcomm_signature_generated_encoding_V);
+  EXPECT({0x03, 0x06, -1, 0x01, 'V', 0x02, 0x11, 0x00});
+
+  labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
+  /* Register twice to make sure that only one registration gets encoded */
+  labcomm_encoder_sample_ref_register(encoder, 
+                                      labcomm_signature_generated_encoding_B);
+  labcomm_encoder_sample_ref_register(encoder, 
+                                      labcomm_signature_generated_encoding_B);
+  EXPECT({0x03, 0x05, -1, 0x01, 'B', 0x01, 0x21});
+
+  labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
+  /* Register twice to make sure that only one registration gets encoded */
+  labcomm_encoder_sample_ref_register(encoder, 
+                                      labcomm_signature_generated_encoding_R);
+  labcomm_encoder_sample_ref_register(encoder, 
+                                      labcomm_signature_generated_encoding_R);
+  EXPECT({0x03, 0x08, -1, 0x01, 'R', 0x04, 0x10, 0x01, 0x04, 0x03});
 
   labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   // was: labcomm_encode_generated_encoding_V(encoder, &V);
@@ -209,6 +232,16 @@ int main(void)
   labcomm_encode_generated_encoding_B(encoder, &B);
   EXPECT({-1, 0x01, 1});
 
+  labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
+  R.a[0] = labcomm_signature_generated_encoding_V;
+  R.a[1] = labcomm_signature_generated_encoding_B;
+  R.a[2] = labcomm_signature_generated_encoding_UnusedE;
+  R.a[3] = labcomm_signature_generated_encoding_R;
+  labcomm_encode_generated_encoding_R(encoder, &R);
+  EXPECT({-1, 0x10, 0x00, 0x00, 0x00, -1,
+                    0x00, 0x00, 0x00, -1,
+                    0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, -1});
   return 0;
 }
 

@@ -64,7 +64,7 @@ int labcomm_reader_free(struct labcomm_reader *r,
 int labcomm_reader_start(struct labcomm_reader *r, 
                          struct labcomm_reader_action_context *action_context,
 			 int local_index, int remote_index,
-			 struct labcomm_signature *signature,
+			 const struct labcomm_signature *signature,
 			 void *value)
 {
   UNWRAP(start, r, action_context, local_index, remote_index, signature, value);
@@ -85,7 +85,7 @@ int labcomm_reader_fill(struct labcomm_reader *r,
 int labcomm_reader_ioctl(struct labcomm_reader *r, 
                          struct labcomm_reader_action_context *action_context,
                          int local_index, int remote_index,
-                         struct labcomm_signature *signature, 
+                         const struct labcomm_signature *signature, 
                          uint32_t ioctl_action, va_list args)
 {
   UNWRAP(ioctl, r, action_context, 
@@ -106,7 +106,7 @@ int labcomm_writer_free(struct labcomm_writer *w,
 
 int labcomm_writer_start(struct labcomm_writer *w, 
                          struct labcomm_writer_action_context *action_context,
-                         int index, struct labcomm_signature *signature,
+                         int index, const struct labcomm_signature *signature,
                          void *value)
 {
   UNWRAP(start, w, action_context, index, signature, value);
@@ -127,7 +127,7 @@ int labcomm_writer_flush(struct labcomm_writer *w,
 int labcomm_writer_ioctl(struct labcomm_writer *w, 
                          struct labcomm_writer_action_context *action_context, 
                          int index, 
-                         struct labcomm_signature *signature, 
+                         const struct labcomm_signature *signature, 
                          uint32_t ioctl_action, va_list args)
 {
   UNWRAP(ioctl, w, action_context, index, signature, ioctl_action, args);
@@ -250,7 +250,7 @@ void labcomm_set_local_index(struct labcomm_signature *signature)
   local_index++;
 }
 
-int labcomm_get_local_index(struct labcomm_signature *signature)
+int labcomm_get_local_index(const struct labcomm_signature *signature)
 {
   if (signature->index == 0) {
     labcomm_error_fatal_global(LABCOMM_ERROR_SIGNATURE_NOT_SET,
@@ -259,7 +259,7 @@ int labcomm_get_local_index(struct labcomm_signature *signature)
   return signature->index;
 }
 
-int labcomm_internal_sizeof(struct labcomm_signature *signature,
+int labcomm_internal_sizeof(const struct labcomm_signature *signature,
                             void *v)
 {
   int length = signature->encoded_size(v);

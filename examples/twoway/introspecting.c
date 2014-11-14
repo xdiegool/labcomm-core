@@ -44,13 +44,13 @@ struct introspecting_private {
   LABCOMM_SIGNATURE_ARRAY_DEF(local, 
 			      struct local {
 				enum introspecting_status status;
-				struct labcomm_signature *signature;
+				const struct labcomm_signature *signature;
 			      });
 };
 
 static struct local *get_local(struct introspecting_private *introspecting,
 			       int index,
-			       struct labcomm_signature *signature)
+			       const struct labcomm_signature *signature)
 {
   /* Called with data_lock held */
   struct local *local;
@@ -137,7 +137,7 @@ static int wrap_reader_alloc(
 struct handles_signature {
   struct introspecting_private *introspecting;
   int index;
-  struct labcomm_signature *signature;
+  const struct labcomm_signature *signature;
 };
 
 static void send_handles_signature(void *arg)
@@ -156,7 +156,7 @@ static void send_handles_signature(void *arg)
 static int wrap_reader_start(
   struct labcomm_reader *r, 
   struct labcomm_reader_action_context *action_context,
-  int local_index, int remote_index, struct labcomm_signature *signature,
+  int local_index, int remote_index, const struct labcomm_signature *signature,
   void *value)
 {
   struct introspecting_private *introspecting = action_context->context;
@@ -180,7 +180,7 @@ static int wrap_reader_start(
   struct labcomm_encoder *encoder,
   void *context)
 {
-  struct labcomm_signature *signature = context;
+  const struct labcomm_signature *signature = context;
   introspecting_messages_handles_signature handles_signature;
   int index = 0;
 
@@ -224,7 +224,7 @@ static int wrap_writer_alloc(
 static int wrap_writer_start(
   struct labcomm_writer *w, 
   struct labcomm_writer_action_context *action_context, 
-  int index, struct labcomm_signature *signature,
+  int index, const struct labcomm_signature *signature,
   void *value)
 {
   struct introspecting_private *introspecting = action_context->context;
@@ -243,7 +243,7 @@ static int wrap_writer_start(
 static int wrap_writer_ioctl(
   struct labcomm_writer *w, 
   struct labcomm_writer_action_context *action_context, 
-  int index, struct labcomm_signature *signature, 
+  int index, const struct labcomm_signature *signature, 
   uint32_t ioctl_action, va_list args)
 {
   struct introspecting_private *introspecting = action_context->context;

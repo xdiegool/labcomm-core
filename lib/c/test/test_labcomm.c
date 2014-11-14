@@ -43,7 +43,7 @@ static int writer_alloc(struct labcomm_writer *w,
 }
 static int writer_start(struct labcomm_writer *w, 
 			 struct labcomm_writer_action_context *action_context,
-			 int index, struct labcomm_signature *signature,
+			 int index, const struct labcomm_signature *signature,
 			 void *value)
 {
   return 0;

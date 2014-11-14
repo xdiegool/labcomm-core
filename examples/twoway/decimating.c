@@ -106,7 +106,7 @@ static void enqueue_decimation(struct decimating_private *decimating,
 static int wrap_reader_start(
   struct labcomm_reader *r, 
   struct labcomm_reader_action_context *action_context,
-  int local_index, int remote_index, struct labcomm_signature *signature,
+  int local_index, int remote_index, const struct labcomm_signature *signature,
   void *value)
 {
   struct decimating_private *decimating = action_context->context;
@@ -133,7 +133,7 @@ static int wrap_reader_ioctl(
   struct labcomm_reader *r,   
   struct labcomm_reader_action_context *action_context,
   int local_index, int remote_index,
-  struct labcomm_signature *signature, 
+  const struct labcomm_signature *signature, 
   uint32_t action, va_list args)
 {
   struct decimating_private *decimating = action_context->context;
@@ -197,7 +197,7 @@ static int wrap_writer_alloc(
 static int wrap_writer_start(
   struct labcomm_writer *w, 
   struct labcomm_writer_action_context *action_context, 
-  int index, struct labcomm_signature *signature,
+  int index, const struct labcomm_signature *signature,
   void *value)
 {
   struct decimating_private *decimating = action_context->context;
