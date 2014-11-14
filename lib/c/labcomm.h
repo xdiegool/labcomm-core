@@ -119,6 +119,9 @@ int labcomm_decoder_decode_one(
   struct labcomm_decoder *decoder);
 void labcomm_decoder_run(
   struct labcomm_decoder *decoder);
+int labcomm_decoder_sample_ref_register(
+  struct labcomm_decoder *decoder,
+  const struct labcomm_signature *signature);
 
 /* See labcomm_ioctl.h for predefined ioctl_action values */
 int labcomm_decoder_ioctl(struct labcomm_decoder *decoder, 
@@ -137,6 +140,9 @@ struct labcomm_encoder *labcomm_encoder_new(
   struct labcomm_scheduler *scheduler);
 void labcomm_encoder_free(
   struct labcomm_encoder *encoder);
+int labcomm_encoder_sample_ref_register(
+  struct labcomm_encoder *encoder,
+  const struct labcomm_signature *signature);
 
 /* See labcomm_ioctl.h for predefined ioctl_action values */
 int labcomm_encoder_ioctl(struct labcomm_encoder *encoder, 

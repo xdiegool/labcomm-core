@@ -21,6 +21,10 @@ aspect FlatSignature {
     getType().flatSignature(list);
   }
 
+  public void SampleRefType.flatSignature(SignatureList list) {
+    list.addInt(LABCOMM_SAMPLE_REF, "sample");
+  }
+
   public void VoidType.flatSignature(SignatureList list) {
     list.addInt(LABCOMM_STRUCT, "void");
     list.addInt(0, null);
@@ -90,6 +94,10 @@ aspect FlatSignature {
 
   public String Field.signatureComment() {
     return getType().signatureComment() + " '" + getName() +"'";
+  }
+
+  public String SampleRefType.signatureComment() {
+    return "sample";
   }
 
   public String PrimType.signatureComment() {

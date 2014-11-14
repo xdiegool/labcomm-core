@@ -283,6 +283,9 @@ aspect C_Type {
     getType().C_emitType(env, env.prefix + getName());
     env.println(";");
     env.println("#endif");
+    env.println("extern const struct labcomm"+env.verStr+"_signature " +
+                "*labcomm"+env.verStr+"_signature_" + env.prefix + getName() + 
+                ";");
   }
 
   public void Type.C_emitType(C_env env, String name) {
@@ -293,6 +296,10 @@ aspect C_Type {
 
   public void VoidType.C_emitType(C_env env, String name) {
     env.print("char " + name);
+  }
+
+  public void SampleRefType.C_emitType(C_env env, String name) {
+    env.print("const struct labcomm_signature *" + name);
   }
 
   public void PrimType.C_emitType(C_env env, String name) {
@@ -516,6 +523,10 @@ aspect C_Decoder {
   public void VoidType.C_emitDecoder(C_env env) {
   }
 
+  public void SampleRefType.C_emitDecoder(C_env env) {
+    env.println(env.qualid + " = labcomm_internal_decoder_index_to_signature(" +
+                             "r->decoder, labcomm"+env.verStr+"_read_int(r));");
+  }
   public void PrimType.C_emitDecoder(C_env env) {
     env.println(env.qualid + " = labcomm"+env.verStr+"_read_" + getName() + "(r);");
   }
@@ -591,6 +602,9 @@ aspect C_Decoder {
     throw new Error(this.getClass().getName() + 
 		    ".C_emitDecoderDeallocation(C_env env)" + 
 		    " not declared");
+  }
+
+  public void SampleRefType.C_emitDecoderDeallocation(C_env env) {
   }
 
   public void PrimType.C_emitDecoderDeallocation(C_env env) {
@@ -677,7 +691,7 @@ aspect C_Decoder {
     env.println("return labcomm"+env.verStr+"_internal_decoder_register(");
     env.indent();
     env.println("d,");
-    env.println("&labcomm"+env.verStr+"_signature_" + env.prefix + getName() + ",");
+    env.println("&signature_" + env.prefix + getName() + ",");
     env.println("(labcomm"+env.verStr+"_decoder_function)decode_" + env.prefix + getName() + ",");
     env.println("(labcomm"+env.verStr+"_handler_function)handler,");
     env.println("context");
@@ -743,6 +757,12 @@ aspect C_copy {
   }
 
   public void VoidType.C_emitCopy(C_env env_src, C_env env_dst) {
+  }
+
+  public void SampleRefType.C_emitCopy(C_env env_src, C_env env_dst) {
+    env_src.println(env_dst.accessor() + env_dst.qualid + " = " +
+                    env_src.accessor() + env_src.qualid + ";");
+  
   }
 
   public void PrimType.C_emitCopy(C_env env_src, C_env env_dst) {
@@ -888,6 +908,9 @@ aspect C_copy {
   public void VoidType.C_emitCopyDeallocation(C_env env) {
   }
 
+  public void SampleRefType.C_emitCopyDeallocation(C_env env) {
+  }
+
   public void PrimType.C_emitCopyDeallocation(C_env env) {
     if (C_isDynamic()) {
       env.println("labcomm" + env.verStr + "_memory_free(mem, 1, " +
@@ -972,7 +995,7 @@ aspect C_DecoderIoctl {
     env.println("va_start(va, ioctl_action);");
     env.println("result = labcomm"+env.verStr+"_internal_decoder_ioctl(");
     env.indent();
-    env.println("d, &labcomm"+env.verStr+"_signature_" + env.prefix + getName() + ", ");
+    env.println("d, &signature_" + env.prefix + getName() + ", ");
     env.println("ioctl_action, va);");
     env.unindent();
     env.println("va_end(va);");
@@ -1022,7 +1045,7 @@ aspect C_Encoder {
     env.println(")");
     env.println("{");
     env.indent();
-    env.println("return labcomm"+env.verStr+"_internal_encode(e, &labcomm"+env.verStr+"_signature_" + 
+    env.println("return labcomm"+env.verStr+"_internal_encode(e, &signature_" + 
 		env.prefix + getName() + 
 		", (labcomm"+env.verStr+"_encoder_function)encode_" + 
                 env.prefix + getName() +
@@ -1039,6 +1062,13 @@ aspect C_Encoder {
 
   public void VoidType.C_emitEncoder(C_env env) {
     env.println("result = 0;");
+  }
+
+  public void SampleRefType.C_emitEncoder(C_env env) {
+    env.println("result = labcomm"+env.verStr+"_write_int(w, " + 
+                "labcomm_internal_encoder_signature_to_index(w->encoder, " +
+                env.qualid + "));");
+    env.println("if (result != 0) { return result; }");
   }
 
   public void PrimType.C_emitEncoder(C_env env) {
@@ -1123,7 +1153,7 @@ aspect C_Encoder {
     env.println("return labcomm"+env.verStr+"_internal_encoder_register(");
     env.indent();
     env.println("e,");
-    env.println("&labcomm"+env.verStr+"_signature_" + env.prefix + getName() + ",");
+    env.println("&signature_" + env.prefix + getName() + ",");
     env.println("(labcomm"+env.verStr+"_encoder_function)encode_" + env.prefix + getName());
     env.unindent();
     env.println(");");
@@ -1159,7 +1189,7 @@ aspect C_EncoderIoctl {
     env.println("va_start(va, ioctl_action);");
     env.println("result = labcomm"+env.verStr+"_internal_encoder_ioctl(");
     env.indent();
-    env.println("e, &labcomm"+env.verStr+"_signature_" + env.prefix + getName() + ", ");
+    env.println("e, &signature_" + env.prefix + getName() + ", ");
     env.println("ioctl_action, va);");
     env.unindent();
     env.println("va_end(va);");
@@ -1276,8 +1306,8 @@ aspect C_Signature {
     env.println("};");
 
     C_emitSizeofValue(env);
-    env.println("struct labcomm"+env.verStr+"_signature labcomm"+env.verStr+"_signature_" + 
-        env.prefix + getName() + " = {");
+    env.println("static struct labcomm"+env.verStr+"_signature " +
+                "signature_" + env.prefix + getName() + " = {");
     env.indent();
     env.println("\"" + getName() + "\",");
     env.println("sizeof_" + env.prefix + getName() + ",");
@@ -1286,6 +1316,9 @@ aspect C_Signature {
     env.println("0");
     env.unindent();
     env.println(" };");
+    env.println("const struct labcomm"+env.verStr+"_signature " +
+                "*labcomm"+env.verStr+"_signature_" + env.prefix + getName() + 
+                " = &signature_" + env.prefix + getName() + ";");
   }
 
     public void Signature.C_emitSignature(C_env env, boolean decl){
@@ -1419,7 +1452,7 @@ aspect C_Constructor {
   }
 //XXX
   public void SampleDecl.C_emitConstructor(C_env env) {
-    env.println("labcomm"+env.verStr+"_set_local_index(&labcomm"+env.verStr+"_signature_" + 
+    env.println("labcomm"+env.verStr+"_set_local_index(&signature_" + 
 		env.prefix + getName() + ");");
   }
 
@@ -1459,7 +1492,7 @@ aspect C_Sizeof {
     env.println("{");
     env.indent();
     env.println("return labcomm"+env.verStr+"_internal_sizeof(" +
-                "&labcomm" + env.verStr+"_signature_" + env.prefix + getName() +
+                "&signature_" + env.prefix + getName() +
                 ", v);");
     env.unindent();
     env.println("}");
@@ -1473,6 +1506,10 @@ aspect C_Sizeof {
 
   public int VoidType.C_fixedSizeof() {
     return 0;
+  }
+
+  public int SampleRefType.C_fixedSizeof() {
+    return 4;
   }
 
   public int PrimType.C_fixedSizeof() {

@@ -5,3 +5,6 @@ sample struct {
 } S1;
 sample int I[_];
 sample struct { int i; } P[_];
+sample void UnusedE;
+sample void UnusedD;
+sample sample R[4];

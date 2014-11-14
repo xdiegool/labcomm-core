@@ -1,8 +1,9 @@
 aspect LabCommTokens {
 
-  public static final int ASTNode.LABCOMM_VERSION   =  0x01;  
-  public static final int ASTNode.LABCOMM_SAMPLE    =  0x02;  // The flat signature
-  public static final int ASTNode.LABCOMM_TYPE_DEF  =  0x03;  // and type declarations, hierarchically
+  public static final int ASTNode.LABCOMM_VERSION =    0x01;  
+  public static final int ASTNode.LABCOMM_SAMPLE_DEF = 0x02;  // The flat signature
+  public static final int ASTNode.LABCOMM_SAMPLE_REF = 0x03;
+  public static final int ASTNode.LABCOMM_TYPE_DEF  =  0x04;  // and type declarations, hierarchically
 
   public static final int ASTNode.LABCOMM_ARRAY =      0x10;
   public static final int ASTNode.LABCOMM_STRUCT =     0x11;

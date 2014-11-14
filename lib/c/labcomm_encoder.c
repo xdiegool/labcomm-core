@@ -31,6 +31,7 @@ struct labcomm_encoder {
   struct labcomm_memory *memory;
   struct labcomm_scheduler *scheduler;
   LABCOMM_SIGNATURE_ARRAY_DEF(registered, int);
+  LABCOMM_SIGNATURE_ARRAY_DEF(sample_ref, int);
 };
 
 struct labcomm_encoder *labcomm_encoder_new(
@@ -56,6 +57,7 @@ struct labcomm_encoder *labcomm_encoder_new(
     result->memory = memory;
     result->scheduler = scheduler;
     LABCOMM_SIGNATURE_ARRAY_INIT(result->registered, int);
+    LABCOMM_SIGNATURE_ARRAY_INIT(result->sample_ref, int);
     labcomm_writer_alloc(result->writer,
 			 result->writer->action_context);
     labcomm_writer_start(result->writer, 
@@ -77,12 +79,13 @@ void labcomm_encoder_free(struct labcomm_encoder* e)
 
   labcomm_writer_free(e->writer, e->writer->action_context);
   LABCOMM_SIGNATURE_ARRAY_FREE(e->memory, e->registered, int);
+  LABCOMM_SIGNATURE_ARRAY_FREE(e->memory, e->sample_ref, int);
   labcomm_memory_free(memory, 0, e);
 }
 
 int labcomm_internal_encoder_register(
   struct labcomm_encoder *e,
-  struct labcomm_signature *signature,
+  const struct labcomm_signature *signature,
   labcomm_encoder_function encode)
 {
   int result = -EINVAL;
@@ -98,7 +101,7 @@ int labcomm_internal_encoder_register(
 			     index, signature, NULL);
   if (err == -EALREADY) { result = 0; goto out; }
   if (err != 0) { result = err; goto out; }
-  labcomm_write_packed32(e->writer, LABCOMM_SAMPLE);
+  labcomm_write_packed32(e->writer, LABCOMM_SAMPLE_DEF);
   length = (labcomm_size_packed32(index) +
             labcomm_size_string(signature->name) +
             labcomm_size_packed32(signature->size) +
@@ -123,7 +126,7 @@ out:
 
 int labcomm_internal_encode(
   struct labcomm_encoder *e,
-  struct labcomm_signature *signature,
+  const struct labcomm_signature *signature,
   labcomm_encoder_function encode,
   void *value)
 {
@@ -143,6 +146,47 @@ int labcomm_internal_encode(
 out:
   labcomm_writer_end(e->writer, e->writer->action_context);
 no_end:
+  labcomm_scheduler_writer_unlock(e->scheduler);
+  return result;
+}
+
+int labcomm_encoder_sample_ref_register(
+  struct labcomm_encoder *e,
+  const struct labcomm_signature *signature)
+{
+  int result = -EINVAL;
+  int index, *done, err, i, length;
+
+  index = labcomm_get_local_index(signature);
+  labcomm_scheduler_writer_lock(e->scheduler);
+  if (index <= 0) { goto out; }
+
+  done = LABCOMM_SIGNATURE_ARRAY_REF(e->memory, e->sample_ref, int, index);
+  if (*done) { goto out; }
+  *done = 1;	
+  err = labcomm_writer_start(e->writer, e->writer->action_context, 
+			     index, signature, NULL);
+  if (err == -EALREADY) { result = 0; goto out; }
+  if (err != 0) { result = err; goto out; }
+  labcomm_write_packed32(e->writer, LABCOMM_SAMPLE_REF);
+  length = (labcomm_size_packed32(index) +
+            labcomm_size_string(signature->name) +
+            labcomm_size_packed32(signature->size) +
+            signature->size);
+  labcomm_write_packed32(e->writer, length);
+  labcomm_write_packed32(e->writer, index);
+  labcomm_write_string(e->writer, signature->name);
+  labcomm_write_packed32(e->writer, signature->size);
+  for (i = 0 ; i < signature->size ; i++) {
+    if (e->writer->pos >= e->writer->count) {
+      labcomm_writer_flush(e->writer, e->writer->action_context);
+    }
+    e->writer->data[e->writer->pos] = signature->signature[i];
+    e->writer->pos++;
+  }
+  labcomm_writer_end(e->writer, e->writer->action_context);
+  result = e->writer->error;
+out:
   labcomm_scheduler_writer_unlock(e->scheduler);
   return result;
 }
@@ -170,7 +214,7 @@ out:
 }
 
 int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder, 
-				   struct labcomm_signature *signature,
+				   const struct labcomm_signature *signature,
 				   uint32_t action, va_list va)
 {
   int result = -ENOTSUP;
@@ -182,3 +226,15 @@ int labcomm_internal_encoder_ioctl(struct labcomm_encoder *encoder,
 				index, signature, action, va);
   return result;
 }
+
+int labcomm_internal_encoder_signature_to_index(
+  struct labcomm_encoder *e, const struct labcomm_signature *signature)
+{
+  /* writer_lock should be held at this point */
+  int index = labcomm_get_local_index(signature);
+  if (! LABCOMM_SIGNATURE_ARRAY_GET(e->sample_ref, int, index, 0)) {
+    index = 0;
+  }
+  return index;
+}
+

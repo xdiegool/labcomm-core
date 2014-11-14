@@ -33,7 +33,7 @@ public class LabComm {
     println("[ RAPID options ]");
     println(" --rapid                 Generates RAPID code in FILE.sys");
     println("[ Misc options ]");
-    println(" --pretty                Pretty prints on standard output");
+    println(" --pretty=PFILE          Pretty prints to PFILE");
     println(" --typeinfo=TIFILE       Generates typeinfo in TIFILE");
   }
     
