@@ -1,18 +1,18 @@
 aspect LabCommTokens {
 
-  public static final int ASTNode.LABCOMM_TYPEDEF = 0x01;
-  public static final int ASTNode.LABCOMM_SAMPLE =  0x02;
+  public static final int ASTNode.LABCOMM_SAMPLE_DEF = 0x02;
+  public static final int ASTNode.LABCOMM_SAMPLE_REF = 0x03;
 
-  public static final int ASTNode.LABCOMM_ARRAY =   0x10;
-  public static final int ASTNode.LABCOMM_STRUCT =  0x11;
+  public static final int ASTNode.LABCOMM_ARRAY =      0x10;
+  public static final int ASTNode.LABCOMM_STRUCT =     0x11;
 
-  public static final int ASTNode.LABCOMM_BOOLEAN = 0x20; 
-  public static final int ASTNode.LABCOMM_BYTE =    0x21;
-  public static final int ASTNode.LABCOMM_SHORT =   0x22;
-  public static final int ASTNode.LABCOMM_INT =     0x23;
-  public static final int ASTNode.LABCOMM_LONG =    0x24;
-  public static final int ASTNode.LABCOMM_FLOAT =   0x25;
-  public static final int ASTNode.LABCOMM_DOUBLE =  0x26;
-  public static final int ASTNode.LABCOMM_STRING =  0x27;
+  public static final int ASTNode.LABCOMM_BOOLEAN =    0x20; 
+  public static final int ASTNode.LABCOMM_BYTE =       0x21;
+  public static final int ASTNode.LABCOMM_SHORT =      0x22;
+  public static final int ASTNode.LABCOMM_INT =        0x23;
+  public static final int ASTNode.LABCOMM_LONG =       0x24;
+  public static final int ASTNode.LABCOMM_FLOAT =      0x25;
+  public static final int ASTNode.LABCOMM_DOUBLE =     0x26;
+  public static final int ASTNode.LABCOMM_STRING =     0x27;
 
 }

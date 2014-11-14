@@ -134,6 +134,10 @@ aspect Signature {
     list.addInt(0, null);
   }
 
+  public void SampleRefType.flatSignature(SignatureList list) {
+    list.addInt(LABCOMM_SAMPLE_REF, "sample");
+  }
+
   public void PrimType.flatSignature(SignatureList list) {
     list.addInt(getToken(), null);
   }
@@ -198,6 +202,10 @@ aspect Signature {
 
   public String Field.signatureComment() {
     return getType().signatureComment() + " '" + getName() +"'";
+  }
+
+  public String SampleRefType.signatureComment() {
+    return "sample";
   }
 
   public String PrimType.signatureComment() {

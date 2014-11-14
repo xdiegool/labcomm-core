@@ -8,6 +8,7 @@ Field ::= Type <Name:String>;
 
 abstract Type;
 VoidType          : Type;
+SampleRefType     : Type;
 PrimType          : Type ::= <Name:String> <Token:int>;
 UserType          : Type ::= <Name:String>;
 StructType        : Type ::= Field*;
