@@ -15,9 +15,6 @@ aspect CS_CodeGenEnv {
     private CS_printer printer;
     private HashMap unique = new HashMap();
 
-//    public boolean versionHasMetaData() {
-//      return version != 2006;
-//    }
     final private static class CS_printer {
       
       private boolean newline = true;
@@ -84,7 +81,7 @@ aspect CS_CodeGenEnv {
       this.version = version;
       this.indent = indent;
       this.printer = printer;
-      this.verStr = (version == 2006) ? "2006" : "";
+      this.verStr = LabCommVersion.versionString(version);
     }
 
     public CS_env(File f, int version) {
@@ -234,16 +231,6 @@ aspect CS_CodeGen {
 aspect CS_Register {
 
   public void Program.CS_emitTypeRegister(CS_env env) {
-    /*
-    env.println("static void register(LabCommChannel c) {");
-    env.indent();
-    for (int i = 0; i < getNumDecl(); i++) {
-      getDecl(i).CS_emitTypeRegister(env);
-    }
-    env.unindent();
-    env.println("}");
-*/
-
   }
 
   public void Decl.CS_emitTypeRegister(CS_env env) {
@@ -281,32 +268,18 @@ aspect CS_Class {
   }
   
   public void Decl.CS_emitUserTypeDeps(CS_env env, String via, boolean outputCode){
-//	if(env.versionHasMetaData() && hasDependencies() || isReferenced() ) {
-//	if(env.versionHasMetaData() && isSampleDecl() && outputCode) {
-//	   env.println("if(sendMetaData){");
-//	   env.indent();
-//	}
-//	Iterator<Decl> it = type_dependencies().iterator();
-//	while(it.hasNext()) {
-//	    Decl t = it.next();
-//
-//	    t.CS_emitUserTypeDeps(env, t.getName(), outputCode);
-//	    if( outputCode && t.getType().isUserType() ) {
-//               //env.println("/* FIXME: " + t.getName() + " does not exist");
-//	       env.println(t.getName()+".register(e, sendMetaData);");
-//               //env.println("*/");
-//	    } else {  // Just output a comment
-//		String refpath = (via == null) ? "directly" : "indirectly via "+via;
-//	       //env.println(" //Depends ("+refpath+") on "+t.getName() + " (" + t +") " );
-//	       //env.println(" //Depends ("+refpath+") on "+t.getName() );
-//	       env.println(" //Depends ("+refpath+") on "+t.getName()+" -- "+t.getType() );
-//	    }
-//	}
-//	if(env.versionHasMetaData() && isSampleDecl() && outputCode) {
-//	   env.unindent();
-//	   env.println("}");
-//	}
-//    }
+	Iterator<Decl> it = type_dependencies().iterator();
+	while(it.hasNext()) {
+	    Decl t = it.next();
+
+	    t.CS_emitUserTypeDeps(env, t.getName(), outputCode);
+	    if( outputCode && t.getType().isUserType() ) {
+	       env.println(t.getName()+".register(e);");
+	    } else {  // Just output a comment
+		String refpath = (via == null) ? "directly" : "indirectly via "+via;
+	       env.println(" //Depends ("+refpath+") on "+t.getName() );
+	    }
+	}
   }
   
   public void Decl.CS_emitUserTypeRefs(CS_env env, String via, boolean outputCode){
@@ -332,22 +305,17 @@ aspect CS_Class {
     env.println("e.register(Dispatcher.singleton());");
     env.unindent();
     env.println("}");
-
-//    env.println();
-//    env.println("public static void register(Encoder e, bool sendMetaData){");
-//    env.indent();
-//
-//    CS_emitUserTypeDeps(env, null, true);
-//    if(env.versionHasMetaData()) {
-//        env.println("e.register(Dispatcher.singleton(), sendMetaData);");
-//    } else {
-//        env.println("e.register(Dispatcher.singleton());");
-//    }
-//    env.unindent();
-//    env.println("}");
-//    env.println();
   }
   
+  public void Decl.CS_emitRegisterDecoder(CS_env env) {
+    env.println("public static void register(Decoder d, Handler h) {");
+    env.indent();
+    env.println("d.register(Dispatcher.singleton(), h);");
+    env.unindent();
+    env.println("}");
+    env.println();
+  }
+    
   public void TypeDecl.CS_emitClass(CS_env env) {
     if (getType().CS_needInstance()) {
       // Hackish prettyprint preamble
@@ -389,91 +357,17 @@ aspect CS_Class {
     env.println(");");
     env.println("}");
     env.println();
-    env.println("public static void register(Decoder d, Handler h) {");
-    env.indent();
-    env.println("d.register(new Dispatcher(), h);");
-    env.unindent();
-    env.println("}");
-    env.println();
-/*
-    env.println("public static void register(Encoder e) {");
-    env.indent();
-    env.println("e.register(new Dispatcher());");
-    env.unindent();
-    env.println("}");
-    env.println(); */
-    
-    CS_emitRegisterEncoder(env);
-
-    /*env.println("private class Dispatcher : LabCommDispatcher {");
-    env.indent();
-    env.println(); 
-    env.println("public Type getSampleClass() {");
-    env.indent();
-    env.println("return typeof(" + getName() + ");");
-    env.unindent();
-    env.println("}");
-    env.println(); 
-    env.println("public String getName() {");
-    env.indent();
-    env.println("return \"" + getName() + "\";");
-    env.unindent();
-    env.println("}");
-    env.println(); 
-    env.println("public byte[] getSignature() {");
-    env.indent();
-    env.println("return signature;");
-    env.unindent();
-    env.println("}");
-    env.println(); 
-    env.println("public void decodeAndHandle(Decoder d, SampleHandler h) {");
-    env.indent();
-    if (isVoid()) {
-      env.println(getName() + ".decode(d);");
-      env.println("((Handler)h).handle();"); 
-    } else {
-      env.println("((Handler)h).handle(" + getName() + ".decode(d));"); 
-    }
-    env.unindent();
-    env.println("}");
-    env.println("");
-    env.unindent();
-    env.println("}");
-    env.println("");*/
     CS_emitDispatcher(env,true);
-
+    CS_emitRegisterEncoder(env);
+    CS_emitRegisterDecoder(env);
     CS_emitEncoder(env);
     CS_emitDecoder(env);
-    /*env.println("private static byte[] signature = new byte[] {");
-    env.indent();
-    SignatureList signature = flatSignature(env.version);
-    for (int i = 0 ; i < signature.size() ; i++) {
-      String comment = signature.getComment(i);
-      if (comment != null) {
-        env.println(signature.getIndent(i) + "// " + comment);
-      }
-      byte[] data = signature.getData(i, env.version);
-      if (data != null) {
-        env.print(signature.getIndent(i));
-        for (int j = 0 ; j < data.length ; j++) {
-	  env.print(data[j] + ", ");
-        }
-        env.println();
-      }
-    }
-    env.unindent();
-    env.println("};");
-    env.unindent();
-    env.println();*/
     CS_emitSignature(env);
+
     env.println("}");
   }
 
   public void Decl.CS_emitSignature(CS_env env) {
-    //always emit the flat signature, as it is needed
-    //for matching at the decoder side (which cannot know
-    //the type_ids of dependent types. Therefore, flat sigs
-    //are used for matching
     CS_emitFlatSignature(env);
 //    if(isReferenced() || isSampleDecl()){
 //      Signature signature = getSignature();
@@ -494,7 +388,8 @@ aspect CS_Class {
       if (data != null) {
         env.print(signature.getIndent(i));
         for (int j = 0 ; j < data.length ; j++) {
-          env.print(data[j] + ", ");
+          //env.print(data[j] + ", ");
+          env.print(String.format("0x%02X, ", data[j])) ;
         }
         env.println();
       }
@@ -550,13 +445,7 @@ aspect CS_Class {
     env.println("return "+isSample+";");
     env.unindent();
     env.println("}");
-    env.println("public bool hasStaticSignature() {");
-    env.indent();
-    env.println("return "+!hasDependencies()+";");
-    env.unindent();
-    env.println("}");
-    env.println();
-    env.println("/** return the flat signature. Intended use is on decoder side */");
+    env.println("/** return the flat signature. */");
     env.println("public byte[] getSignature() {");
     env.indent();
     env.println("return signature;");

@@ -15,10 +15,6 @@ aspect Java_CodeGenEnv {
     private Java_printer printer;
     private HashMap unique = new HashMap();
 
-    public boolean versionHasMetaData() {
-      return version != 2006;
-    }
-
     final private class Java_printer {
 
       private boolean newline = true;
@@ -83,7 +79,7 @@ aspect Java_CodeGenEnv {
 
     private Java_env(int version, int indent) {
       this.version = version;
-      this.verStr = (version == 2006) ? "2006" : "";
+      this.verStr = LabCommVersion.versionString(version);
       this.indent = indent;
     }
 
@@ -289,11 +285,11 @@ aspect Java_Class {
   //  // all type decls
   //}
   //public void SampleDecl.Java_emitUserTypeDeps(Java_env env, String via, boolean outputCode) {
-    if(env.versionHasMetaData() && hasDependencies() || isReferenced() ) {
-        if(env.versionHasMetaData() && isSampleDecl() && outputCode) {
-           env.println("if(sendMetaData){");
-           env.indent();
-        }
+//  if(env.versionHasMetaData() && hasDependencies() || isReferenced() ) {
+//      if(env.versionHasMetaData() && isSampleDecl() && outputCode) {
+//         env.println("if(sendMetaData){");
+//         env.indent();
+//      }
         Iterator<Decl> it = type_dependencies().iterator();
         while(it.hasNext()) {
             Decl t = it.next();
@@ -303,16 +299,14 @@ aspect Java_Class {
                env.println(t.getName()+".register(e);");
             } else {  // Just output a comment
 	        String refpath = (via == null) ? "directly" : "indirectly via "+via;
-	       //env.println(" //Depends ("+refpath+") on "+t.getName() + " (" + t +") " );
-	       //env.println(" //Depends ("+refpath+") on "+t.getName() );
-	       env.println(" //Depends ("+refpath+") on "+t.getName()+" -- "+t.getType() );
+	       env.println(" //Depends ("+refpath+") on "+t.getName() );
             }
         }
-        if(env.versionHasMetaData() && isSampleDecl() && outputCode) {
-           env.unindent();
-           env.println("}");
-        }
-    }
+//      if(env.versionHasMetaData() && isSampleDecl() && outputCode) {
+//         env.unindent();
+//         env.println("}");
+//      }
+//  }
   }
   public void Decl.Java_emitUserTypeRefs(Java_env env, String via, boolean outputCode) {
     if( isReferenced() ) {
@@ -344,11 +338,7 @@ aspect Java_Class {
     env.indent();
 
     Java_emitUserTypeDeps(env, null, true);
-    if(env.versionHasMetaData()) {
-        env.println("e.register(Dispatcher.singleton());");
-    } else {
-        env.println("e.register(Dispatcher.singleton());");
-    }
+    env.println("e.register(Dispatcher.singleton());");
     env.unindent();
     env.println("}");
     env.println();
@@ -499,7 +489,7 @@ aspect Java_Class {
 
   //XXX TODO: refactor: split into a static class ("TypeDefSingleton"?)and a (smaller) dispatcher
   public void Decl.Java_emitDispatcher(Java_env env, boolean isSample) {
-    String genericStr = env.versionHasMetaData()?"<"+getName()+">":""; 
+    String genericStr = ""; //env.versionHasMetaData()?"<"+getName()+">":""; 
     env.println("private static class Dispatcher implements SampleDispatcher "+genericStr+"{");
     env.indent();
     env.println();
@@ -547,13 +537,13 @@ aspect Java_Class {
     env.println("return "+isSample+";");
     env.unindent();
     env.println("}");
-    env.println("public boolean hasStaticSignature() {");
-    env.indent();
-    env.println("return "+!hasDependencies()+";");
-    env.unindent();
-    env.println("}");
+//    env.println("public boolean hasStaticSignature() {");
+//    env.indent();
+//    env.println("return "+!hasDependencies()+";");
+//    env.unindent();
+//    env.println("}");
     env.println();
-    env.println("/** return the flat signature. Intended use is on decoder side */");
+    env.println("/** return the flat signature. */");
     env.println("public byte[] getSignature() {");
     env.indent();
     env.println("return signature;");

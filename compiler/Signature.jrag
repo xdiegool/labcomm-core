@@ -23,34 +23,21 @@ aspect Signature {
     Signature sig = new Signature();
     sig.setSignatureList(sl);
     sig.setFlatSignatureList(fsl);
-    // HERE BE DRAGONS. Is this correct for a NTA?
     setSignature(sig);
     return sig;
   }
 
-  //syn nta SignatureList Signature.getSignatureList() {
-  //  SignatureList result = new SignatureList();
-  //  genSigLineForDecl(result, true);
-  //  return result;
-  //}
-
-    public String SignatureLine.getIndentString() {
-      StringBuffer result = new StringBuffer();
-      int indent = getIndent();
-      for (int i = 0 ; i < indent ; i++) {
-        result.append("  ");
-      }
-      return result.toString();
+  public String SignatureLine.getIndentString() {
+    StringBuffer result = new StringBuffer();
+    int indent = getIndent();
+    for (int i = 0 ; i < indent ; i++) {
+      result.append("  ");
     }
+    return result.toString();
+  }
 
-    //Very temporary kludge: the flat signature generation 
-    //predates the SignatureLine class hierarchy. This hack
-    //returns size zero arrays, which doesn't break the sig
-    //generation
-    //public byte[] getData() {
-    syn byte[] SignatureLine.getData(int version) {
-      return new byte[0];
-    }
+    syn byte[] SignatureLine.getData(int version) = null;
+    //  return new byte[0];
 
     private Decl TypeRefSignatureLine.decl;
     public TypeRefSignatureLine.TypeRefSignatureLine(int indent, Decl decl, String comment) {
@@ -171,7 +158,7 @@ aspect Signature {
   }
 
   public void TypeDecl.genSigLineForDecl(SignatureList list, boolean decl) {
-     System.out.println("************ TypeDecl.genSigLine("+decl+").... for "+getName());
+     //System.out.println("************ TypeDecl.genSigLine("+decl+").... for "+getName());
     if(decl){
       getType().genSigLineForDecl(list, decl);
     }else{
@@ -180,7 +167,7 @@ aspect Signature {
   }
 
   public void SampleDecl.genSigLineForDecl(SignatureList list, boolean decl) {
-     System.out.println("************ SampleDecl.genSigLine("+decl+").... for "+getName());
+     //System.out.println("************ SampleDecl.genSigLine("+decl+").... for "+getName());
     getType().genSigLineForDecl(list, decl);
   }
 
@@ -195,9 +182,9 @@ aspect Signature {
 
   public void UserType.genSigLineForDecl(SignatureList list, boolean decl) {
     if(decl){
-     System.out.println("************ UserType.genSigLine("+decl+").... for "+getName());
+     //System.out.println("************ UserType.genSigLine("+decl+").... for "+getName());
       TypeDecl thet=lookupType(getName());
-      System.out.println("************ thet: "+thet.getName() +":"+thet.getType());
+      //System.out.println("************ thet: "+thet.getName() +":"+thet.getType());
       thet.genSigLineForDecl(list, decl);
     }else{
      //System.out.println("************ UserType.genSigLine("+decl+").... for "+getName());

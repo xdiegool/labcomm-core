@@ -33,7 +33,7 @@ aspect C_CodeGenEnv {
       }
     }
 
-    public final int version; //labcomm version (2006 or 2013)
+    public final int version; //labcomm version (2006 or 2014)
     public final String verStr; // version suffix to append (currently _2006 and empty string)
 
     public final String qualid;
@@ -56,7 +56,7 @@ aspect C_CodeGenEnv {
                   int nestedLevel, int version)
     {
       this.version = version;
-      this.verStr = (version == 2006 ? "2006" : "");
+      this.verStr = LabCommVersion.versionString(version);
       this.qualid = qualid;
       this.lcName = lcName;
       this.rawPrefix = rawPrefix;
@@ -986,13 +986,14 @@ aspect C_DecoderIoctl {
 aspect C_Encoder {
 
   public void Decl.C_emitEncoder(C_env env) {
-  //XXX  throw new Error(this.getClass().getName() + 
-//		    ".C_emitEncoder()" + 
-//		    " not declared");
+    throw new Error(this.getClass().getName() + 
+        ".C_emitEncoder()" + 
+        " not declared");
   }
 
-//  public void TypeDecl.C_emitEncoder(C_env env) {
-//  }
+  public void TypeDecl.C_emitEncoder(C_env env) {
+    // do nothing for type decls
+  }
 
   public void SampleDecl.C_emitEncoder(C_env env) {
     env = env.nestStruct("(*v)");
@@ -1099,15 +1100,15 @@ aspect C_Encoder {
   }
 
   public void Decl.C_emitEncoderRegisterHandler(C_env env) {
-  //XXX
-  //  throw new Error(this.getClass().getName() + 
-  //		    ".C_emitEncoderRegisterHandler(C_env env)" + 
-  //		    " not declared");
+    throw new Error(this.getClass().getName() + 
+  		    ".C_emitEncoderRegisterHandler(C_env env)" + 
+  		    " not declared");
   }
-  //
-  //public void TypeDecl.C_emitEncoderRegisterHandler(C_env env) {
-  //}
-  //
+  
+  public void TypeDecl.C_emitEncoderRegisterHandler(C_env env) {
+    // do nothing for type decls
+  }
+  
   public void SampleDecl.C_emitEncoderRegisterHandler(C_env env) {
     env.println("int labcomm"+env.verStr+"_encoder_register_" + 
 		env.prefix + getName() + "(");
@@ -1118,7 +1119,7 @@ aspect C_Encoder {
     env.println("{");
     env.indent();
     C_emitUserTypeDeps(env, null, false); //XXX HERE BE DRAGONS
-                                          //set to false to turn off
+                                          //currently set to false to turn off
                                           //outputting of code
     env.println("return labcomm"+env.verStr+"_internal_encoder_register(");
     env.indent();
@@ -1183,7 +1184,6 @@ aspect C_TypeDependencies {
                env.println("labcomm"+env.verStr+"_encoder_register_"+env.prefix + t.getName()+"(e);");
             } else {  // Just output a comment
 	        String refpath = (via == null) ? "directly" : "indirectly via "+via;
-	       //env.println(" //Depends ("+refpath+") on "+t.getName() + " (" + t +") " );
 	       env.println(" //Depends ("+refpath+") on "+t.getName() );
             }
         }
@@ -1220,30 +1220,26 @@ aspect C_Signature {
   eq TypeDecl.C_DeclTypeString() = "LABCOMM_TYPEDEF";
 
   public void Decl.C_emitSignature(C_env env) {
-    //always emit the flat signature, as it is needed
-    //for matching at the decoder side (which cannot know
-    //the type_ids of dependent types. Therefore, flat sigs
-    //are used for matching
     C_emitFlatSignature(env);
-/*
-    if( false && (isReferenced() || isSampleDecl())){ 
-      Signature signature = getSignature();
-      signature.C_emitSignature(env, !isSampleDecl());
-    } else {
-      env.println("// not emitting signature for "+getName()+isReferenced()+isSampleDecl());  
-    }
-    if(env.versionHasMetaData()) { 
-      if(isReferenced() || isSampleDecl()){
-          env.println("(int (*)(void *))labcomm"+env.verStr+"_signature_" + 
-  	 	env.prefix + getName() + "_emit_signature");
-      } else {
-          env.println("NULL");  // HERE BE DRAGONS! Is it worth the size saving to skip emitting the emit_signature function for unused types?
-                                //                  The code won't likely end up in a target system anyway?
-      }
-    }
-    env.unindent();
-    env.println(" };");
-*/
+//
+//  if( false && (isReferenced() || isSampleDecl())){ 
+//    Signature signature = getSignature();
+//    signature.C_emitSignature(env, !isSampleDecl());
+//  } else {
+//    env.println("// not emitting signature for "+getName()+isReferenced()+isSampleDecl());  
+//  }
+//  if(env.versionHasMetaData()) { 
+//    if(isReferenced() || isSampleDecl()){
+//        env.println("(int (*)(void *))labcomm"+env.verStr+"_signature_" + 
+//	 	env.prefix + getName() + "_emit_signature");
+//    } else {
+//        env.println("NULL");  // HERE BE DRAGONS! Is it worth the size saving to skip emitting the emit_signature function for unused types?
+//                              //                  The code won't likely end up in a target system anyway?
+//    }
+//  }
+//  env.unindent();
+//  env.println(" };");
+//
   }
 
   public void ASTNode.C_emitFlatSignature(C_env env) {
@@ -1318,41 +1314,33 @@ aspect C_Signature {
        //     env.println("\"),");
        // }
     }
-/*
-
-        byte[] data = getData(env.version);
-          if (data != null) {
-              for (int j = 0 ; j < data.length ; j++) {
-                  env.print(getIndentString());
-                  //env.print("printf(\"labcomm"+env.verStr+"_write_byte( w, (unsigned char)"+ String.format("0x%02X ", data[j]) +")\\n\"); ");
-                  env.print("labcomm"+env.verStr+"_write_byte( w, (unsigned char)"+ String.format("0x%02X ", data[j]) +"); ");
-                  env.println("if (result != 0) { return result; }");
-              }
-              env.println();
-          }
-*/
-  //}
-/**
-static int encode_test_twoLines(
-struct labcomm_writer *w
-, test_twoLines *v
-)
-{
-result = labcomm_write_int(w, (*v).l1.start.x.val);
-**/
+//
+//
+//      byte[] data = getData(env.version);
+//        if (data != null) {
+//            for (int j = 0 ; j < data.length ; j++) {
+//                env.print(getIndentString());
+//                //env.print("printf(\"labcomm"+env.verStr+"_write_byte( w, (unsigned char)"+ String.format("0x%02X ", data[j]) +")\\n\"); ");
+//                env.print("labcomm"+env.verStr+"_write_byte( w, (unsigned char)"+ String.format("0x%02X ", data[j]) +"); ");
+//                env.println("if (result != 0) { return result; }");
+//            }
+//            env.println();
+//        }
+//
+//}
   public void SignatureList.C_emitSignature(C_env env, boolean decl) { 
-    env.println("static struct labcomm_signature_data signature_tree_" + 
-		 env.prefix + parentDecl().getName() + "[] = {");
-    env.indent();
-    for (int i = 0 ; i < size() ; i++) {
-      SignatureLine l = getSignatureLine(i);
-      l.C_emitSignature(env, decl);
-    }
-    
-    env.println("LABCOMM_SIGDEF_END");
-    env.println("};");
-    env.unindent();
-    env.println();
+//  env.println("static struct labcomm_signature_data signature_tree_" + 
+//  	 env.prefix + parentDecl().getName() + "[] = {");
+//  env.indent();
+//  for (int i = 0 ; i < size() ; i++) {
+//    SignatureLine l = getSignatureLine(i);
+//    l.C_emitSignature(env, decl);
+//  }
+//  
+//  env.println("LABCOMM_SIGDEF_END");
+//  env.println("};");
+//  env.unindent();
+//  env.println();
   }
 
 

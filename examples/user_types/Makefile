@@ -100,7 +100,7 @@ run:
 	@echo "************ running python decoder (from wiki_example):"
 	PYTHONPATH=${LCDIR}/lib/python ../wiki_example/example_decoder.py encoded_data_p LabComm2014
 
-runwcs: ExampleEncoder.exe ExampleDecoder.exe
+runwcs: build ExampleEncoder.exe ExampleDecoder.exe
 	export LD_LIBRARY_PATH=${LCDIR}/lib/c/
 	@echo
 	@echo "********************************************"
