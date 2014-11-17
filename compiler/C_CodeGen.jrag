@@ -298,10 +298,6 @@ aspect C_Type {
     env.print("char " + name);
   }
 
-  public void SampleRefType.C_emitType(C_env env, String name) {
-    env.print("const struct labcomm_signature *" + name);
-  }
-
   public void PrimType.C_emitType(C_env env, String name) {
     switch (getToken()) {
       case LABCOMM_BOOLEAN: { env.print("uint8_t"); } break;
@@ -312,6 +308,9 @@ aspect C_Type {
       case LABCOMM_FLOAT: { env.print("float"); } break;
       case LABCOMM_DOUBLE: { env.print("double"); } break;
       case LABCOMM_STRING: { env.print("char*"); } break;
+      case LABCOMM_SAMPLE: { 
+        env.print("const struct labcomm_signature *"); 
+      } break;
     }
     env.print(" " + name);
   }
@@ -523,12 +522,17 @@ aspect C_Decoder {
   public void VoidType.C_emitDecoder(C_env env) {
   }
 
-  public void SampleRefType.C_emitDecoder(C_env env) {
-    env.println(env.qualid + " = labcomm_internal_decoder_index_to_signature(" +
-                             "r->decoder, labcomm"+env.verStr+"_read_int(r));");
-  }
   public void PrimType.C_emitDecoder(C_env env) {
-    env.println(env.qualid + " = labcomm"+env.verStr+"_read_" + getName() + "(r);");
+    env.print(env.qualid + " = ");
+    switch (getToken()) {
+      case LABCOMM_SAMPLE: { 
+        env.println("labcomm_internal_decoder_index_to_signature(" +
+                    "r->decoder, labcomm"+env.verStr+"_read_int(r));");
+      } break;
+      default: {
+        env.println("labcomm"+env.verStr+"_read_" + getName() + "(r);");
+      }; break;
+    }
   }
 
   public void UserType.C_emitDecoder(C_env env) {
@@ -602,9 +606,6 @@ aspect C_Decoder {
     throw new Error(this.getClass().getName() + 
 		    ".C_emitDecoderDeallocation(C_env env)" + 
 		    " not declared");
-  }
-
-  public void SampleRefType.C_emitDecoderDeallocation(C_env env) {
   }
 
   public void PrimType.C_emitDecoderDeallocation(C_env env) {
@@ -759,12 +760,6 @@ aspect C_copy {
   public void VoidType.C_emitCopy(C_env env_src, C_env env_dst) {
   }
 
-  public void SampleRefType.C_emitCopy(C_env env_src, C_env env_dst) {
-    env_src.println(env_dst.accessor() + env_dst.qualid + " = " +
-                    env_src.accessor() + env_src.qualid + ";");
-  
-  }
-
   public void PrimType.C_emitCopy(C_env env_src, C_env env_dst) {
     if (C_isDynamic()) {
       env_src.println(String.format(
@@ -906,9 +901,6 @@ aspect C_copy {
   }
 
   public void VoidType.C_emitCopyDeallocation(C_env env) {
-  }
-
-  public void SampleRefType.C_emitCopyDeallocation(C_env env) {
   }
 
   public void PrimType.C_emitCopyDeallocation(C_env env) {
@@ -1065,16 +1057,19 @@ aspect C_Encoder {
     env.println("result = 0;");
   }
 
-  public void SampleRefType.C_emitEncoder(C_env env) {
-    env.println("result = labcomm"+env.verStr+"_write_int(w, " + 
-                "labcomm_internal_encoder_signature_to_index(w->encoder, " +
-                env.qualid + "));");
-    env.println("if (result != 0) { return result; }");
-  }
-
   public void PrimType.C_emitEncoder(C_env env) {
-    env.println("result = labcomm"+env.verStr+"_write_" + getName() + 
-                "(w, " + env.qualid + ");");
+    env.print("result = ");
+    switch (getToken()) {
+      case LABCOMM_SAMPLE: { 
+        env.println("labcomm"+env.verStr+"_write_int(w, " + 
+                    "labcomm_internal_encoder_signature_to_index(w->encoder, " +
+                    env.qualid + "));");
+      } break;
+      default: {
+        env.println("labcomm"+env.verStr+"_write_" + getName() + 
+                    "(w, " + env.qualid + ");");
+      } break;
+    }
     env.println("if (result != 0) { return result; }");
   }
 
@@ -1496,10 +1491,6 @@ aspect C_Sizeof {
     return 0;
   }
 
-  public int SampleRefType.C_fixedSizeof() {
-    return 4;
-  }
-
   public int PrimType.C_fixedSizeof() {
     switch (getToken()) {
       case LABCOMM_BOOLEAN: { return 1; } 
@@ -1509,6 +1500,7 @@ aspect C_Sizeof {
       case LABCOMM_LONG: { return 8; }
       case LABCOMM_FLOAT: { return 4; }
       case LABCOMM_DOUBLE: { return 8; }
+      case LABCOMM_SAMPLE: { return 4; }
       default: { 
     throw new Error(this.getClass().getName() + 
             ".C_fixedSizeof()" + 

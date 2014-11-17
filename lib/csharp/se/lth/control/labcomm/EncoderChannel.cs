@@ -117,5 +117,11 @@ namespace se.lth.control.labcomm {
     public void encodePacked32(Int64 value) {
       WritePacked32(bytes, value);
     }
+
+    public void encodeSampleRef(Sample value) {
+      WriteInt(0, 4);
+      throw new Exception("IMPLEMENT");
+    }
+
   }
 }

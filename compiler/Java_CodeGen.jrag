@@ -645,6 +645,7 @@ aspect Java_Class {
       case LABCOMM_FLOAT: { env.print("e.encodeFloat"); } break;
       case LABCOMM_DOUBLE: { env.print("e.encodeDouble"); } break;
       case LABCOMM_STRING: { env.print("e.encodeString"); } break;
+      case LABCOMM_SAMPLE: { env.print("e.encodeSampleRef"); } break;
     }
     env.println("(" + name + ");");
   }
@@ -735,6 +736,7 @@ aspect Java_Class {
       case LABCOMM_FLOAT: { env.println("d.decodeFloat();"); } break;
       case LABCOMM_DOUBLE: { env.println("d.decodeDouble();"); } break;
       case LABCOMM_STRING: { env.println("d.decodeString();"); } break;
+      case LABCOMM_SAMPLE: { env.println("d.decodeSampleRef();"); } break;
     }
   }
 
@@ -819,6 +821,7 @@ aspect Java_Class {
   public void PrimType.Java_emitTypePrefix(Java_env env) {
     switch (getToken()) {
       case LABCOMM_STRING: { env.print("String"); } break;
+      case LABCOMM_SAMPLE: { env.print("Sample"); } break;
       default: { env.print(getName()); } break;
     }
   }
@@ -938,10 +941,6 @@ aspect Java_Class {
 		    " not declared");
   }
 
-  public void SampleRefType.Java_emitType(Java_env env) {
-    env.print("Sample");
-  }
-
   public void VoidType.Java_emitType(Java_env env) {
     env.print("void");
   }
@@ -949,6 +948,7 @@ aspect Java_Class {
   public void PrimType.Java_emitType(Java_env env) {
     switch (getToken()) {
       case LABCOMM_STRING: { env.print("String"); } break;
+      case LABCOMM_SAMPLE: { env.print("Sample"); } break;
       default: { env.print(getName()); } break;
     }
   }

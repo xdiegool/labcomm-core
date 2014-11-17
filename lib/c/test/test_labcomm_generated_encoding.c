@@ -221,7 +221,7 @@ int main(void)
                                       labcomm_signature_generated_encoding_R);
   labcomm_encoder_sample_ref_register(encoder, 
                                       labcomm_signature_generated_encoding_R);
-  EXPECT({0x03, 0x08, -1, 0x01, 'R', 0x04, 0x10, 0x01, 0x04, 0x03});
+  EXPECT({0x03, 0x08, -1, 0x01, 'R', 0x04, 0x10, 0x01, 0x04, 0x28});
 
   labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   // was: labcomm_encode_generated_encoding_V(encoder, &V);

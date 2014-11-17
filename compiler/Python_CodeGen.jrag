@@ -152,10 +152,6 @@ aspect PythonTypes {
                     " not declared");
   }
 
-  public void SampleRefType.Python_genSignature(Python_env env) {
-    env.print("labcomm.SAMPLE_REF()");
-  }
-
   public void PrimType.Python_genSignature(Python_env env) {
     switch (getToken()) {
       case LABCOMM_BOOLEAN: { env.print("labcomm.BOOLEAN()"); } break;
@@ -166,6 +162,7 @@ aspect PythonTypes {
       case LABCOMM_FLOAT: { env.print("labcomm.FLOAT()"); } break;
       case LABCOMM_DOUBLE: { env.print("labcomm.DOUBLE()"); } break;
       case LABCOMM_STRING: { env.print("labcomm.STRING()"); } break;
+      case LABCOMM_SAMPLE: { env.print("labcomm.SAMPLE()"); } break;
     }
   }
 

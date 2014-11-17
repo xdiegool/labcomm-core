@@ -16,5 +16,6 @@ aspect LabCommTokens {
   public static final int ASTNode.LABCOMM_FLOAT =      0x25;
   public static final int ASTNode.LABCOMM_DOUBLE =     0x26;
   public static final int ASTNode.LABCOMM_STRING =     0x27;
+  public static final int ASTNode.LABCOMM_SAMPLE =     0x28;
 
 }

@@ -131,5 +131,12 @@ public class EncoderChannel implements Encoder {
       encodeByte((byte)(tmp[i] | (i!=0?0x80:0x00)));
     }
   }
+
+  public void encodeSampleRef(Sample value) throws IOException {
+    data.writeInt(0);
+    throw new IOException("IMPLEMENT");
+  }
+    
+
 }
 

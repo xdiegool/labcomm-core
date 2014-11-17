@@ -74,8 +74,10 @@ if __name__ == '__main__':
     for func,arg,stype in sample:
         result.extend(split_match('^[^|]*\|(.*)$', """
           |  labcomm_encoder_register_%(func)s(e);
+          |  labcomm_encoder_sample_ref_register(e, labcomm_signature_%(func)s);
           |  labcomm_decoder_register_%(func)s(d, handle_%(func)s, e);
-        """ % { 'func': func, 'arg': arg }))
+          |  labcomm_decoder_sample_ref_register(d, labcomm_signature_%(func)s);
+       """ % { 'func': func, 'arg': arg }))
     result.extend(split_match('^[^|]*\|(.*)$', """
       |  labcomm_decoder_run(d);
       |  return 0;

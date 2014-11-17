@@ -172,5 +172,12 @@ public class DecoderChannel implements Decoder {
 
     return (int) (res & 0xffffffff);
   }
+
+  public Sample decodeSampleRef() throws IOException {
+    int index = in.readInt();
+    throw new IOException("IMPLEMENT");
+//    return null;
+  }
+    
 }
 

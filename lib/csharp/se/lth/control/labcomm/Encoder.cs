@@ -17,6 +17,7 @@ namespace se.lth.control.labcomm {
     void encodeDouble(double value);
     void encodeString(String value);
     void encodePacked32(Int64 value);
+    void encodeSampleRef(Sample value);
     
   }
 

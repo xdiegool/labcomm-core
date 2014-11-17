@@ -77,7 +77,6 @@ Type type =
   | user_type.u                     {: return u; :}
   | struct_type.s                   {: return s; :}
   | void_type.v                     {: return v; :}
-  | sample_ref_type.s               {: return s; :}
   ;
 
 PrimType prim_type =
@@ -97,6 +96,8 @@ PrimType prim_type =
       {: return new PrimType(DOUBLE, ASTNode.LABCOMM_DOUBLE); :}
   | STRING
       {: return new PrimType(STRING, ASTNode.LABCOMM_STRING); :}
+  | SAMPLE
+      {: return new PrimType(SAMPLE, ASTNode.LABCOMM_SAMPLE); :}
   ;
 
 UserType user_type =
@@ -109,10 +110,6 @@ StructType struct_type =
 
 VoidType void_type = 
     VOID {: return new VoidType(); :} 
-;
-
-SampleRefType sample_ref_type = 
-    SAMPLE {: return new SampleRefType(); :} 
 ;
 
 List dim_list =

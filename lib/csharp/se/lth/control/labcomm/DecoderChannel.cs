@@ -146,5 +146,9 @@ namespace se.lth.control.labcomm {
 
       return (int) (res & 0xffffffff);
     }
+
+    public Sample decodeSampleRef() {
+      return null;
+    }
   }
 } 

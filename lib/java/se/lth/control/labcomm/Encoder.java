@@ -16,5 +16,6 @@ public interface Encoder {
   public void encodeDouble(double value) throws IOException;
   public void encodeString(String value) throws IOException;
   public void encodePacked32(long value) throws IOException;
+  public void encodeSampleRef(Sample value) throws IOException;
 
 }

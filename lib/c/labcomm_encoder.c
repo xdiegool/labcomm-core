@@ -231,9 +231,12 @@ int labcomm_internal_encoder_signature_to_index(
   struct labcomm_encoder *e, const struct labcomm_signature *signature)
 {
   /* writer_lock should be held at this point */
-  int index = labcomm_get_local_index(signature);
-  if (! LABCOMM_SIGNATURE_ARRAY_GET(e->sample_ref, int, index, 0)) {
-    index = 0;
+  int index = 0;
+  if (signature != NULL) {
+    index = labcomm_get_local_index(signature);
+    if (! LABCOMM_SIGNATURE_ARRAY_GET(e->sample_ref, int, index, 0)) {
+      index = 0;
+    }
   }
   return index;
 }

@@ -16,6 +16,7 @@ namespace se.lth.control.labcomm {
     double decodeDouble();
     String decodeString();
     int decodePacked32();
+    Sample decodeSampleRef();
 
   }
 

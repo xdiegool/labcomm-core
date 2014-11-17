@@ -28,6 +28,7 @@ if __name__ == '__main__':
       |import java.io.IOException;
       |import se.lth.control.labcomm.DecoderChannel;
       |import se.lth.control.labcomm.EncoderChannel;
+      |import se.lth.control.labcomm.Sample;
       |
       |public class java_relay implements
     """))

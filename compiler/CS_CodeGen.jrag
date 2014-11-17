@@ -546,6 +546,7 @@ aspect CS_Class {
       case LABCOMM_FLOAT: { env.print("e.encodeFloat"); } break;
       case LABCOMM_DOUBLE: { env.print("e.encodeDouble"); } break;
       case LABCOMM_STRING: { env.print("e.encodeString"); } break;
+      case LABCOMM_SAMPLE: { env.println("e.encodeSampleRef"); } break;
     }
     env.println("(" + name + ");");
   }
@@ -640,6 +641,11 @@ aspect CS_Class {
       case LABCOMM_FLOAT: { env.println("d.decodeFloat();"); } break;
       case LABCOMM_DOUBLE: { env.println("d.decodeDouble();"); } break;
       case LABCOMM_STRING: { env.println("d.decodeString();"); } break;
+      case LABCOMM_SAMPLE: { env.println("d.decodeSampleRef();"); } break;
+      default: {
+        throw new Error("PrimType.CS_emitDecoder(CS_env env, String name)" + 
+                        " unknown token type");
+      }
     }
   }
 
@@ -720,13 +726,10 @@ aspect CS_Class {
 		    " not declared");
   }
 
-  public void SampleRefType.CS_emitTypePrefix(CS_env env) {
-    env.print("Sample");
-  }
-
   public void PrimType.CS_emitTypePrefix(CS_env env) {
     switch (getToken()) {
       case LABCOMM_STRING: { env.print("String"); } break;
+      case LABCOMM_SAMPLE: { env.print("Sample"); } break;
       default: { env.print(getName()); } break;
     }
   }
@@ -848,10 +851,6 @@ aspect CS_Class {
 		    " not declared");
   }
 
-  public void SampleRefType.CS_emitType(CS_env env) {
-    env.print("Sample");
-  }
-
   public void VoidType.CS_emitType(CS_env env) {
     env.print("void");
   }
@@ -860,6 +859,7 @@ aspect CS_Class {
     switch (getToken()) {
       case LABCOMM_STRING: { env.print("String"); } break;
       case LABCOMM_BOOLEAN: { env.print("bool"); } break;
+      case LABCOMM_SAMPLE: { env.print("Sample"); } break;
       default: { env.print(getName()); } break;
     }
   }
