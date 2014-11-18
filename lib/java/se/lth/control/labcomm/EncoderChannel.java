@@ -41,6 +41,9 @@ public class EncoderChannel implements Encoder {
     end(null);
   }
 
+  public void registerSampleRef(Sample sample) throws IOException {
+  }
+
   private void begin(int tag) {
     current_tag = tag;
     bytes.reset();

@@ -9,7 +9,8 @@ namespace se.lth.control.labcomm {
 
     private Stream writer;
     private MemoryStream bytes = new MemoryStream();
-    private EncoderRegistry registry = new EncoderRegistry();
+    private EncoderRegistry def_registry = new EncoderRegistry();
+    private EncoderRegistry ref_registry = new EncoderRegistry();
     byte[] buf = new byte[8];
     private int current_tag; 
 
@@ -22,8 +23,21 @@ namespace se.lth.control.labcomm {
     }
 
     public void register(SampleDispatcher dispatcher) {
-      int index = registry.add(dispatcher);
+      int index = def_registry.add(dispatcher);
       begin(Constant.SAMPLE_DEF);
+      encodePacked32(index);
+      encodeString(dispatcher.getName());
+      byte[] signature = dispatcher.getSignature();
+      encodePacked32(signature.Length);
+      for (int i = 0 ; i < signature.Length ; i++) {
+	encodeByte(signature[i]);
+      }
+      end(null);
+    }
+
+    public void registerSampleRef(SampleDispatcher dispatcher) {
+      int index = ref_registry.add(dispatcher);
+      begin(Constant.SAMPLE_REF);
       encodePacked32(index);
       encodeString(dispatcher.getName());
       byte[] signature = dispatcher.getSignature();
@@ -40,7 +54,7 @@ namespace se.lth.control.labcomm {
     }
 
     public void begin(Type c) {
-      begin(registry.getTag(c));
+      begin(def_registry.getTag(c));
     }
 
     public void end(Type c) {
@@ -118,9 +132,13 @@ namespace se.lth.control.labcomm {
       WritePacked32(bytes, value);
     }
 
-    public void encodeSampleRef(Sample value) {
-      WriteInt(0, 4);
-      throw new Exception("IMPLEMENT");
+    public void encodeSampleRef(Type value) {
+      int index = 0;
+      try {
+        index = ref_registry.getTag(value);
+      } catch (NullReferenceException) {
+      }
+      WriteInt(index, 4);
     }
 
   }

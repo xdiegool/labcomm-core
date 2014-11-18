@@ -5,6 +5,7 @@ import java.io.IOException;
 public interface Encoder {
 
   public void register(SampleDispatcher dispatcher) throws IOException;
+  public void registerSampleRef(Sample sample) throws IOException;
   public void begin(Class<? extends Sample> c) throws IOException;
   public void end(Class<? extends Sample> c) throws IOException;
   public void encodeBoolean(boolean value) throws IOException;

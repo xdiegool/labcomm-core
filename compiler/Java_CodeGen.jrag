@@ -338,7 +338,7 @@ aspect Java_Class {
     env.indent();
 
     Java_emitUserTypeDeps(env, null, true);
-    env.println("e.register(Dispatcher.singleton());");
+    env.println("e.register(dispatcher);");
     env.unindent();
     env.println("}");
     env.println();
@@ -429,7 +429,7 @@ aspect Java_Class {
     env.println();
     env.println("public static void register(Decoder d, Handler h) throws IOException {");
     env.indent();
-    env.println("d.register(Dispatcher.singleton(), h);");
+    env.println("d.register(dispatcher, h);");
     env.unindent();
     env.println("}");
     env.println();
@@ -490,17 +490,16 @@ aspect Java_Class {
   //XXX TODO: refactor: split into a static class ("TypeDefSingleton"?)and a (smaller) dispatcher
   public void Decl.Java_emitDispatcher(Java_env env, boolean isSample) {
     String genericStr = ""; //env.versionHasMetaData()?"<"+getName()+">":""; 
-    env.println("private static class Dispatcher implements SampleDispatcher "+genericStr+"{");
-    env.indent();
+    env.println("private static Dispatcher dispatcher = new Dispatcher();");
     env.println();
-    env.println("private static Dispatcher singleton;");
-    env.println();
-    env.println("public synchronized static Dispatcher singleton() {");
+    env.println("public SampleDispatcher getDispatcher() {");
     env.indent();
-    env.println("if(singleton==null) singleton=new Dispatcher();");
-    env.println("return singleton;");
+    env.println("return dispatcher;");
     env.unindent();
     env.println("}");
+    env.println();
+    env.println("private static class Dispatcher implements SampleDispatcher "+genericStr+"{");
+    env.indent();
     env.println();
     env.println("public Class"+genericStr+" getSampleClass() {");
     env.indent();

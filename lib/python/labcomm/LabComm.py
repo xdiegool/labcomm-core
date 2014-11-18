@@ -559,7 +559,17 @@ class array(object):
     
 class struct:
     def __init__(self, field):
-        self.field = field
+        self.field = tuple(field)
+
+    def __eq__(self, other):
+        return (type(self) == type(other) and 
+                self.field == other.field)
+        
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return hash(self.field)
 
     def encode_decl(self, encoder):
         encoder.encode_type(i_STRUCT)
@@ -612,7 +622,7 @@ SAMPLE_DEF = sample_def()
 SAMPLE_REF = sample_ref()
 
 ARRAY = array(None, None)
-STRUCT = struct({})
+STRUCT = struct([])
 
 class anonymous_object(dict):
     def __setattr__(self, name, value):

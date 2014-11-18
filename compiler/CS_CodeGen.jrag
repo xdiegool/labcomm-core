@@ -302,15 +302,27 @@ aspect CS_Class {
   public void Decl.CS_emitRegisterEncoder(CS_env env) {
     env.println("public static void register(Encoder e){");
     env.indent();
-    env.println("e.register(Dispatcher.singleton());");
+    env.println("e.register(dispatcher);");
     env.unindent();
     env.println("}");
+    env.println("public static void registerSampleRef(Encoder e) {");
+    env.indent();
+    env.println("e.registerSampleRef(dispatcher);");
+    env.unindent();
+    env.println("}");
+    env.println();
   }
   
   public void Decl.CS_emitRegisterDecoder(CS_env env) {
     env.println("public static void register(Decoder d, Handler h) {");
     env.indent();
-    env.println("d.register(Dispatcher.singleton(), h);");
+    env.println("d.register(dispatcher, h);");
+    env.unindent();
+    env.println("}");
+    env.println();
+    env.println("public static void registerSampleRef(Decoder d) {");
+    env.indent();
+    env.println("d.registerSampleRef(dispatcher);");
     env.unindent();
     env.println("}");
     env.println();
@@ -402,21 +414,16 @@ aspect CS_Class {
   //XXX TODO: refactor: split into a static class ("TypeDefSingleton"?)and a (smaller) dispatcher
   public void Decl.CS_emitDispatcher(CS_env env, boolean isSample) {
     String genericStr = ""; //env.versionHasMetaData()?"<"+getName()+">":""; 
+    env.println("private static Dispatcher dispatcher = new Dispatcher();");
+    env.println();
+    env.println("public SampleDispatcher getDispatcher() {");
+    env.indent();
+    env.println("return dispatcher;");
+    env.unindent();
+    env.println("}");
+    env.println();
     env.println("private class Dispatcher : SampleDispatcher{");
     env.indent();
-    env.println();
-    env.println("private static Dispatcher single;");
-    env.println();
-    env.println("public static Dispatcher singleton() {");
-    env.indent();
-    env.println("lock(typeof(Dispatcher)) {");
-    env.indent();
-    env.println("if( single == null ) single = new Dispatcher();");
-    env.println("return single;");
-    env.unindent();
-    env.println("}");
-    env.unindent();
-    env.println("}");
     env.println();
     env.println("public Type getSampleClass() {");
     env.indent();
@@ -546,7 +553,7 @@ aspect CS_Class {
       case LABCOMM_FLOAT: { env.print("e.encodeFloat"); } break;
       case LABCOMM_DOUBLE: { env.print("e.encodeDouble"); } break;
       case LABCOMM_STRING: { env.print("e.encodeString"); } break;
-      case LABCOMM_SAMPLE: { env.println("e.encodeSampleRef"); } break;
+      case LABCOMM_SAMPLE: { env.print("e.encodeSampleRef"); } break;
     }
     env.println("(" + name + ");");
   }
@@ -729,7 +736,7 @@ aspect CS_Class {
   public void PrimType.CS_emitTypePrefix(CS_env env) {
     switch (getToken()) {
       case LABCOMM_STRING: { env.print("String"); } break;
-      case LABCOMM_SAMPLE: { env.print("Sample"); } break;
+      case LABCOMM_SAMPLE: { env.print("Type"); } break;
       default: { env.print(getName()); } break;
     }
   }
@@ -859,7 +866,7 @@ aspect CS_Class {
     switch (getToken()) {
       case LABCOMM_STRING: { env.print("String"); } break;
       case LABCOMM_BOOLEAN: { env.print("bool"); } break;
-      case LABCOMM_SAMPLE: { env.print("Sample"); } break;
+      case LABCOMM_SAMPLE: { env.print("Type"); } break;
       default: { env.print(getName()); } break;
     }
   }

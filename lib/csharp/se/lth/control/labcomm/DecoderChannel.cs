@@ -8,7 +8,8 @@ namespace se.lth.control.labcomm {
   public class DecoderChannel : Decoder {
 
     private Stream stream;
-    private DecoderRegistry registry = new DecoderRegistry();
+    private DecoderRegistry def_registry = new DecoderRegistry();
+    private DecoderRegistry ref_registry = new DecoderRegistry();
     byte[] buf = new byte[8];
 
     public DecoderChannel(Stream stream) {
@@ -34,10 +35,18 @@ namespace se.lth.control.labcomm {
           int signature_length = decodePacked32();
           byte[] signature = new byte[signature_length];
           ReadBytes(signature, signature_length);
-	  registry.add(index, name, signature);
+	  def_registry.add(index, name, signature);
+        } break;
+        case Constant.SAMPLE_REF: {
+          int index = decodePacked32();
+          String name = decodeString();
+          int signature_length = decodePacked32();
+          byte[] signature = new byte[signature_length];
+          ReadBytes(signature, signature_length);
+	  ref_registry.add(index, name, signature);
         } break;
         default: {
-          DecoderRegistry.Entry e = registry.get(tag);
+          DecoderRegistry.Entry e = def_registry.get(tag);
           if (e == null) {
             throw new IOException("Unhandled tag " + tag);
           }
@@ -64,7 +73,11 @@ namespace se.lth.control.labcomm {
 
     public void register(SampleDispatcher dispatcher, 
 			 SampleHandler handler) {
-      registry.add(dispatcher, handler);
+      def_registry.add(dispatcher, handler);
+    }
+
+    public void registerSampleRef(SampleDispatcher dispatcher) {
+      ref_registry.add(dispatcher, null);
     }
 
     private void ReadBytes(byte[] result, int length) {
@@ -147,8 +160,14 @@ namespace se.lth.control.labcomm {
       return (int) (res & 0xffffffff);
     }
 
-    public Sample decodeSampleRef() {
-      return null;
+    public Type decodeSampleRef() {
+      int index = (int)ReadInt(4);
+      DecoderRegistry.Entry e = ref_registry.get(index);
+      if (e != null) {
+        return e.getSampleDispatcher().getSampleClass();
+      } else {
+        return null;
+      }
     }
   }
 } 

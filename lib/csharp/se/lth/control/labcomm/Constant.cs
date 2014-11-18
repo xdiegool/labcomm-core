@@ -9,8 +9,8 @@ namespace se.lth.control.labcomm {
      */
     public const int VERSION          = 0x01;
     public const int SAMPLE_DEF       = 0x02;
-    public const int TYPE_DEF         = 0x03;
-    public const int TYPE_BINDING     = 0x04;
+    public const int SAMPLE_REF       = 0x03;
+    public const int TYPE_DEF         = 0x04;
     public const int PRAGMA           = 0x3f;
     public const int FIRST_USER_INDEX = 0x40; /* ..0xffffffff */
 
@@ -31,6 +31,7 @@ namespace se.lth.control.labcomm {
     public const int FLOAT            = 0x25;
     public const int DOUBLE           = 0x26;
     public const int STRING           = 0x27;
+    public const int SAMPLE           = 0x28;
     
   }
 
