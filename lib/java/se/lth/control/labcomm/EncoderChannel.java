@@ -8,16 +8,14 @@ import java.io.OutputStream;
 public class EncoderChannel implements Encoder {
 
   private Writer writer;
-  private ByteArrayOutputStream bytes;
-  private DataOutputStream data;
-  private EncoderRegistry registry;
+  private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+  private DataOutputStream data = new DataOutputStream(bytes);
+  private EncoderRegistry def_registry = new EncoderRegistry();
+  private EncoderRegistry ref_registry = new EncoderRegistry();
   private int current_tag; 
 
   public EncoderChannel(Writer writer) throws IOException {
     this.writer = writer;
-    bytes = new ByteArrayOutputStream();
-    data = new DataOutputStream(bytes);
-    registry = new EncoderRegistry();
 
     begin(Constant.VERSION);
     encodeString(Constant.CURRENT_VERSION);
@@ -29,7 +27,7 @@ public class EncoderChannel implements Encoder {
   }
 
   public void register(SampleDispatcher dispatcher) throws IOException {
-    int index = registry.add(dispatcher);
+    int index = def_registry.add(dispatcher);
     begin(Constant.SAMPLE_DEF);
     encodePacked32(index);
     encodeString(dispatcher.getName());
@@ -41,7 +39,18 @@ public class EncoderChannel implements Encoder {
     end(null);
   }
 
-  public void registerSampleRef(Sample sample) throws IOException {
+  public void registerSampleRef(SampleDispatcher dispatcher) throws IOException {
+    System.err.println(dispatcher);
+    int index = ref_registry.add(dispatcher);
+    begin(Constant.SAMPLE_REF);
+    encodePacked32(index);
+    encodeString(dispatcher.getName());
+    byte[] signature = dispatcher.getSignature();
+    encodePacked32(signature.length);
+    for (int i = 0 ; i < signature.length ; i++) {
+      encodeByte(signature[i]);
+    }
+    end(null);
   }
 
   private void begin(int tag) {
@@ -50,7 +59,7 @@ public class EncoderChannel implements Encoder {
   }
 
   public void begin(Class<? extends Sample> c) throws IOException {
-    begin(registry.getTag(c));
+    begin(def_registry.getTag(c));
   }
 
   public void end(Class<? extends Sample> c) throws IOException {
@@ -135,11 +144,14 @@ public class EncoderChannel implements Encoder {
     }
   }
 
-  public void encodeSampleRef(Sample value) throws IOException {
-    data.writeInt(0);
-    throw new IOException("IMPLEMENT");
+  public void encodeSampleRef(Class value) throws IOException {
+    int index = 0;
+    try {
+      index = ref_registry.getTag(value);
+    } catch (NullPointerException e) {
+    }
+    data.writeInt(index);
   }
-    
 
 }
 

@@ -332,13 +332,16 @@ aspect Java_Class {
     env.println("register(e, true);");
     env.unindent();
     env.println("}");
-
     env.println();
     env.println("public static void register(Encoder e, boolean sendMetaData) throws IOException {");
     env.indent();
-
     Java_emitUserTypeDeps(env, null, true);
     env.println("e.register(dispatcher);");
+    env.unindent();
+    env.println("}");
+    env.println("public static void registerSampleRef(Encoder e) throws IOException{");
+    env.indent();
+    env.println("e.registerSampleRef(dispatcher);");
     env.unindent();
     env.println("}");
     env.println();
@@ -430,6 +433,11 @@ aspect Java_Class {
     env.println("public static void register(Decoder d, Handler h) throws IOException {");
     env.indent();
     env.println("d.register(dispatcher, h);");
+    env.unindent();
+    env.println("}");
+    env.println("public static void registerSampleRef(Decoder d) throws IOException {");
+    env.indent();
+    env.println("d.registerSampleRef(dispatcher);");
     env.unindent();
     env.println("}");
     env.println();
@@ -820,7 +828,7 @@ aspect Java_Class {
   public void PrimType.Java_emitTypePrefix(Java_env env) {
     switch (getToken()) {
       case LABCOMM_STRING: { env.print("String"); } break;
-      case LABCOMM_SAMPLE: { env.print("Sample"); } break;
+      case LABCOMM_SAMPLE: { env.print("Class"); } break;
       default: { env.print(getName()); } break;
     }
   }
@@ -947,7 +955,7 @@ aspect Java_Class {
   public void PrimType.Java_emitType(Java_env env) {
     switch (getToken()) {
       case LABCOMM_STRING: { env.print("String"); } break;
-      case LABCOMM_SAMPLE: { env.print("Sample"); } break;
+      case LABCOMM_SAMPLE: { env.print("Class"); } break;
       default: { env.print(getName()); } break;
     }
   }

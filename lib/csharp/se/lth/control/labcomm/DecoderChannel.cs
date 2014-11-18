@@ -162,12 +162,14 @@ namespace se.lth.control.labcomm {
 
     public Type decodeSampleRef() {
       int index = (int)ReadInt(4);
-      DecoderRegistry.Entry e = ref_registry.get(index);
-      if (e != null) {
+      try {
+        DecoderRegistry.Entry e = ref_registry.get(index);
         return e.getSampleDispatcher().getSampleClass();
-      } else {
+      } catch (NullReferenceException) {
         return null;
       }
     }
+
   }
+
 } 

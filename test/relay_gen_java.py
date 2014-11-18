@@ -2,6 +2,7 @@
 
 import re
 import sys
+import random
 
 def split_match(pattern, multiline):
     def match(s):
@@ -11,6 +12,10 @@ def split_match(pattern, multiline):
         pass
     return filter(lambda s: s != None, map(match, multiline.split('\n')))
    
+def shuffle(l):
+    result = list(l)
+    random.shuffle(result)
+    return result
 
 if __name__ == '__main__':
     f = open(sys.argv[1])
@@ -59,20 +64,26 @@ if __name__ == '__main__':
     result.extend(split_match('^[^|]*\|(.*)$', """
       |  public java_relay(String InName, String OutName) throws Exception {
       |    FileInputStream InFile = new FileInputStream(InName);
-      |    DecoderChannel d = new DecoderChannel(InFile);
+      |    DecoderChannel decoder = new DecoderChannel(InFile);
       |    FileOutputStream OutFile = new FileOutputStream(OutName);
       |    encoder = new EncoderChannel(OutFile);
       |
     """))
-    for func,arg in sample:
-        result.append('    %s.register(d, this);' % func)
+    for func,arg in shuffle(sample):
+        result.append('    %s.register(decoder, this);' % func)
         pass
-    for func,arg in sample:
+    for func,arg in shuffle(sample):
+        result.append('    %s.registerSampleRef(decoder);' % func)
+        pass
+    for func,arg in shuffle(sample):
         result.append('    %s.register(encoder);' % func)
+        pass
+    for func,arg in shuffle(sample):
+        result.append('    %s.registerSampleRef(encoder);' % func)
         pass
     result.extend(split_match('^[^|]*\|(.*)$', """
       |    try {
-      |      d.run();
+      |      decoder.run();
       |    } catch (java.io.EOFException e) {
       |    }
       |  }

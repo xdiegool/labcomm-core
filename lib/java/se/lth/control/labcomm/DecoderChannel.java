@@ -9,14 +9,11 @@ import java.io.EOFException;
 public class DecoderChannel implements Decoder {
 
   private DataInputStream in;
-  private DecoderRegistry registry;
+  private DecoderRegistry def_registry = new DecoderRegistry();
+  private DecoderRegistry ref_registry = new DecoderRegistry();
 
-  private DecoderChannel(InputStream in, DecoderRegistry reg) throws IOException {
-    this.in = new DataInputStream(in);
-    registry = reg;
-  }
   public DecoderChannel(InputStream in) throws IOException {
-    this(in, new DecoderRegistry());
+    this.in = new DataInputStream(in);
   }
 
   private void processSampleDef() throws IOException {
@@ -25,26 +22,34 @@ public class DecoderChannel implements Decoder {
     int signature_length = decodePacked32();
     byte[] signature = new byte[signature_length];
     ReadBytes(signature, signature_length);
-    registry.add(index, name, signature);
+    def_registry.add(index, name, signature);
   }	   
 
+  private void processSampleRef() throws IOException {
+    int index = decodePacked32();
+    String name = decodeString();
+    int signature_length = decodePacked32();
+    byte[] signature = new byte[signature_length];
+    ReadBytes(signature, signature_length);
+    ref_registry.add(index, name, signature);
+  }	   
 
   private void processTypeDef(int len) throws IOException {
-       System.out.println("Got TypeDef: skipping "+len+" bytes"); 
+       System.err.println("Got TypeDef: skipping "+len+" bytes"); 
        for(int i=0; i<len; i++) {
            decodeByte();		  
        }
   }
 
   private void processTypeBinding(int len) throws IOException {
-       System.out.println("Got TypeBinding: skipping "+len+" bytes"); 
+       System.err.println("Got TypeBinding: skipping "+len+" bytes"); 
        for(int i=0; i<len; i++) {
            decodeByte();		  
        }
   }
 
   private void processPragma(int len) throws IOException {
-       System.out.println("Got Pragma: skipping "+len+" bytes"); 
+       System.err.println("Got Pragma: skipping "+len+" bytes"); 
        for(int i=0; i<len; i++) {
            decodeByte();		  
        }
@@ -66,6 +71,9 @@ public class DecoderChannel implements Decoder {
 	case Constant.SAMPLE_DEF: {
           processSampleDef();
 	} break;
+	case Constant.SAMPLE_REF: {
+          processSampleRef();
+	} break;
 	case Constant.TYPE_DEF: {
           processTypeDef(length);
 	} break;
@@ -76,7 +84,7 @@ public class DecoderChannel implements Decoder {
           processPragma(length);
 	} break;
 	default: {
-	  DecoderRegistry.Entry e = registry.get(tag);
+	  DecoderRegistry.Entry e = def_registry.get(tag);
 	  if (e == null) {
 	    throw new IOException("Unhandled tag " + tag);
 	  }
@@ -103,7 +111,11 @@ public class DecoderChannel implements Decoder {
 
   public void register(SampleDispatcher dispatcher, 
                        SampleHandler handler) throws IOException {
-    registry.add(dispatcher, handler);
+    def_registry.add(dispatcher, handler);
+  }
+
+  public void registerSampleRef(SampleDispatcher dispatcher) throws IOException {
+    ref_registry.add(dispatcher, null);
   }
 
   private void ReadBytes(byte[] result, int length) throws IOException {
@@ -173,10 +185,15 @@ public class DecoderChannel implements Decoder {
     return (int) (res & 0xffffffff);
   }
 
-  public Sample decodeSampleRef() throws IOException {
+  public Class decodeSampleRef() throws IOException {
     int index = in.readInt();
-    throw new IOException("IMPLEMENT");
-//    return null;
+    try {
+      DecoderRegistry.Entry e = ref_registry.get(index);
+      return e.getDispatcher().getSampleClass();
+    } catch (NullPointerException e) {
+      return null;
+    }
+
   }
     
 }
