@@ -402,16 +402,24 @@ static int accept_signature(labcomm_sig_parser_t *d)
 int accept_packet(labcomm_sig_parser_t *d) {
         unsigned char nbytes;
         unsigned int type = peek_varint(d, &nbytes) ;
-	if(type == TYPE_DECL ) {
+    if(type == VERSION ) {
+		//XXX is this used? If so, is it correct?
+		advancen(d, nbytes);
+		VERBOSE_PRINTF("ignoring version ");
+        int len = get_varint(d); //ignore length field
+        advancen(d, len);
+    }else if(type == TYPE_DECL ) {
 		//XXX is this used? If so, is it correct?
 		advancen(d, nbytes);
 		d->current_decl_is_varsize = FALSE; // <-- a conveniance flag in labcomm_sig_parser_t
 		VERBOSE_PRINTF("type_decl ");
+        get_varint(d); //ignore length field
 		accept_signature(d);
 	} else if (type == SAMPLE_DECL) {
 		d->current_decl_is_varsize = FALSE; // <-- a conveniance flag in labcomm_sig_parser_t
 		advancen(d, nbytes);
 		VERBOSE_PRINTF("sample_decl ");
+        get_varint(d); //ignore length field
 		accept_signature(d);
 	} else if(type >= LABCOMM_USER) {
 #ifdef EXIT_WHEN_RECEIVING_DATA
@@ -609,14 +617,19 @@ static int accept_sample_data(labcomm_sig_parser_t *d){
 	accept_user_id(d);
 	unsigned int uid = pop_val(d);	
 	printf("sample data... uid=0x%x\n", uid);
+    int len = get_varint(d); //length field
 #ifdef DEBUG
 	dump_signature(d, uid);
 #endif
+#ifdef SKIP_BY_PARSING
 	struct labcomm_signature *sigt = get_sig_t(d, uid);
 	int encoded_size = sigt->encoded_size(NULL);
 	INFO_PRINTF("encoded_size from sig: %d\n", encoded_size);
 	struct labcomm_signature *sig = get_sig_t(d, uid);
 	skip_packed_sample_data(d, sig);
+#else
+	advancen(d, len);
+#endif
 	return TRUE;
 }
 

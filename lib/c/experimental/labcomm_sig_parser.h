@@ -112,8 +112,9 @@ int skip_packed_sample_data(labcomm_sig_parser_t *p, struct labcomm_signature *s
 #endif
 
 typedef enum{
-        TYPE_DECL = LABCOMM_TYPEDEF,
+        VERSION = LABCOMM_VERSION,
         SAMPLE_DECL = LABCOMM_SAMPLE_DEF,
+        TYPE_DECL = LABCOMM_TYPEDEF,
 
         ARRAY_DECL = LABCOMM_ARRAY,
         STRUCT_DECL = LABCOMM_STRUCT,
