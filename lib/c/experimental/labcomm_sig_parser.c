@@ -155,7 +155,7 @@ int labcomm_sig_parser_init(labcomm_sig_parser_t *b, size_t buffer_size,
 #ifdef STATIC_ALLOCATION
 	printf("warning: labcomm_sig_parser_t_init: size params ignored, using defaults from .h file \n");
 #else
-	b->sig_ts=calloc(num_signatures, sizeof(labcomm_signature_t));
+	b->sig_ts=calloc(num_signatures, sizeof(struct labcomm_signature));
 	b->signatures_length=calloc(num_signatures, sizeof(int));
 	b->signatures_name_length=calloc(num_signatures, sizeof(int));
 	b->signatures_name=calloc(num_signatures, sizeof(void *)); //HERE BE DRAGONS: add range checks
@@ -221,7 +221,7 @@ void getStr(labcomm_sig_parser_t *b, char *dest, size_t size) {
 	b->idx += size;
 }
 
-labcomm_signature_t *get_sig_t(labcomm_sig_parser_t *p, unsigned int uid) 
+struct labcomm_signature *get_sig_t(labcomm_sig_parser_t *p, unsigned int uid) 
 {
 	return &(p->sig_ts[uid-LABCOMM_USER]);
 }
@@ -310,13 +310,17 @@ static unsigned char labcomm_varint_sizeof(unsigned int i)
 		return res;
 	}
 }
-
-int encoded_size_static(labcomm_signature_t *sig, void *unused)
+int encoded_size_static(struct labcomm_signature *sig, void *unused)
 {
+#ifdef LABCOMM_EXPERIMENTAL_CACHED_ENCODED_SIZE
 	if(sig->cached_encoded_size == -1) {
 		error("encoded_size_static called for var_size sample or uninitialized signature");
 	}
 	return sig->cached_encoded_size;
+#else
+	printf("Warning: encoded_size_static currently broken\n");
+	return -1;
+#endif
 }
 
 /* This function probably never will be implemented, as it would be 
@@ -326,7 +330,7 @@ int encoded_size_static(labcomm_signature_t *sig, void *unused)
    on the receiver side, is to skip unhandled samples.
 */
   
-int encoded_size_parse_sig(labcomm_signature_t *sig, void *sample)
+int encoded_size_parse_sig(struct labcomm_signature *sig, void *sample)
 {
 	printf("Warning: encoded_size_parse_sig not implemented\n");
 	return -1;
@@ -355,8 +359,8 @@ static int accept_signature(labcomm_sig_parser_t *d)
 		unsigned int end = d->idx;
 		unsigned int len = end-start;
 
-		labcomm_signature_t *newsig = get_sig_t(d, uid);
-		newsig->type = type;
+		struct labcomm_signature *newsig = get_sig_t(d, uid);
+//		newsig->type = type;
 		if(len <= d->max_sig_len) {
 			d->signatures_length[uid-LABCOMM_USER] = len;
 			memcpy(d->signatures[uid-LABCOMM_USER], &d->c[start], len);
@@ -376,6 +380,7 @@ static int accept_signature(labcomm_sig_parser_t *d)
 		}
 		VERBOSE_PRINTF("signature for uid %x: %s (start=%x,end=%x, nlen=%d,len=%d)\n", uid, get_signature_name(d, uid), start,end, nlen, len);
 		INFO_PRINTF("SIG: %s\n", newsig->name);	
+#ifdef LABCOMM_EXPERIMENTAL_CACHED_ENCODED_SIZE
 		if(! d->current_decl_is_varsize) {
 			newsig->cached_encoded_size = enc_size;
 			newsig->encoded_size = encoded_size_static;
@@ -385,6 +390,7 @@ static int accept_signature(labcomm_sig_parser_t *d)
 			newsig->encoded_size = encoded_size_parse_sig;
 			INFO_PRINTF(".... is variable size\n");
 		}
+#endif
 		return TRUE;
 	} else {
 		error("sample_decl with uid < LABCOMM_USER");	
@@ -606,10 +612,10 @@ static int accept_sample_data(labcomm_sig_parser_t *d){
 #ifdef DEBUG
 	dump_signature(d, uid);
 #endif
-	labcomm_signature_t *sigt = get_sig_t(d, uid);
-	int encoded_size = sigt->encoded_size(sigt, NULL);
+	struct labcomm_signature *sigt = get_sig_t(d, uid);
+	int encoded_size = sigt->encoded_size(NULL);
 	INFO_PRINTF("encoded_size from sig: %d\n", encoded_size);
-	labcomm_signature_t *sig = get_sig_t(d, uid);
+	struct labcomm_signature *sig = get_sig_t(d, uid);
 	skip_packed_sample_data(d, sig);
 	return TRUE;
 }
@@ -801,7 +807,7 @@ int skip_type(unsigned int type, labcomm_sig_parser_t *d,
 
 /* parse signature and skip the corresponding bytes in the labcomm_sig_parser_t 
  */
-int skip_packed_sample_data(labcomm_sig_parser_t *d, labcomm_signature_t *sig) {
+int skip_packed_sample_data(labcomm_sig_parser_t *d, struct labcomm_signature *sig) {
 	unsigned int pos = 0; 		//current position in signature
 	unsigned int skipped = 0;	//skipped byte counter
 	while(pos < sig->size) {

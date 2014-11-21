@@ -29,7 +29,7 @@
 
 /* internal type: stack &c. for the parser */
 typedef struct {
-        unsigned char* c;
+        char* c;
         size_t size;
         size_t capacity;
         unsigned int idx;
@@ -44,14 +44,14 @@ typedef struct {
 	size_t max_name_len;
 	size_t max_sig_len; 
 #ifdef STATIC_ALLOCATION
-	labcomm_signature_t sig_ts[MAX_SIGNATURES];
+	struct labcomm_signature sig_ts[MAX_SIGNATURES];
 
 	unsigned int signatures_length[MAX_SIGNATURES];
 	unsigned int signatures_name_length[MAX_SIGNATURES];
 	unsigned char signatures_name[MAX_SIGNATURES][MAX_NAME_LEN]; 
 	unsigned char signatures[MAX_SIGNATURES][MAX_SIG_LEN];
 #else
-	labcomm_signature_t *sig_ts;           // [MAX_SIGNATURES]
+	struct labcomm_signature *sig_ts;           // [MAX_SIGNATURES]
 
 	unsigned int *signatures_length;       // [MAX_SIGNATURES]
 	unsigned char **signatures;            // [MAX_SIGNATURES][MAX_SIG_LEN];
@@ -70,7 +70,7 @@ int labcomm_sig_parser_read_file(labcomm_sig_parser_t *p, FILE *f);
 
 int accept_packet(labcomm_sig_parser_t *p);
 
-labcomm_signature_t *get_sig_t(labcomm_sig_parser_t *p,unsigned int uid);
+struct labcomm_signature *get_sig_t(labcomm_sig_parser_t *p,unsigned int uid);
 
 unsigned int get_signature_len(labcomm_sig_parser_t *p,unsigned int uid);
 unsigned char* get_signature_name(labcomm_sig_parser_t *p,unsigned int uid);
@@ -78,9 +78,12 @@ unsigned char* get_signature(labcomm_sig_parser_t *p,unsigned int uid);
 void dump_signature(labcomm_sig_parser_t *p,unsigned int uid);
 
 
+int more(labcomm_sig_parser_t *b);
+
+
 /* parse signature and skip the corresponding bytes in the labcomm_sig_parser 
  */
-int skip_packed_sample_data(labcomm_sig_parser_t *p, labcomm_signature_t *sig);
+int skip_packed_sample_data(labcomm_sig_parser_t *p, struct labcomm_signature *sig);
 
 #ifdef QUIET
 #define INFO_PRINTF(format, args...)  
@@ -110,7 +113,7 @@ int skip_packed_sample_data(labcomm_sig_parser_t *p, labcomm_signature_t *sig);
 
 typedef enum{
         TYPE_DECL = LABCOMM_TYPEDEF,
-        SAMPLE_DECL = LABCOMM_SAMPLE,
+        SAMPLE_DECL = LABCOMM_SAMPLE_DEF,
 
         ARRAY_DECL = LABCOMM_ARRAY,
         STRUCT_DECL = LABCOMM_STRUCT,

@@ -3,10 +3,11 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "labcomm_sig_parser.h"
 
-#undef DEBUG_READ
+#define DEBUG_READ
 
 #define BUF_SIZE 1024
 #define STACK_SIZE 16

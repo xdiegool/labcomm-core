@@ -50,7 +50,10 @@ ifeq ($(LABCOMM_EXPERIMENTAL),true)
 		experimental/labcomm_thr_reader_writer.o \
 		experimental/ThrottleDrv/ethernet_drv.o \
 		experimental/ThrottleDrv/throttle_drv.o \
-		experimental/labcomm_udp_reader_writer.o
+		experimental/labcomm_udp_reader_writer.o\
+		experimental/labcomm_sig_parser.o \
+		experimental/test_sig_parser.o 
+
 endif
 
 ## Targets
