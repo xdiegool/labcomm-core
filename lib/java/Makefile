@@ -17,15 +17,15 @@ all: labcomm.jar labcomm2014.jar labcomm2006.jar
 
 labcomm.jar: gen/JAVAC
 	echo $@
-	cd gen ; jar cfm ../$@ osgi-manifest.txt se/lth/control/labcomm/*.class se/lth/control/labcomm2006/*.class
+	cd gen ; jar cfm ../$@ ../osgi-manifest.txt se/lth/control/labcomm/*.class se/lth/control/labcomm2006/*.class
 
 labcomm2014.jar: gen/JAVAC
 	echo $@
-	cd gen ; jar cfm ../$@ osgi-manifest.txt se/lth/control/labcomm/*.class
+	cd gen ; jar cfm ../$@ ../osgi-manifest.txt se/lth/control/labcomm/*.class
 
 labcomm2006.jar: gen/JAVAC
 	echo $@
-	cd gen ; jar cfm ../$@ osgi-manifest.txt se/lth/control/labcomm2006/*.class
+	cd gen ; jar cfm ../$@ ../osgi-manifest.txt se/lth/control/labcomm2006/*.class
 
 gen:
 	mkdir gen
@@ -38,5 +38,4 @@ gen/JAVAC: $(MODULES:%=se/lth/control/labcomm/%.java) $(MODULES:%=se/lth/control
 .PHONY: clean
 
 clean:
-	rm -rf labcomm.jar labcomm2006.jar labcomm2014.jar gen 
-
+	rm -rf labcomm.jar labcomm2006.jar labcomm2014.jar gen
