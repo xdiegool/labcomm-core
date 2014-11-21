@@ -64,8 +64,12 @@ struct labcomm_encoder *labcomm_encoder_new(
                          result->writer->action_context, 
                          LABCOMM_VERSION, NULL, CURRENT_VERSION);
     labcomm_write_packed32(result->writer, LABCOMM_VERSION);
+#ifdef LENGTH_INCL_TAG    
     length = (labcomm_size_packed32(LABCOMM_VERSION) +
               labcomm_size_string(CURRENT_VERSION));
+#else
+    length = labcomm_size_string(CURRENT_VERSION);
+#endif
     labcomm_write_packed32(result->writer, length);
     labcomm_write_string(result->writer, CURRENT_VERSION);
     labcomm_writer_end(result->writer, result->writer->action_context);
