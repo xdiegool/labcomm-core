@@ -54,6 +54,8 @@ ifeq ($(LABCOMM_EXPERIMENTAL),true)
 		experimental/labcomm_sig_parser.o \
 		experimental/test_sig_parser.o 
 
+
+experimental/test_sig_parser : experimental/labcomm_sig_parser.o experimental/test_sig_parser.c
 endif
 
 ## Targets

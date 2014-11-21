@@ -15,7 +15,7 @@
 #undef DEBUG_STACK_VERBOSE // dump stack, otherwise just print value of top
 
 #undef QUIET 		//just print type and size when skipping data
-#undef VERBOSE 		// print in great detail
+// #undef VERBOSE 		// print in great detail
 
 #undef STATIC_ALLOCATION  //dynamic allocation not completely implemented
 
@@ -29,10 +29,10 @@
 
 /* internal type: stack &c. for the parser */
 typedef struct {
-        char* c;
+        unsigned char* c;
         size_t size;
         size_t capacity;
-        unsigned int idx;
+        int idx;
         int val_top;
         int * val_stack;
         int ptr_top;
@@ -57,7 +57,7 @@ typedef struct {
 	unsigned char **signatures;            // [MAX_SIGNATURES][MAX_SIG_LEN];
 
 	unsigned int *signatures_name_length;  // [MAX_SIGNATURES]
-	unsigned char **signatures_name;       // [MAX_SIGNATURES][MAX_NAME_LEN];
+	char **signatures_name;       // [MAX_SIGNATURES][MAX_NAME_LEN];
 #endif
 
 } labcomm_sig_parser_t;
@@ -73,7 +73,7 @@ int accept_packet(labcomm_sig_parser_t *p);
 struct labcomm_signature *get_sig_t(labcomm_sig_parser_t *p,unsigned int uid);
 
 unsigned int get_signature_len(labcomm_sig_parser_t *p,unsigned int uid);
-unsigned char* get_signature_name(labcomm_sig_parser_t *p,unsigned int uid);
+char* get_signature_name(labcomm_sig_parser_t *p,unsigned int uid);
 unsigned char* get_signature(labcomm_sig_parser_t *p,unsigned int uid);
 void dump_signature(labcomm_sig_parser_t *p,unsigned int uid);
 
