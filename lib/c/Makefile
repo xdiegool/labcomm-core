@@ -51,8 +51,7 @@ ifeq ($(LABCOMM_EXPERIMENTAL),true)
 		experimental/ThrottleDrv/ethernet_drv.o \
 		experimental/ThrottleDrv/throttle_drv.o \
 		experimental/labcomm_udp_reader_writer.o\
-		experimental/labcomm_sig_parser.o \
-		experimental/test_sig_parser.o 
+		experimental/labcomm_sig_parser.o 
 
 
 experimental/test_sig_parser : experimental/labcomm_sig_parser.o experimental/test_sig_parser.c
