@@ -1,5 +1,6 @@
 %header {:
- package AST;
+package se.lth.control.labcomm2006.compiler;
+import se.lth.control.labcomm2006.compiler.*;
 :};
 %embed {:
   public static class SourceError extends Error {

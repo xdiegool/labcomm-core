@@ -1,8 +1,8 @@
-package AST;
+package se.lth.control.labcomm2006.compiler;
 
 import beaver.Symbol;
 import beaver.Scanner;
-import AST.LabCommParser.Terminals;
+import se.lth.control.labcomm2006.compiler.LabCommParser.Terminals;
 
 %%
 

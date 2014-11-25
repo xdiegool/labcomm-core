@@ -76,7 +76,7 @@ aspect Signature {
 	    }
 	    //add(data, comment);
         break;
-        case 2013:             // Use new encoding with varints
+        case 2014:             // Use new encoding with varints
 	    byte[] tmp = new byte[5];
  	    long v = value & 0xffffffff;
             int i, j;

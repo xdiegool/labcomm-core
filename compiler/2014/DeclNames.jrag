@@ -1,0 +1,14 @@
+aspect DeclNames {
+	inh String Type.declName();
+	eq Decl.getType().declName() = getName();
+
+	inh String Field.declName();
+	eq StructType.getField(int i).declName() = declName();
+    
+        //TODO: aspect should be renamed to parent-something
+
+        inh Decl Type.parentDecl();
+        inh Decl Field.parentDecl();
+        eq Decl.getType().parentDecl() = this;
+        eq StructType.getField(int i).parentDecl() = parentDecl();
+}

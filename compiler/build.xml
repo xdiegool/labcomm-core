@@ -23,48 +23,9 @@
 <taskdef name="beaver" classname="beaver.comp.run.AntTask" classpath="tools/beaver-ant.jar"/>
 <!-- "jastadd" is an ant task class in jastadd2.jar -->
 <taskdef name="jastadd" classname="jastadd.JastAddTask"
-classpath="tools/jastadd2.jar"/>
+         classpath="tools/jastadd2.jar"/>
 
-
-<!-- compile sources -->
-<target name="build" depends="gen">
-	<javac debug="true" nowarn="true" srcdir="." includes="**/*.java" excludes="test/** examples/**" classpath=".:${tools}/beaver-rt.jar:${tools}/junit.jar"
-   fork="true" memoryMaximumSize="128M">
-                 <!-- compilerarg value="-Xlint"/ -->
-        </javac>
-</target>
 	
-
-<!-- generate compiler source files -->
-<target name="gen">
-	<!-- create AST node types and weave aspect modules -->
-		<echo message = "Running JastAdd"/>
-		<jastadd package="${package}" rewrite="true" beaver="true" novisitcheck="true" lazyMaps="true" outdir="${basedir}">
-			<fileset dir=".">
-				<include name="**/*.ast"/>
-				<include name="**/*.jrag"/>
-				<include name="**/*.jadd"/>
-			</fileset>
-		</jastadd>
-	<!-- generate the scanner -->
-		<echo message = "Running jflex"/>
-		<jflex file="LabCommScanner.flex" outdir="AST" nobak="yes"/>
-	<!-- generate the parser phase 1, create a full .lalr specification from fragments-->
-		<echo message = "Running parser phase 1"/>
-		<concat destfile="AST/LabCommParser.all" binary="true">
-	    <fileset dir=".">
-	      <include name="*.parser"/>
-	    </fileset>
-	</concat>
-	<!-- generate the parser phase 2, translating .lalr to .beaver -->
-		<java fork="true" dir="${basedir}" classpath="${tools}/proj.jar:${tools}/beaver-rt.jar" classname="Main">
-			<arg line="AST/LabCommParser.all AST/LabCommParser.beaver"/>
-		</java>
-	<!-- generate the parser phase 3, translating .beaver to .java -->
-	<beaver file="AST/LabCommParser.beaver" terminalNames="yes" compress="yes" useSwitch="yes"/>
-</target>
-
-
 <!-- compile sources -->
 <target name="test" depends="jar">
   <echo message = "Running tests"/>
@@ -77,8 +38,10 @@ classpath="tools/jastadd2.jar"/>
 <!-- remove generated source files and .class files -->
 <target name="clean" depends="cleanGen">
      <!-- delete all .class files recursively -->
+    <delete dir="gen"/>
     <delete>
       <fileset dir="." includes="**/*.class"/>
+      <fileset dir="." includes="gen"/>
       <fileset dir="." includes="labcomm_compiler.jar"/>
     </delete>
 
@@ -87,21 +50,105 @@ classpath="tools/jastadd2.jar"/>
 
 <!-- remove generated source files and their .class files -->
 <target name="cleanGen">
-	 <delete dir="${package}"/>
+  <delete dir="${package}"/>
 </target>
 
 
 <target name="jar" depends="build">
   <jar destfile="labcomm_compiler.jar">
-    <fileset dir="." includes="LabComm*.class"/>
-    <fileset dir="." includes="AST/*.class"/>
+    <fileset dir="gen" includes="**/*.class"/>
     <zipfileset src="tools/beaver-rt.jar" includes="beaver/*.class"/>
     <manifest>
       <attribute name="Main-Class" value="LabComm"/>
     </manifest>
   </jar>
 </target>
-		  
+
+<!-- generate compiler source files -->
+<target name="gen_compiler_version">
+  <local name="package"/>
+  <local name="package_path"/>
+  <property name="package" value="se.lth.control.labcomm${version}.compiler"/>
+  <loadresource property="package_path">
+    <propertyresource name="package"/>
+    <filterchain>
+      <tokenfilter>
+        <filetokenizer/>
+        <replacestring from="." to="/"/>
+      </tokenfilter>
+    </filterchain>
+  </loadresource>  
+
+  <mkdir dir="${outdir}"/>
+
+  <!-- create AST node types and weave aspect modules -->
+  <echo message = "Running JastAdd"/>
+  <jastadd package="${package}" rewrite="true" beaver="true" 
+           novisitcheck="true" lazyMaps="true" outdir="${outdir}">
+    <fileset dir=".">
+      <include name="${version}/*.ast"/>
+      <include name="${version}/*.jrag"/>
+      <include name="${version}/*.jadd"/>
+    </fileset>
+  </jastadd>
+
+  <!-- generate the scanner -->
+  <echo message = "Running jflex -> ${package} ${package_path}"/>
+  <jflex file="${version}/LabCommScanner.flex" 
+         outdir="${outdir}/${package_path}" nobak="yes"/>
+
+  <!-- generate the parser phase 1, create a full .lalr specification 
+       from fragments-->
+  <echo message = "Running parser phase 1"/>
+  <concat destfile="${outdir}/${package_path}/LabCommParser.all" binary="true">
+    <fileset dir=".">
+      <include name="${version}/*.parser"/>
+    </fileset>
+  </concat>
+
+  <!-- generate the parser phase 2, translating .lalr to .beaver -->
+  <echo message = "translating .lalr to .beaver"/>
+  <java fork="true" dir="${basedir}" 
+        classpath="${tools}/proj.jar:${tools}/beaver-rt.jar" classname="Main">
+    <arg line="${outdir}/${package_path}/LabCommParser.all 
+               ${outdir}/${package_path}/LabCommParser.beaver"/>
+  </java>
+
+  <!-- generate the parser phase 3, translating .beaver to .java -->
+  <echo message = "translating .beaver to .java"/>
+  <beaver file="${outdir}/${package_path}/LabCommParser.beaver"
+          terminalNames="yes" compress="yes" useSwitch="yes"/>
+
+  <echo message = "compiling .java"/>
+<!--
+  <javac debug="true" srcdir="." destdir="${outdir}"
+         includes="${version}/*.java ${outdir}/${package_path}/*.java" 
+         classpath="gen:${tools}/beaver-rt.jar:${tools}/junit.jar"
+         includeantruntime="false"
+         fork="true" memoryMaximumSize="128M">
+    <!- -compilerarg value="-Xlint"/- ->
+  </javac>
+-->
+</target>
+
+<target name="build">
+  <antcall target="gen_compiler_version">
+    <param name="version" value="2006"/>
+    <param name="outdir" value="gen"/>
+  </antcall>
+  <antcall target="gen_compiler_version">
+    <param name="version" value="2014"/>
+    <param name="outdir" value="gen"/>
+  </antcall>
+  <echo message = "compiling main"/>
+  <javac debug="true" srcdir="." destdir="gen"
+         includes="*.java 2006/*.java 2014/*.java gen/**/*.java" 
+         classpath="gen:${tools}/beaver-rt.jar:${tools}/junit.jar"
+         includeantruntime="false"
+         fork="true" memoryMaximumSize="128M">
+    <!--compilerarg value="-Xlint"/-->
+  </javac>
+</target>
 
 </project>
 
