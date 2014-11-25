@@ -1,0 +1,15 @@
+aspect Version {
+
+    /* An auxilliary class for handling naming and prefixes connected
+     * to the LabComm version
+     */
+    class LabCommVersion {
+        public static String versionString(int version) {
+            return (version == 2006) ? "2006" : "";
+        }       
+
+        public static boolean versionHasPragma(int version) {
+            return version != 2006;
+        }
+    }
+}

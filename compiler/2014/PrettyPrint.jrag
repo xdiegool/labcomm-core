@@ -1,0 +1,117 @@
+import java.io.PrintStream;
+
+aspect PPIndentation {
+
+  inh String Exp.pp_indent();
+  inh String Field.pp_indent();
+  inh String StructType.pp_indent();
+  eq StructType.getField(int index).pp_indent() = pp_indent() + "  ";
+  eq Program.getDecl(int index).pp_indent() = "";
+  
+}
+
+aspect PrettyPrint {
+  
+  public void ASTNode.pp(PrintStream out) {
+    throw new Error(this.getClass().getName() + 
+		    ".pp(PrintStream out)" + 
+		    " not declared");
+  }
+
+  public void Program.pp(PrintStream out) {
+    for(int i = 0; i < getNumDecl(); i++) {
+    	getDecl(i).pp(out);
+    }
+  }
+
+   // Pretty print declarations
+  public void TypeDecl.pp(PrintStream out) {
+    out.print("typedef ");
+    getType().ppIdentifier(out, getName());
+    out.println(";");
+  }
+
+  public void SampleDecl.pp(PrintStream out) {
+    out.print("sample ");
+    getType().ppIdentifier(out, getName());
+    out.println(";");
+  }
+
+  public void Field.pp(PrintStream out) {
+    out.print(pp_indent());
+    getType().ppIdentifier(out, getName());
+    out.println(";");
+  }
+
+  // Pretty print variable of a given type 
+  public void Type.ppIdentifier(PrintStream out, String id) { 
+    ppPrefix(out);
+    out.print(" ");
+    out.print(id);
+  }
+
+  public void ArrayType.ppIdentifier(PrintStream out, String id) {
+    ppPrefix(out);
+    out.print(" ");
+    out.print(id);
+    ppSuffix(out);
+  }
+
+  // PrettyPrint prefix type info
+  public void Type.ppPrefix(PrintStream out) {
+    throw new Error(this.getClass().getName() + 
+		    ".ppPrefix(PrintStream out)" + 
+		    " not declared");
+  }
+
+  public void VoidType.ppPrefix(PrintStream out) { 
+    out.print("void");
+  }
+
+  public void SampleRefType.ppPrefix(PrintStream out) { 
+    out.print("sample");
+  }
+
+  public void PrimType.ppPrefix(PrintStream out) { 
+    out.print(getName());
+  }
+
+  public void UserType.ppPrefix(PrintStream out) { 
+    out.print(getName());
+  }
+
+  public void ArrayType.ppPrefix(PrintStream out) {
+    getType().ppPrefix(out);
+  }
+
+  public void StructType.ppPrefix(PrintStream out) {
+    out.println("struct {");
+    for (int i = 0 ; i < getNumField() ; i++) {
+      getField(i).pp(out);
+    }
+    out.print(pp_indent());
+    out.print("}");
+  }
+
+  // PrettyPrint suffix type info (array dimensions)
+  public void Type.ppSuffix(PrintStream out) { }
+
+  public void ArrayType.ppSuffix(PrintStream out) { 
+    out.print("[");
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      if (i > 0) { out.print(", "); }
+      getExp(i).pp(out);
+    }
+    out.print("]");
+    getType().ppSuffix(out);
+  }
+
+  public void IntegerLiteral.pp(PrintStream out) {
+    out.print(getValue());
+  }
+
+  public void VariableSize.pp(PrintStream out) {
+    out.print("_");
+  }
+
+}
