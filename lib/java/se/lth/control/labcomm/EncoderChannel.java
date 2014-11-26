@@ -27,16 +27,19 @@ public class EncoderChannel implements Encoder {
   }
 
   public void register(SampleDispatcher dispatcher) throws IOException {
-    int index = def_registry.add(dispatcher);
-    begin(Constant.SAMPLE_DEF);
-    encodePacked32(index);
-    encodeString(dispatcher.getName());
-    byte[] signature = dispatcher.getSignature();
-    encodePacked32(signature.length);
-    for (int i = 0 ; i < signature.length ; i++) {
-      encodeByte(signature[i]);
+    if(dispatcher.getTypeDeclTag() == Constant.SAMPLE_DEF) {
+        int index = def_registry.add(dispatcher);
+        //begin(Constant.SAMPLE_DEF);
+        begin(dispatcher.getTypeDeclTag());
+        encodePacked32(index);
+        encodeString(dispatcher.getName());
+        byte[] signature = dispatcher.getSignature();
+        encodePacked32(signature.length);
+        for (int i = 0 ; i < signature.length ; i++) {
+        encodeByte(signature[i]);
+        }
+        end(null);
     }
-    end(null);
   }
 
   public void registerSampleRef(SampleDispatcher dispatcher) throws IOException {

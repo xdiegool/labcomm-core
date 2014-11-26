@@ -848,7 +848,7 @@ class Decoder(Codec):
             decl = self.index_to_decl[index].decode_decl(self)
             value = None
         elif index < i_USER:
-            raise exception("Invalid type index %d" % index)
+            raise Exception("Invalid type index %d" % index)
         else:
             decl = self.index_to_decl[index]
             value = decl.decode(self)
