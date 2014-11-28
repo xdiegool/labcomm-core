@@ -5,11 +5,11 @@ import labcomm
 
 
 class Reader(object):
-    def __init__(self, file):
-        self.file = open(file)
+    def __init__(self, _file):
+        self._file = open(_file)
 
     def read(self, count):
-        data = self.file.read(count)
+        data = self._file.read(count)
         if len(data) == 0:
             raise EOFError()
         return data
@@ -70,37 +70,41 @@ def dump_labels(current, _type):
 
 
 def main():
+    if len(sys.argv) != 2:
+        sys.exit("Give input file as argument\n")
     d = labcomm.Decoder(Reader(sys.argv[1]))
     seen = {}
     current = {}
     _type = {}
+
+    # Do one pass through the file to find all registrations.
     while True:
         try:
-            (o, t) = d.decode()
+            o, t = d.decode()
+            if o is None:
+                seen[t.name] = 0
+                _type[t.name] = t
+            else:
+                current[t.name] = o
         except EOFError:
             break
-        if o == None:
-            # Type declaration
-	    seen[t.name] = 0
-	    _type[t.name] = t
-        else:
-            current[t.name] = o
-            if len(current) == len(_type):
-                # We have got one sample of each
-                break
     dump_labels(current, _type)
-    n = 0
-    while o != None:
-        if seen[t.name] > n:
-            n = seen[t.name]
-            dump(current, _type)
-        current[t.name] = o
-        seen[t.name] += 1
+
+    # Do another pass to extract the data.
+    current = {}
+    d = labcomm.Decoder(Reader(sys.argv[1]))
+    while True:
         try:
-            (o, t) = d.decode()
+            o, t = d.decode()
+            if o is not None:
+                current[t.name] = o
+                if len(current) == len(_type):
+                    # Assume that samples arrive at different rates.
+                    # Trigger on everything once we have a value for
+                    # each column.
+                    dump(current, _type)
         except EOFError:
             break
-    dump(current, _type)
 
 
 if __name__ == "__main__":
