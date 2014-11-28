@@ -1,3 +1,6 @@
+#!/bin/sh
+set -x
+set -e
 ### Example compile script, showing the steps required to build a labcomm application
 ### (including compiler and libs). Also illustrates how versions 2013 and 2006 coexist
 
@@ -10,12 +13,12 @@ java -jar ../../compiler/labcomm_compiler.jar --java=gen --c=gen/simple.c --h=ge
 javac -cp ../../lib/java/labcomm2014.jar:. gen/*.java Encoder.java Decoder.java
 
 gcc -Wall -Werror -Wno-unused-function \
-    -I. -I../../lib/c -L../../lib/c \
+    -I. -I../../lib/c/2014 -L../../lib/c \
     -o example_encoder example_encoder.c gen/simple.c \
-    -llabcomm2014 -Tlabcomm.linkscript
-gcc -Wall -Werror -I . -I ../../lib/c -L../../lib/c \
+    -llabcomm2014 
+gcc -Wall -Werror -I . -I ../../lib/c/2014 -L../../lib/c \
     -o example_decoder example_decoder.c gen/simple.c \
-    -llabcomm2014 -Tlabcomm.linkscript
+    -llabcomm2014 
 
 # For version 2006
 
@@ -26,10 +29,10 @@ javac -cp ../../lib/java/labcomm2006.jar:. gen06/*.java Encoder06.java Decoder06
 
 gcc -Wall -Werror -I.  -I../../lib/c/2006 -L../../lib/c \
     -o example_encoder06 example_encoder06.c gen06/simple.c \
-    -llabcomm -Tlabcomm.linkscript
+    -llabcomm2006
 gcc -Wall -Werror -I . -I ../../lib/c/2006 -L../../lib/c \
     -o example_decoder06 example_decoder06.c gen06/simple.c \
-    -llabcomm -Tlabcomm.linkscript
+    -llabcomm2006 
 
 #gcc -o example_encoder -I . -I ../../lib/c example_encoder.c gen/simple.c ../../lib/c/labcomm.c ../../lib/c/labcomm_fd_reader_writer.c
 

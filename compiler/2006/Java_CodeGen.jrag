@@ -339,11 +339,6 @@ aspect Java_Class {
     env.println("e.register(dispatcher);");
     env.unindent();
     env.println("}");
-    env.println("public static void registerSampleRef(Encoder e) throws IOException{");
-    env.indent();
-    env.println("e.registerSampleRef(dispatcher);");
-    env.unindent();
-    env.println("}");
     env.println();
   }
 
@@ -433,11 +428,6 @@ aspect Java_Class {
     env.println("public static void register(Decoder d, Handler h) throws IOException {");
     env.indent();
     env.println("d.register(dispatcher, h);");
-    env.unindent();
-    env.println("}");
-    env.println("public static void registerSampleRef(Decoder d) throws IOException {");
-    env.indent();
-    env.println("d.registerSampleRef(dispatcher);");
     env.unindent();
     env.println("}");
     env.println();
@@ -652,7 +642,6 @@ aspect Java_Class {
       case LABCOMM_FLOAT: { env.print("e.encodeFloat"); } break;
       case LABCOMM_DOUBLE: { env.print("e.encodeDouble"); } break;
       case LABCOMM_STRING: { env.print("e.encodeString"); } break;
-      case LABCOMM_SAMPLE: { env.print("e.encodeSampleRef"); } break;
     }
     env.println("(" + name + ");");
   }
@@ -743,7 +732,6 @@ aspect Java_Class {
       case LABCOMM_FLOAT: { env.println("d.decodeFloat();"); } break;
       case LABCOMM_DOUBLE: { env.println("d.decodeDouble();"); } break;
       case LABCOMM_STRING: { env.println("d.decodeString();"); } break;
-      case LABCOMM_SAMPLE: { env.println("d.decodeSampleRef();"); } break;
     }
   }
 

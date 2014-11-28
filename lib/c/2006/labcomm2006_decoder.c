@@ -26,7 +26,7 @@
 
 struct sample_entry {
   int remote_index;
-  struct labcomm2006_signature *signature;
+  const struct labcomm2006_signature *signature;
   labcomm2006_decoder_function decode;
   labcomm2006_handler_function handler;
   void *context;
@@ -181,7 +181,8 @@ static int decode_typedef_or_sample(struct labcomm2006_decoder *d, int kind)
     .pos = 0,
     .error = 0,
   };
-  struct labcomm2006_signature signature, *local_signature;
+  struct labcomm2006_signature signature;
+  const struct labcomm2006_signature *local_signature;
   int remote_index, local_index, err;
   
   local_signature = NULL;
@@ -264,7 +265,7 @@ struct call_handler_context {
   struct labcomm2006_reader *reader;
   int local_index;
   int remote_index;
-  struct labcomm2006_signature *signature;
+  const struct labcomm2006_signature *signature;
   labcomm2006_handler_function handler;
   void *context;
 };
@@ -300,7 +301,7 @@ int labcomm2006_decoder_decode_one(struct labcomm2006_decoder *d)
     result = d->reader->error;
     goto out;
   }
-  if (remote_index == LABCOMM_TYPEDEF || remote_index == LABCOMM_SAMPLE) {
+  if (remote_index == LABCOMM_SAMPLE) {
     result = decode_typedef_or_sample(d, remote_index); 
   } else {
     int *local_index;
@@ -366,7 +367,7 @@ int labcomm2006_decoder_ioctl(struct labcomm2006_decoder *d,
 }
 
 int labcomm2006_internal_decoder_ioctl(struct labcomm2006_decoder *d, 
-				   struct labcomm2006_signature *signature,
+				   const struct labcomm2006_signature *signature,
 				   uint32_t action, va_list va)
 {
   int result;
@@ -387,7 +388,7 @@ int labcomm2006_internal_decoder_ioctl(struct labcomm2006_decoder *d,
 
 int labcomm2006_internal_decoder_register(
   struct labcomm2006_decoder *d,
-  struct labcomm2006_signature *signature,
+  const struct labcomm2006_signature *signature,
   labcomm2006_decoder_function decode, 
   labcomm2006_handler_function handler,
   void *context)

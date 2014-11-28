@@ -62,7 +62,7 @@ int labcomm2006_reader_free(struct labcomm2006_reader *r,
 int labcomm2006_reader_start(struct labcomm2006_reader *r, 
                          struct labcomm2006_reader_action_context *action_context,
 			 int local_index, int remote_index,
-			 struct labcomm2006_signature *signature,
+			  const struct labcomm2006_signature *signature,
 			 void *value)
 {
   UNWRAP(start, r, action_context, local_index, remote_index, signature, value);
@@ -81,10 +81,10 @@ int labcomm2006_reader_fill(struct labcomm2006_reader *r,
 }
 
 int labcomm2006_reader_ioctl(struct labcomm2006_reader *r, 
-                         struct labcomm2006_reader_action_context *action_context,
-                         int local_index, int remote_index,
-                         struct labcomm2006_signature *signature, 
-                         uint32_t ioctl_action, va_list args)
+                             struct labcomm2006_reader_action_context *action_context,
+                             int local_index, int remote_index,
+                             const struct labcomm2006_signature *signature, 
+                             uint32_t ioctl_action, va_list args)
 {
   UNWRAP(ioctl, r, action_context, 
 	 local_index, remote_index, signature, ioctl_action, args);
@@ -104,7 +104,7 @@ int labcomm2006_writer_free(struct labcomm2006_writer *w,
 
 int labcomm2006_writer_start(struct labcomm2006_writer *w, 
                          struct labcomm2006_writer_action_context *action_context,
-                         int index, struct labcomm2006_signature *signature,
+                         int index, const struct labcomm2006_signature *signature,
                          void *value)
 {
   UNWRAP(start, w, action_context, index, signature, value);
@@ -125,7 +125,7 @@ int labcomm2006_writer_flush(struct labcomm2006_writer *w,
 int labcomm2006_writer_ioctl(struct labcomm2006_writer *w, 
                          struct labcomm2006_writer_action_context *action_context, 
                          int index, 
-                         struct labcomm2006_signature *signature, 
+                         const struct labcomm2006_signature *signature, 
                          uint32_t ioctl_action, va_list args)
 {
   UNWRAP(ioctl, w, action_context, index, signature, ioctl_action, args);
@@ -156,31 +156,30 @@ const char *labcomm2006_error_get_str(enum labcomm2006_error error_id)
   return error_str;
 }
 
-#if 0 //XXX hack to avoid name clash. is this really the same as in 2013?
-void on_error_fprintf(enum labcomm2006_error error_id, size_t nbr_va_args, ...)
-{
 #ifndef LABCOMM_NO_STDIO
+void labcomm2006_on_error_fprintf(enum labcomm2006_error error_id, size_t nbr_va_args, ...)
+{
   const char *err_msg = labcomm2006_error_get_str(error_id); // The final string to print.
   if (err_msg == NULL) {
     err_msg = "Error with an unknown error ID occured.";
   }
   fprintf(stderr, "%s\n", err_msg);
-
- if (nbr_va_args > 0) {
-   va_list arg_pointer;
-   va_start(arg_pointer, nbr_va_args);
-
-   fprintf(stderr, "%s\n", "Extra info {");
-   char *print_format = va_arg(arg_pointer, char *);
-   vfprintf(stderr, print_format, arg_pointer);
-   fprintf(stderr, "}\n");
-
-   va_end(arg_pointer);
- } 
+  
+  if (nbr_va_args > 0) {
+    va_list arg_pointer;
+    va_start(arg_pointer, nbr_va_args);
+    
+    fprintf(stderr, "%s\n", "Extra info {");
+    char *print_format = va_arg(arg_pointer, char *);
+    vfprintf(stderr, print_format, arg_pointer);
+    fprintf(stderr, "}\n");
+    
+    va_end(arg_pointer);
+  } 
+}
 #else
  ; // If labcomm can't be compiled with stdio the user will have to make an own error callback functionif he/she needs error reporting.
-#endif
-}
+  #error Define LABCOMM2006_ON_ERROR_FPRINTF
 #endif
 
 
@@ -244,22 +243,22 @@ void labcomm2006_set_local_index(struct labcomm2006_signature *signature)
 {
   if (signature->index != 0) {
     labcomm2006_error_fatal_global(LABCOMM_ERROR_SIGNATURE_ALREADY_SET,
-			       "%s", signature->name);
+                                   "Signature already set: %s", signature->name);
   }
   signature->index = local_index;
   local_index++;
 }
 
-int labcomm2006_get_local_index(struct labcomm2006_signature *signature)
+int labcomm2006_get_local_index(const struct labcomm2006_signature *signature)
 {
   if (signature->index == 0) {
     labcomm2006_error_fatal_global(LABCOMM_ERROR_SIGNATURE_NOT_SET,
-			       "%s", signature->name);
+                                   "Signature not set: %s", signature->name);
   }
   return signature->index;
 }
 
-int labcomm2006_internal_sizeof(struct labcomm2006_signature *signature,
+int labcomm2006_internal_sizeof(const struct labcomm2006_signature *signature,
                             void *v)
 {
   int length = signature->encoded_size(v);

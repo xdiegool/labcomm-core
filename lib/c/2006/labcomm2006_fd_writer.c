@@ -79,7 +79,7 @@ static int fd_free(struct labcomm2006_writer *w,
 static int fd_start(struct labcomm2006_writer *w, 
 		    struct labcomm2006_writer_action_context *action_context,
 		    int index,
-		    struct labcomm2006_signature *signature,
+		    const struct labcomm2006_signature *signature,
 		    void *value)
 {
   w->pos = 0;

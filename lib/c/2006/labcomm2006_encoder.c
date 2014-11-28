@@ -69,7 +69,7 @@ void labcomm2006_encoder_free(struct labcomm2006_encoder* e)
 
 int labcomm2006_internal_encoder_register(
   struct labcomm2006_encoder *e,
-  struct labcomm2006_signature *signature,
+  const struct labcomm2006_signature *signature,
   labcomm2006_encoder_function encode)
 {
   int result = -EINVAL;
@@ -104,7 +104,7 @@ out:
 
 int labcomm2006_internal_encode(
   struct labcomm2006_encoder *e,
-  struct labcomm2006_signature *signature,
+  const struct labcomm2006_signature *signature,
   labcomm2006_encoder_function encode,
   void *value)
 {
@@ -150,8 +150,8 @@ out:
 }
 
 int labcomm2006_internal_encoder_ioctl(struct labcomm2006_encoder *encoder, 
-				   struct labcomm2006_signature *signature,
-				   uint32_t action, va_list va)
+                                       const struct labcomm2006_signature *signature,
+                                       uint32_t action, va_list va)
 {
   int result = -ENOTSUP;
   int index;

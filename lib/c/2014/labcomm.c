@@ -37,8 +37,6 @@
 #include "labcomm_ioctl.h"
 #include "labcomm_dynamic_buffer_writer.h"
 
-#define CURRENT_VERSION "LabComm2014"
-
 /* Unwrapping reader/writer functions */
 #define UNWRAP_ac(rw, ac, ...) ac
 #define UNWRAP(func, ...)	     \
@@ -158,7 +156,7 @@ const char *labcomm_error_get_str(enum labcomm_error error_id)
   return error_str;
 }
 
-void on_error_fprintf(enum labcomm_error error_id, size_t nbr_va_args, ...)
+void labcomm2014_on_error_fprintf(enum labcomm_error error_id, size_t nbr_va_args, ...)
 {
 #ifndef LABCOMM_NO_STDIO
   const char *err_msg = labcomm_error_get_str(error_id); // The final string to print.
