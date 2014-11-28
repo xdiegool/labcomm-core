@@ -65,8 +65,8 @@ gen/%/c_relay.c: gen/%/typeinfo relay_gen_c.py Makefile
 
 .PRECIOUS: gen/%/c_relay
 gen/%/c_relay: gen/%/c_relay.c gen/%/c_code.c Makefile
-	$(CC) $(CFLAGS) -o $@ $< -I../lib/c -I. -L..//lib/c \
-		gen/$*/c_code.c -llabcomm
+	$(CC) $(CFLAGS) -o $@ $< -I../lib/c/2014 -I. -L../lib/c \
+		gen/$*/c_code.c -llabcomm2014
 
 # C# relay test rules
 .PRECIOUS: gen/%/cs_code.cs

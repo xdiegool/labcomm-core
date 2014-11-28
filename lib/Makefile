@@ -4,7 +4,7 @@ all:
 	cd java ; make
 
 test:
-	$(MAKE) -C c -e run-test
+	$(MAKE) -C c test
 
 clean:
 	cd c ; make clean

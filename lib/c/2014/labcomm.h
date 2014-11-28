@@ -70,7 +70,7 @@ typedef void (*labcomm_error_handler_callback)(enum labcomm_error error_id,
 /* Default error handler, prints message to stderr. 
  * Extra info about the error can be supplied as char* as VA-args. Especially user defined errors should supply a describing string. if nbr_va_args > 1 the first variable argument must be a printf format string and the possibly following arguments are passed as va_args to vprintf. 
  */
-void on_error_fprintf(enum labcomm_error error_id, size_t nbr_va_args, ...);
+void labcomm2014_on_error_fprintf(enum labcomm_error error_id, size_t nbr_va_args, ...);
 
 /* Register a callback for the error handler for this encoder. */
 void labcomm_register_error_handler_encoder(struct labcomm_encoder *encoder, labcomm_error_handler_callback callback);

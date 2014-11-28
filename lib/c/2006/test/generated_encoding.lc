@@ -1,0 +1,7 @@
+sample void V;
+sample byte B;
+sample struct {
+  int i;
+} S1;
+sample int I[_];
+sample struct { int i; } P[_];

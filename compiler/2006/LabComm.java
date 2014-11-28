@@ -127,7 +127,7 @@ public class LabComm {
     String coreName = null;
     String prefix = null;
     boolean verbose = false;
-    int ver = 2013; //Version 2013 as default
+    int ver = 2006; // Version 2006 fixed
     String cFile = null;
     String hFile = null;
     Vector cIncludes = new Vector();
@@ -192,8 +192,8 @@ public class LabComm {
         } else if (args[i].equals("-v")) {
   	verbose=true;
         } else if (args[i].startsWith("--ver=")) {
-          ver = Integer.parseInt(args[i].substring(6));
-          checkVersion(ver);
+          /* ver = Integer.parseInt(args[i].substring(6));
+             checkVersion(ver); */
         } else if (args[i].equals("-C")) {
   	cFile = coreName + ".c";
   	hFile = coreName + ".h";

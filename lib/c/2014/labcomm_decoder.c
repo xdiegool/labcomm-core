@@ -71,7 +71,7 @@ struct labcomm_decoder *labcomm_decoder_new(
     result->error = error;
     result->memory = memory;
     result->scheduler = scheduler;
-    result->on_error = on_error_fprintf;
+    result->on_error = labcomm2014_on_error_fprintf;
     LABCOMM_SIGNATURE_ARRAY_INIT(result->local, struct sample_entry);
     LABCOMM_SIGNATURE_ARRAY_INIT(result->remote_to_local, int);
     LABCOMM_SIGNATURE_ARRAY_INIT(result->local_ref, 

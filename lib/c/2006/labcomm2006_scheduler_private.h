@@ -22,7 +22,12 @@
 #ifndef _LABCOMM_SCHEDULER_PRIVATE_H_
 #define _LABCOMM_SCHEDULER_PRIVATE_H_
 
-#include <unistd.h>
+#ifdef LABCOMM_COMPAT
+ #include LABCOMM_COMPAT
+#else
+ #include <unistd.h>
+#endif
+
 #include "labcomm2006_scheduler.h"
 
 struct labcomm2006_time {

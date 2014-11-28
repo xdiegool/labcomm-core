@@ -23,8 +23,6 @@
 #ifndef _LABCOMM_H_
 #define _LABCOMM_H_
 
-#define LABCOMM_VERSION "LabComm2006"
-
 #include <stdarg.h>
 
 #ifdef LABCOMM_COMPAT
@@ -33,6 +31,7 @@
   #include <stdint.h>
   #include <unistd.h>
 #endif
+
 #include "labcomm2006_error.h"
 #include "labcomm2006_scheduler.h"
 
@@ -71,7 +70,7 @@ typedef void (*labcomm2006_error_handler_callback)(enum labcomm2006_error error_
 /* Default error handler, prints message to stderr. 
  * Extra info about the error can be supplied as char* as VA-args. Especially user defined errors should supply a describing string. if nbr_va_args > 1 the first variable argument must be a printf format string and the possibly following arguments are passed as va_args to vprintf. 
  */
-void on_error_fprintf(enum labcomm2006_error error_id, size_t nbr_va_args, ...);
+void labcomm2006_on_error_fprintf(enum labcomm2006_error error_id, size_t nbr_va_args, ...);
 
 /* Register a callback for the error handler for this encoder. */
 void labcomm2006_register_error_handler_encoder(struct labcomm2006_encoder *encoder, labcomm2006_error_handler_callback callback);

@@ -2,7 +2,7 @@ TARGETS=client server
 LABCOMM_JAR=../../compiler/labcomm_compiler.jar
 LABCOMM=java -jar $(LABCOMM_JAR) 
 
-CFLAGS=-O3 -g -Wall -Werror -I../../lib/c -I. -Wno-unused-function
+CFLAGS=-O3 -g -Wall -Werror -I../../lib/c/2014 -I. -Wno-unused-function
 
 all: $(TARGETS:%=gen/%)
 
@@ -26,11 +26,11 @@ gen/%.c gen/%.h: %.lc | gen/.dir
 
 gen/client: client.c 
 	$(CC) -o $@ $(CFLAGS) $^ -lpthread \
-		-L../../lib/c -llabcomm 
+		-L../../lib/c -llabcomm2014
 
 gen/server: server.c 
 	$(CC) -o $@ $(CFLAGS) $^ -lpthread \
-		-L../../lib/c -llabcomm 
+		-L../../lib/c -llabcomm2014 
 
 .PHONY: clean distclean
 clean distclean:

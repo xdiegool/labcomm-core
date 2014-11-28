@@ -53,8 +53,25 @@
   <delete dir="${package}"/>
 </target>
 
+<target name="jar_version" depends="build">
+  <jar destfile="labcomm${version}_compiler.jar">
+    <fileset dir="gen" 
+             includes="se/lth/control/labcomm${version}/compiler/*.class"/>
+    <zipfileset src="tools/beaver-rt.jar" includes="beaver/*.class"/>
+    <manifest>
+      <attribute name="Main-Class" 
+                 value="se.lth.control.labcomm${version}.compiler.LabComm"/>
+    </manifest>
+  </jar>
+</target>
 
 <target name="jar" depends="build">
+  <antcall target="jar_version">
+    <param name="version" value="2006"/>
+  </antcall>
+  <antcall target="jar_version">
+    <param name="version" value="2014"/>
+  </antcall>
   <jar destfile="labcomm_compiler.jar">
     <fileset dir="gen" includes="**/*.class"/>
     <zipfileset src="tools/beaver-rt.jar" includes="beaver/*.class"/>
