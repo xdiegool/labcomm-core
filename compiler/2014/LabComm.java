@@ -14,7 +14,7 @@ public class LabComm {
     println("");
     println(" --help                  Shows this help text");
     println(" -v                      Be verbose");
-    println(" --ver=VERSION           Generate code for labcomm VERSION (=2006 or 2013)");
+    println(" --ver=VERSION           Generate code for labcomm VERSION (=2006 or 2014)");
     println("[ C options ]");
     println(" -C                      Generates C/H code in FILE.[ch]");
     println(" --cprefix=PREFIX        Prefixes C types with PREFIX");
@@ -127,7 +127,7 @@ public class LabComm {
     String coreName = null;
     String prefix = null;
     boolean verbose = false;
-    int ver = 2013; //Version 2013 as default
+    int ver = 2014; //Version 2014 as default
     String cFile = null;
     String hFile = null;
     Vector cIncludes = new Vector();
