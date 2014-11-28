@@ -23,7 +23,7 @@ OBJS=labcomm$(VERSION).o \
      labcomm$(VERSION)_fd_writer.o \
      labcomm$(VERSION)_pthread_scheduler.o 
 
-LABCOMM_JAR=../../../compiler/labcomm$(VERSION)_compiler.jar
+LABCOMM_JAR=../../../compiler/labcomm$(LIBVERSION)_compiler.jar
 LABCOMM=java -jar $(LABCOMM_JAR) 
 
 TESTS=test_labcomm_basic_type_encoding \
@@ -35,8 +35,6 @@ TESTS=test_labcomm_basic_type_encoding \
 #FIXME: test_labcomm_errors
 
 TEST_DIR=test
-
-#VPATH=$(TEST_DIR)
 
 ## Targets
 
@@ -57,9 +55,6 @@ clean:
 	$(RM) test/testdata/gen/*.[cho]
 	$(RM) test/gen/*.[cho]
 	$(RM) -rf test/gen
-	for x in $(TESTS); do \
-		$(RM) $(TEST_DIR)/$$x ; \
-	done
 
 .PHONY: distclean
 distclean: clean
@@ -80,11 +75,12 @@ distclean: clean
 %.o: %.c %.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-
 # rules invoked by 'test'
 .PHONY: run-test-%
 run-test-%: $(TEST_DIR)/gen/% | $(TEST_DIR)/gen
 	$<
+
+.PRECIOUS: $(TEST_DIR)/gen/%
 
 $(TEST_DIR)/gen/%: $(TEST_DIR)/gen/%.o | $(TEST_DIR)/gen
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS) 
@@ -92,23 +88,33 @@ $(TEST_DIR)/gen/%: $(TEST_DIR)/gen/%.o | $(TEST_DIR)/gen
 $(TEST_DIR)/gen/%.o: $(TEST_DIR)/%.c | $(TEST_DIR)/gen
 	$(CC) $(CFLAGS_TEST) -o $@ -c $<
 
-# Extra compilation dependencies
-labcomm_fd_reader.o: \
-	labcomm_private.h
-labcomm_fd_writer.o: \
-	labcomm_private.h
-labcomm_dynamic_buffer_writer.o: \
-	labcomm_private.h
+$(TEST_DIR)/gen/%.c $(TEST_DIR)/gen/%.h: $(TEST_DIR)/%.lc | $(TEST_DIR)/gen
+	$(LABCOMM) \
+		--c=$(TEST_DIR)/gen/$*.c \
+		--h=$(TEST_DIR)/gen/$*.h \
+		$<
 
+$(LABCOMM_JAR):
+	@echo "======Building LabComm compiler======"
+	cd $(shell dirname $(LABCOMM_JAR)); ant jar
+	@echo "======End building LabComm compiler======"
+
+$(TEST_DIR)/gen:
+	mkdir -p $@
+
+# Extra compilation dependencies
 labcomm$(VERSION).o: \
 	labcomm$(VERSION).c \
 	labcomm$(VERSION).h \
 	labcomm$(VERSION)_private.h
 
-labcomm$(VERSION)_fd_reader_writer.o: \
-	labcomm$(VERSION)_fd_reader_writer.c \
-	labcomm$(VERSION)_fd_reader_writer.h  \
-	labcomm$(VERSION).h \
+labcomm$(VERSION)_fd_reader.o: \
+	labcomm$(VERSION)_private.h
+
+labcomm$(VERSION)_fd_writer.o: \
+	labcomm$(VERSION)_private.h
+
+labcomm$(VERSION)_dynamic_buffer_writer.o: \
 	labcomm$(VERSION)_private.h
 
 $(TEST_DIR)/gen/test_labcomm_basic_type_encoding.o: \
@@ -136,34 +142,3 @@ $(TEST_DIR)/gen/test_labcomm_copy: \
 	$(TEST_DIR)/gen/generated_encoding.o \
 	$(TEST_DIR)/gen/test_sample.o \
 	$(TEST_DIR)/gen/more_types.o
-
-#$(TEST_DIR)/labcomm_mem_reader.o: labcomm_fd_reader_writer.c labcomm_fd_reader_writer.h
-
-#$(TEST_DIR)/labcomm_mem_writer.o: labcomm_mem_writer.c labcomm_mem_writer.h cppmacros.h
-
-ethaddr.o: ethaddr.c
-
-.PRECIOUS: $(TEST_DIR)/%
-
-$(TEST_DIR)/gen:
-	mkdir -p $@
-
-.PRECIOUS: $(TEST_DIR)/gen/%.c
-.PRECIOUS: $(TEST_DIR)/gen/%.h
-$(TEST_DIR)/gen/%.c $(TEST_DIR)/gen/%.h: $(TEST_DIR)/%.lc | $(TEST_DIR)/gen
-	$(LABCOMM) \
-		--c=$(TEST_DIR)/gen/$*.c \
-		--h=$(TEST_DIR)/gen/$*.h \
-		$<
-
-$(TEST_GEN_DIR)/%.c $(TEST_GEN_DIR)/%.h: $(TESTDATA_DIR)/%.lc \
-					 $(LABCOMM_JAR) | $(TEST_GEN_DIR)
-	$(LABCOMM) \
-		--c=$(patsubst %.h,%.c,$@) --h=$(patsubst %.c,%.h,$@) $<
-
-$(LABCOMM_JAR):
-	@echo "======Building LabComm compiler======"
-	cd $(shell dirname $(LABCOMM_JAR)); ant jar
-	@echo "======End building LabComm compiler======"
-
-

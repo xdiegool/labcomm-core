@@ -48,8 +48,12 @@ if __name__ == '__main__':
             print "Only in %s:" %sys.argv[4], b.path
             b = B.next()
         else:
-            print a.path, b.path
-            print ''.join(difflib.unified_diff(a.lines, b.lines, 
-                                                 a.path, b.path))
+            equal = True
+            for l in difflib.unified_diff(a.lines, b.lines, a.path, b.path):
+                print l,
+                equal = False
+            if equal:
+                print "Identical", a.path, b.path
+                
             a = A.next() 
             b = B.next() 

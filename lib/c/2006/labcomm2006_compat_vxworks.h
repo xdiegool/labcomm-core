@@ -15,6 +15,7 @@
 #ifdef __INT64_MAX__
 #undef INT64_MAX
 #define INT64_MAX __INT64_MAX__
+#endif
 
 #if (CPU == PPC603)
   #undef _LITTLE_ENDIAN
