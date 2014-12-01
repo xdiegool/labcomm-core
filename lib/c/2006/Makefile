@@ -4,7 +4,7 @@ LIBVERSION=2006
 
 include ../os_compat.mk
 
-ALL_DEPS=../liblabcomm$(LIBVERSION).a ../liblabcomm$(LIBVERSION).so.1
+ALL_DEPS=../liblabcomm$(LIBVERSION).a ../liblabcomm$(LIBVERSION).so
 
 # TODO: Support for Codesourcery ARM toolchain.
 
@@ -62,8 +62,12 @@ distclean: clean
 	$(RM) ../liblabcomm$(LIBVERSION).a
 
 # rules invoked by 'all'
+../liblabcomm$(LIBVERSION).so: ../liblabcomm$(LIBVERSION).so.1
+	if [ -h $@ ] ; then rm $@ ; fi
+	ln -s $(<:../%=%) $@
+
 ../liblabcomm$(LIBVERSION).so.1: $(OBJS:%.o=%.pic.o)
-	$(call MAKESHARED,$@,$@,$^)
+	$(call MAKESHARED,$@,$(@:../%=%),$^)
 
 ../liblabcomm$(LIBVERSION).a: $(OBJS)
 	ar -r $@ $^
