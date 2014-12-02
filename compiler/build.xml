@@ -6,16 +6,10 @@
        gen             - generates java files
        cleanGen        - removes all generated files and their class files
 -->
-<project name="LabComm" default="build" basedir=".">
-
-<!-- "package" is the directory where generated files will be stored -->
-<property name="package" value="AST"/>
+<project name="LabComm" default="all" basedir=".">
 
 <!-- "tools" is the directory where generators and libraries are located. -->
 <property name="tools" value="tools"/>
-	
-<!-- "test" is the directory where tests are located. -->
-<property name="test" value="../test"/>
 	
 <!-- "jflex" is an ant task class for the scanner generator in JFlex.jar -->
 <taskdef name="jflex" classname="JFlex.anttask.JFlexTask" classpath="tools/JFlex.jar"/>
@@ -25,64 +19,182 @@
 <taskdef name="jastadd" classname="jastadd.JastAddTask"
          classpath="tools/jastadd2.jar"/>
 
-	
-<!-- compile sources -->
-<target name="test" depends="jar">
-  <echo message = "Running tests"/>
-  <exec executable="./run" dir="../test"> 
-    <env key="PYTHONPATH" value="../lib/python"/>
-    <!--arg value="hej"/-->
-  </exec>
-</target>
-	
-<!-- remove generated source files and .class files -->
-<target name="clean" depends="cleanGen">
-     <!-- delete all .class files recursively -->
-    <delete dir="gen"/>
-    <delete>
-      <fileset dir="." includes="**/*.class"/>
-      <fileset dir="." includes="gen"/>
-      <fileset dir="." includes="labcomm_compiler.jar"/>
-    </delete>
-
+<target name="jastadd.cu">
+  <uptodate property="jastadd.u">
+    <srcfiles dir='.'>
+      <include name="${version}/*.ast"/>
+      <include name="${version}/*.jrag"/>
+      <include name="${version}/*.jadd"/>
+    </srcfiles>
+    <mapper type="merge" 
+            to="${outdir}/${package_path}/jastadd.uptodate"/>
+  </uptodate>
 </target>
 
-
-<!-- remove generated source files and their .class files -->
-<target name="cleanGen">
-  <delete dir="${package}"/>
+<target name="jastadd" depends="jastadd.cu" unless="jastadd.u">
+  <echo message = "Running JastAdd"/>
+  <jastadd package="${package}" rewrite="true" beaver="true" 
+           novisitcheck="true" lazyMaps="true" outdir="${outdir}">
+    <fileset dir=".">
+      <include name="${version}/*.ast"/>
+      <include name="${version}/*.jrag"/>
+      <include name="${version}/*.jadd"/>
+    </fileset>
+  </jastadd>
+  <touch file="${outdir}/${package_path}/jastadd.uptodate"/>
 </target>
 
-<target name="jar_version" depends="build">
+<target name="scanner.cu">
+  <uptodate property="scanner.u">
+    <srcfiles dir='.'>
+      <include name="${version}/LabCommScanner.flex"/>
+      <!--include name="${tools}/JFlex.jar"/-->
+    </srcfiles>
+    <mapper type="merge" 
+            to="./gen/se/lth/control/labcomm${version}/compiler/LabCommScanner.java"/>
+  </uptodate>
+</target>
+
+<target name="scanner" depends="scanner.cu" unless="scanner.u">
+  <echo message = "Generating scanner ${version}"/>
+  <echo message = "Running jflex -> ${package} ${outdir}/${package_path}"/>
+  <jflex file="${version}/LabCommScanner.flex" 
+         outdir="${outdir}/${package_path}" nobak="yes"/>
+</target>
+
+<target name="parser.1.cu">
+  <uptodate property="parser.1.u">
+    <srcfiles dir='.'>
+      <include name="${version}/*.parser"/>
+    </srcfiles>
+    <mapper type="merge" 
+            to="${outdir}/${package_path}/LabCommParser.all"/>
+  </uptodate>
+</target>
+
+<target name="parser.1" depends="parser.1.cu" unless="parser.1.u">
+  <!-- generate the parser phase 1, create a full .lalr specification 
+       from fragments-->
+  <echo message = "Joining parser fragments"/>
+  <concat destfile="${outdir}/${package_path}/LabCommParser.all" binary="true">
+    <fileset dir=".">
+      <include name="${version}/*.parser"/>
+    </fileset>
+  </concat>
+</target>
+
+<target name="parser.2.cu">
+  <uptodate property="parser.2.u">
+    <srcfiles dir='.'>
+      <include name="${outdir}/${package_path}/LabCommParser.all"/>
+    </srcfiles>
+    <mapper type="merge" 
+            to="${outdir}/${package_path}/LabCommParser.beaver"/>
+  </uptodate>
+</target>
+
+<target name="parser.2" depends="parser.1, parser.2.cu" unless="parser.2.u">
+  <!-- generate the parser phase 2, translating .lalr to .beaver -->
+  <echo message = "translating .lalr to .beaver"/>
+  <java fork="true" dir="${basedir}" 
+        classpath="${tools}/proj.jar:${tools}/beaver-rt.jar" classname="Main">
+    <arg line="${outdir}/${package_path}/LabCommParser.all 
+               ${outdir}/${package_path}/LabCommParser.beaver"/>
+  </java>
+</target>
+
+<target name="parser.3.cu">
+  <uptodate property="parser.3.u">
+    <srcfiles dir='.'>
+      <include name="${outdir}/${package_path}/LabCommParser.beaver"/>
+    </srcfiles>
+    <mapper type="merge" 
+            to="${outdir}/${package_path}/LabCommParser.java"/>
+  </uptodate>
+</target>
+
+<target name="parser.3" depends="parser.2, parser.3.cu" unless="parser.3.u">
+  <echo message = "translating .beaver to .java"/>
+  <beaver file="${outdir}/${package_path}/LabCommParser.beaver"
+          terminalNames="yes" compress="yes" useSwitch="yes"/>
+</target>
+
+<target name="all.version" depends="jastadd, scanner, parser.3">
+</target>
+
+<target name="compile.cu">
+  <uptodate property="compile.u">
+    <srcfiles dir='.'>
+      <include name="*.java"/>
+      <include name="2006/*.java"/>
+      <include name="2014/*.java"/>
+      <include name="${outdir}/**/*.java"/>
+    </srcfiles>
+    <mapper type="merge" 
+            to="${outdir}/compile.uptodate"/>
+  </uptodate>
+</target>
+
+<target name="compile" depends="compile.cu" unless="compile.u">
+  <echo message = "compiling"/>
+  <javac debug="true" srcdir="." destdir="gen"
+         includes="*.java 2006/*.java 2014/*.java gen/**/*.java" 
+         classpath="gen:${tools}/beaver-rt.jar:${tools}/junit.jar"
+         includeantruntime="false"
+         fork="true" memoryMaximumSize="128M">
+    <!--compilerarg value="-Xlint"/-->
+  </javac>
+  <touch file="${outdir}/compile.uptodate"/>
+</target>
+
+<target name="jar.version.cu">
+  <uptodate property="jar.version.u">
+    <srcfiles dir=".">
+      <include name="${outdir}/${package_path}/*.class"/>
+    </srcfiles>
+    <mapper type="merge" 
+            to="labcomm${version}_compiler.jar"/>
+  </uptodate>
+</target>
+
+<target name="jar.version" depends="jar.version.cu" unless="jar.version.u">
+  <echo message = "Generating labcomm${version}_compiler.jar"/>
   <jar destfile="labcomm${version}_compiler.jar">
-    <fileset dir="gen" 
-             includes="se/lth/control/labcomm${version}/compiler/*.class"/>
+    <fileset dir="${outdir}" 
+             includes="${package_path}/*.class"/>
     <zipfileset src="tools/beaver-rt.jar" includes="beaver/*.class"/>
     <manifest>
       <attribute name="Main-Class" 
-                 value="se.lth.control.labcomm${version}.compiler.LabComm"/>
+                 value="${package}.LabComm"/>
     </manifest>
   </jar>
 </target>
 
-<target name="jar" depends="build">
-  <antcall target="jar_version">
-    <param name="version" value="2006"/>
-  </antcall>
-  <antcall target="jar_version">
-    <param name="version" value="2014"/>
-  </antcall>
+<target name="jar.all.cu">
+  <uptodate property="jar.all.u">
+    <srcfiles dir=".">
+      <include name="${outdir}/**/*.class"/>
+    </srcfiles>
+    <mapper type="merge" 
+            to="labcomm_compiler.jar"/>
+  </uptodate>
+</target>
+
+<target name="jar.all" depends="jar.all.cu" unless="jar.all.u">
+  <echo message = "Generating labcomm_compiler.jar"/>
   <jar destfile="labcomm_compiler.jar">
-    <fileset dir="gen" includes="**/*.class"/>
+    <fileset dir="${outdir}" 
+             includes="**/*.class"/>
     <zipfileset src="tools/beaver-rt.jar" includes="beaver/*.class"/>
     <manifest>
-      <attribute name="Main-Class" value="LabComm"/>
+      <attribute name="Main-Class" 
+                 value="LabComm"/>
     </manifest>
   </jar>
 </target>
 
-<!-- generate compiler source files -->
-<target name="gen_compiler_version">
+<target name="do.version">
+  <!-- Wrapper that sets up package and package_path based on ${version} -->
   <local name="package"/>
   <local name="package_path"/>
   <property name="package" value="se.lth.control.labcomm${version}.compiler"/>
@@ -95,78 +207,59 @@
       </tokenfilter>
     </filterchain>
   </loadresource>  
-
+  <echo>${do} ${version} ${outdir}</echo>
   <mkdir dir="${outdir}"/>
-
-  <!-- create AST node types and weave aspect modules -->
-  <echo message = "Running JastAdd"/>
-  <jastadd package="${package}" rewrite="true" beaver="true" 
-           novisitcheck="true" lazyMaps="true" outdir="${outdir}">
-    <fileset dir=".">
-      <include name="${version}/*.ast"/>
-      <include name="${version}/*.jrag"/>
-      <include name="${version}/*.jadd"/>
-    </fileset>
-  </jastadd>
-
-  <!-- generate the scanner -->
-  <echo message = "Running jflex -> ${package} ${package_path}"/>
-  <jflex file="${version}/LabCommScanner.flex" 
-         outdir="${outdir}/${package_path}" nobak="yes"/>
-
-  <!-- generate the parser phase 1, create a full .lalr specification 
-       from fragments-->
-  <echo message = "Running parser phase 1"/>
-  <concat destfile="${outdir}/${package_path}/LabCommParser.all" binary="true">
-    <fileset dir=".">
-      <include name="${version}/*.parser"/>
-    </fileset>
-  </concat>
-
-  <!-- generate the parser phase 2, translating .lalr to .beaver -->
-  <echo message = "translating .lalr to .beaver"/>
-  <java fork="true" dir="${basedir}" 
-        classpath="${tools}/proj.jar:${tools}/beaver-rt.jar" classname="Main">
-    <arg line="${outdir}/${package_path}/LabCommParser.all 
-               ${outdir}/${package_path}/LabCommParser.beaver"/>
-  </java>
-
-  <!-- generate the parser phase 3, translating .beaver to .java -->
-  <echo message = "translating .beaver to .java"/>
-  <beaver file="${outdir}/${package_path}/LabCommParser.beaver"
-          terminalNames="yes" compress="yes" useSwitch="yes"/>
-
-  <echo message = "compiling .java"/>
-<!--
-  <javac debug="true" srcdir="." destdir="${outdir}"
-         includes="${version}/*.java ${outdir}/${package_path}/*.java" 
-         classpath="gen:${tools}/beaver-rt.jar:${tools}/junit.jar"
-         includeantruntime="false"
-         fork="true" memoryMaximumSize="128M">
-    <!- -compilerarg value="-Xlint"/- ->
-  </javac>
--->
+  <antcall target="${do}">
+    <param name="version" value="${version}"/>
+    <param name="outdir" value="${outdir}"/>
+    <param name="package" value="${package}"/>
+    <param name="package_path" value="${package_path}"/>
+  </antcall>
 </target>
 
-<target name="build">
-  <antcall target="gen_compiler_version">
+<target name="all">
+  <antcall target="do.version">
+    <param name="do" value="all.version"/>
     <param name="version" value="2006"/>
     <param name="outdir" value="gen"/>
   </antcall>
-  <antcall target="gen_compiler_version">
+  <antcall target="do.version">
+    <param name="do" value="all.version"/>
     <param name="version" value="2014"/>
     <param name="outdir" value="gen"/>
   </antcall>
-  <echo message = "compiling main"/>
-  <javac debug="true" srcdir="." destdir="gen"
-         includes="*.java 2006/*.java 2014/*.java gen/**/*.java" 
-         classpath="gen:${tools}/beaver-rt.jar:${tools}/junit.jar"
-         includeantruntime="false"
-         fork="true" memoryMaximumSize="128M">
-    <!--compilerarg value="-Xlint"/-->
-  </javac>
+  <antcall target="compile">
+    <param name="outdir" value="gen"/>
+  </antcall>
+  <antcall target="do.version">
+    <param name="do" value="jar.version"/>
+    <param name="version" value="2006"/>
+    <param name="outdir" value="gen"/>
+  </antcall>
+  <antcall target="do.version">
+    <param name="do" value="jar.version"/>
+    <param name="version" value="2014"/>
+    <param name="outdir" value="gen"/>
+  </antcall>
+  <antcall target="jar.all">
+    <param name="outdir" value="gen"/>
+  </antcall>
 </target>
 
+<target name="clean">
+  <delete dir="gen"/>
+</target>
+  
+<target name="distclean" depends="clean">
+  <delete>
+    <fileset dir="." includes="labcomm*_compiler.jar"/>
+  </delete>
+</target>
+
+<target name="test">
+  <echo>No tests defined yet</echo>
+</target>
+  
 </project>
 
 
