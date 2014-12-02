@@ -51,7 +51,7 @@
       <!--include name="${tools}/JFlex.jar"/-->
     </srcfiles>
     <mapper type="merge" 
-            to="./gen/se/lth/control/labcomm${version}/compiler/LabCommScanner.java"/>
+            to="${outdir}/${package_path}/LabCommScanner.java"/>
   </uptodate>
 </target>
 
@@ -137,9 +137,9 @@
 
 <target name="compile" depends="compile.cu" unless="compile.u">
   <echo message = "compiling"/>
-  <javac debug="true" srcdir="." destdir="gen"
+  <javac debug="true" srcdir="." destdir="${outdir}"
          includes="*.java 2006/*.java 2014/*.java gen/**/*.java" 
-         classpath="gen:${tools}/beaver-rt.jar:${tools}/junit.jar"
+         classpath="${outdir}:${tools}/beaver-rt.jar:${tools}/junit.jar"
          includeantruntime="false"
          fork="true" memoryMaximumSize="128M">
     <!--compilerarg value="-Xlint"/-->
