@@ -12,6 +12,7 @@ test:
 	echo More to be done...
 	cd simple ; sh compile.sh && sh run.sh
 	$(MAKE) -C  wiki_example test
+	$(MAKE) -C user_types test 
 	$(MAKE) -C duck_typing test
 	$(MAKE) -C twoway test 
 
