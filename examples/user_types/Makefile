@@ -2,7 +2,9 @@ LCDIR=../..
 LCCJAR=${LCDIR}/compiler/labcomm2014_compiler.jar  # the LabComm compiler
 LCLJAR=${LCDIR}/lib/java/labcomm2014.jar  # the LabComm library
 
-EXECUTABLES=example_encoder example_decoder Encoder.class Decoder.class Encoder.exe Decoder.exe
+EXECUTABLES=example_encoder example_decoder \
+	    Encoder.class Decoder.class \
+	    ExampleEncoder.exe ExampleDecoder.exe
 include ${LCDIR}/lib/c/os_compat.mk
 
 GENDIR=gen
@@ -174,3 +176,8 @@ clean:
 
 distclean: clean
 	rm -f ${EXECUTABLES}
+	rm -f encoded_data_c
+	rm -f encoded_data_cs
+	rm -f encoded_data_j
+	rm -f encoded_data_p
+	rm -f labcomm.dll
