@@ -92,6 +92,8 @@ $(TEST_DIR)/gen/%: $(TEST_DIR)/gen/%.o | $(TEST_DIR)/gen
 $(TEST_DIR)/gen/%.o: $(TEST_DIR)/%.c | $(TEST_DIR)/gen
 	$(CC) $(CFLAGS_TEST) -o $@ -c $<
 
+.PRECIOUS: $(TEST_DIR)/gen/%.c
+.PRECIOUS: $(TEST_DIR)/gen/%.h
 $(TEST_DIR)/gen/%.c $(TEST_DIR)/gen/%.h: $(TEST_DIR)/%.lc | $(TEST_DIR)/gen
 	$(LABCOMM) \
 		--c=$(TEST_DIR)/gen/$*.c \

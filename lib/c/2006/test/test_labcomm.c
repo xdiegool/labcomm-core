@@ -103,13 +103,13 @@ static struct labcomm2006_reader reader =  {
 static int32_t encoder_data[256];
 static test_sample_test_var encoder_var = {
   .n_0 = 1,
-  .n_1 = 1,
+  .n_2 = 1,
   .a = encoder_data,
 };
 static int32_t decoder_data[256];
 static test_sample_test_var decoder_var = {
   .n_0 = 1,
-  .n_1 = 1,
+  .n_2 = 1,
   .a = decoder_data,
 };;
 
@@ -151,27 +151,27 @@ int test_decode_one(struct labcomm2006_decoder *decoder)
 
 static void test_encode_decode(struct labcomm2006_encoder *encoder,
 			       struct labcomm2006_decoder *decoder,
-			       int expected, uint32_t n_0, uint32_t n_1)
+			       int expected, uint32_t n_0, uint32_t n_2)
 {
   int err;
 
   writer.pos = 0;
   encoder_var.n_0 = n_0;
-  encoder_var.n_1 = n_1;
+  encoder_var.n_2 = n_2;
   encoder_var.a[0] = 314;
   labcomm2006_encode_test_sample_test_var(encoder, &encoder_var);
   err = test_decode_one(decoder);
-  fprintf(stderr, "decode of sample %u * %u -> size=%d err=%d\n", 
-	  n_0, n_1, writer.pos, err);
+  fprintf(stderr, "decode of sample %u * 2 * %u -> size=%d err=%d\n", 
+	  n_0, n_2, writer.pos, err);
   if (writer.pos != labcomm2006_sizeof_test_sample_test_var(&encoder_var)) {
-    fprintf(stderr, "Incorrect sizeof %u * %u (%d != %d)\n",
-	    n_0, n_1, 
+    fprintf(stderr, "Incorrect sizeof %u * 2 * %u (%d != %d)\n",
+	    n_0, n_2, 
 	    writer.pos, labcomm2006_sizeof_test_sample_test_var(&encoder_var));
     exit(1);
   }
   if (writer.pos != expected) {
     fprintf(stderr, "Unexpected size %u * %u (%d != %d)\n",
-	    n_0, n_1, 
+	    n_0, n_2, 
 	    writer.pos, expected);
     exit(1);
   }
@@ -196,13 +196,13 @@ int main(void)
   labcomm2006_encoder_register_test_sample_test_var(encoder);
   err = test_decode_one(decoder);
   fprintf(stderr, "decode of register -> index %d\n", err);
-  test_encode_decode(encoder, decoder, 16, 1, 1);
+  test_encode_decode(encoder, decoder, 20, 1, 1);
   if (decoder_var.a[0] != encoder_var.a[0]) {
     fprintf(stderr, "Failed to decode correct value %d != %d\n", 
 	    encoder_var.a[0], decoder_var.a[0]);
     exit(1);
   }
-  test_encode_decode(encoder, decoder, 28, 2, 2);
+  test_encode_decode(encoder, decoder, 44, 2, 2);
   test_encode_decode(encoder, decoder, 12, 0, 0);
   for (i = 1 ; i <= 4 ; i++) {
     test_encode_decode(encoder, decoder, 12, 0, (1<<(7*i))-1);
