@@ -1,6 +1,6 @@
 LCDIR=../..
-LCCJAR=${LCDIR}/compiler/labcomm_compiler.jar  # the LabComm compiler
-LCLJAR=${LCDIR}/lib/java/labcomm.jar  # the LabComm library
+LCCJAR=${LCDIR}/compiler/labcomm2014_compiler.jar  # the LabComm compiler
+LCLJAR=${LCDIR}/lib/java/labcomm2014.jar  # the LabComm library
 
 EXECUTABLES=example_encoder example_decoder Encoder.class Decoder.class Encoder.exe Decoder.exe
 include ${LCDIR}/lib/c/os_compat.mk
@@ -13,6 +13,8 @@ all: cleanbuild run
 
 allall: clean build buildcs runwcs
 
+test: allall
+
 ###############################################
 ### dependencies and parts ####################
 ###############################################
@@ -24,7 +26,7 @@ ${LCCJAR} :
 	$MAKE -C ${LCDIR} make-compiler
 
 ${LCLJAR} :
-	$MAKE -C ${LCDIR} labcomm.jar
+	$MAKE -C ${LCDIR} labcomm2014.jar
 
 
 cleanbuild: clean build
@@ -44,46 +46,45 @@ build :
 	mkdir -p ${GENDIR}
 	java -jar ${LCDIR}/compiler/labcomm_compiler.jar --java=${GENDIR} --c=${GENDIR}/test.c --h=${GENDIR}/test.h  --python=${GENDIR}/test.py --cs=${GENDIR}/test.cs test.lc 
 
-	javac -cp ${LCDIR}/lib/java/labcomm.jar:. ${GENDIR}/*.java Encoder.java Decoder.java
+	javac -cp ${LCDIR}/lib/java/labcomm2014.jar:. ${GENDIR}/*.java Encoder.java Decoder.java
 
 	${CC} ${CFLAGS} ${LDFLAGS} -Wall -Werror -Wno-unused-function \
-	    -I. -I${LCDIR}/lib/c -L${LCDIR}/lib/c \
+	    -I. -I${LCDIR}/lib/c/2014 -L${LCDIR}/lib/c \
 	    -o example_encoder example_encoder.c ${GENDIR}/test.c \
 	    -llabcomm2014 
 
-	${CC} ${CFLAGS} ${LDFLAGS} -Wall -Werror -I . -I ${LCDIR}/lib/c -L${LCDIR}/lib/c \
+	${CC} ${CFLAGS} ${LDFLAGS} -Wall -Werror -I . -I ${LCDIR}/lib/c/2014 -L${LCDIR}/lib/c \
 	    -o example_decoder example_decoder.c ${GENDIR}/test.c \
 	    -llabcomm2014 
 
-buildcs: Encoder.exe Decoder.exe
+buildcs: ExampleEncoder.exe ExampleDecoder.exe
 
 run:
-	export LD_LIBRARY_PATH=${LCDIR}/lib/c/
 	@echo
 	@echo "********************************************"
 	@echo "***   ************ running example for version 2014   ***"
 	@echo "********************************************"
 	@echo
 
-	@java -cp .:${LCDIR}/lib/java/labcomm.jar:${GENDIR} Encoder encoded_data_j
+	@java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${GENDIR} Encoder encoded_data_j
 
 	@echo "************ running Java  decoder: *****************"
-	@java -cp .:${LCDIR}/lib/java/labcomm.jar:${GENDIR} Decoder encoded_data_j
+	@java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${GENDIR} Decoder encoded_data_j
 
 	@echo "************ running C decoder: *****************"
-	@./example_decoder encoded_data_j
+	@LD_LIBRARY_PATH=${LCDIR}/lib/c/ ./example_decoder encoded_data_j
 
 	@echo "************ running python decoder (from wiki_example):"
 	@PYTHONPATH=${LCDIR}/lib/python ../wiki_example/example_decoder.py encoded_data_j LabComm2014
 
 	@echo "************ running C encoder: *****************"
-	@./example_encoder encoded_data_c
+	@LD_LIBRARY_PATH=${LCDIR}/lib/c/ ./example_encoder encoded_data_c
 
 	@echo "************ running Java  decoder: *****************"
-	@java -cp .:${LCDIR}/lib/java/labcomm.jar:${GENDIR} Decoder encoded_data_c
+	@java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${GENDIR} Decoder encoded_data_c
 
 	@echo "************ running C decoder: *****************"
-	@./example_decoder encoded_data_c
+	@LD_LIBRARY_PATH=${LCDIR}/lib/c/ ./example_decoder encoded_data_c
 
 	@echo "************ running python decoder (from wiki_example):"
 	@PYTHONPATH=${LCDIR}/lib/python ../wiki_example/example_decoder.py encoded_data_c LabComm2014
@@ -92,44 +93,43 @@ run:
 	@PYTHONPATH=${LCDIR}/lib/python:${GENDIR} ./example_encoder.py encoded_data_p LabComm2014
 
 	@echo "************ running Java  decoder: *****************"
-	@java -cp .:${LCDIR}/lib/java/labcomm.jar:${GENDIR} Decoder encoded_data_p
+	@java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${GENDIR} Decoder encoded_data_p
 
 	@echo "************ running C decoder: *****************"
-	@./example_decoder encoded_data_p
+	@LD_LIBRARY_PATH=${LCDIR}/lib/c/ ./example_decoder encoded_data_p
 
 	@echo "************ running python decoder (from wiki_example):"
 	PYTHONPATH=${LCDIR}/lib/python ../wiki_example/example_decoder.py encoded_data_p LabComm2014
 
 runwcs: build ExampleEncoder.exe ExampleDecoder.exe
-	export LD_LIBRARY_PATH=${LCDIR}/lib/c/
 	@echo
 	@echo "********************************************"
 	@echo "***   ************ running example for version 2014   ***"
 	@echo "********************************************"
 	@echo
 
-	@java -cp .:${LCDIR}/lib/java/labcomm.jar:${GENDIR} Encoder encoded_data_j
+	@java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${GENDIR} Encoder encoded_data_j
 
 	@echo "************ running Java  decoder: *****************"
-	@java -cp .:${LCDIR}/lib/java/labcomm.jar:${GENDIR} Decoder encoded_data_j
+	@java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${GENDIR} Decoder encoded_data_j
 
 	@echo "************ running C decoder: *****************"
-	@./example_decoder encoded_data_j
+	@LD_LIBRARY_PATH=${LCDIR}/lib/c/ ./example_decoder encoded_data_j
 
 	@echo "************ running python decoder (from wiki_example):"
 	@PYTHONPATH=${LCDIR}/lib/python ../wiki_example/example_decoder.py encoded_data_j LabComm2014
 
 	@echo "************ running C# decoder: *****************"
-	@./ExampleDecoder.exe encoded_data_j
+	@LD_LIBRARY_PATH=${LCDIR}/lib/c/ ./ExampleDecoder.exe encoded_data_j
 
 	@echo "************ running C encoder: *****************"
-	@./example_encoder encoded_data_c
+	@LD_LIBRARY_PATH=${LCDIR}/lib/c/ ./example_encoder encoded_data_c
 
 	@echo "************ running Java  decoder: *****************"
-	@java -cp .:${LCDIR}/lib/java/labcomm.jar:${GENDIR} Decoder encoded_data_c
+	@java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${GENDIR} Decoder encoded_data_c
 
 	@echo "************ running C decoder: *****************"
-	@./example_decoder encoded_data_c
+	@LD_LIBRARY_PATH=${LCDIR}/lib/c/ ./example_decoder encoded_data_c
 
 	@echo "************ running python decoder (from wiki_example):"
 	@PYTHONPATH=${LCDIR}/lib/python ../wiki_example/example_decoder.py encoded_data_c LabComm2014
@@ -141,10 +141,10 @@ runwcs: build ExampleEncoder.exe ExampleDecoder.exe
 	@PYTHONPATH=${LCDIR}/lib/python:${GENDIR} ./example_encoder.py encoded_data_p LabComm2014
 
 	@echo "************ running Java  decoder: *****************"
-	@java -cp .:${LCDIR}/lib/java/labcomm.jar:${GENDIR} Decoder encoded_data_p
+	@java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${GENDIR} Decoder encoded_data_p
 
 	@echo "************ running C decoder: *****************"
-	@./example_decoder encoded_data_p
+	@LD_LIBRARY_PATH=${LCDIR}/lib/c/ ./example_decoder encoded_data_p
 
 	@echo "************ running python decoder (from wiki_example):"
 	PYTHONPATH=${LCDIR}/lib/python ../wiki_example/example_decoder.py encoded_data_p LabComm2014
@@ -156,10 +156,10 @@ runwcs: build ExampleEncoder.exe ExampleDecoder.exe
 	@./ExampleEncoder.exe encoded_data_cs
 
 	@echo "************ running Java  decoder: *****************"
-	@java -cp .:${LCDIR}/lib/java/labcomm.jar:${GENDIR} Decoder encoded_data_cs
+	@java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${GENDIR} Decoder encoded_data_cs
 
 	@echo "************ running C decoder: *****************"
-	@./example_decoder encoded_data_cs
+	@LD_LIBRARY_PATH=${LCDIR}/lib/c/ ./example_decoder encoded_data_cs
 
 	@echo "************ running python decoder (from wiki_example):"
 	@PYTHONPATH=${LCDIR}/lib/python ../wiki_example/example_decoder.py encoded_data_cs LabComm2014
