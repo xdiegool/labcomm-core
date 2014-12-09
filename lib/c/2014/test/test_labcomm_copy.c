@@ -130,11 +130,13 @@ int main(int argc, char **argv)
 
   labcomm_encoder_register_test_sample_test_var(encoder);
   test_var.n_0 = 2;
-  test_var.n_1 = 7;
-  test_var.a = calloc(test_var.n_0 * test_var.n_1, sizeof(*test_var.a));
+  test_var.n_2 = 7;
+  test_var.a = calloc(test_var.n_0 * 2 * test_var.n_2, sizeof(*test_var.a));
   for (int i = 0; i < test_var.n_0; i++)
-    for (int j = 0; j < test_var.n_1; j++)
-      test_var.a[i] = 10 * i + j;
+    for (int j = 0; j < 2; j++)
+      for (int k = 0; k < test_var.n_2; k++) {
+        test_var.a[(((i) * 2 + j) * test_var.n_2) + k] = 100 * i + 10 * j + k;
+      }
   labcomm_encode_test_sample_test_var(encoder, &test_var);
 
   labcomm_encoder_register_more_types_A(encoder);
@@ -217,10 +219,15 @@ int main(int argc, char **argv)
   puts("P copied ok");
 
   assert(cache_test_var.n_0 == test_var.n_0);
-  assert(cache_test_var.n_1 == test_var.n_1);
+  assert(cache_test_var.n_2 == test_var.n_2);
   for (int i = 0; i < test_var.n_0; i++)
-    for (int j = 0; j < test_var.n_1; j++)
-      assert(cache_test_var.a[p.n_0 * i + j] == test_var.a[p.n_0 * i + j]);
+    for (int j = 0; j < 2; j++)
+      for (int k = 0; k < test_var.n_2; k++) {
+        assert(cache_test_var.a[(((i) * 2 + j) * test_var.n_2) + k] == 
+                     test_var.a[(((i) * 2 + j) * test_var.n_2) + k]);
+        assert(cache_test_var.a[(((i) * 2 + j) * test_var.n_2) + k] == 
+               100 * i + 10 * j + k);
+      }
   free(test_var.a);
   puts("test_var copied ok");
 

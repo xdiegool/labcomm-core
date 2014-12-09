@@ -1453,7 +1453,8 @@ aspect C_Constructor {
 }
 
 aspect C_Sizeof {
- public void Decl.C_emitSizeofDeclaration(C_env env) {
+
+  public void Decl.C_emitSizeofDeclaration(C_env env) {
   }
 
   public void SampleDecl.C_emitSizeofDeclaration(C_env env) {
@@ -1578,10 +1579,10 @@ aspect C_Sizeof {
     int fixed = 0;
     for (int i = 0 ; i < getNumField() ; i++) {
       if (getField(i).getType().C_isDynamic()) {
-    getField(i).getType().C_emitSizeof(
-      env.nestStruct("." + getField(i).getName()));
+        getField(i).getType().C_emitSizeof(
+        env.nestStruct("." + getField(i).getName()));
       } else {
-    fixed += getField(i).getType().C_fixedSizeof();
+        fixed += getField(i).getType().C_fixedSizeof();
       }
     }
     if (fixed > 0) {
@@ -1589,36 +1590,43 @@ aspect C_Sizeof {
     }
   }
 
+  public void Exp.C_emitSizeof(C_env env, int i) {
+  }
+
+  public void VariableSize.C_emitSizeof(C_env env, int i) {
+    env.println("result += labcomm"+env.verStr+"_size_packed32(" + 
+                env.qualid + env.memberAccessor() + "n_" + i + ");");
+  }
+
   public void ArrayType.C_emitSizeof(C_env env) {
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      getExp(i).C_emitSizeof(env, i);
+    }
     if (getType().C_isDynamic()) {
       env.println("{");
       env.indent();
       C_emitLoopVariables(env);
       for (int i = 0 ; i < getNumExp() ; i++) {
-    String iterator = "i_" + env.depth + "_" + i;
-    env.println("for (" + iterator + " = 0" +
-            " ; " +
-            iterator + " < " + getExp(i).C_getLimit(env, i) +
-            " ; " +
-            iterator + "++) {");
-    env.indent();
+        String iterator = "i_" + env.depth + "_" + i;
+        env.println("for (" + iterator + " = 0" +
+                    " ; " +
+                    iterator + " < " + getExp(i).C_getLimit(env, i) +
+                    " ; " +
+                    iterator + "++) {");
+        env.indent();
       }
       C_emitCalcIndex(env);
       getType().C_emitSizeof(C_Nest(env));
       for (int i = 0 ; i < getNumExp() ; i++) {
-    env.unindent();
-    env.println("}");
+        env.unindent();
+        env.println("}");
       }
       env.unindent();
       env.println("}");
     } else {
-      for (int i = 0 ; i < getNumExp() ; i++) {
-        env.println("result += labcomm"+env.verStr+"_size_packed32(" + 
-                getExp(i).C_getLimit(env, i) + ");");
-      }
       env.print("result += " + getType().C_fixedSizeof());
       for (int i = 0 ; i < getNumExp() ; i++) {
-    env.print(" * " + getExp(i).C_getLimit(env, i));
+        env.print(" * " + getExp(i).C_getLimit(env, i));
       }
       env.println(";");      
     }
