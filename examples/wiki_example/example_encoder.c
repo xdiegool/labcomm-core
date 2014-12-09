@@ -1,6 +1,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <labcomm.h>
+#include <labcomm_default_memory.h>
 #include <labcomm_fd_reader.h>
 #include <labcomm_fd_writer.h>
 #include "example.h"
@@ -8,10 +10,13 @@
 int main(int argc, char *argv[]) {
   int fd;
   struct labcomm_encoder *encoder;
+  struct labcomm_writer *labcomm_fd_writer;
   int i, j;
 
   fd = open("example.encoded", O_WRONLY|O_CREAT|O_TRUNC, 0644);
-  encoder = labcomm_encoder_new(labcomm_fd_writer, &fd, NULL, NULL);
+  labcomm_fd_writer = labcomm_fd_writer_new(labcomm_default_memory, fd, 1);
+  encoder = labcomm_encoder_new(labcomm_fd_writer, NULL, 
+                                labcomm_default_memory, NULL);
   labcomm_encoder_register_example_log_message(encoder);
   labcomm_encoder_register_example_data(encoder);
   for (i = 0 ; i < argc ; i++) {
@@ -31,4 +36,5 @@ int main(int argc, char *argv[]) {
     float f = i;
     labcomm_encode_example_data(encoder, &f);
   }
+  return 0;
 }
