@@ -1,0 +1,73 @@
+Rationale for the licensing choosen for LabComm
+===============================================
+
+Primary goal:   the owners of systems with LabComm communication in it, 
+                should have the liberty to replace the LabComm parts with 
+                any software they see fit.
+
+Secondary goal: it should be possible to release propreitary software
+                with LabComm.
+
+
+Wanted software architecture
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
++------------------------------------------------------------+
+| Propreitary software (any license)                         |
++------------------------------------------------------------+
+| Labcomm glue (LGPL)                                        |
++--------------+-----+--------------+                        |
+|  Generated   |     |  Generated   |                        |
+|   encoder/   |     |   encoder/   |                        |
+|   decoder    | * * |   decoder    |                        |
+| (  GPLv3 +   |     | (  GPLv3 +   |        +---------------+
+|  permission) |     |  permission) |        |  Non-system   |
++--------------+-----+--------------+--+     |    library    |
+| LabComm library (GPLv3 + permission) |     | (any license) | 
++--------------------------------------+-----+----------+----+
+| System library (any license)                          |    |
++-------------------------------------------------------+    |
+| OS (any license)                                           |
++------------------------------------------------------------+
+
+License considerations
+^^^^^^^^^^^^^^^^^^^^^^
+
+We need to allow linking to the LabComm library from the LGPL glue
+(see http://www.gnu.org/licenses/gpl-faq.html#GPLIncompatibleLibs).
+
+We can not set a license on generated code
+(http://www.gnu.org/licenses/gpl-faq.html#GPLOutput), 
+but when used with the LabComm library we can force it 
+to be licensed under GPLv3.
+
+
+Suggested license for all library files
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
+
+This file is part of LabComm.
+
+LabComm is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+LabComm is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Additional permission under GNU GPL version 3 section 7
+
+If you modify this Program, or any covered work, by directly linking 
+any functionality of it, with the the exception of calls denoting the 
+boundary of encoded samples and calls encoding primitive datatypes,
+with any software licensed under the GNU Lesser General Public License, 
+the licensors of this Program grant you additional permission to convey 
+the resulting work. 
+
