@@ -28,7 +28,10 @@ application sees fit.
 
 The LabComm system is based on a binary protocol and
 and a compiler that generates encoder/decoder routines for popular languages
-including C, Java, and Python.
+including C, Java, and Python. There is also a standard library for the
+languages supported by the compiler, containing generic routines for
+encoding and decoding types and samples, and interaction with
+application code.
 
 The LabComm compiler accepts type and sample declarations in a small language
 that is similar to C or Java type-declarations. 
@@ -44,10 +47,15 @@ where the overhead of communication has to be kept at a minimum, hence LabComm
 only requires one-way communication to operate. The one-way operation also has
 the added benefit of making LabComm suitable as a storage format. 
 
+Two-way comminication adds complexity, in particular for hand-shaking
+during establishment of connections, and the LabComm library provides
+support for (for instance) avoiding deadlocks during such hand-shaking.
+
 \section{Communication model}
 
 LabComm provides self-describing communication channels, by always transmitting
-a machine readable description of the data before actual data is sent.
+a machine readable description of the data before actual data is
+sent\footnote{Sometimes referred to as \emph{in-band} self-describing}. 
 Therefore, communication on a LabComm channel has two phases
 
 \begin{enumerate}
@@ -88,11 +96,34 @@ The roles in setting up, and maintaining, the configuration of a channel are as 
  \item if an unhandled signature is received, pauses the channel and informs the application
 \end{itemize}
 
+\subsection{Reconfiguration}
+
+The fundamental communication model can be generalized to the life-cycle
+of a concrete communication channel, including the transport layer,
+between two end-points. Then, the communication phases are
+\begin{enumerate}
+  \item \emph{Establishment} of communication channel at the transport layer
+  \item \emph{Configuration} of the LabComm channel (registration of sample
+    types)
+  \item \emph{Operation} (transmission of samples)
+\end{enumerate}
+where it is possible to \emph{reconfigure} a channel by transitioning
+back from phase 3 to phase 2. That allows dynamic behaviour, as a sample
+type can be added or redefined at run-time. It also facilitates error
+handling in two-way channels.
+
 \section{The Labcomm language}
 
-The following examples do not cover the entire language
-specification (see appendix~\ref{language_grammar}), but might serve as a
-gentle introduction to the LabComm language.
+The LabComm language is used to describe data types, and from such data
+descriptions, the compiler generates code for encoding and decoding
+samples. The language is quite similar to C struct declarations, with
+some exceptions. We will now introduce the language through a set of
+examples.
+
+These examples do not cover the entire language
+specification (see appendix~\ref{language_grammar} for the complete
+grammar), but serve as a gentle introduction to the LabComm
+language covering most common use-cases.
 
 \subsection{Primitive types}
 
