@@ -8,9 +8,9 @@
 \begin{document}
 \title{Labcomm tech report}
 \author{Anders Blomdell and Sven Gesteg\aa{}rd Robertz }
-\date{embryo of draft, \today}
+\date{draft, \today}
 
-\maketitle 
+\maketitle
 
 \begin{abstract}
 
@@ -20,7 +20,7 @@ processor, and network used (e.g., byte order, etc).  It is primarily intended
 for situations where the overhead of communication has to be kept at a minimum,
 hence LabComm only requires one-way communication to operate. The one-way
 operation also has the added benefit of making LabComm suitable as a storage
-format. 
+format.
 
 LabComm provides self-describing channels, as communication starts with the
 transmission of an encoded description of all possible sample types that can
@@ -35,7 +35,7 @@ encoding and decoding types and samples, and interaction with
 application code.
 
 The LabComm compiler accepts type and sample declarations in a small language
-that is similar to C or Java type-declarations. 
+that is similar to C or Java type-declarations.
 \end{abstract}
 \section{Introduction}
 
@@ -43,20 +43,21 @@ that is similar to C or Java type-declarations.
 %[[http://asn1.org|ASN1]].
 
 LabComm has got it's inspiration from Sun RPC~\cite{SunRPC}
-and ASN1~\cite{ANS1}. LabComm is primarily intended for situations
+and ASN1~\cite{ASN1}. LabComm is primarily intended for situations
 where the overhead of communication has to be kept at a minimum, hence LabComm
 only requires one-way communication to operate. The one-way operation also has
-the added benefit of making LabComm suitable as a storage format. 
+the added benefit of making LabComm suitable as a storage format.
 
 Two-way comminication adds complexity, in particular for hand-shaking
 during establishment of connections, and the LabComm library provides
 support for (for instance) avoiding deadlocks during such hand-shaking.
 
+\pagebreak
 \section{Communication model}
 
 LabComm provides self-describing communication channels, by always transmitting
 a machine readable description of the data before actual data is
-sent\footnote{Sometimes referred to as \emph{in-band} self-describing}. 
+sent\footnote{Sometimes referred to as \emph{in-band} self-describing}.
 Therefore, communication on a LabComm channel has two phases
 
 \begin{enumerate}
@@ -70,9 +71,9 @@ During operation, LabComm will ensure (i.e., monitor) that a communication
 channel is fully configured, meaning that both ends agree on what messages that
 may be passed over that channel.  If an unregistered sample type is sent or
 received, the LabComm encoder or decoder will detect it and take action.
-
 In more dynamic applications, it is possible to reconfigure a channel in order to add,
-remove, or change the set of registerd sample types.
+remove, or change the set of registered sample types. This is discussed
+in Section~\ref{sec:reconfig}.
 
 The roles in setting up, and maintaining, the configuration of a channel are as follows:
 
@@ -86,7 +87,7 @@ The roles in setting up, and maintaining, the configuration of a channel are as 
 \paragraph{The transmitter (encoder)}
 
 \begin{itemize}
- \item ensures that the signature of a sample is transmitted on the channel before samples are 
+ \item ensures that the signature of a sample is transmitted on the channel before samples are
        written to that channel
 \end{itemize}
 
@@ -97,7 +98,21 @@ The roles in setting up, and maintaining, the configuration of a channel are as 
  \item if an unhandled signature is received, pauses the channel and informs the application
 \end{itemize}
 
+The fundamental communication model applies to all LabComm channels and
+deals with the individual unidirectional channels. In addition to that,
+the labcomm libraries support the implementation of higher-level
+handshaking and establishment of bidirectional channels both through
+means of interacting with the underlying transport layer (e.g., for
+marking packets containing signatures as \emph{important}, for
+transports that handle resending of dropped packets selectively), or
+requesting retransmission of signatures.
+
+In order to be both lean and generic, LabComm does not provide a
+complete protocol for establishing and negotiating bidirectional
+channels, but does provide support for building such protocols on top
+of LabComm.
 \subsection{Reconfiguration}
+\label{sec:reconfig}
 
 The fundamental communication model can be generalized to the life-cycle
 of a concrete communication channel, including the transport layer,
@@ -113,6 +128,21 @@ back from phase 3 to phase 2. That allows dynamic behaviour, as a sample
 type can be added or redefined at run-time. It also facilitates error
 handling in two-way channels.
 
+One example of this, more dynamic, view of a labcomm channel is that the
+action taken when an unregistered sample is sent or received is to
+revert back to the configuration phase and redo the handshaking to
+ensure that both sides agree on the set of sample types (i.e.,
+signatures) that are currently configured for the channel.
+
+From the system perspective, the LabComm protocol is involved in
+phases 2 and 3. The establishement of the \emph{transport-layer}
+channels is left to external application code. In the Labcomm library,
+that application code is connected to the LabComm routines through
+the \emph{reader} and \emph{writer} interfaces,
+with default implementations for sockets or file descriptors (i.e.,
+files and streams).
+
+
 \section{The Labcomm language}
 
 The LabComm language is used to describe data types, and from such data
@@ -122,7 +152,7 @@ some exceptions. We will now introduce the language through a set of
 examples.
 
 These examples do not cover the entire language
-specification (see appendix~\ref{language_grammar} for the complete
+specification (see appendix~\ref{sec:LanguageGrammar} for the complete
 grammar), but serve as a gentle introduction to the LabComm
 language covering most common use-cases.
 
@@ -152,7 +182,7 @@ language covering most common use-cases.
 
 \begin{enumerate}
 \item In contrast to C, LabComm supports both fixed and variable (denoted
-by \verb+_+) sized arrays.
+by~\verb+_+) sized arrays.
 
 \item In contrast to Java, LabComm supports multidimensional arrays and not
 only arrays of arrays.
@@ -183,7 +213,8 @@ only arrays of arrays.
 
 The LabComm system consists of a compiler for generating code from the data
 descriptions, and libraries providing LabComm communication facilities in,
-currently, C, Java, Python, and C\#.
+currently, C, Java, Python, C\#, and RAPID\footnote{excluding variable
+size samples, as RAPID has limited support for dynamic memory allocation}.
 
 
 \subsection{The LabComm compiler}
@@ -192,12 +223,12 @@ The LabComm compiler generates code for the declared samples, including marshall
 demarshalling code, in the supported target languages.
 
 The compiler itself is implemented in Java using the JastAdd~\cite{jastadd} compiler compiler.
-\pagebreak
+
 \subsection{The LabComm library}
 
 The LabComm libraries contain functionality for the end-to-end transmission
 of samples. They are divided into two layers, where the upper layer implements
-the general encoding and decoding of samples, and the lower one deals with 
+the general encoding and decoding of samples, and the lower one deals with
 the transmission of the encoded byte stream on a particular transport layer.
 
 Thus, the LabComm communication stack looks like this:
@@ -216,7 +247,7 @@ Thus, the LabComm communication stack looks like this:
 \end{figure}
 \subsubsection{LabComm actions}
 
-(similar to ioctl()) 
+(similar to ioctl())
 The encoder/writer and decoder/reader interfaces consist of a set of actions
 
 One example of this is that there is a a separate writer action for
@@ -225,7 +256,7 @@ from encoded samples, e.g., to allow handshaking during channel setup.
 
 User actions allow the application or a higher level
 protocol to communicate with the underlying transport layer through the LabComm
-encoder. 
+encoder.
 
 One example is reliable communication, which is controlled from the application
 but needs to be implemented for each transport at at the reader/writer level.
@@ -235,7 +266,7 @@ but needs to be implemented for each transport at at the reader/writer level.
 
 \begin{itemize}
 \item a protocol for two-way connections
-\item intrinsically supporting reliable communication 
+\item intrinsically supporting reliable communication
 \item providing semantic service-descriptions
 \end{itemize}
 
@@ -255,7 +286,7 @@ But
 With the following `example.lc` file:
 
 \lstinputlisting[basicstyle=\footnotesize]{../examples/wiki_example/example.lc}
-and this \verb+example_encoder.c+ file 
+and this \verb+example_encoder.c+ file
 \lstinputlisting[basicstyle=\footnotesize,language=C]{../examples/wiki_example/example_encoder.c}
 
 
@@ -275,16 +306,16 @@ Running \verb+./example_encoder one two+, will yield the following result in exa
 i.e.,
 \begin{verbatim}
 <version> <length: 12> <string: <len: 11> <"LabComm2014">>
-<sample_decl> <length: 48 <user_id: 0x40> <string: <len: 11> <"log_message"> 
+<sample_decl> <length: 48 <user_id: 0x40> <string: <len: 11> <"log_message">
   <signature_length: 34>
-  <struct_decl: 
+  <struct_decl:
     <number_of_fields: 2>
     <string: <len: 8> <"sequence"> <type: <integer_type>>
-    <string: <len: 4> <"line">> <type: <array_decl 
-      <number_indices: 1> <variable_index> 
-      <type: <struct_decl: 
+    <string: <len: 4> <"line">> <type: <array_decl
+      <number_indices: 1> <variable_index>
+      <type: <struct_decl:
         <number_of_fields:2>
-        <string: <len: 4> <"last">> <type: <boolean_type>> 
+        <string: <len: 4> <"last">> <type: <boolean_type>>
         <string: <len: 4> <"data">> <type: <string_type>>
       >>
    >
@@ -308,8 +339,12 @@ Java primitive types. However, it is unlikely that the entire range is actually 
 way of supporting the common cases is to include run-time checks for overflow in the Java encoders
 and decoders.
 
+\bibliography{refs}{}
+\bibliographystyle{plain}
+
 \appendix
 \newpage
+
 \section{The LabComm language}
 \label{sec:LanguageGrammar}
 
@@ -354,7 +389,7 @@ VariableSize : Exp;
 <char> := any UTF-8 char
 <type> := ( <basic_type> | <user_id> | <array_decl> | <struct_decl> )
 <basic_type> := ( <boolean_type> | <byte_type> | <short_type> |
-                  <integer_type> | <long_type> | <float_type> | 
+                  <integer_type> | <long_type> | <float_type> |
                   <double_type> | <string_type> )
 <boolean_type> := 0x20 ''(packed)''
 <byte_type> := 0x21 ''(packed)''
