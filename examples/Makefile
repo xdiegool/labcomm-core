@@ -7,12 +7,18 @@ all:
 	echo More to be done...
 	$(MAKE) -C twoway all
 
+UNAME_S=$(shell uname -s)
+
 .PHONY: test
 test:
 	echo More to be done...
+ifeq ($(UNAME_S),Darwin)
+	$(MAKE) -C user_types all 
+else	
 	cd simple ; sh compile.sh && sh run.sh
 	$(MAKE) -C  wiki_example test
 	$(MAKE) -C user_types test 
+endif	
 	$(MAKE) -C duck_typing test
 	$(MAKE) -C twoway test 
 

@@ -2,7 +2,8 @@ TARGETS=client server
 LABCOMM_JAR=../../compiler/labcomm_compiler.jar
 LABCOMM=java -jar $(LABCOMM_JAR) 
 
-CFLAGS=-O3 -g -Wall -Werror -I../../lib/c/2014 -I. -Wno-unused-function
+include ../../lib/c/os_compat.mk
+CFLAGS+=-I../../lib/c/2014 -I.
 
 all: $(TARGETS:%=gen/%)
 

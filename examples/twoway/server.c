@@ -20,7 +20,12 @@
 */
 
 #include <arpa/inet.h>
+#ifndef LABCOMM_OS_DARWIN
 #include <linux/tcp.h>
+#else
+#include <netinet/in.h>
+#include <netinet/tcp.h> 
+#endif
 #include <errno.h>
 #include <pthread.h>
 #include <stdlib.h>

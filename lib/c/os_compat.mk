@@ -14,6 +14,7 @@ else ifeq ($(UNAME_S),Darwin)
   LD=$(CROSS_COMPILE)ld
   CFLAGS=-g -Wall -Werror -O3  -I. -Itest \
 	 -DLABCOMM_COMPAT=\"labcomm_compat_osx.h\" \
+	 -DLABCOMM_OS_DARWIN=1\
 	 -Wno-tautological-compare -Wno-unused-function
   LDFLAGS=-L..
   LDLIBS=-llabcomm$(LIBVERSION)

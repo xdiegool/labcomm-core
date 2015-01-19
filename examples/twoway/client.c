@@ -21,7 +21,12 @@
 
 #include <errno.h>
 #include <arpa/inet.h>
+#ifndef LABCOMM_OS_DARWIN
 #include <linux/tcp.h>
+#else
+#include <netinet/in.h>
+#include <netinet/tcp.h> 
+#endif
 #include <netdb.h>
 #include <pthread.h>
 #include <stdio.h>
