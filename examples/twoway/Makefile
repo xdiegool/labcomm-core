@@ -1,9 +1,14 @@
+UNAME_S=$(shell uname -s)
+
 TARGETS=client server
 LABCOMM_JAR=../../compiler/labcomm_compiler.jar
 LABCOMM=java -jar $(LABCOMM_JAR) 
 
-include ../../lib/c/os_compat.mk
-CFLAGS+=-I../../lib/c/2014 -I.
+CFLAGS=-O3 -g -Wall -Werror -I../../lib/c/2014 -I. -Wno-unused-function
+
+ifeq ($(UNAME_S),Darwin)
+    CFLAGS+=-DLABCOMM_COMPAT=\"labcomm_compat_osx.h\" -DLABCOMM_OS_DARWIN=1  -Wno-tautological-compare
+endif
 
 all: $(TARGETS:%=gen/%)
 
