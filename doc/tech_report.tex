@@ -289,6 +289,7 @@ With the following `example.lc` file:
 and this \verb+example_encoder.c+ file
 \lstinputlisting[basicstyle=\footnotesize,language=C]{../examples/wiki_example/example_encoder.c}
 
+\newpage
 
 Running \verb+./example_encoder one two+, will yield the following result in example.encoded:
 \begin{verbatim}
@@ -306,7 +307,9 @@ Running \verb+./example_encoder one two+, will yield the following result in exa
 i.e.,
 \begin{verbatim}
 <version> <length: 12> <string: <len: 11> <"LabComm2014">>
-<sample_decl> <length: 48 <user_id: 0x40> <string: <len: 11> <"log_message">
+<sample_decl> <length: 48 
+              <user_id: 0x40> 
+              <string: <len: 11> <"log_message">
   <signature_length: 34>
   <struct_decl:
     <number_of_fields: 2>
@@ -379,37 +382,25 @@ VariableSize : Exp;
 \section{The LabComm protocol}
 \label{sec:ProtocolGrammar}
 
+Each LabComm2014 packet has the layout
 \begin{verbatim}
-<packet> := ( <type_decl> | <sample_decl> | <sample_data> )*
-<type_decl> := 0x01 ''(packed)'' <user_id> <string> <type>
-<sample_decl> := 0x02 ''(packed)''<user_id> <string> <type>
-<user_id> := 0x40..0xffffffff  ''(packed)''
-<string> := <string_length> <char>*
-<string_length> := 0x00..0xffffffff  ''(packed)''
-<char> := any UTF-8 char
-<type> := ( <basic_type> | <user_id> | <array_decl> | <struct_decl> )
-<basic_type> := ( <boolean_type> | <byte_type> | <short_type> |
-                  <integer_type> | <long_type> | <float_type> |
-                  <double_type> | <string_type> )
-<boolean_type> := 0x20 ''(packed)''
-<byte_type> := 0x21 ''(packed)''
-<short_type> := 0x22 ''(packed)''
-<integer_type> := 0x23 ''(packed)''
-<long_type> := 0x24 ''(packed)''
-<float_type> := 0x25 ''(packed)''
-<double_type> := 0x26 ''(packed)''
-<string_type> := 0x27 ''(packed)''
-<array_decl> := 0x10 ''(packed)'' <number_of_indices> <indices> <type>
-<number_of_indices> := 0x00..0xffffffff  ''(packed)''
-<indices> := ( <variable_index> | <fixed_index> )*
-<variable_index> := 0x00  ''(packed)''
-<fixed_index> := 0x01..0xffffffff  ''(packed)''
-<struct_decl> := 0x11 ''(packed)'' <number_of_fields> <field>*
-<number_of_fields> := 0x00..0xffffffff  ''(packed)''
-<field> := <string> <type>
-<sample_data> := <user_id> <packed_sample_data>
-<packed_sample_data> := is sent in network order, sizes are as follows:
+<id> <length> <data...>
+\end{verbatim}
+where \verb+length+ is the number of bytes of the \verb+data+ part
+(i.e., excluding the \verb+id+ and \verb+length+ fields), and 
+the \verb+id+ gives the layout of the \verb+data+ part as defined 
+in \ref{sec:ConcreteGrammar}
+\subsection{Data encoding}
+LabComm primitive types are encoded as fixed width values, sent in
+network order.  Type fields, user IDs, number of indices and lengths are
+sent in a variable length (\emph{varint}) form.  A varint integer value
+is sent as a sequence of bytes where the lower seven bits contain a
+chunk of the actual number and the high bit indicates if more chunks
+follow. The sequence of chunks are sent with the least significant chunk
+first.  
 
+The built-in data types are encoded as follows:
+\begin{verbatim}
 ||Type           ||Encoding/Size                                         ||
 ||---------------||------------------------------------------------------||
 ||boolean        ||  8 bits                                              ||
@@ -419,18 +410,46 @@ VariableSize : Exp;
 ||long           || 64 bits                                              ||
 ||float          || 32 bits                                              ||
 ||double         || 64 bits                                              ||
-||string         || length ''(packed)'', followed by UTF8 encoded string ||
-||array          || each variable index ''(packed)'',                    ||
+||string         || length (varint), followed by UTF8 encoded string     ||
+||array          || each variable index (varint),                        ||
 ||               || followed by encoded elements                         ||
 ||struct         || concatenation of encoding of each element            ||
 ||               || in declaration order                                 ||
 \end{verbatim}
 
-Type fields, user IDs, number of indices and lengths are sent in a packed, or
-variable length, form.  An integer is sent as a sequence of bytes where the
-lower seven bits contain a chunk of the actual number and the high bit
-indicates if more chunks follow. The sequence of chunks are sent with the least
-significant chunk first.  (The numbers encoded in this form are indicated above
-with \textit{(packed)}.)
+\subsection{Protocol grammar}
+\label{sec:ConcreteGrammar}
+\begin{verbatim}
+<packet>     := ( <version> | <type_decl> | <sample_decl> | <sample_data> )*
+<version>    := 0x01  <length> <string>
+<sample_def> := 0x02 <length> <user_id> <string> <type>
+<type_def>   := 0x03   <length> <user_id>  <string> <type>
+<user_id>    := 0x40..0xffffffff  
+<string>     := <string_length> <char>*
+<string_length> := 0x00..0xffffffff  
+<char>       := any UTF-8 char
+<type>       := <length> ( <basic_type> | <user_id> | <array_decl> | <struct_decl> )
+<basic_type> := ( <boolean_type> | <byte_type> | <short_type> |
+                  <integer_type> | <long_type> | <float_type> |
+                  <double_type> | <string_type> )
+<boolean_type> := 0x20 
+<byte_type>    := 0x21 
+<short_type>   := 0x22 
+<integer_type> := 0x23 
+<long_type>    := 0x24 
+<float_type>   := 0x25 
+<double_type>  := 0x26 
+<string_type>  := 0x27 
+<array_decl>   := 0x10  <number_of_indices> <indices> <type>
+<number_of_indices> := 0x00..0xffffffff  
+<indices>      := ( <variable_index> | <fixed_index> )*
+<variable_index> := 0x00  
+<fixed_index>  := 0x01..0xffffffff  
+<struct_decl>  := 0x11  <number_of_fields> <field>*
+<number_of_fields> := 0x00..0xffffffff  
+<field>        := <string> <type>
+<sample_data>  := <user_id> <packed_sample_data>
+<packed_sample_data> := is sent in network order, encoded :
+\end{verbatim}
 
 \end{document}
