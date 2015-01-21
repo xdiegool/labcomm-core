@@ -285,9 +285,9 @@ But
 
 With the following `example.lc` file:
 
-\lstinputlisting[basicstyle=\footnotesize]{../examples/wiki_example/example.lc}
+\lstinputlisting[basicstyle=\footnotesize\ttfamily]{../examples/wiki_example/example.lc}
 and this \verb+example_encoder.c+ file
-\lstinputlisting[basicstyle=\footnotesize,language=C]{../examples/wiki_example/example_encoder.c}
+\lstinputlisting[basicstyle=\footnotesize\ttfamily,language=C]{../examples/wiki_example/example_encoder.c}
 
 \newpage
 
@@ -329,6 +329,95 @@ i.e.,
 <sample_data> <user_id: 40> <length: 9>  <packed_sample_data>
 <sample_data> <user_id: 40> <length: 14>  <packed_sample_data>
 \end{verbatim}
+
+\section{Technical details}
+
+TODO: better section title
+
+\subsection{Type and sample declarations}
+
+LabComm has two constructs for declaring sample types, \emph{sample
+declarations} and \emph{type declarations}. A sample declaration is used
+for the concrete sample types that may be transmitted, and is always
+encoded as a \emph{flattened} signature. That means that a sample
+containing user types, like
+
+\begin{verbatim}
+typedef struct {
+  int x;
+  int y;
+} point;
+
+sample struct {
+  point start;
+  point end;
+} line;
+\end{verbatim}
+
+is flattened to 
+
+\begin{verbatim}
+sample struct {
+  struct {
+    int x;
+    int y;
+  } start;
+  struct {
+    int x;
+    int y;
+  } end;
+} line;
+\end{verbatim}
+
+Sample declarations are always sent, and is the fundamental identity of
+a type in LabComm. 
+
+Type declarations is the hierarchical counterpart to sample
+declarations: here, fields of user types are encoded as a reference to
+the type instead of being flattened. As the flattened sample decl is the
+fundamental identity of a type, type declarations can be regarded as
+meta-data, describing the internal structure of a sample. They are
+intended to be read by higher-level software and human system developers
+and integrators.
+
+Sample declarations and type declarations have separate name-spaces in
+the sense that the numbers assigned to them by a labcomm encoder 
+come from two independent number series. To identify which
+\verb+TYPE_DECL+ a particular \verb+SAMPLE_DECL+ corresponds to, the
+\verb+TYPE_BINDING+ packet is used.
+
+\subsubsection{Example}
+
+The labcomm declaration
+\lstinputlisting[basicstyle=\footnotesize\ttfamily]{../examples/user_types/test.lc}
+can be is encoded as
+\begin{lstlisting}[basicstyle=\footnotesize\ttfamily]
+TYPE_DECL 0x40 "coord" <int> val
+TYPE_DECL 0x41 "point" <struct> <2 fields> 
+                                "x" <type: 0x40> 
+                                "y" <type: 0x40>
+TYPE_DECL 0x42 "line" <struct> <2 fields> 
+                                "start" <type: 0x41> 
+                                "end" <type: 0x41>
+TYPE_DECL 0x43 "foo" <struct> <3 fields> 
+                                "a" <int> 
+                                "b" <int> 
+                                "c" <boolean>
+TYPE_DECL 0x44 "twolines" <struct> <3 fields> 
+                                "l1" <type:0x42> 
+                                "l2" <type:0x42> 
+                                "f" <type:0x43>
+
+SAMPLE_DECL 0x40 "twolines" <flat signature>
+
+TYPE_BINDING 0x40 0x44
+\end{lstlisting}
+
+Note that the id 0x40 is used both for the \verb+TYPE_DECL+ of
+\verb+coord+ and the \verb+SAMPLE_DECL+ of \verb+twoline+, and that the
+\verb+TYPE_BINDING+ binds the sample id \verb+0x40+ to the type id
+\verb+0x44+.
+
 
 \section{Ideas/Discussion}:
 
@@ -400,36 +489,43 @@ follow. The sequence of chunks are sent with the least significant chunk
 first.  
 
 The built-in data types are encoded as follows:
-\begin{verbatim}
-||Type           ||Encoding/Size                                         ||
-||---------------||------------------------------------------------------||
-||boolean        ||  8 bits                                              ||
-||byte           ||  8 bits                                              ||
-||short          || 16 bits                                              ||
-||integer        || 32 bits                                              ||
-||long           || 64 bits                                              ||
-||float          || 32 bits                                              ||
-||double         || 64 bits                                              ||
-||string         || length (varint), followed by UTF8 encoded string     ||
-||array          || each variable index (varint),                        ||
-||               || followed by encoded elements                         ||
-||struct         || concatenation of encoding of each element            ||
-||               || in declaration order                                 ||
-\end{verbatim}
+\begin{lstlisting}[basicstyle=\footnotesize\ttfamily]
+||Type      ||Encoding/Size                                      ||
+||----------||---------------------------------------------------||
+||boolean   ||  8 bits                                           ||
+||byte      ||  8 bits                                           ||
+||short     || 16 bits                                           ||
+||integer   || 32 bits                                           ||
+||long      || 64 bits                                           ||
+||float     || 32 bits                                           ||
+||double    || 64 bits                                           ||
+||string    || length (varint), followed by UTF8 encoded string  ||
+||array     || each variable index (varint),                     ||
+||          || followed by encoded elements                      ||
+||struct    || concatenation of encoding of each element         ||
+||          || in declaration order                              ||
+\end{lstlisting}
 
 \subsection{Protocol grammar}
 \label{sec:ConcreteGrammar}
-\begin{verbatim}
-<packet>     := ( <version> | <type_decl> | <sample_decl> | <sample_data> )*
-<version>    := 0x01  <length> <string>
-<sample_def> := 0x02 <length> <user_id> <string> <type>
-<type_def>   := 0x03   <length> <user_id>  <string> <type>
-<user_id>    := 0x40..0xffffffff  
-<string>     := <string_length> <char>*
-<string_length> := 0x00..0xffffffff  
-<char>       := any UTF-8 char
-<type>       := <length> ( <basic_type> | <user_id> | <array_decl> | <struct_decl> )
-<basic_type> := ( <boolean_type> | <byte_type> | <short_type> |
+\begin{lstlisting}[basicstyle=\footnotesize\ttfamily]
+<packet>       := <id> <length> ( <version>      | 
+                                  <type_decl>    | 
+                                  <sample_decl>  |
+                                  <type_binding> |
+                                  <sample_data> )
+<version>      := <string>
+<sample_def>   := <sample_id> <string> <type>
+<type_def>     := <type_id> <string> <type>
+<type_binding> := <sample_id> <type_id>
+<user_id>      := 0x40..0xffffffff  
+<sample_id> : <user_id>
+<type_id>   : <user_id>
+<string>       := <string_length> <char>*
+<string_length>:= 0x00..0xffffffff  
+<char>         := any UTF-8 char
+<type>         := <length> ( <basic_type> | <array_decl> | <struct_decl> | <type_id> )
+<basic_type>   := ( <boolean_type> | <byte_type> | <short_type> |
                   <integer_type> | <long_type> | <float_type> |
                   <double_type> | <string_type> )
 <boolean_type> := 0x20 
@@ -448,8 +544,20 @@ The built-in data types are encoded as follows:
 <struct_decl>  := 0x11  <number_of_fields> <field>*
 <number_of_fields> := 0x00..0xffffffff  
 <field>        := <string> <type>
-<sample_data>  := <user_id> <packed_sample_data>
-<packed_sample_data> := is sent in network order, encoded :
-\end{verbatim}
-
+<sample_data>  := packed sample data sent in network order, with
+                  primitive type elements encoded according to
+                  the sizes above
+\end{lstlisting}
+where the \verb+<id>+ in \verb+<packet>+ signals the type of payload,
+and may be either a \verb+<sample_id>+ or a system packet id.
+The labcomm sytem packet ids are:
+\begin{lstlisting}[basicstyle=\footnotesize\ttfamily]
+version:      0x01 
+sample_decl:  0x02 
+type_decl:    0x03 
+type_binding: 0x04          
+\end{lstlisting}
+Note that since the signature transmitted in a \verb+<sample_def>+ is
+flattened, the \verb+<type>+ transmitted in a \verb+<sample_def>+ may
+not contain any \verb+<type_id>+ fields.
 \end{document}
