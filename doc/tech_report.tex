@@ -330,11 +330,7 @@ i.e.,
 <sample_data> <user_id: 40> <length: 14>  <packed_sample_data>
 \end{verbatim}
 
-\section{Technical details}
-
-TODO: better section title
-
-\subsection{Type and sample declarations}
+\section{Type and sample declarations}
 
 LabComm has two constructs for declaring sample types, \emph{sample
 declarations} and \emph{type declarations}. A sample declaration is used
@@ -386,7 +382,7 @@ come from two independent number series. To identify which
 \verb+TYPE_DECL+ a particular \verb+SAMPLE_DECL+ corresponds to, the
 \verb+TYPE_BINDING+ packet is used.
 
-\subsubsection{Example}
+\subsection{Example}
 
 The labcomm declaration
 \lstinputlisting[basicstyle=\footnotesize\ttfamily]{../examples/user_types/test.lc}
@@ -417,6 +413,22 @@ Note that the id 0x40 is used both for the \verb+TYPE_DECL+ of
 \verb+coord+ and the \verb+SAMPLE_DECL+ of \verb+twoline+, and that the
 \verb+TYPE_BINDING+ binds the sample id \verb+0x40+ to the type id
 \verb+0x44+.
+
+\subsection{Run-time behaviour}
+
+When a sample type is registered on an encoder, a \verb+SAMPLE_DECL+
+(i.e., the flat signature) is always generated on that encoder channel.
+
+If the sample depends on user types (i.e., typedefs), \verb+TYPE_DECL+
+packets are encoded, recursively, for the dependent types and a 
+corresponding \verb+TYPE_BINDING+ is encoded.
+
+If a \verb+TYPE_DECL+ is included via multiple sample types, or
+dependency paths, an encoder may choose to only encode it once, but is
+not required to do so. However, if multiple \verb+TYPE_DECL+ packets are
+sent for the same \verb+typedef+, the encoder must use the same
+\verb+type_id+.
+
 
 
 \section{Ideas/Discussion}:
@@ -515,8 +527,8 @@ The built-in data types are encoded as follows:
                                   <type_binding> |
                                   <sample_data> )
 <version>      := <string>
-<sample_def>   := <sample_id> <string> <type>
-<type_def>     := <type_id> <string> <type>
+<sample_decl>  := <sample_id> <string> <type>
+<type_decl>    := <type_id> <string> <type>
 <type_binding> := <sample_id> <type_id>
 <user_id>      := 0x40..0xffffffff  
 <sample_id> : <user_id>
