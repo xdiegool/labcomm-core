@@ -27,19 +27,36 @@ public class EncoderChannel implements Encoder {
   }
 
   public void register(SampleDispatcher dispatcher) throws IOException {
-    if(dispatcher.getTypeDeclTag() == Constant.SAMPLE_DEF) {
-        int index = def_registry.add(dispatcher);
-        //begin(Constant.SAMPLE_DEF);
-        begin(dispatcher.getTypeDeclTag());
-        encodePacked32(index);
-        encodeString(dispatcher.getName());
-        byte[] signature = dispatcher.getSignature();
-        encodePacked32(signature.length);
-        for (int i = 0 ; i < signature.length ; i++) {
-        encodeByte(signature[i]);
+    switch (dispatcher.getTypeDeclTag())  {
+        case Constant.SAMPLE_DEF: {
+            int index = def_registry.add(dispatcher);
+            begin(dispatcher.getTypeDeclTag());
+            encodePacked32(index);
+            encodeString(dispatcher.getName());
+            byte[] signature = dispatcher.getSignature();
+            encodePacked32(signature.length);
+            for (int i = 0 ; i < signature.length ; i++) {
+                encodeByte(signature[i]);
+            }
+            end(null);
+            break;
         }
-        end(null);
-    }
+        case Constant.TYPE_DEF: {
+            int index = def_registry.add(dispatcher);
+            begin(dispatcher.getTypeDeclTag());
+            encodePacked32(index);
+            encodeString(dispatcher.getName());
+            byte[] signature = dispatcher.getSignature();
+            encodePacked32(8);
+            for (int i = 0 ; i < 8; i++) {
+                encodeByte((byte) 0xff);
+            }
+            end(null);
+            break;
+        }
+        default:
+            throw new Error("Unknown typeDeclTag: "+dispatcher.getTypeDeclTag());    
+    } 
   }
 
   public void registerSampleRef(SampleDispatcher dispatcher) throws IOException {
