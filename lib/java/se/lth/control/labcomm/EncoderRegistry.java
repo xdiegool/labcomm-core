@@ -42,7 +42,11 @@ public class EncoderRegistry {
     return e.getIndex();
   }
   
-  public int getTag(Class<? extends Sample> sample) throws IOException {
+  public int getTag(SampleDispatcher d) throws IOException {
+      return getTag(d.getSampleClass());
+  }
+
+  public int getTag(Class<? extends SampleType> sample) throws IOException {
     Entry e = byClass.get(sample);
     if (e == null) {
       throw new IOException("'" + 
@@ -50,6 +54,10 @@ public class EncoderRegistry {
 			    "' is not registered");
     }
     return e.index;
+  }
+
+  public boolean contains(Class<? extends SampleType> sample) {
+    return byClass.containsKey(sample);
   }
 
 }

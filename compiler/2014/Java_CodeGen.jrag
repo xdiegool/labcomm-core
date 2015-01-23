@@ -454,10 +454,10 @@ aspect Java_Class {
     env.println();
   }
 
-  //public void TypeDecl.Java_emitSignature(Java_env env) {
-  //  Signature signature = getSignature();
-  //  signature.Java_emitSignature(env, true);
-  //}
+  public void TypeDecl.Java_emitSignature(Java_env env) {
+    Signature signature = getSignature();
+    signature.Java_emitSignature(env, true);
+  }
 
   public void Decl.Java_emitSignature(Java_env env) {
     //always emit the flat signature, as it is needed
@@ -465,10 +465,10 @@ aspect Java_Class {
     //the type_ids of dependent types. Therefore, flat sigs
     //are used for matching
     Java_emitFlatSignature(env);
-    //if(isReferenced() || isSampleDecl()){
-    //  Signature signature = getSignature();
-    //  signature.Java_emitSignature(env, !isSampleDecl());
-    //}
+    if(isReferenced() || isSampleDecl()){
+      Signature signature = getSignature();
+      signature.Java_emitSignature(env, !isSampleDecl());
+    }
   }
 
   public void Decl.Java_emitFlatSignature(Java_env env){
@@ -497,7 +497,8 @@ aspect Java_Class {
 
   //XXX TODO: refactor: split into a static class ("TypeDefSingleton"?)and a (smaller) dispatcher
   public void Decl.Java_emitDispatcher(Java_env env, boolean isSample) {
-    String genericStr = ""; //env.versionHasMetaData()?"<"+getName()+">":""; 
+    // String genericStr = ""; //env.versionHasMetaData()?"<"+getName()+">":""; 
+    String genericStr = "<"+getName()+">"; 
     env.println("private static Dispatcher dispatcher = new Dispatcher();");
     env.println();
     env.println("public SampleDispatcher getDispatcher() {");
@@ -553,7 +554,11 @@ aspect Java_Class {
     env.println("/** return the flat signature. */");
     env.println("public byte[] getSignature() {");
     env.indent();
-    env.println("return signature;");
+    if(isSample) {
+        env.println("return signature;");
+    } else {
+        env.println("throw new Error(\"a TYPE_DEF has no flat signature\");");
+    }
     env.unindent();
     env.println("}");
     env.println();
@@ -563,15 +568,16 @@ aspect Java_Class {
 //    env.unindent();
 //    env.println("}");
 //    env.println();
-//    env.println("public void encodeSignatureMetadata(Encoder e, int index) throws IOException{");
-//    env.indent();
-//    env.println("e.encodePacked32(Constant.TYPE_DEF);");
-//    env.println("e.encodePacked32(index);");
-//    env.println("e.encodeString(getName());");
-//    env.println("emitSignature(e);");
-//    env.unindent();
-//    env.println("}");
-//    env.println();
+    env.println("public void encodeTypeDef(Encoder e, int index) throws IOException{");
+    env.indent();
+    env.println("e.begin(Constant.TYPE_DEF);");
+    env.println("e.encodePacked32(index);");
+    env.println("e.encodeString(getName());");
+    env.println("emitSignature(e);");
+    env.println("e.end(null);");
+    env.unindent();
+    env.println("}");
+    env.println();
     env.println("public boolean canDecodeAndHandle() {");
     env.indent();
     env.println("return "+isSample+";");
