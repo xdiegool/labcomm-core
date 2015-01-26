@@ -20,6 +20,7 @@ OBJS=labcomm$(VERSION).o \
      labcomm$(VERSION)_decoder.o \
      labcomm$(VERSION)_dynamic_buffer_writer.o \
      labcomm$(VERSION)_fd_reader.o \
+	 labcomm$(VERSION)_type_signature.o \
      labcomm$(VERSION)_fd_writer.o \
      labcomm$(VERSION)_pthread_scheduler.o 
 

@@ -42,8 +42,8 @@
 #define LABCOMM_VERSION      0x01
 #define LABCOMM_SAMPLE_DEF   0x02
 #define LABCOMM_SAMPLE_REF   0x03
-#define LABCOMM_TYPEDEF      0x04
-#define LABCOMM_TYPEBINDING  0x05
+#define LABCOMM_TYPE_DEF     0x04
+#define LABCOMM_TYPE_BINDING 0x05
 #define LABCOMM_PRAGMA       0x3f
 #define LABCOMM_USER         0x40 /* ..0xffffffff */
 
@@ -364,6 +364,14 @@ int labcomm_writer_ioctl(struct labcomm_writer *w,
 			 int index, const struct labcomm_signature *signature, 
 			 uint32_t ioctl_action, va_list args);
 
+int labcomm_internal_encoder_type_register(
+  struct labcomm_encoder *e,
+  const struct labcomm_signature *signature);
+
+int labcomm_internal_encoder_type_bind(
+  struct labcomm_encoder *e,
+  const struct labcomm_signature *signature);
+
 int labcomm_internal_encoder_register(
   struct labcomm_encoder *encoder, 
   const struct labcomm_signature *signature, 
@@ -542,5 +550,7 @@ void labcomm_set_local_index(struct labcomm_signature *signature);
 
 /* Get the local index for a signature */
 int labcomm_get_local_index(const struct labcomm_signature *s);
+
+int labcomm_get_local_type_index(const struct labcomm_signature *s);
 
 #endif

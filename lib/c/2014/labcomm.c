@@ -257,6 +257,11 @@ int labcomm_get_local_index(const struct labcomm_signature *signature)
   return signature->index;
 }
 
+int labcomm_get_local_type_index(const struct labcomm_signature *signature)
+{
+    return labcomm_get_local_index(signature);
+}
+
 int labcomm_internal_sizeof(const struct labcomm_signature *signature,
                             void *v)
 {

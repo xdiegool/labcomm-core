@@ -1130,11 +1130,34 @@ aspect C_Encoder {
   		    " not declared");
   }
   
+  protected void Decl.C_emitEncoderTypeRegister(C_env env) {
+    env.println("int labcomm"+env.verStr+"_encoder_type_register_" + 
+		env.prefix + getName() + "(");
+    env.indent();
+    env.println("struct labcomm"+env.verStr+"_encoder *e");
+    env.unindent();
+    env.println(")");
+    env.println("{");
+    env.indent();
+    env.println("//TODO: add error handling for dependencies");
+    C_emitUserTypeDeps(env, null, true); //XXX HERE BE DRAGONS
+                                          //currently set to false to turn off
+                                          //outputting of code
+    env.println("return labcomm"+env.verStr+"_internal_encoder_type_register(");
+    env.indent();
+    env.println("e,");
+    env.println("&signature_" + env.prefix + getName() + "");
+    env.unindent();
+    env.println(");");
+    env.unindent();
+    env.println("}");
+  }
   public void TypeDecl.C_emitEncoderRegisterHandler(C_env env) {
-    // do nothing for type decls
+    C_emitEncoderTypeRegister(env);
   }
   
   public void SampleDecl.C_emitEncoderRegisterHandler(C_env env) {
+    C_emitEncoderTypeRegister(env);
     env.println("int labcomm"+env.verStr+"_encoder_register_" + 
 		env.prefix + getName() + "(");
     env.indent();
@@ -1146,17 +1169,23 @@ aspect C_Encoder {
     C_emitUserTypeDeps(env, null, false); //XXX HERE BE DRAGONS
                                           //currently set to false to turn off
                                           //outputting of code
-    env.println("return labcomm"+env.verStr+"_internal_encoder_register(");
+    env.println("int result = labcomm"+env.verStr+"_internal_encoder_register(");
     env.indent();
     env.println("e,");
     env.println("&signature_" + env.prefix + getName() + ",");
     env.println("(labcomm"+env.verStr+"_encoder_function)encode_" + env.prefix + getName());
     env.unindent();
     env.println(");");
+    env.println("labcomm"+env.verStr+"_encoder_type_register_" + env.prefix + getName()+"(e);");
+    env.println("labcomm"+env.verStr+"_internal_encoder_type_bind(");
+    env.indent();
+    env.println("e,");
+    env.println("&signature_" + env.prefix + getName() + ");");
+    env.unindent();
+    env.println("return result;");
     env.unindent();
     env.println("}");
   }
-
 }
 
 aspect C_EncoderIoctl {
@@ -1206,7 +1235,7 @@ aspect C_TypeDependencies {
             t.C_emitUserTypeDeps(env, t.getName(), outputCode);
             if(outputCode) {
                System.out.println("Decl.C_emitUserTypeDeps registering "+t.getName());
-               env.println("labcomm"+env.verStr+"_encoder_register_"+env.prefix + t.getName()+"(e);");
+               env.println("labcomm"+env.verStr+"_encoder_type_register_"+env.prefix + t.getName()+"(e);");
             } else {  // Just output a comment
 	        String refpath = (via == null) ? "directly" : "indirectly via "+via;
 	       env.println(" //Depends ("+refpath+") on "+t.getName() );
@@ -1222,7 +1251,7 @@ aspect C_TypeDependencies {
 
             t.C_emitUserTypeRefs(env, t.getName(), outputCode);
             if(outputCode) {
-               env.println("labcomm"+env.verStr+"_encoder_register_"+env.prefix + t.getName()+"(e);");
+               env.println("labcomm"+env.verStr+"_encoder_type_register_"+env.prefix + t.getName()+"(e);");
             } else {  // Just output a comment
 	        String refpath = (via == null) ? "directly" : "indirectly via "+via;
 	       env.println(" //Is referenced ("+refpath+")  by "+t.getName() );
@@ -1454,9 +1483,9 @@ aspect C_Constructor {
   }
 
   public void Decl.C_emitConstructor(C_env env) {
-  }
+//  }
 //XXX
-  public void SampleDecl.C_emitConstructor(C_env env) {
+//  public void SampleDecl.C_emitConstructor(C_env env) {
     env.println("labcomm"+env.verStr+"_set_local_index(&signature_" + 
 		env.prefix + getName() + ");");
   }

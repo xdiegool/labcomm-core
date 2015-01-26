@@ -374,11 +374,15 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
     result = decode_sample_def_or_ref(d, LABCOMM_SAMPLE_DEF); 
   } else if (remote_index == LABCOMM_SAMPLE_REF) {
     result = decode_sample_def_or_ref(d, LABCOMM_SAMPLE_REF); 
+  } else if (remote_index == LABCOMM_TYPE_DEF) {
+    result = decoder_skip(d, length, remote_index);
+  } else if (remote_index == LABCOMM_TYPE_BINDING) {
+    result = decoder_skip(d, length, remote_index);
   } else if (remote_index == LABCOMM_PRAGMA) {
     result = decode_pragma(d, d, length);
   } else if (remote_index < LABCOMM_USER) {
     fprintf(stderr, "SKIP %d %d\n", remote_index, length);
-    result = remote_index;
+    result = decoder_skip(d, length, remote_index);
   } else {
     result = decode_and_handle(d, d, remote_index);
   }

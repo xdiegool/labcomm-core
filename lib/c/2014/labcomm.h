@@ -39,59 +39,6 @@
 struct labcomm_encoder;
 struct labcomm_decoder;
 
-/*
- * Signature entry
- */
-#ifndef LABCOMM_NO_TYPEDECL
-#ifdef USE_UNIONS
-
-/* Useful for C99 and up (or GCC without -pedantic) */ 
-
-#define LABCOMM_SIGDEF_BYTES_OR_SIGNATURE          \
-  union {                                   \
-    char *bytes;                            \
-    struct labcomm_signature* signature;            \
-  } u;
-
-#define LABCOMM_SIGDEF_BYTES(l, b) { l, .u.bytes=b }
-#define LABCOMM_SIGDEF_SIGNATURE(s) { 0, .u.signature=&s } // addressof, as s is pointing at the sig struct, not directly the the sig_bytes[]
-#define LABCOMM_SIGDEF_END { -1, .u.bytes=0 }
-
-#else
-
-#define LABCOMM_SIGDEF_BYTES_OR_SIGNATURE          \
-  struct {                                  \
-    char *bytes;                            \
-    const struct labcomm_signature *signature;            \
-  } u;
-
-#define LABCOMM_SIGDEF_BYTES(l, b) { l, { b, 0 } }
-#define LABCOMM_SIGDEF_SIGNATURE(s) { 0, { 0, &s } }
-#define LABCOMM_SIGDEF_END { -1, { 0, 0 } }
-
-#endif
-
-struct labcomm_signature_data {
-  int length;
-  LABCOMM_SIGDEF_BYTES_OR_SIGNATURE
-};
-
-#endif
-struct labcomm_signature {
-  char *name;
-  int (*encoded_size)(void *); /* void* refers to sample_data */
-  int size;
-  unsigned char *signature; 
-  int index;
-#ifndef LABCOMM_NO_TYPEDECL
-  int tdsize;
-  struct labcomm_signature_data *treedata;
-#endif  
-#ifdef LABCOMM_EXPERIMENTAL_CACHED_ENCODED_SIZE
-  int cached_encoded_size; // -1 if not initialized or type is variable size
-#endif
-};
-
 #include "labcomm_type_signature.h"
 /*
  * Error handling.
