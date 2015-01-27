@@ -57,3 +57,10 @@ doc/tech_report.bbl
 doc/tech_report.log
 doc/tech_report.pdf
 doc/tech_report.fdb_latexmk
+examples/user_types/encoded_data_c
+examples/user_types/encoded_data_j
+examples/user_types/example_decoder
+examples/user_types/example_encoder
+doc/tech_report.fls
+examples/dynamic/encoded_data
+examples/dynamic/gen
