@@ -240,6 +240,36 @@ static void do_write_signature(struct labcomm_encoder * e, const struct labcomm_
 #endif
 }
 
+#ifdef TEST_MAP
+static void sig_size(char b, const struct labcomm_signature *signature,
+                           void *context)
+{
+  int *result = context;
+  int diff;
+  if(signature) {
+    int idx = labcomm_get_local_index(signature);
+    diff = labcomm_size_packed32(idx);
+    //printf("== diff = %d, idx = 0x%d\n",diff, idx);
+  }else {
+    diff = 1;
+    //printf("== diff = %d, byte = 0x%d\n",diff, b);
+  }
+    (*result)+=diff;
+}
+#endif
+static int calc_sig_encoded_size(struct labcomm_encoder *e,
+                                 const struct labcomm_signature *sig)
+{
+  int result=0;
+#ifdef TEST_MAP
+  map_signature(sig_size, &result, sig, FALSE);
+#else
+  fprintf("warning! calc_sig_encoded_size not implemented without map...\n");
+#endif
+  //printf("calc_sig_encoded_size: %s == %d\n",sig->name,result);
+  return result;
+}
+
 static int internal_reg_type(
   struct labcomm_encoder *e,
   const struct labcomm_signature *signature,
@@ -263,6 +293,7 @@ static int internal_reg_type(
   labcomm_write_string(e->writer, signature->name);
   //XXX flush for debugging, can be removed when working
   //    labcomm_writer_flush(e->writer, e->writer->action_context);
+  labcomm_write_packed32(e->writer, calc_sig_encoded_size(e, signature));
   do_write_signature(e, signature, FALSE);
 //  for (i = 0 ; i < signature->size ; i++) {
 //    if (e->writer->pos >= e->writer->count) {

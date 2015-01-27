@@ -166,6 +166,72 @@ static int handle_sample_ref(struct labcomm_decoder *d, int remote_index,
   return result;
 }
 
+static int decoder_skip(struct labcomm_decoder *d, int len, int tag)
+{
+  int i;
+  printf("got tag 0x%x, skipping %d bytes\n", tag, len);
+  for(i = 0; i <len; i++){
+    fprintf(stderr,".");
+    labcomm_read_byte(d->reader);
+    if (d->reader->error < 0) {
+      fprintf(stderr, "\nerror while skipping: %d\n",  d->reader->error);
+      return d->reader->error;
+    }
+  }
+  fprintf(stderr, "\n");
+  return tag;
+}
+
+static int decode_type_binding(struct labcomm_decoder *d, int kind)
+{
+  int sample_index =  labcomm_read_packed32(d->reader);
+  int typedef_index =  labcomm_read_packed32(d->reader);
+  printf("type_binding: 0x%x -> 0x%x\n", sample_index, typedef_index);
+  int result = kind;
+  return result;
+} 
+static int decode_type_def(struct labcomm_decoder *d, int kind){
+  int i, remote_index, result;
+  char *name;
+  int size;
+  remote_index = labcomm_read_packed32(d->reader);
+  result = remote_index;
+  if (d->reader->error < 0) {
+    result = d->reader->error;
+    goto out;
+  }
+  name = labcomm_read_string(d->reader);
+  if (d->reader->error < 0) {
+    result = d->reader->error;
+    goto out;
+  }
+  size = labcomm_read_packed32(d->reader);
+  if (d->reader->error < 0) {
+    result = d->reader->error;
+    goto free_signature_name;
+  }
+  //printf("got typedef 0x%x : %s, skipping %d signature bytes", remote_index, name, size); 
+#if 0
+  signature.signature = labcomm_memory_alloc(d->memory, 1,  signature.size);
+  if (d->reader->error < 0) {
+    result = d->reader->error;
+    goto free_signature_name;
+  }
+#endif
+  for (i = 0 ; i < size ; i++) {
+    /*signature.signature[i] =*/ labcomm_read_byte(d->reader);
+    if (d->reader->error < 0) {
+      result = d->reader->error;
+      goto free_signature_signature;
+    }
+  }
+free_signature_signature:
+//  labcomm_memory_free(d->memory, 1,  signature.signature);
+free_signature_name:
+  labcomm_memory_free(d->memory, 0, name);
+out:
+  return result;
+}
 
 static int decode_sample_def_or_ref(struct labcomm_decoder *d, int kind)
 {
@@ -200,16 +266,31 @@ static int decode_sample_def_or_ref(struct labcomm_decoder *d, int kind)
       goto free_signature_signature;
     }
   }
-  if (kind == LABCOMM_SAMPLE_DEF) {
-    result = handle_sample_def(d, remote_index, &signature);
-  } else if (kind == LABCOMM_SAMPLE_REF) {
-    result = handle_sample_ref(d, remote_index, &signature);
-    if (result == -ENOENT) {
-      /* Dummy value to silently continue */
-      result = LABCOMM_SAMPLE_REF;
+  switch (kind) {
+    case LABCOMM_SAMPLE_DEF: {
+      result = handle_sample_def(d, remote_index, &signature);
+      break;
+    } 
+    case LABCOMM_SAMPLE_REF: {
+      result = handle_sample_ref(d, remote_index, &signature);
+      if (result == -ENOENT) {
+        /* Dummy value to silently continue */
+        result = LABCOMM_SAMPLE_REF;
+      }
+      break;
+    } 
+    case LABCOMM_TYPE_DEF: {
+      int i;
+      printf("labcomm_decoder: ignoring TYPE_DEF 0x%x\n", remote_index);
+      for(i = 0; i < signature.size; i++){
+        printf("%x ",signature.signature[i]);
+      }
+      printf("\n");
+      result = LABCOMM_SAMPLE_DEF;
+      break;
     }
-  } else {
-    result = -EINVAL;
+    default:
+      result = -EINVAL;
   }
 free_signature_signature:
   labcomm_memory_free(d->memory, 1,  signature.signature);
@@ -249,18 +330,6 @@ static void reader_alloc(struct labcomm_decoder *d)
   }
 }
 
-static int decoder_skip(struct labcomm_decoder *d, int len, int tag)
-{
-  int i;
-  printf("got tag 0x%x, skipping %d bytes\n", tag, len);
-  for(i = 0; i <len; i++){
-    labcomm_read_byte(d->reader);
-    if (d->reader->error < 0) {
-      return d->reader->error;
-    }
-  }
-  return tag;
-}
 /* d        - decoder to read from
    registry - decoder to lookup signatures (registry != d only if
                 nesting decoders, e.g., when decoding pragma)
@@ -375,9 +444,9 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
   } else if (remote_index == LABCOMM_SAMPLE_REF) {
     result = decode_sample_def_or_ref(d, LABCOMM_SAMPLE_REF); 
   } else if (remote_index == LABCOMM_TYPE_DEF) {
-    result = decoder_skip(d, length, remote_index);
+    result = decode_type_def(d, LABCOMM_TYPE_DEF); 
   } else if (remote_index == LABCOMM_TYPE_BINDING) {
-    result = decoder_skip(d, length, remote_index);
+    result = decode_type_binding(d, LABCOMM_TYPE_BINDING); 
   } else if (remote_index == LABCOMM_PRAGMA) {
     result = decode_pragma(d, d, length);
   } else if (remote_index < LABCOMM_USER) {

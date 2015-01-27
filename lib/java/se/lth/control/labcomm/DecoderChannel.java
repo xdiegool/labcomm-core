@@ -35,10 +35,18 @@ public class DecoderChannel implements Decoder {
   }	   
 
   private void processTypeDef(int len) throws IOException {
-       System.err.println("Got TypeDef: skipping "+len+" bytes"); 
-       for(int i=0; i<len; i++) {
-           decodeByte();		  
+       //System.err.println("Got TypeDef: skipping "+len+" bytes"); 
+       int idx = decodePacked32();
+       String name = decodeString(); 
+       System.err.println("Got TypeDef: "+idx+" "+name); 
+       int siglen = decodePacked32();
+       System.err.println("siglen="+siglen);
+       for(int i=0; i<siglen; i++) {
+           byte b = decodeByte();		  
+           System.out.print(b);
+           System.out.print(" ");
        }
+       System.out.println();
   }
 
   private void processTypeBinding(int len) throws IOException {

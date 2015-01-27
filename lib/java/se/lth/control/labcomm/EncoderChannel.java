@@ -15,18 +15,26 @@ public class EncoderChannel implements Encoder {
   private EncoderRegistry type_def_registry = new EncoderRegistry();
   private int current_tag;
 
-  public EncoderChannel(Writer writer) throws IOException {
+  private EncoderChannel(Writer writer, boolean emitVersion) throws IOException {
     this.writer = writer;
 
-    begin(Constant.VERSION);
-    encodeString(Constant.CURRENT_VERSION);
-    end(null);
+    if(emitVersion){
+      begin(Constant.VERSION);
+      encodeString(Constant.CURRENT_VERSION);
+      end(null);
+    }
+  }
+  public EncoderChannel(Writer writer) throws IOException {
+      this(writer, true);
   }
 
   public EncoderChannel(OutputStream writer) throws IOException {
-    this(new WriterWrapper(writer));
+    this(new WriterWrapper(writer), true);
   }
 
+  private EncoderChannel(OutputStream writer, boolean emitVersion) throws IOException {
+    this(new WriterWrapper(writer), emitVersion);
+  }
   private void bindType(int sampleId, int typeId) throws IOException {
         begin(Constant.TYPE_BINDING);
         encodePacked32(sampleId);
@@ -50,6 +58,19 @@ public class EncoderChannel implements Encoder {
 
   }
 
+  private static class WrappedEncoder extends EncoderChannel{
+      private Encoder wrapped;
+
+      public WrappedEncoder(Encoder e, OutputStream s, boolean emitVersion) throws IOException {
+          super(s,emitVersion);
+          this.wrapped = e;
+      }
+      public int getTypeId(Class<? extends SampleType> c) throws IOException{
+         return wrapped.getTypeId(c);
+      }
+  }
+
+
   private int registerTypeDef(SampleDispatcher dispatcher) throws IOException {
       //XXX A bit crude; maybe add boolean registry.contains(...) and check
       //    if already registered
@@ -57,11 +78,24 @@ public class EncoderChannel implements Encoder {
             return type_def_registry.getTag(dispatcher);
         } catch (IOException e) {
             int index = type_def_registry.add(dispatcher);
-            begin(dispatcher.getTypeDeclTag());
+            System.out.println("registered "+dispatcher.getName());
+            //
+            //wrap encoder to get encoded length of signature
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            EncoderChannel wrapped = new WrappedEncoder(this, baos, false);
+            dispatcher.encodeTypeDef(wrapped, index);
+            wrapped.flush();
+            byte b[] = baos.toByteArray();
+
+            begin(Constant.TYPE_DEF);
             encodePacked32(index);
             encodeString(dispatcher.getName());
-            dispatcher.encodeTypeDef(this, index);
+            encodePacked32(b.length);
+            for(int i = 0; i<b.length; i++) {
+                encodeByte(b[i]);
+            }
             end(null);
+
             return index;
         }
   }
@@ -104,6 +138,12 @@ public class EncoderChannel implements Encoder {
     begin(sample_def_registry.getTag(c));
   }
 
+  /* temporary(?) fix to allow nesting encoders to find encoded size */
+  private void flush() throws IOException{
+    data.flush();
+    writer.write(bytes.toByteArray());
+    bytes.reset();
+  }
   public void end(Class<? extends SampleType> c) throws IOException {
     data.flush();
     WritePacked32(writer, current_tag);
@@ -112,8 +152,8 @@ public class EncoderChannel implements Encoder {
     bytes.reset();
   }
 
-  /** 
-   * @return the id of a TYPE_DEF 
+  /**
+   * @return the id of a TYPE_DEF
    */
   public int getTypeId(Class<? extends SampleType> c) throws IOException {
     return type_def_registry.getTag(c);

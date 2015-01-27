@@ -10,15 +10,18 @@ ifeq ($(UNAME_S),Linux)
   LDLIBS=-llabcomm$(LIBVERSION) -lrt
   MAKESHARED=gcc -o $1 -shared -Wl,-soname,$2 $3 -lc -lrt
 else ifeq ($(UNAME_S),Darwin)
-  CC=$(CROSS_COMPILE)clang
-  LD=$(CROSS_COMPILE)ld
+  #CC=$(CROSS_COMPILE)clang
+  #LD=$(CROSS_COMPILE)ld
+  CC=$(CROSS_COMPILE)gcc
+  LD=$(CROSS_COMPILE)gcc
   CFLAGS=-g -Wall -Werror -O3  -I. -Itest \
 	 -DLABCOMM_COMPAT=\"labcomm_compat_osx.h\" \
-	 -DLABCOMM_OS_DARWIN=1\
-	 -Wno-tautological-compare -Wno-unused-function
-  LDFLAGS=-L..
+	 -DLABCOMM_OS_DARWIN=1
+#	 -Wno-tautological-compare -Wno-unused-function
+  CFLAGS+=-std=c99 
+  LDFLAGS=-L.. 
   LDLIBS=-llabcomm$(LIBVERSION)
-  MAKESHARED=clang -o $1 -shared -Wl,-install_name,$2 $3 -lc
+  MAKESHARED=clang -o $1 -shared -Wl,-install_name,$2 $3 -lc 
 else ifneq ($(findstring CYGWIN,$(UNAME_S)),)
   CC=$(CROSS_COMPILE)gcc
   LD=$(CROSS_COMPILE)ld

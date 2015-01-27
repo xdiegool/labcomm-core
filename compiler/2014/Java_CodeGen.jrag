@@ -570,11 +570,7 @@ aspect Java_Class {
 //    env.println();
     env.println("public void encodeTypeDef(Encoder e, int index) throws IOException{");
     env.indent();
-    env.println("e.begin(Constant.TYPE_DEF);");
-    env.println("e.encodePacked32(index);");
-    env.println("e.encodeString(getName());");
     env.println("emitSignature(e);");
-    env.println("e.end(null);");
     env.unindent();
     env.println("}");
     env.println();
