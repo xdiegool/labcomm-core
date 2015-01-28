@@ -24,7 +24,7 @@ OBJS=labcomm$(VERSION).o \
      labcomm$(VERSION)_pthread_scheduler.o 
 
 LABCOMM_JAR=../../../compiler/labcomm$(LIBVERSION)_compiler.jar
-LABCOMM=java -jar $(LABCOMM_JAR) 
+LABCOMM=java -jar $(LABCOMM_JAR)
 
 TESTS=test_labcomm_basic_type_encoding \
       test_labcomm_generated_encoding \
@@ -96,6 +96,7 @@ $(TEST_DIR)/gen/%.o: $(TEST_DIR)/%.c | $(TEST_DIR)/gen
 .PRECIOUS: $(TEST_DIR)/gen/%.h
 $(TEST_DIR)/gen/%.c $(TEST_DIR)/gen/%.h: $(TEST_DIR)/%.lc | $(TEST_DIR)/gen
 	$(LABCOMM) \
+		--ver=$(VERSION) \
 		--c=$(TEST_DIR)/gen/$*.c \
 		--h=$(TEST_DIR)/gen/$*.h \
 		$<

@@ -8,6 +8,6 @@ all:
 
 .PHONY: distclean
 distclean: 
-	rm *.o *.so *.so.1 *.a
-	for v in $(VERSIONS) ; do $(MAKE) -C $${v} distclean ; done
+	for v in $(VERSIONS) ; do $(MAKE) -C $${v} $@ || exit 1 ; done
+	rm -f *.o *.so *.so.1 *.a
 
