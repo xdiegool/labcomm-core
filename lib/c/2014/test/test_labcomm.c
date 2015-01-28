@@ -125,8 +125,6 @@ int test_decode_one(struct labcomm_decoder *decoder)
   for (reader.count = 0 ; reader.count < writer.pos ; reader.count++) {
     reader.error = 0;
     reader.pos = 0;
-    labcomm_decoder_decode_one(decoder); 
-    labcomm_decoder_decode_one(decoder); 
     result = labcomm_decoder_decode_one(decoder); 
     if (result >= 0 ) {
       fprintf(stderr, "Got result from buffer with bogus length (%d)\n",

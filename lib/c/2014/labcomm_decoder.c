@@ -184,9 +184,15 @@ static int decoder_skip(struct labcomm_decoder *d, int len, int tag)
 
 static int decode_type_binding(struct labcomm_decoder *d, int kind)
 {
+#if 0
   int sample_index =  labcomm_read_packed32(d->reader);
   int typedef_index =  labcomm_read_packed32(d->reader);
   printf("type_binding: 0x%x -> 0x%x\n", sample_index, typedef_index);
+#else
+  labcomm_read_packed32(d->reader);  //  sample_index
+  labcomm_read_packed32(d->reader);  //  typedef_index
+#endif
+
   int result = kind;
   return result;
 } 
@@ -279,16 +285,6 @@ static int decode_sample_def_or_ref(struct labcomm_decoder *d, int kind)
       }
       break;
     } 
-    case LABCOMM_TYPE_DEF: {
-      int i;
-      printf("labcomm_decoder: ignoring TYPE_DEF 0x%x\n", remote_index);
-      for(i = 0; i < signature.size; i++){
-        printf("%x ",signature.signature[i]);
-      }
-      printf("\n");
-      result = LABCOMM_SAMPLE_DEF;
-      break;
-    }
     default:
       result = -EINVAL;
   }

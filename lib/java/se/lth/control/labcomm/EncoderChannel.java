@@ -78,7 +78,7 @@ public class EncoderChannel implements Encoder {
             return type_def_registry.getTag(dispatcher);
         } catch (IOException e) {
             int index = type_def_registry.add(dispatcher);
-            System.out.println("registered "+dispatcher.getName());
+            //System.out.println("registered "+dispatcher.getName());
             //
             //wrap encoder to get encoded length of signature
             ByteArrayOutputStream baos = new ByteArrayOutputStream();

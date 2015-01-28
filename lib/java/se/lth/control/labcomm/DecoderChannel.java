@@ -38,19 +38,19 @@ public class DecoderChannel implements Decoder {
        //System.err.println("Got TypeDef: skipping "+len+" bytes"); 
        int idx = decodePacked32();
        String name = decodeString(); 
-       System.err.println("Got TypeDef: "+idx+" "+name); 
+       //System.err.println("Got TypeDef: "+idx+" "+name); 
        int siglen = decodePacked32();
-       System.err.println("siglen="+siglen);
+       //System.err.println("siglen="+siglen);
        for(int i=0; i<siglen; i++) {
            byte b = decodeByte();		  
-           System.out.print(b);
-           System.out.print(" ");
+           //System.out.print(b);
+           //System.out.print(" ");
        }
-       System.out.println();
+       //System.out.println();
   }
 
   private void processTypeBinding(int len) throws IOException {
-       System.err.println("Got TypeBinding: skipping "+len+" bytes"); 
+       //System.err.println("Got TypeBinding: skipping "+len+" bytes"); 
        for(int i=0; i<len; i++) {
            decodeByte();		  
        }
