@@ -11,6 +11,7 @@ namespace se.lth.control.labcomm {
     public const int SAMPLE_DEF       = 0x02;
     public const int SAMPLE_REF       = 0x03;
     public const int TYPE_DEF         = 0x04;
+    public const int TYPE_BINDING     = 0x05;
     public const int PRAGMA           = 0x3f;
     public const int FIRST_USER_INDEX = 0x40; /* ..0xffffffff */
 

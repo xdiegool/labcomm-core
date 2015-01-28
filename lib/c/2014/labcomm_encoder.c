@@ -101,6 +101,8 @@ void labcomm_encoder_free(struct labcomm_encoder* e)
   labcomm_memory_free(memory, 0, e);
 }
 //================
+#undef WITHOUT_TYPE_DEFS
+#ifndef WITHOUT_TYPE_DEFS
 static struct labcomm_encoder * wrapped_begin(
                     struct labcomm_encoder *e) {
     struct labcomm_writer *dyn_writer = labcomm_dynamic_buffer_writer_new(
@@ -308,19 +310,25 @@ out:
   labcomm_scheduler_writer_unlock(e->scheduler);
   return result;
 }
+#endif
 //--------------
 int labcomm_internal_encoder_type_register(
   struct labcomm_encoder *e,
   const struct labcomm_signature *signature)
 {
+#ifndef WITHOUT_TYPE_DEFS
   struct labcomm_encoder *w = wrapped_begin(e);
   internal_reg_type(w, signature, FALSE);
   return wrapped_end(e, LABCOMM_TYPE_DEF, w);  
+#else
+   return 0;
+#endif
 }
 int labcomm_internal_encoder_type_bind(
   struct labcomm_encoder *e,
   const struct labcomm_signature *signature)
 {
+#ifndef WITHOUT_TYPE_DEFS 
   int result = -EINVAL;
   int err;
   int sindex = labcomm_get_local_index(signature);
@@ -343,6 +351,9 @@ int labcomm_internal_encoder_type_bind(
 out:
   labcomm_scheduler_writer_unlock(e->scheduler);
   return result;
+#else
+  return 0;
+#endif
 }
 int labcomm_internal_encoder_register(
   struct labcomm_encoder *e,
