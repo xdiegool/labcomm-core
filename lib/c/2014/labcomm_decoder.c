@@ -184,16 +184,20 @@ static int decoder_skip(struct labcomm_decoder *d, int len, int tag)
 
 static int decode_type_binding(struct labcomm_decoder *d, int kind)
 {
-#if 0
-  int sample_index =  labcomm_read_packed32(d->reader);
-  int typedef_index =  labcomm_read_packed32(d->reader);
+  int result;
+  int sample_index = result = labcomm_read_packed32(d->reader);
+  if(d->reader->error < 0 ) {
+      result =  d->reader->error;
+      goto out;
+  }
+  int typedef_index = labcomm_read_packed32(d->reader);
+  if(d->reader->error < 0 ) {
+      result =  d->reader->error;
+      goto out;
+  }
   printf("type_binding: 0x%x -> 0x%x\n", sample_index, typedef_index);
-#else
-  labcomm_read_packed32(d->reader);  //  sample_index
-  labcomm_read_packed32(d->reader);  //  typedef_index
-#endif
-
-  int result = kind;
+out:
+  fprintf(stderr,"[type_binding: %d]", result);
   return result;
 } 
 static int decode_type_def(struct labcomm_decoder *d, int kind){
@@ -452,6 +456,7 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
     result = decode_and_handle(d, d, remote_index);
   }
 out:   
+  fprintf(stderr, "\n        decode_one returns %d\n", result);
   return result;
 }
 
