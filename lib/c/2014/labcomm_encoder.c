@@ -410,7 +410,11 @@ int labcomm_internal_encode(
   index = labcomm_get_local_index(signature);
   length = (signature->encoded_size(value));
   labcomm_scheduler_writer_lock(e->scheduler);
-  result = labcomm_writer_start(e->writer, e->writer->action_context,
+  if (! LABCOMM_SIGNATURE_ARRAY_GET(e->registered, int, index, 0)) {
+    result = -EINVAL;
+    goto no_end;
+  }
+  result = labcomm_writer_start(e->writer, e->writer->action_context, 
 				index, signature, value);
   if (result == -EALREADY) { result = 0; goto no_end; }
   if (result != 0) { goto out; }
