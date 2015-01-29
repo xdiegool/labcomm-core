@@ -1140,15 +1140,20 @@ aspect C_Encoder {
     env.println("{");
     env.indent();
     env.println("//TODO: add error handling for dependencies");
-    C_emitUserTypeDeps(env, null, true); //XXX HERE BE DRAGONS
-                                          //currently set to false to turn off
-                                          //outputting of code
-    env.println("return labcomm"+env.verStr+"_internal_encoder_type_register(");
-    env.indent();
-    env.println("e,");
-    env.println("&signature_" + env.prefix + getName() + "");
-    env.unindent();
-    env.println(");");
+
+    C_emitUserTypeDeps(env, null, true); 
+
+    if(!isSampleDecl() || hasDependencies()) {
+      env.println("return labcomm"+env.verStr+"_internal_encoder_type_register(");
+      env.indent();
+      env.println("e,");
+      env.println("&signature_" + env.prefix + getName() + "");
+      env.unindent();
+      env.println(");");
+    } else {
+      env.println("// the type has no dependencies, do nothing");
+      env.println("return 0;");
+    }
     env.unindent();
     env.println("}");
   }
@@ -1176,11 +1181,16 @@ aspect C_Encoder {
     env.println("(labcomm"+env.verStr+"_encoder_function)encode_" + env.prefix + getName());
     env.unindent();
     env.println(");");
+    env.println("if(result >= 0) {\n");
+    env.indent();
     env.println("labcomm"+env.verStr+"_encoder_type_register_" + env.prefix + getName()+"(e);");
     env.println("labcomm"+env.verStr+"_internal_encoder_type_bind(");
     env.indent();
     env.println("e,");
-    env.println("&signature_" + env.prefix + getName() + ");");
+    env.println("&signature_" + env.prefix + getName() + ",");
+    env.println( (hasDependencies() ? "1" : "0")  + ");");
+    env.unindent();
+    env.println("}");
     env.unindent();
     env.println("return result;");
     env.unindent();

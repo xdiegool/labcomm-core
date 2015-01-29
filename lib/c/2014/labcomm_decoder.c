@@ -197,7 +197,6 @@ static int decode_type_binding(struct labcomm_decoder *d, int kind)
   }
   printf("type_binding: 0x%x -> 0x%x\n", sample_index, typedef_index);
 out:
-  fprintf(stderr,"[type_binding: %d]", result);
   return result;
 } 
 static int decode_type_def(struct labcomm_decoder *d, int kind){
@@ -456,7 +455,6 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
     result = decode_and_handle(d, d, remote_index);
   }
 out:   
-  fprintf(stderr, "\n        decode_one returns %d\n", result);
   return result;
 }
 

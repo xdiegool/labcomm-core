@@ -252,7 +252,9 @@ int main(void)
 						NULL);
   struct expect expect_registration[] = {
     { "Sampledef", -1, test_decode_one, decoder },
+#ifdef SHOULD_THIS_BE_REMOVED
     { "Typedef", -1, test_decode_one, decoder },
+#endif
     { "Binding", -1, test_decode_one, decoder },
     { 0, 0, 0 }
   };

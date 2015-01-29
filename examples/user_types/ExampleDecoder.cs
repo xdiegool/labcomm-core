@@ -7,7 +7,7 @@ using se.lth.control.labcomm;
 
 namespace user_types
 {
-    class Decoder : twoLines.Handler 
+    class Decoder : twoLines.Handler, twoInts.Handler 
     {
         DecoderChannel dec;
 
@@ -15,6 +15,7 @@ namespace user_types
         {
             dec = new DecoderChannel(stream);
             twoLines.register(dec, this);
+            twoInts.register(dec, this);
             try
             {
                 Console.WriteLine("Running decoder.");
@@ -39,6 +40,13 @@ namespace user_types
             Console.WriteLine("Got twoLines: ");
             Console.WriteLine("Line l1: "+genLine(d.l1));
             Console.WriteLine("Line l2: " + genLine(d.l2));
+        }
+
+        public void handle(twoInts d)
+        {
+            Console.WriteLine("Got twoInts: ");
+            Console.WriteLine("a: "+d.a);
+            Console.WriteLine("b: "+d.b);
         }
 
         static void Main(string[] args)

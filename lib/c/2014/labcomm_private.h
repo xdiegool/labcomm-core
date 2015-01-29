@@ -65,6 +65,11 @@
 #define LABCOMM_DOUBLE       0x26
 #define LABCOMM_STRING       0x27
 
+/* 
+ * other special values
+ */
+
+#define LABCOMM_BIND_SELF    0
 
 /*
  * Macro to automagically call constructors in modules compiled 
@@ -370,7 +375,8 @@ int labcomm_internal_encoder_type_register(
 
 int labcomm_internal_encoder_type_bind(
   struct labcomm_encoder *e,
-  const struct labcomm_signature *signature);
+  const struct labcomm_signature *signature,
+  char has_deps);
 
 int labcomm_internal_encoder_register(
   struct labcomm_encoder *encoder, 

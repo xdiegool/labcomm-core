@@ -214,24 +214,21 @@ int main(void)
   labcomm_encoder_register_generated_encoding_V(encoder);
   labcomm_encoder_register_generated_encoding_V(encoder);
   EXPECT({ 0x02, 0x06, VARIABLE(0), 0x01, 'V', 0x02, 0x11, 0x00,
-           0x04, 0x06, VARIABLE(1), 0x01, 'V', 0x02, 0x11, 0x00,
-           0x05, 0x02, VARIABLE(0), VARIABLE(1) });
+           0x05, 0x02, VARIABLE(0), LABCOMM_BIND_SELF });
 
   labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   /* Register twice to make sure that only one registration gets encoded */
   labcomm_encoder_register_generated_encoding_B(encoder);
   labcomm_encoder_register_generated_encoding_B(encoder);
   EXPECT({ 0x02, 0x05, VARIABLE(2), 0x01, 'B', 0x01, 0x21,
-           0x04, 0x05, VARIABLE(3), 0x01, 'B', 0x01, 0x21,
-           0x05, 0x02, VARIABLE(2), VARIABLE(3) });
+           0x05, 0x02, VARIABLE(2), LABCOMM_BIND_SELF });
 
   labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   /* Register twice to make sure that only one registration gets encoded */
   labcomm_encoder_register_generated_encoding_R(encoder);
   labcomm_encoder_register_generated_encoding_R(encoder);
   EXPECT({ 0x02, 0x08, VARIABLE(4), 0x01, 'R', 0x04, 0x10, 0x01, 0x04, 0x28,
-           0x04, 0x08, VARIABLE(5), 0x01, 'R', 0x04, 0x10, 0x01, 0x04, 0x28,
-           0x05, 0x02, VARIABLE(4), VARIABLE(5) });
+           0x05, 0x02, VARIABLE(4), LABCOMM_BIND_SELF });
 
   labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   /* Register twice to make sure that only one registration gets encoded */
