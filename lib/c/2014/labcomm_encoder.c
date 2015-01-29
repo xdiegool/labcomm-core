@@ -98,6 +98,7 @@ void labcomm_encoder_free(struct labcomm_encoder* e)
   labcomm_writer_free(e->writer, e->writer->action_context);
   LABCOMM_SIGNATURE_ARRAY_FREE(e->memory, e->registered, int);
   LABCOMM_SIGNATURE_ARRAY_FREE(e->memory, e->sample_ref, int);
+  LABCOMM_SIGNATURE_ARRAY_FREE(e->memory, e->typedefs, int);
   labcomm_memory_free(memory, 0, e);
 }
 //================
@@ -407,6 +408,10 @@ int labcomm_internal_encode(
   index = labcomm_get_local_index(signature);
   length = (signature->encoded_size(value));
   labcomm_scheduler_writer_lock(e->scheduler);
+  if (! LABCOMM_SIGNATURE_ARRAY_GET(e->registered, int, index, 0)) {
+    result = -EINVAL;
+    goto no_end;
+  }
   result = labcomm_writer_start(e->writer, e->writer->action_context, 
 				index, signature, value);
   if (result == -EALREADY) { result = 0; goto no_end; }
