@@ -228,7 +228,7 @@ int main(void)
   labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   /* Register twice to make sure that only one registration gets encoded */
   labcomm_encoder_register_generated_encoding_R(encoder);
-  labcomm_encoder_register_generated_encoding_B(encoder);
+  labcomm_encoder_register_generated_encoding_R(encoder);
   EXPECT({ 0x02, 0x08, VARIABLE(4), 0x01, 'R', 0x04, 0x10, 0x01, 0x04, 0x28,
            0x04, 0x08, VARIABLE(5), 0x01, 'R', 0x04, 0x10, 0x01, 0x04, 0x28,
            0x05, 0x02, VARIABLE(4), VARIABLE(5) });
