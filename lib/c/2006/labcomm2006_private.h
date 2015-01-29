@@ -42,7 +42,7 @@
 #define LABCOMM_SAMPLE   0x02
 #define LABCOMM_ARRAY    0x10
 #define LABCOMM_STRUCT   0x11
-#define LABCOMM_USER     0x80   /* ..0xffffffff */
+#define LABCOMM_USER     0x40   /* ..0xffffffff */
 
 /*
  * Predefined primitive type indices

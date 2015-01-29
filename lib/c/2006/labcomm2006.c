@@ -237,7 +237,7 @@ void *labcomm2006_signature_array_ref(struct labcomm2006_memory *memory,
   }
 }
 
-static int local_index = 0x40;
+static int local_index = LABCOMM_USER;
 
 void labcomm2006_set_local_index(struct labcomm2006_signature *signature)
 {
