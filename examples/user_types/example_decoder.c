@@ -9,7 +9,7 @@
 #include <stdio.h>
 
 static void handle_test_twoLines(test_twoLines *v,void *context) {
-  printf("Got theTwoInts. (%d,%d) -> (%d,%d), (%d,%d) -> (%d,%d)\n", v->l1.start.x.val, v->l1.start.y.val, 
+  printf("Got twoLines. (%d,%d) -> (%d,%d), (%d,%d) -> (%d,%d)\n", v->l1.start.x.val, v->l1.start.y.val, 
                                                                      v->l1.end.x.val, v->l1.end.y.val,    
                                                                      v->l2.start.x.val, v->l2.start.y.val,
                                                                      v->l2.end.x.val, v->l2.end.y.val);    
