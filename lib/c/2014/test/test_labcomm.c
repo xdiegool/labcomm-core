@@ -231,7 +231,7 @@ static void test_encode_decode(struct labcomm_encoder *encoder,
 
 int main(void)
 {
-  int err, i;
+  int i;
   struct labcomm_decoder *decoder = labcomm_decoder_new(
     &reader,
     labcomm_default_error_handler,
@@ -258,8 +258,6 @@ int main(void)
   };
   expect = expect_registration;
   labcomm_encoder_register_test_sample_test_var(encoder);
-  err = test_decode_one(decoder);
-  fprintf(stderr, "decode of register -> index %d\n", err);
   test_encode_decode(encoder, decoder, 12, 1, 1);
   if (decoder_var.a[0] != encoder_var.a[0]) {
     fprintf(stderr, "Failed to decode correct value %d != %d\n", 
