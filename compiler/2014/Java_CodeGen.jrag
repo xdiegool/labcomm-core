@@ -465,7 +465,7 @@ aspect Java_Class {
     //the type_ids of dependent types. Therefore, flat sigs
     //are used for matching
     Java_emitFlatSignature(env);
-    if(isReferenced() || isSampleDecl()){
+    if(isReferenced() || (isSampleDecl() && hasDependencies() )){
       Signature signature = getSignature();
       signature.Java_emitSignature(env, !isSampleDecl());
     }
@@ -545,11 +545,11 @@ aspect Java_Class {
     env.println("return "+isSample+";");
     env.unindent();
     env.println("}");
-//    env.println("public boolean hasStaticSignature() {");
-//    env.indent();
-//    env.println("return "+!hasDependencies()+";");
-//    env.unindent();
-//    env.println("}");
+    env.println("public boolean hasDependencies() {");
+    env.indent();
+    env.println("return "+hasDependencies()+";");
+    env.unindent();
+    env.println("}");
     env.println();
     env.println("/** return the flat signature. */");
     env.println("public byte[] getSignature() {");
@@ -570,7 +570,11 @@ aspect Java_Class {
 //    env.println();
     env.println("public void encodeTypeDef(Encoder e, int index) throws IOException{");
     env.indent();
-    env.println("emitSignature(e);");
+    if(!isSample || hasDependencies()) {
+      env.println("emitSignature(e);");
+    } else {
+      env.println("// the type has no dependencies, do nothing");
+    }
     env.unindent();
     env.println("}");
     env.println();

@@ -5,7 +5,8 @@ import java.io.InputStream;
 import se.lth.control.labcomm.DecoderChannel;
 
 public class Decoder
-  implements twoLines.Handler
+  implements twoLines.Handler,
+             twoInts.Handler
 
 {
 
@@ -15,6 +16,7 @@ public class Decoder
     throws Exception 
   {
     decoder = new DecoderChannel(in);
+    twoInts.register(decoder, this);
     twoLines.register(decoder, this);
 
     try {
@@ -31,6 +33,11 @@ public class Decoder
 
   private String genLine(line l) {
     return "Line from "+genPoint(l.start)+" to "+genPoint(l.end);
+  }
+
+  public void handle_twoInts(twoInts d) throws java.io.IOException {
+    System.out.print("Got twoInts: ");
+    System.out.println(d.a +", "+d.b);
   }
 
   public void handle_twoLines(twoLines d) throws java.io.IOException {

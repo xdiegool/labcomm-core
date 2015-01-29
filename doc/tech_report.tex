@@ -382,6 +382,11 @@ come from two independent number series. To identify which
 \verb+TYPE_DECL+ a particular \verb+SAMPLE_DECL+ corresponds to, the
 \verb+TYPE_BINDING+ packet is used.
 
+For sample types that do not depend on any typedefs, no \verb+TYPE_DECL+
+is sent, and the \verb+TYPE_BINDING+ binds the sample id to the special
+value zero to indicate that the type definition is identical to the
+flattened signature.
+
 \subsection{Example}
 
 The labcomm declaration

@@ -36,4 +36,10 @@ public class Constant {
   public static final int DOUBLE           = 0x26;
   public static final int STRING           = 0x27;
 
+
+  /*
+   * Other predefined symbols
+   */
+
+  public static final int TYPE_BIND_SELF   = 0x00;
 }

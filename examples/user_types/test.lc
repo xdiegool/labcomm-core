@@ -23,3 +23,8 @@ sample struct {
   line l2;
   foo  f;
 } twoLines;
+
+sample struct {
+  int a;
+  int b;
+} twoInts;

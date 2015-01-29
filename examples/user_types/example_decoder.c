@@ -8,6 +8,10 @@
 #include "gen/test.h"
 #include <stdio.h>
 
+static void handle_test_twoInts(test_twoInts *v,void *context) {
+  printf("Got twoInts. (%d,%d) \n", v->a, v->b); 
+}
+
 static void handle_test_twoLines(test_twoLines *v,void *context) {
   printf("Got twoLines. (%d,%d) -> (%d,%d), (%d,%d) -> (%d,%d)\n", v->l1.start.x.val, v->l1.start.y.val, 
                                                                      v->l1.end.x.val, v->l1.end.y.val,    
@@ -33,6 +37,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
+  labcomm_decoder_register_test_twoInts(decoder, handle_test_twoInts, context);
   labcomm_decoder_register_test_twoLines(decoder, handle_test_twoLines, context);
 
   printf("Decoding:\n");

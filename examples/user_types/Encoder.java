@@ -16,10 +16,18 @@ public class Encoder
     throws Exception 
   {
     encoder = new EncoderChannel(out);
+    twoInts.register(encoder);
     twoLines.register(encoder);
   }
 
   public void doEncode() throws java.io.IOException {
+    twoInts ti = new twoInts();
+    ti.a = 12;
+    ti.b = 21;
+
+    System.out.println("Encoding twoInts");
+    twoInts.encode(encoder, ti);
+      
     twoLines x = new twoLines();
     line l1 = new line();
     point p11 = new point();
