@@ -54,9 +54,14 @@ namespace user_types
             Console.WriteLine("b: "+d.b);
         }
 
-        public void handle(int d)
+        void theFirstInt.Handler.handle(int d)
         {
-            Console.WriteLine("Got int: "+d);
+            Console.WriteLine("Got theFirstInt: "+d);
+        }
+
+        void theSecondInt.Handler.handle(int d)
+        {
+            Console.WriteLine("Got theSecondInt: "+d);
         }
 
         static void Main(string[] args)
