@@ -1,3 +1,3 @@
-public class TypeDef {
+public class Typedef {
 
 }

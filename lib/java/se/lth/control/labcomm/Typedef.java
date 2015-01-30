@@ -21,74 +21,6 @@ public class Typedef implements SampleType {
     return name;
   }
 
-  static void collectFlatSignature(Decoder in, 
-                                   DecoderRegistry registry, 
-                                   Encoder out, 
-                                   boolean recurse) throws IOException {
-    int type = in.decodePacked32();
-    //System.out.println("cFS..."+in+"  --- type = "+String.format("0x%02X ", type));
-    switch (type) {
-      case Constant.ARRAY: {
-        out.encodePacked32(type);
-	int dimensions = in.decodePacked32();
-	out.encodePacked32(dimensions);
-	for (int i = 0 ; i < dimensions ; i++) {
-	  out.encodePacked32(in.decodePacked32());
-	}
-	collectFlatSignature(in, registry, out, recurse);
-      } break;
-      case Constant.STRUCT: {
-        out.encodePacked32(type);
-	int fields = in.decodePacked32();
-	out.encodePacked32(fields);
-	for (int i = 0 ; i < fields ; i++) {
-	  out.encodeString(in.decodeString());
-	  collectFlatSignature(in, registry, out, recurse);
-	}
-      } break;
-      case Constant.BOOLEAN:
-      case Constant.BYTE:
-      case Constant.SHORT:
-      case Constant.INT:
-      case Constant.LONG:
-      case Constant.FLOAT:
-      case Constant.DOUBLE:
-      case Constant.STRING: {
-        out.encodePacked32(type);
-      } break;
-      default: {
-        if(recurse) {
-          DecoderRegistry.Entry entry = registry.get(type);
-          //System.out.println("...... ***** flattening signature for type "+type);
-          if(entry != null) {
-            //System.out.println("...... ***** entry "+entry.getName()+") != null");
-            byte[] sig = entry.getSignature();
-    
-            //System.out.print("...... ***** sig :");
-            //for (byte b : sig) {
-            //  System.out.print(String.format("0x%02X ", b));
-            //}
-            //System.out.println();
-  
-            ByteArrayInputStream bis = new ByteArrayInputStream(sig);
-            //System.out.println("...... ***** bis.available() :"+bis.available());
-            try {
-              collectFlatSignature(new DecoderChannel(bis, registry), registry, out, recurse);
-            } catch(java.io.EOFException e) { 
-              // When the "inner" signature is handled, we continue recursion on the outer level
-              collectFlatSignature(in, registry, out, recurse);
-            }
-            bis.close();
-          }else {
-	    throw new IOException("Unknown type=" + String.format("0x%02X ", type));
-          }
-        }else {
-          out.encodePacked32(type);
-        }
-      }
-    }
-  }
-
   public void dump() {
       System.out.print("=== Typedef "+getName()+"( "+Integer.toHexString(getIndex())+") : ");
       for (byte b : signature) {
@@ -154,25 +86,35 @@ public class Typedef implements SampleType {
 //    }
     
     public void decodeAndHandle(Decoder d,
-                                Handler h) throws Exception {
+                                SampleHandler h) throws Exception {
       ((Handler)h).handle_Typedef(Typedef.decode(d));
     }
     
+    public boolean hasDependencies() {
+        return false;
+    }
   }
   
   public static void encode(Encoder e, Typedef value) throws IOException {
     throw new Error("Should not be called");
   }
   
+  public Typedef(int index, String name, byte sig[]) {
+      this.index = index;
+      this.name = name;
+      this.signature = sig;
+  }
+
   public static Typedef decode(Decoder d) throws IOException {
     Typedef result;
-    result = new Typedef();
-    result.index = d.decodePacked32();
-    result.name = d.decodeString();
-    ByteArrayOutputStream signature = new ByteArrayOutputStream();
-    ((DecoderChannel )d).collectFlatSignature(new EncoderChannel(signature, false), false);
-    result.signature = signature.toByteArray();
-
+    int index = d.decodePacked32();
+    String name = d.decodeString();
+    int siglen= d.decodePacked32();
+    byte sig[] = new byte[siglen];
+    for(int i=0; i<siglen;i++){
+        sig[i] = d.decodeByte();
+    }
+    result = new Typedef(index, name, sig);
     return result;
   }
 }

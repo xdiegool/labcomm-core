@@ -96,6 +96,14 @@ public class DecoderRegistry {
 
   public synchronized void add(SampleDispatcher dispatcher,
 			       SampleHandler handler) throws IOException{
+ //XXX kludge: special handling of predefined types
+    if(dispatcher.getSampleClass() == Typedef.class){
+      Entry e = new Entry(dispatcher, handler);
+      e.setIndex(Constant.TYPE_DEF);
+      byClass.put(dispatcher.getSampleClass(), e);
+      byIndex.put(Integer.valueOf(Constant.TYPE_DEF), e);
+      //System.out.println("LCDecoderRegistry.add("+e.getName()+", "+e.getIndex()+")");
+    } else {
     Entry e = byClass.get(dispatcher.getSampleClass());
     if (e != null) {
       e.check(dispatcher.getName(), dispatcher.getSignature());
@@ -114,6 +122,7 @@ public class DecoderRegistry {
 	byClass.put(dispatcher.getSampleClass(), e);
       }
     }
+   }
   }
 
   public synchronized void add(int index, 

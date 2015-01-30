@@ -3,12 +3,14 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 
 import se.lth.control.labcomm.DecoderChannel;
+import se.lth.control.labcomm.Typedef;
 
 public class Decoder
   implements twoLines.Handler,
              twoInts.Handler,
              theFirstInt.Handler,
-             theSecondInt.Handler
+             theSecondInt.Handler,
+             Typedef.Handler
 
 {
 
@@ -22,6 +24,7 @@ public class Decoder
     twoLines.register(decoder, this);
     theFirstInt.register(decoder, this);
     theSecondInt.register(decoder, this);
+    Typedef.register(decoder, this);
 
     try {
       System.out.println("Running decoder.");
@@ -37,6 +40,10 @@ public class Decoder
 
   private String genLine(line l) {
     return "Line from "+genPoint(l.start)+" to "+genPoint(l.end);
+  }
+
+  public void handle_Typedef(Typedef d) throws java.io.IOException {
+    System.out.println("Got Typedef: "+d.getName()+"("+d.getIndex()+")");
   }
 
   public void handle_twoInts(twoInts d) throws java.io.IOException {

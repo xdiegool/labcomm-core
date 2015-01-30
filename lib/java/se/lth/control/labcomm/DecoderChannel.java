@@ -35,10 +35,14 @@ public class DecoderChannel implements Decoder {
   }	   
 
   private void processTypeDef(int len) throws IOException {
+       try {
+           processSample(Constant.TYPE_DEF);
+      } catch(Exception ex) {
+       System.out.println(ex.getMessage());   
        //System.err.println("Got TypeDef: skipping "+len+" bytes"); 
        int idx = decodePacked32();
        String name = decodeString(); 
-       //System.err.println("Got TypeDef: "+idx+" "+name); 
+       System.err.println("Ignoring (unhandled) TypeDef: "+idx+" "+name); 
        int siglen = decodePacked32();
        //System.err.println("siglen="+siglen);
        for(int i=0; i<siglen; i++) {
@@ -47,6 +51,7 @@ public class DecoderChannel implements Decoder {
            //System.out.print(" ");
        }
        //System.out.println();
+      }
   }
 
   private void processTypeBinding(int len) throws IOException {
@@ -62,6 +67,29 @@ public class DecoderChannel implements Decoder {
            decodeByte();		  
        }
   }
+
+  private void processSample(int tag) throws IOException {
+	  DecoderRegistry.Entry e = def_registry.get(tag);
+	  if (e == null) {
+	    throw new IOException("Unhandled tag " + tag);
+	  }
+	  SampleDispatcher d = e.getDispatcher();
+	  if (d == null) {
+	    throw new IOException("No dispatcher for '" + e.getName() + "'");
+	  }
+	  SampleHandler h = e.getHandler();
+	  if (h == null) {
+	    throw new IOException("No handler for '" + e.getName() +"'");
+	  }
+      try {
+        //XXX why does decodeAndHandle throw Exception and not IOException?
+        d.decodeAndHandle(this, h);
+      } catch (IOException ex) {
+          throw ex;
+      } catch (Exception ex) {
+          ex.printStackTrace();
+      }
+  }	  
 
   public void runOne() throws Exception {
     boolean done = false;
@@ -92,20 +120,9 @@ public class DecoderChannel implements Decoder {
           processPragma(length);
 	} break;
 	default: {
-	  DecoderRegistry.Entry e = def_registry.get(tag);
-	  if (e == null) {
-	    throw new IOException("Unhandled tag " + tag);
-	  }
-	  SampleDispatcher d = e.getDispatcher();
-	  if (d == null) {
-	    throw new IOException("No dispatcher for '" + e.getName() + "'");
-	  }
-	  SampleHandler h = e.getHandler();
-	  if (h == null) {
-	    throw new IOException("No handler for '" + e.getName() +"'");
-	  }
-	  d.decodeAndHandle(this, h);
-	  done = true;
+          processSample(tag);
+          done = true;
+
 	}
       }
     }
