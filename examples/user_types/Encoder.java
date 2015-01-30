@@ -18,6 +18,8 @@ public class Encoder
     encoder = new EncoderChannel(out);
     twoInts.register(encoder);
     twoLines.register(encoder);
+    theFirstInt.register(encoder);
+    theSecondInt.register(encoder);
   }
 
   public void doEncode() throws java.io.IOException {
@@ -28,6 +30,10 @@ public class Encoder
     System.out.println("Encoding twoInts");
     twoInts.encode(encoder, ti);
       
+    System.out.println("Encoding the Ints");
+    theFirstInt.encode(encoder, 71);
+    theSecondInt.encode(encoder, 24);
+
     twoLines x = new twoLines();
     line l1 = new line();
     point p11 = new point();

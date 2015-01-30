@@ -6,7 +6,9 @@ import se.lth.control.labcomm.DecoderChannel;
 
 public class Decoder
   implements twoLines.Handler,
-             twoInts.Handler
+             twoInts.Handler,
+             theFirstInt.Handler,
+             theSecondInt.Handler
 
 {
 
@@ -18,6 +20,8 @@ public class Decoder
     decoder = new DecoderChannel(in);
     twoInts.register(decoder, this);
     twoLines.register(decoder, this);
+    theFirstInt.register(decoder, this);
+    theSecondInt.register(decoder, this);
 
     try {
       System.out.println("Running decoder.");
@@ -38,6 +42,14 @@ public class Decoder
   public void handle_twoInts(twoInts d) throws java.io.IOException {
     System.out.print("Got twoInts: ");
     System.out.println(d.a +", "+d.b);
+  }
+
+  public void handle_theFirstInt(int d) throws java.io.IOException {
+    System.out.println("Got theFirstInt: "+d);
+  }
+
+  public void handle_theSecondInt(int d) throws java.io.IOException {
+    System.out.println("Got theSecondInt: "+d);
   }
 
   public void handle_twoLines(twoLines d) throws java.io.IOException {

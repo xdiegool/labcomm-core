@@ -12,6 +12,14 @@ static void handle_test_twoInts(test_twoInts *v,void *context) {
   printf("Got twoInts. (%d,%d) \n", v->a, v->b); 
 }
 
+static void handle_test_theFirstInt(int *v,void *context) {
+  printf("Got theFirstInt. (%d) \n", *v); 
+}
+
+static void handle_test_theSecondInt(int *v,void *context) {
+  printf("Got theSecondInt. (%d) \n", *v); 
+}
+
 static void handle_test_twoLines(test_twoLines *v,void *context) {
   printf("Got twoLines. (%d,%d) -> (%d,%d), (%d,%d) -> (%d,%d)\n", v->l1.start.x.val, v->l1.start.y.val, 
                                                                      v->l1.end.x.val, v->l1.end.y.val,    
@@ -38,6 +46,8 @@ int main(int argc, char *argv[]) {
   }
 
   labcomm_decoder_register_test_twoInts(decoder, handle_test_twoInts, context);
+  labcomm_decoder_register_test_theFirstInt(decoder, handle_test_theFirstInt, context);
+  labcomm_decoder_register_test_theSecondInt(decoder, handle_test_theSecondInt, context);
   labcomm_decoder_register_test_twoLines(decoder, handle_test_twoLines, context);
 
   printf("Decoding:\n");

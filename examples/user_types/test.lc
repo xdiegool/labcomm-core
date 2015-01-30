@@ -2,6 +2,8 @@ typedef struct {
   int val;
 } coord;
 
+typedef int anInt;
+
 typedef struct {
   coord x;
   coord y;
@@ -28,3 +30,6 @@ sample struct {
   int a;
   int b;
 } twoInts;
+
+sample anInt theFirstInt;
+sample anInt theSecondInt;
