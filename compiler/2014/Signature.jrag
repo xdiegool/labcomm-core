@@ -184,17 +184,17 @@ aspect Signature {
   }
 
   public void UserType.genSigLineForDecl(SignatureList list, boolean decl) {
-    if(decl){
-     //System.out.println("************ UserType.genSigLine("+decl+").... for "+getName());
-      TypeDecl thet=lookupType(getName());
-      //System.out.println("************ thet: "+thet.getName() +":"+thet.getType());
-      thet.genSigLineForDecl(list, decl);
-    }else{
+//    if(decl){
+//     //System.out.println("************ UserType.genSigLine("+decl+").... for "+getName());
+//      TypeDecl thet=lookupType(getName());
+//      //System.out.println("************ thet: "+thet.getName() +":"+thet.getType());
+//      thet.genSigLineForDecl(list, decl);
+//    }else{
      //System.out.println("************ UserType.genSigLine("+decl+").... for "+getName());
       TypeDecl thet = lookupType(getName());
      // System.out.println("************ thet: "+thet.getName() +":"+thet.getType());
       list.addTypeRef(thet, null);
-    }
+//    }
   }
 
   public void ArrayType.genSigLineForDecl(SignatureList list, boolean decl) {

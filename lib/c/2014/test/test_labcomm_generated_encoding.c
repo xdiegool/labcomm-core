@@ -215,7 +215,7 @@ int main(void)
   labcomm_encoder_register_generated_encoding_V(encoder);
   EXPECT({ 0x02, 0x06, VARIABLE(0), 0x01, 'V', 0x02, 0x11, 0x00,
            0x04, 0x08, VARIABLE(1), 0x03, 'v', '_', 't', 0x02, 0x11, 0x00,
-           0x04, 0x04, VARIABLE(2), 0x01, 'V', VARIABLE(1),
+           0x04, 0x05, VARIABLE(2), 0x01, 'V', 0x01, VARIABLE(1),
            0x05, 0x02, VARIABLE(0), VARIABLE(2) });
 
   labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
