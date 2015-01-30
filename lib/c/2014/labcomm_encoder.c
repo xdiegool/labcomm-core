@@ -69,12 +69,7 @@ static struct labcomm_encoder *internal_encoder_new(
                             result->writer->action_context,
                             LABCOMM_VERSION, NULL, CURRENT_VERSION);
         labcomm_write_packed32(result->writer, LABCOMM_VERSION);
-#ifdef LENGTH_INCL_TAG
-        length = (labcomm_size_packed32(LABCOMM_VERSION) +
-                labcomm_size_string(CURRENT_VERSION));
-#else
         length = labcomm_size_string(CURRENT_VERSION);
-#endif
         labcomm_write_packed32(result->writer, length);
         labcomm_write_string(result->writer, CURRENT_VERSION);
         labcomm_writer_end(result->writer, result->writer->action_context);
@@ -101,103 +96,10 @@ void labcomm_encoder_free(struct labcomm_encoder* e)
   LABCOMM_SIGNATURE_ARRAY_FREE(e->memory, e->typedefs, int);
   labcomm_memory_free(memory, 0, e);
 }
-//================
-#undef WITHOUT_TYPE_DEFS
-#ifndef WITHOUT_TYPE_DEFS
-static struct labcomm_encoder * wrapped_begin(
-                    struct labcomm_encoder *e) {
-    struct labcomm_writer *dyn_writer = labcomm_dynamic_buffer_writer_new(
-                                                 e->memory);
-    struct labcomm_encoder *wrapped = internal_encoder_new(dyn_writer,
-                                                          e->error,
-                                                          e->memory,
-                                                          e->scheduler,
-                                                          FALSE);
-    return wrapped;
-}
-//HERE BE DRAGONS! Copied from decoder.c
-//Should this be moved to private_h?
-static int writer_ioctl(struct labcomm_writer *writer,
-            uint32_t action,
-            ...)
-{
-  int result;
-  va_list va;
 
-  if (LABCOMM_IOC_SIG(action) != LABCOMM_IOC_NOSIG) {
-    result = -EINVAL;
-    goto out;
-  }
+#ifndef LABCOMM_WITHOUT_TYPE_DEFS
 
-  va_start(va, action);
-  result = labcomm_writer_ioctl(writer, writer->action_context,
-                0, NULL, action, va);
-  va_end(va);
-out:
-  return result;
-}
-
-
-int wrapped_end(struct labcomm_encoder *e, int tag, struct labcomm_encoder* wrapped)
-{
-//HERE BE DRAGONS!
-//We assume that the writer is a dynamic_buffer_writer
-  char*  wrapped_data;
-  int err,len;
-  labcomm_writer_end(wrapped->writer, wrapped->writer->action_context);
-  err = writer_ioctl(wrapped->writer,
-             LABCOMM_IOCTL_WRITER_GET_BYTES_WRITTEN,
-             &len);
-  if (err < 0) {
-
-// HERE BE DRAGONS!
-// What is the difference between error_handler (where is it defined?)
-// and error_handler_callback. And why is the latter only in
-// the decoder struct?
-//
-//    wrapped->on_error(LABCOMM_ERROR_BAD_WRITER, 2,
-//      "Failed to get size: %s\n", strerror(-err));
-    fprintf(stderr, "BAD WRITER, Failed to get size> %s\n", strerror(-err));
-    err = -ENOENT;
-    goto free_encoder;
-  }
-  err = writer_ioctl(wrapped->writer,
-                 LABCOMM_IOCTL_WRITER_GET_BYTE_POINTER,
-                 &wrapped_data);
-  if (err < 0) {
-//    wrapped->on_error(LABCOMM_ERROR_BAD_WRITER, 2,
-//          "Failed to get pointer: %s\n", strerror(-err));
-    fprintf(stderr, "BAD WRITER, Failed to get pointer> %s\n", strerror(-err));
-    err = -ENOENT;
-    goto free_encoder;
-  }
-  {
-      int i;
-      err = labcomm_writer_start(e->writer, e->writer->action_context,
-			     LABCOMM_TYPE_DEF, NULL, NULL);
-      if(err < 0) {
-          goto free_encoder;
-      }
-      labcomm_write_packed32(e->writer, tag);
-      labcomm_write_packed32(e->writer, len);
-      for(i=0; i<len;i++){
-          labcomm_write_byte(e->writer, wrapped_data[i]);
-      }
-      labcomm_writer_end(e->writer, e->writer->action_context);
-      err = e->writer->error;
-  }
-free_encoder:
-  //labcomm_memory_free(wrapped->memory, 1, ctx);
-  labcomm_encoder_free(wrapped);
-  return err;
-}
-//================
-
-// --------------
-#define TEST_MAP
-
-#ifdef TEST_MAP
-static void write_sig_byte(char b, const struct labcomm_signature *signature,
+static void write_sig_tree_byte(char b, const struct labcomm_signature *signature,
                            void *context)
 {
   struct labcomm_encoder *e = context;
@@ -211,65 +113,33 @@ static void write_sig_byte(char b, const struct labcomm_signature *signature,
     e->writer->pos++;
   }
 }
-#endif
 
-static void do_write_signature(struct labcomm_encoder * e, const struct labcomm_signature *signature, unsigned char flatten)
+static void do_write_signature(struct labcomm_encoder * e, 
+                               const struct labcomm_signature *signature, 
+                               unsigned char flatten)
 {
-#ifdef TEST_MAP
-  map_signature(write_sig_byte, e, signature, flatten);
-#else
-  struct labcomm_signature_data* p = signature->signature;
-  while (p->length != -1) {
-    if (p->length) {
-      int i;
-      for ( i = 0 ; i < p->length ; i++) {
-        if (e->writer->pos >= e->writer->count) {
-         labcomm_writer_flush(e->writer, e->writer->action_context);
-        }
-        e->writer->data[e->writer->pos] = p->u.bytes[i];
-        e->writer->pos++;
-      }
-    } else {
-      if(p->u.signature == 0) printf("p->u.signature == null\n");
-      if(flatten) {
-        do_write_signature(e, p->u.signature, flatten);
-      } else {
-        labcomm_write_packed32(e->writer, labcomm_get_local_index(p->u.signature));
-      }
-
-    }
-    p+=1;
-  }
-#endif
+  map_signature(write_sig_tree_byte, e, signature, flatten);
 }
 
-#ifdef TEST_MAP
 static void sig_size(char b, const struct labcomm_signature *signature,
-                           void *context)
+                     void *context)
 {
   int *result = context;
   int diff;
   if(signature) {
     int idx = labcomm_get_local_index(signature);
     diff = labcomm_size_packed32(idx);
-    //printf("== diff = %d, idx = 0x%d\n",diff, idx);
   }else {
     diff = 1;
-    //printf("== diff = %d, byte = 0x%d\n",diff, b);
   }
     (*result)+=diff;
 }
-#endif
+
 static int calc_sig_encoded_size(struct labcomm_encoder *e,
                                  const struct labcomm_signature *sig)
 {
   int result=0;
-#ifdef TEST_MAP
   map_signature(sig_size, &result, sig, FALSE);
-#else
-  fprintf("warning! calc_sig_encoded_size not implemented without map...\n");
-#endif
-  //printf("calc_sig_encoded_size: %s == %d\n",sig->name,result);
   return result;
 }
 
@@ -280,7 +150,6 @@ static int internal_reg_type(
 {
   int result = -EINVAL;
   int index, *done, err;
-  //int i:
 
   index = labcomm_get_local_index(signature);
   labcomm_scheduler_writer_lock(e->scheduler);
@@ -292,19 +161,20 @@ static int internal_reg_type(
                  index, signature, NULL);
   if (err == -EALREADY) { result = 0; goto out; }
   if (err != 0) { result = err; goto out; }
+
+  int sig_size = calc_sig_encoded_size(e, signature);
+  int len =  labcomm_size_packed32(index) +
+             labcomm_size_string(signature->name) +
+             labcomm_size_packed32(sig_size) +
+              sig_size;
+
+  labcomm_write_packed32(e->writer, LABCOMM_TYPE_DEF);
+  labcomm_write_packed32(e->writer, len);
   labcomm_write_packed32(e->writer, index);
   labcomm_write_string(e->writer, signature->name);
-  //XXX flush for debugging, can be removed when working
-  //    labcomm_writer_flush(e->writer, e->writer->action_context);
-  labcomm_write_packed32(e->writer, calc_sig_encoded_size(e, signature));
+  labcomm_write_packed32(e->writer, sig_size);
   do_write_signature(e, signature, FALSE);
-//  for (i = 0 ; i < signature->size ; i++) {
-//    if (e->writer->pos >= e->writer->count) {
-//      labcomm_writer_flush(e->writer, e->writer->action_context);
-//    }
-//    e->writer->data[e->writer->pos] = signature->signature[i];
-//    e->writer->pos++;
-//  }
+
   labcomm_writer_end(e->writer, e->writer->action_context);
   result = e->writer->error;
 out:
@@ -312,15 +182,13 @@ out:
   return result;
 }
 #endif
-//--------------
+
 int labcomm_internal_encoder_type_register(
   struct labcomm_encoder *e,
   const struct labcomm_signature *signature)
 {
 #ifndef WITHOUT_TYPE_DEFS
-  struct labcomm_encoder *w = wrapped_begin(e);
-  internal_reg_type(w, signature, FALSE);
-  return wrapped_end(e, LABCOMM_TYPE_DEF, w);
+  return internal_reg_type(e, signature, FALSE);
 #else
    return 0;
 #endif
@@ -414,7 +282,7 @@ int labcomm_internal_encode(
     result = -EINVAL;
     goto no_end;
   }
-  result = labcomm_writer_start(e->writer, e->writer->action_context, 
+  result = labcomm_writer_start(e->writer, e->writer->action_context,
 				index, signature, value);
   if (result == -EALREADY) { result = 0; goto no_end; }
   if (result != 0) { goto out; }
