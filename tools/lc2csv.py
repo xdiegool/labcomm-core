@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
-import sys
+import argparse
 import labcomm
+import subprocess
+import sys
 
 
 class Reader(object):
@@ -13,6 +15,18 @@ class Reader(object):
         if len(data) == 0:
             raise EOFError()
         return data
+
+    def mark(self, value, decl):
+        pass
+
+
+class FollowingReader(object):
+    def __init__(self, file_):
+        self.tail_proc = subprocess.Popen(['tail', '-c', '+0', '-f', file_],
+                                          stdout=subprocess.PIPE)
+
+    def read(self, count):
+        return self.tail_proc.stdout.read(count)
 
     def mark(self, value, decl):
         pass
@@ -70,9 +84,15 @@ def dump_labels(current, _type):
 
 
 def main():
-    if len(sys.argv) != 2:
-        sys.exit("Give input file as argument\n")
-    d = labcomm.Decoder(Reader(sys.argv[1]))
+    parser = argparse.ArgumentParser()
+    parser.add_argument('elc', type=str, help="The log file.")
+    parser.add_argument('-f', '--follow', action='store_true',
+                        help="Find all registrations that already "
+                        "exist, then watch the file for changes. All "
+                        "future registrations are ignored (because "
+                        "the header has already been written).")
+    args = parser.parse_args()
+    d = labcomm.Decoder(Reader(args.elc))
     seen = {}
     current = {}
     _type = {}
@@ -92,7 +112,8 @@ def main():
 
     # Do another pass to extract the data.
     current = {}
-    d = labcomm.Decoder(Reader(sys.argv[1]))
+    reader = FollowingReader(args.elc) if args.follow else Reader(args.elc)
+    d = labcomm.Decoder(reader)
     while True:
         try:
             o, t = d.decode()
