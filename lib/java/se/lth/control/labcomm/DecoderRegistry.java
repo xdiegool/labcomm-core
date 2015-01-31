@@ -103,6 +103,12 @@ public class DecoderRegistry {
       byClass.put(dispatcher.getSampleClass(), e);
       byIndex.put(Integer.valueOf(Constant.TYPE_DEF), e);
       //System.out.println("LCDecoderRegistry.add("+e.getName()+", "+e.getIndex()+")");
+    } else if(dispatcher.getSampleClass() == TypeBinding.class){
+      Entry e = new Entry(dispatcher, handler);
+      e.setIndex(Constant.TYPE_BINDING);
+      byClass.put(dispatcher.getSampleClass(), e);
+      byIndex.put(Integer.valueOf(Constant.TYPE_BINDING), e);
+      //System.out.println("LCDecoderRegistry.add("+e.getName()+", "+e.getIndex()+")");
     } else {
     Entry e = byClass.get(dispatcher.getSampleClass());
     if (e != null) {

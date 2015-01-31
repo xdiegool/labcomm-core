@@ -4,13 +4,15 @@ import java.io.InputStream;
 
 import se.lth.control.labcomm.DecoderChannel;
 import se.lth.control.labcomm.Typedef;
+import se.lth.control.labcomm.TypeBinding;
 
 public class Decoder
   implements twoLines.Handler,
              twoInts.Handler,
              theFirstInt.Handler,
              theSecondInt.Handler,
-             Typedef.Handler
+             Typedef.Handler,
+             TypeBinding.Handler
 
 {
 
@@ -25,6 +27,7 @@ public class Decoder
     theFirstInt.register(decoder, this);
     theSecondInt.register(decoder, this);
     Typedef.register(decoder, this);
+    TypeBinding.register(decoder, this);
 
     try {
       System.out.println("Running decoder.");
@@ -44,6 +47,10 @@ public class Decoder
 
   public void handle_Typedef(Typedef d) throws java.io.IOException {
     System.out.println("Got Typedef: "+d.getName()+"("+d.getIndex()+")");
+  }
+
+  public void handle_TypeBinding(TypeBinding d) throws java.io.IOException {
+    System.out.println("Got TypeBinding: "+d.getSampleIndex()+" --> "+d.getTypeIndex()+"");
   }
 
   public void handle_twoInts(twoInts d) throws java.io.IOException {

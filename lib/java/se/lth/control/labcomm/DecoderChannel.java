@@ -55,10 +55,15 @@ public class DecoderChannel implements Decoder {
   }
 
   private void processTypeBinding(int len) throws IOException {
+      try {
+           processSample(Constant.TYPE_BINDING);
+      } catch(Exception ex) {
+       System.out.println(ex.getMessage());   
        //System.err.println("Got TypeBinding: skipping "+len+" bytes"); 
-       for(int i=0; i<len; i++) {
-           decodeByte();		  
-       }
+          for(int i=0; i<len; i++) {
+              decodeByte();		  
+          }
+      } 
   }
 
   private void processPragma(int len) throws IOException {

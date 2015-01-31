@@ -11,6 +11,7 @@ MODULES=Constant \
 	SampleHandler \
 	SampleType \
 	Typedef \
+	TypeBinding \
 	Writer \
 	WriterWrapper
 
