@@ -61,11 +61,11 @@ struct labcomm_signature {
 #endif
 };
 
-/* a struct for "raw" typedefs, to be used as an intermediate representation
+/* a struct for "raw" type_defs, to be used as an intermediate representation
  * between decoder and signature parser
  */
 
-struct labcomm_raw_typedef {
+struct labcomm_raw_type_def {
     char *name;
     int index;
     int length;
@@ -85,13 +85,13 @@ struct labcomm_type_binding {
  */
 
 
-/* register a handler for typedefs and type bindings
+/* register a handler for type_defs and type bindings
  */
 
-int labcomm_decoder_register_labcomm_typedef(
+int labcomm_decoder_register_labcomm_type_def(
   struct labcomm_decoder *d,
   void (*handler)(
-    struct labcomm_raw_typedef *v,
+    struct labcomm_raw_type_def *v,
     void *context
   ),
   void *context

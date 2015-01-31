@@ -3,7 +3,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 
 import se.lth.control.labcomm.DecoderChannel;
-import se.lth.control.labcomm.Typedef;
+import se.lth.control.labcomm.TypeDef;
 import se.lth.control.labcomm.TypeBinding;
 
 public class Decoder
@@ -11,7 +11,7 @@ public class Decoder
              twoInts.Handler,
              theFirstInt.Handler,
              theSecondInt.Handler,
-             Typedef.Handler,
+             TypeDef.Handler,
              TypeBinding.Handler
 
 {
@@ -26,7 +26,7 @@ public class Decoder
     twoLines.register(decoder, this);
     theFirstInt.register(decoder, this);
     theSecondInt.register(decoder, this);
-    Typedef.register(decoder, this);
+    TypeDef.register(decoder, this);
     TypeBinding.register(decoder, this);
 
     try {
@@ -45,8 +45,8 @@ public class Decoder
     return "Line from "+genPoint(l.start)+" to "+genPoint(l.end);
   }
 
-  public void handle_Typedef(Typedef d) throws java.io.IOException {
-    System.out.println("Got Typedef: "+d.getName()+"("+d.getIndex()+")");
+  public void handle_TypeDef(TypeDef d) throws java.io.IOException {
+    System.out.println("Got TypeDef: "+d.getName()+"("+d.getIndex()+")");
   }
 
   public void handle_TypeBinding(TypeBinding d) throws java.io.IOException {

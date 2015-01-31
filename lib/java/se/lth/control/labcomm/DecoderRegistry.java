@@ -97,7 +97,7 @@ public class DecoderRegistry {
   public synchronized void add(SampleDispatcher dispatcher,
 			       SampleHandler handler) throws IOException{
  //XXX kludge: special handling of predefined types
-    if(dispatcher.getSampleClass() == Typedef.class){
+    if(dispatcher.getSampleClass() == TypeDef.class){
       Entry e = new Entry(dispatcher, handler);
       e.setIndex(Constant.TYPE_DEF);
       byClass.put(dispatcher.getSampleClass(), e);

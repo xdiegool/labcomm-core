@@ -182,7 +182,7 @@ static int decoder_skip(struct labcomm_decoder *d, int len, int tag)
   return tag;
 }
 
-#ifdef OLD_TYPEDEF_DECODING_TEST_CODE 
+#ifdef OLD_type_def_DECODING_TEST_CODE 
 static int decode_type_binding(struct labcomm_decoder *d, int kind)
 {
   int result;
@@ -191,12 +191,12 @@ static int decode_type_binding(struct labcomm_decoder *d, int kind)
       result =  d->reader->error;
       goto out;
   }
-  int typedef_index = labcomm_read_packed32(d->reader);
+  int type_def_index = labcomm_read_packed32(d->reader);
   if(d->reader->error < 0 ) {
       result =  d->reader->error;
       goto out;
   }
-  printf("type_binding: 0x%x -> 0x%x\n", sample_index, typedef_index);
+  printf("type_binding: 0x%x -> 0x%x\n", sample_index, type_def_index);
 out:
   return result;
 } 
@@ -221,7 +221,7 @@ static int decode_type_def(struct labcomm_decoder *d, int kind){
     result = d->reader->error;
     goto free_signature_name;
   }
-  //printf("got typedef 0x%x : %s, skipping %d signature bytes", remote_index, name, size); 
+  //printf("got type_def 0x%x : %s, skipping %d signature bytes", remote_index, name, size); 
 #if 0
   signature.signature = labcomm_memory_alloc(d->memory, 1,  signature.size);
   if (d->reader->error < 0) {
@@ -448,8 +448,8 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
   } else if (remote_index == LABCOMM_TYPE_DEF) {
     result = decode_and_handle(d, d, remote_index);
     if(result == -ENOENT) { 
-        //No handler for typedefs, skip
-#ifdef OLD_TYPEDEF_DECODING_TEST_CODE 
+        //No handler for type_defs, skip
+#ifdef OLD_type_def_DECODING_TEST_CODE 
         result = decode_type_def(d, LABCOMM_TYPE_DEF); 
 #else
         result = decoder_skip(d, length, remote_index);
@@ -459,7 +459,7 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
     result = decode_and_handle(d, d, remote_index);
     if(result == -ENOENT) { 
         //No handler for type_bindings, skip
-#ifdef OLD_TYPEDEF_DECODING_TEST_CODE 
+#ifdef OLD_type_def_DECODING_TEST_CODE 
       result = decode_type_binding(d, LABCOMM_TYPE_BINDING); 
 #else
         result = decoder_skip(d, length, remote_index);
@@ -545,19 +545,19 @@ int labcomm_internal_decoder_ioctl(struct labcomm_decoder *d,
 }
 
 #ifndef LABCOMM_NO_TYPEDECL
-//// Code for allowing user code to handle typedefs 
+//// Code for allowing user code to handle type_defs 
 //// (should perhaps be moved to another file)
 
-static void decode_raw_typedef(
+static void decode_raw_type_def(
   struct labcomm_reader *r,
   void (*handle)(
-    struct labcomm_raw_typedef *v,
+    struct labcomm_raw_type_def *v,
     void *context
   ),
   void *context
 )
 {
-  struct labcomm_raw_typedef v;
+  struct labcomm_raw_type_def v;
   v.index = labcomm_read_packed32(r);
   if (r->error < 0) { goto out; }
   v.name  = labcomm_read_string(r);
@@ -580,10 +580,10 @@ free_name:
 out:
   return;
 }
-int labcomm_decoder_register_labcomm_typedef(
+int labcomm_decoder_register_labcomm_type_def(
   struct labcomm_decoder *d,
   void (*handler)(
-    struct labcomm_raw_typedef *v,
+    struct labcomm_raw_type_def *v,
     void *context
   ),
   void *context
@@ -600,7 +600,7 @@ int labcomm_decoder_register_labcomm_typedef(
   if (entry == NULL) { tag = -ENOMEM; goto unlock; }
   entry->remote_index = tag;
   entry->signature = NULL;
-  entry->decode = (labcomm_decoder_function) decode_raw_typedef;
+  entry->decode = (labcomm_decoder_function) decode_raw_type_def;
   entry->handler =(labcomm_handler_function) handler;
   entry->context = context;
 
@@ -668,7 +668,7 @@ unlock:
   return tag;
 }
 
-//// End typedef handling
+//// End type_def handling
 #endif
 
 int labcomm_internal_decoder_register(

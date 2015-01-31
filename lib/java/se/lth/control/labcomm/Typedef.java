@@ -8,7 +8,7 @@ import se.lth.control.labcomm.DecoderChannel;
 import se.lth.control.labcomm.SampleDispatcher;
 import se.lth.control.labcomm.SampleHandler;
 
-public class Typedef implements SampleType {
+public class TypeDef implements SampleType {
     private int index;
     private String name;
     private byte signature[];
@@ -22,14 +22,14 @@ public class Typedef implements SampleType {
   }
 
   public void dump() {
-      System.out.print("=== Typedef "+getName()+"( "+Integer.toHexString(getIndex())+") : ");
+      System.out.print("=== TypeDef "+getName()+"( "+Integer.toHexString(getIndex())+") : ");
       for (byte b : signature) {
         System.out.print(String.format("0x%02X ", b));
       }
       System.out.println();
   }
   public interface Handler extends SampleHandler {
-    public void handle_Typedef(Typedef value) throws Exception;
+    public void handle_TypeDef(TypeDef value) throws Exception;
   }
   
   public static void register(Decoder d, Handler h) throws IOException {
@@ -44,7 +44,7 @@ public class Typedef implements SampleType {
     throw new IOException("cannot send TypeDefs");
   }
   
- static class Dispatcher implements SampleDispatcher<Typedef> {
+ static class Dispatcher implements SampleDispatcher<TypeDef> {
     
     private static Dispatcher singleton;
     
@@ -53,12 +53,12 @@ public class Typedef implements SampleType {
       return singleton;
     }
     
-    public Class<Typedef> getSampleClass() {
-      return Typedef.class;
+    public Class<TypeDef> getSampleClass() {
+      return TypeDef.class;
     }
     
     public String getName() {
-      return "Typedef";
+      return "TypeDef";
     }
     
     public byte getTypeDeclTag() {
@@ -87,7 +87,7 @@ public class Typedef implements SampleType {
     
     public void decodeAndHandle(Decoder d,
                                 SampleHandler h) throws Exception {
-      ((Handler)h).handle_Typedef(Typedef.decode(d));
+      ((Handler)h).handle_TypeDef(TypeDef.decode(d));
     }
     
     public boolean hasDependencies() {
@@ -95,18 +95,18 @@ public class Typedef implements SampleType {
     }
   }
   
-  public static void encode(Encoder e, Typedef value) throws IOException {
+  public static void encode(Encoder e, TypeDef value) throws IOException {
     throw new Error("Should not be called");
   }
   
-  public Typedef(int index, String name, byte sig[]) {
+  public TypeDef(int index, String name, byte sig[]) {
       this.index = index;
       this.name = name;
       this.signature = sig;
   }
 
-  public static Typedef decode(Decoder d) throws IOException {
-    Typedef result;
+  public static TypeDef decode(Decoder d) throws IOException {
+    TypeDef result;
     int index = d.decodePacked32();
     String name = d.decodeString();
     int siglen= d.decodePacked32();
@@ -114,7 +114,7 @@ public class Typedef implements SampleType {
     for(int i=0; i<siglen;i++){
         sig[i] = d.decodeByte();
     }
-    result = new Typedef(index, name, sig);
+    result = new TypeDef(index, name, sig);
     return result;
   }
 }
