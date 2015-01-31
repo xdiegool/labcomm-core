@@ -61,67 +61,33 @@ struct labcomm_signature {
 #endif
 };
 
-#if 0
-/*
- * Signature entry
+/* a struct for "raw" typedefs, to be used as an intermediate representation
+ * between decoder and signature parser
  */
 
-#ifdef USE_UNIONS
-
-/* Useful for C99 and up (or GCC without -pedantic) */ 
-
-#define LABCOMM_SIGDEF_BYTES_OR_SIGNATURE          \
-  union {                                   \
-    char *bytes;                            \
-    struct labcomm_signature* signature;            \
-  } u;
-
-#define LABCOMM_SIGDEF_BYTES(l, b) { l, .u.bytes=b }
-#define LABCOMM_SIGDEF_SIGNATURE(s) { 0, .u.signature=&s } // addressof, as s is pointing at the sig struct, not directly the the sig_bytes[]
-#define LABCOMM_SIGDEF_END { -1, .u.bytes=0 }
-
-#else
-
-#define LABCOMM_SIGDEF_BYTES_OR_SIGNATURE          \
-  struct {                                  \
-    char *bytes;                            \
-    struct labcomm_signature *signature;            \
-  } u;
-
-#define LABCOMM_SIGDEF_BYTES(l, b) { l, { b, 0 } }
-#define LABCOMM_SIGDEF_SIGNATURE(s) { 0, { 0, &s } }
-#define LABCOMM_SIGDEF_END { -1, { 0, 0 } }
-
-#endif
-
-struct labcomm_signature_data {
-  int length;
-  LABCOMM_SIGDEF_BYTES_OR_SIGNATURE
+struct labcomm_raw_typedef {
+    char *name;
+    int index;
+    int length;
+    char *signature_data;
 };
 
-struct labcomm_signature {
-  int type;
-  char *name;
-  int (*encoded_size)(struct labcomm_signature *, void *); // void * == encoded_sample *
-  struct {
-    int size;
-    unsigned char *data; 
-  } flat;
-  struct {
-    int size;
-    struct labcomm_signature_data *data;
-  } tree;
-  int index;
-#ifdef LABCOMM_EXPERIMENTAL_CACHED_ENCODED_SIZE
-  int cached_encoded_size; // -1 if not initialized or type is variable size
-#endif
-};
-#endif
 /*
  * functions
  */
 
 
+/* register a handler for typedefs
+ */
+
+int labcomm_decoder_register_labcomm_typedef(
+  struct labcomm_decoder *d,
+  void (*handler)(
+    struct labcomm_raw_typedef *v,
+    void *context
+  ),
+  void *context
+);
 /* Dump signature bytes on stdout 
  */
 
