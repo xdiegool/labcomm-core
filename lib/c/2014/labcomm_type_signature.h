@@ -72,12 +72,20 @@ struct labcomm_raw_typedef {
     char *signature_data;
 };
 
+/* a struct for type bindings
+ */
+
+struct labcomm_type_binding {
+    int sample_index;
+    int type_index;
+};
+
 /*
  * functions
  */
 
 
-/* register a handler for typedefs
+/* register a handler for typedefs and type bindings
  */
 
 int labcomm_decoder_register_labcomm_typedef(
@@ -88,6 +96,16 @@ int labcomm_decoder_register_labcomm_typedef(
   ),
   void *context
 );
+
+int labcomm_decoder_register_labcomm_type_binding(
+  struct labcomm_decoder *d,
+  void (*handler)(
+    struct labcomm_type_binding *v,
+    void *context
+  ),
+  void *context
+);
+
 /* Dump signature bytes on stdout 
  */
 

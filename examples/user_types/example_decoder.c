@@ -21,7 +21,11 @@ static void handle_test_theSecondInt(int *v,void *context) {
 }
 
 static void handle_typedef(struct labcomm_raw_typedef *v,void *context) {
-  printf("Got typedef. (%d) %s\n", v->index, v->name); 
+  printf("Got typedef. (0x%x) %s\n", v->index, v->name); 
+}
+
+static void handle_type_binding(struct labcomm_type_binding *v,void *context) {
+  printf("Got type binding. 0x%x --> 0x%x\n", v->sample_index, v->type_index); 
 }
 
 static void handle_test_twoLines(test_twoLines *v,void *context) {
@@ -54,6 +58,7 @@ int main(int argc, char *argv[]) {
   labcomm_decoder_register_test_theSecondInt(decoder, handle_test_theSecondInt, context);
   labcomm_decoder_register_test_twoLines(decoder, handle_test_twoLines, context);
   labcomm_decoder_register_labcomm_typedef(decoder, handle_typedef, context);
+  labcomm_decoder_register_labcomm_type_binding(decoder, handle_type_binding, context);
 
   printf("Decoding:\n");
   labcomm_decoder_run(decoder);
