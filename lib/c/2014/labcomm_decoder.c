@@ -199,6 +199,7 @@ static int decode_type_binding(struct labcomm_decoder *d, int kind)
 out:
   return result;
 } 
+#ifdef OLD_TYPEDEF_DECODING_TEST_CODE 
 static int decode_type_def(struct labcomm_decoder *d, int kind){
   int i, remote_index, result;
   char *name;
@@ -241,6 +242,7 @@ free_signature_name:
 out:
   return result;
 }
+#endif
 
 static int decode_sample_def_or_ref(struct labcomm_decoder *d, int kind)
 {
@@ -444,9 +446,13 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
     result = decode_sample_def_or_ref(d, LABCOMM_SAMPLE_REF); 
   } else if (remote_index == LABCOMM_TYPE_DEF) {
     result = decode_and_handle(d, d, remote_index);
-    if(result == -ENOENT) {
-        printf("*** no handler for typedef...");
+    if(result == -ENOENT) { 
+        //No handler for typedefs, skip
+#ifdef OLD_TYPEDEF_DECODING_TEST_CODE 
         result = decode_type_def(d, LABCOMM_TYPE_DEF); 
+#else
+        result = decoder_skip(d, length, remote_index);
+#endif
     }
   } else if (remote_index == LABCOMM_TYPE_BINDING) {
     result = decode_type_binding(d, LABCOMM_TYPE_BINDING); 
