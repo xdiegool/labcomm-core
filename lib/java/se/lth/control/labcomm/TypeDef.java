@@ -21,6 +21,10 @@ public class TypeDef implements SampleType {
     return name;
   }
 
+  public byte[] getSignature() {
+    return signature;
+  }
+
   public void dump() {
       System.out.print("=== TypeDef "+getName()+"( "+Integer.toHexString(getIndex())+") : ");
       for (byte b : signature) {
@@ -99,6 +103,9 @@ public class TypeDef implements SampleType {
     throw new Error("Should not be called");
   }
   
+  protected TypeDef() {
+  }
+
   public TypeDef(int index, String name, byte sig[]) {
       this.index = index;
       this.name = name;

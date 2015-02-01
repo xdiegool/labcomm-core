@@ -4,19 +4,21 @@ import java.io.InputStream;
 
 import se.lth.control.labcomm.DecoderChannel;
 import se.lth.control.labcomm.TypeDef;
-import se.lth.control.labcomm.TypeBinding;
+import se.lth.control.labcomm.TypeDefParser;
+//import se.lth.control.labcomm.TypeBinding;
 
 public class Decoder
   implements twoLines.Handler,
+//             TypeDef.Handler,
+//             TypeBinding.Handler,
+             TypeDefParser.TypeDefListener,
              twoInts.Handler,
              theFirstInt.Handler,
-             theSecondInt.Handler,
-             TypeDef.Handler,
-             TypeBinding.Handler
-
+             theSecondInt.Handler
 {
 
-  DecoderChannel decoder;
+  private DecoderChannel decoder;
+  private TypeDefParser tdp;
 
   public Decoder(InputStream in) 
     throws Exception 
@@ -26,9 +28,13 @@ public class Decoder
     twoLines.register(decoder, this);
     theFirstInt.register(decoder, this);
     theSecondInt.register(decoder, this);
-    TypeDef.register(decoder, this);
-    TypeBinding.register(decoder, this);
+    this.tdp = TypeDefParser.registerTypeDefParser(decoder); 
+ //   TypeDef.register(decoder, this);
+ //   TypeBinding.register(decoder, this);
 
+        
+    tdp.addListener(this);
+    
     try {
       System.out.println("Running decoder.");
       decoder.run();
@@ -45,12 +51,16 @@ public class Decoder
     return "Line from "+genPoint(l.start)+" to "+genPoint(l.end);
   }
 
-  public void handle_TypeDef(TypeDef d) throws java.io.IOException {
-    System.out.println("Got TypeDef: "+d.getName()+"("+d.getIndex()+")");
-  }
+//  public void handle_TypeDef(TypeDef d) throws java.io.IOException {
+//    System.out.println("Got TypeDef: "+d.getName()+"("+d.getIndex()+")");
+//  }
+//
+//  public void handle_TypeBinding(TypeBinding d) throws java.io.IOException {
+//    System.out.println("Got TypeBinding: "+d.getSampleIndex()+" --> "+d.getTypeIndex()+"");
+//  }
 
-  public void handle_TypeBinding(TypeBinding d) throws java.io.IOException {
-    System.out.println("Got TypeBinding: "+d.getSampleIndex()+" --> "+d.getTypeIndex()+"");
+  public void onTypeDef(TypeDef d) {
+    System.out.println("onTypeDef: "+d.getName()+"("+d.getIndex()+")");
   }
 
   public void handle_twoInts(twoInts d) throws java.io.IOException {
