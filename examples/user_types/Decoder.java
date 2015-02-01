@@ -1,6 +1,7 @@
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.io.IOException;
 
 import se.lth.control.labcomm.DecoderChannel;
 import se.lth.control.labcomm.TypeDef;
@@ -61,6 +62,13 @@ public class Decoder
 
   public void onTypeDef(TypeDef d) {
     System.out.println("onTypeDef: "+d.getName()+"("+d.getIndex()+")");
+    for(byte b: d.getSignature()) {
+       System.out.print(Integer.toHexString(b)+" ");
+    }
+    System.out.println(); 
+    try {
+       tdp.parseSignature(d.getIndex());
+    } catch(IOException ex) { ex.printStackTrace();}   
   }
 
   public void handle_twoInts(twoInts d) throws java.io.IOException {
