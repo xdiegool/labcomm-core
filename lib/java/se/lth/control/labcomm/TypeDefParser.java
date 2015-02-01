@@ -55,7 +55,9 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         if(d.getTypeIndex() == Constant.TYPE_BIND_SELF){
             //TODO: make the sample_def signature a TypeDef.
             // e.g., by looking up the signature in the decoder
-            // (how to expose that?)
+            // (how to expose that? A good option may be to
+            // make this internal to the Decoder, and just expose a
+            // HierarchicalTypeDef for user code to register handlers for)
             //td = typeDefs.get(d.getTypeIndex());
            
             //XXX this will return a SelfBinding (w/o a signature)
