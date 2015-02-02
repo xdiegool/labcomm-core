@@ -21,6 +21,10 @@ public class TypeDef implements SampleType {
     return name;
   }
 
+  public String toString() {
+     return getName();
+  }
+ 
   public byte[] getSignature() {
     return signature;
   }
@@ -64,7 +68,7 @@ public class TypeDef implements SampleType {
     public String getName() {
       return "TypeDef";
     }
-    
+
     public byte getTypeDeclTag() {
       throw new Error("Should not be called");
     }

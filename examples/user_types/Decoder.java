@@ -60,15 +60,16 @@ public class Decoder
 //    System.out.println("Got TypeBinding: "+d.getSampleIndex()+" --> "+d.getTypeIndex()+"");
 //  }
 
-  public void onTypeDef(TypeDef d) {
+  public void onTypeDef(TypeDefParser.ParsedTypeDef d) {
     System.out.println("onTypeDef: "+d.getName()+"("+d.getIndex()+")");
-    for(byte b: d.getSignature()) {
-       System.out.print(Integer.toHexString(b)+" ");
-    }
-    System.out.println(); 
-    try {
-       tdp.parseSignature(d.getIndex());
-    } catch(IOException ex) { ex.printStackTrace();}   
+    System.out.println(d);
+    //for(byte b: d.getSignature()) {
+    //   System.out.print(Integer.toHexString(b)+" ");
+    //}
+    //System.out.println(); 
+    //try {
+    //   tdp.parseSignature(d.getIndex());
+    //} catch(IOException ex) { ex.printStackTrace();}   
   }
 
   public void handle_twoInts(twoInts d) throws java.io.IOException {
