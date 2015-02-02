@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-import time
 import argparse
 import labcomm
+import sys
+import time
 
 
 class Reader(object):
@@ -90,7 +91,7 @@ def dump_labels(current, _type):
     print
 
 
-def main():
+def main(main_args):
     parser = argparse.ArgumentParser()
     parser.add_argument('elc', type=str, help="The log file.")
     parser.add_argument('-f', '--follow', action='store_true',
@@ -105,7 +106,7 @@ def main():
                         help="timeout to terminate when no changes are detected. "
                         "Requires -f.")
 
-    args = parser.parse_args()
+    args = parser.parse_args(main_args)
     seen = {}
     current = {}
     _type = {}
@@ -147,4 +148,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])
