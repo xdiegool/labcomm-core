@@ -11,17 +11,45 @@ import java.io.IOException;
 import java.io.EOFException;
 
 import se.lth.control.labcomm.Decoder;
+import se.lth.control.labcomm.DecoderChannel;
 import se.lth.control.labcomm.TypeDef;
 import se.lth.control.labcomm.TypeBinding;
+
 
 public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
 
     static class SelfBinding extends TypeDef {
 
+        private int sampleIndex;
+        private Decoder decoder;
         private byte[] dummy = new byte[0];
-        public String getName() {return "self";} 
+        //public String getName() {return "self";} 
+        public String getName() {
+            if(decoder instanceof DecoderChannel) {
+                DecoderChannel dc = (DecoderChannel) decoder;
+                return dc.getSampleName(sampleIndex);
+            } else {
+                return "self";
+            }
+        } 
         public int getIndex() {return 0;}
-        public byte[] getSignature() {return dummy;}
+        public byte[] getSignature() {
+            //todo: get sample signature from decoder
+            //return dummy;
+
+            if(decoder instanceof DecoderChannel) {
+                DecoderChannel dc = (DecoderChannel) decoder;
+                return dc.getSampleSignature(sampleIndex);
+            } else {
+                return dummy;
+            }
+        }
+
+        public SelfBinding(int sampleIndex, Decoder decoder) {
+            super();
+            this.sampleIndex = sampleIndex;
+            this.decoder = decoder;
+        }
     }
 
     public interface TypeDefListener {
@@ -31,13 +59,15 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     private HashMap<Integer,TypeDef> typeDefs;
     private HashMap<Integer,Integer> typeBindings;
     private HashSet<TypeDefListener> listeners;
+    private Decoder decoder;
 
-    protected TypeDefParser() {
+    protected TypeDefParser(Decoder d) {
+        this.decoder = d;
         typeDefs = new HashMap<Integer,TypeDef>();
         typeBindings = new HashMap<Integer,Integer>();
         listeners = new HashSet<TypeDefListener>();
 
-        typeDefs.put(0, new SelfBinding());
+        //typeDefs.put(0, new SelfBinding());
     }
 
     public void addListener(TypeDefListener l) {
@@ -57,19 +87,22 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
             // e.g., by looking up the signature in the decoder
             // (how to expose that? A good option may be to
             // make this internal to the Decoder, and just expose a
-            // HierarchicalTypeDef for user code to register handlers for)
-            //td = typeDefs.get(d.getTypeIndex());
+            // Parsed{Sample,Type}Def for user code to register handlers for)
+             td = new SelfBinding(d.getSampleIndex(), decoder);
            
             //XXX this will return a SelfBinding (w/o a signature)
-            td = getTypeDefForIndex(d.getSampleIndex());
+            //td = getTypeDefForIndex(d.getSampleIndex());
         } else {
             typeBindings.put(d.getSampleIndex(), d.getTypeIndex());
             td = getTypeDefForIndex(d.getSampleIndex());
         }
         
+//TODO  ParsedSampleDef result = parseSignature(d.getSampleIndex());
+
         Iterator<TypeDefListener> it = listeners.iterator();
         while(it.hasNext()){
             it.next().onTypeDef(td);
+//TODO      it.next().onTypeDef(result);            
             //it.next().onTypeDef(typeDefs.get(d.getTypeIndex()));
         }
     }
@@ -85,7 +118,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
      */
     public static TypeDefParser registerTypeDefParser(Decoder d) throws java.io.IOException  {
 
-        TypeDefParser res = new TypeDefParser();
+        TypeDefParser res = new TypeDefParser(d);
 
         TypeDef.register(d,res);
         TypeBinding.register(d,res);
@@ -97,6 +130,19 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
 ///// parsing
 //
 //
+
+// Sketch of result types "unparsed labcomm-file"
+//   
+// 
+//   public class ParsedTypeDef{
+//     public int getIndex();
+//     public String toString(); 
+//   }
+// 
+//   public class ParsedSampleDef extends ParsedTypeDef{
+//      private HashSet<TypeDefinition> getDependencies();
+//   }
+// 
 
     private class ParserState {
         private ByteArrayInputStream bis;
@@ -164,25 +210,16 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         }
     }
 
-//    public HierarchicalTypeDef parseSignature(int typeIndex) {
+//TODO    public ParsedSampleDef parseSignature(int typeIndex) throws IOException{
     public void parseSignature(int typeIndex) throws IOException{
-//    public void parseSignature(TypeDef td) throws IOException{
 
-        //TypeDef td = getTypeDefForIndex(sampleIndex);
-
-//        byte sig[] = td.getSignature();
-
-//        ParserState s = new ParserState(sig);
         ParserState s = new ParserState(typeIndex);
 
         try {
-      //      parseType(s);
-
             while(s.moreTypes()) {
                 s.popType();
                 parseType(s);
             }
-
         } catch(java.io.EOFException ex) {
             System.out.println("EOF: self_binding");
         }
@@ -268,5 +305,3 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     }
 
 }
-
-

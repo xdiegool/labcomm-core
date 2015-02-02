@@ -51,6 +51,11 @@ public class DecoderRegistry {
       return index;
     }
 
+    // protected, for TypeDefParser...
+    byte[] getSignature() {
+        return signature;
+    }
+
     public void setIndex(int index) throws IOException {
       if (this.index != 0 && this.index != index) {
 	throw new IOException("Index mismatch " + 

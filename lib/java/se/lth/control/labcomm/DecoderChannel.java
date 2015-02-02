@@ -226,5 +226,13 @@ public class DecoderChannel implements Decoder {
 
   }
     
+  public String getSampleName(int idx) {
+    DecoderRegistry.Entry e = def_registry.get(idx); 
+    return e.getName();  
+  }
+  public byte[] getSampleSignature(int idx) {
+    DecoderRegistry.Entry e = def_registry.get(idx); 
+    return e.getSignature();  
+  }
 }
 
