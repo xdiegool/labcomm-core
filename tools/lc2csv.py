@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 
+import time
 import argparse
 import labcomm
-import subprocess
-import sys
 
 
 class Reader(object):
@@ -20,16 +19,24 @@ class Reader(object):
         pass
 
 
-class FollowingReader(object):
-    def __init__(self, file_):
-        self.tail_proc = subprocess.Popen(['tail', '-c', '+0', '-f', file_],
-                                          stdout=subprocess.PIPE)
+class FollowingReader(Reader):
+    def __init__(self, file_, interval, timeout):
+        super(FollowingReader, self).__init__(file_)
+        self._interval = interval
+        self._timeout = timeout
 
     def read(self, count):
-        return self.tail_proc.stdout.read(count)
-
-    def mark(self, value, decl):
-        pass
+        data = ''
+        t_start = time.time()
+        while len(data) < count:
+            tmp = self._file.read(count - len(data))
+            if tmp:
+                data += tmp
+            else:
+                time.sleep(self._interval)
+                if self._timeout and time.time() - t_start > self._timeout:
+                    raise EOFError()
+        return data
 
 
 def flatten(sample, _type):
@@ -87,10 +94,17 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('elc', type=str, help="The log file.")
     parser.add_argument('-f', '--follow', action='store_true',
-                        help="Find all registrations that already "
+                        help="find all registrations that already "
                         "exist, then watch the file for changes. All "
                         "future registrations are ignored (because "
                         "the header has already been written).")
+    parser.add_argument('-s', '--interval', action="store", type=float,
+                        default=0.040,
+                        help="time to sleep between failed reads. Requires -f.")
+    parser.add_argument('-t', '--timeout', action="store", type=float,
+                        help="timeout to terminate when no changes are detected. "
+                        "Requires -f.")
+
     args = parser.parse_args()
     d = labcomm.Decoder(Reader(args.elc))
     seen = {}
@@ -112,7 +126,10 @@ def main():
 
     # Do another pass to extract the data.
     current = {}
-    reader = FollowingReader(args.elc) if args.follow else Reader(args.elc)
+    if args.follow:
+        reader = FollowingReader(args.elc, args.interval, args.timeout)
+    else:
+        reader = Reader(args.elc)
     d = labcomm.Decoder(reader)
     while True:
         try:
