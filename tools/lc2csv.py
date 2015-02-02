@@ -6,8 +6,8 @@ import labcomm
 
 
 class Reader(object):
-    def __init__(self, _file):
-        self._file = open(_file)
+    def __init__(self, file_):
+        self._file = file_
 
     def read(self, count):
         data = self._file.read(count)
@@ -106,11 +106,11 @@ def main():
                         "Requires -f.")
 
     args = parser.parse_args()
-    d = labcomm.Decoder(Reader(args.elc))
     seen = {}
     current = {}
     _type = {}
-
+    file_ = open(args.elc)
+    d = labcomm.Decoder(Reader(file_))
     # Do one pass through the file to find all registrations.
     while True:
         try:
@@ -126,10 +126,11 @@ def main():
 
     # Do another pass to extract the data.
     current = {}
+    file_.seek(0)
     if args.follow:
-        reader = FollowingReader(args.elc, args.interval, args.timeout)
+        reader = FollowingReader(file_, args.interval, args.timeout)
     else:
-        reader = Reader(args.elc)
+        reader = Reader(file_)
     d = labcomm.Decoder(reader)
     while True:
         try:
