@@ -56,7 +56,7 @@ def flatten(sample, _type):
     elif isinstance(_type, labcomm.primitive):
         print "%s," % sample,
     else:
-        raise Exception("Unhandled type.")
+        raise Exception("Unhandled type. " + str(type(type_)) + " " + str(type_))
 
 
 def flatten_labels(_type, prefix=""):
@@ -76,7 +76,7 @@ def flatten_labels(_type, prefix=""):
     elif isinstance(_type, labcomm.primitive):
         print '"%s",' % prefix,
     else:
-        raise Exception("Unhandled type.")
+        raise Exception("Unhandled type. " + str(type(type_)) + " " + str(type_))
 
 
 def default(type_):
@@ -98,8 +98,10 @@ def default(type_):
     elif (isinstance(type_, labcomm.FLOAT) or
           isinstance(type_, labcomm.DOUBLE)):
         return float('NaN')
-    elif isinstance(type_, labcomm.primitive):
-        # Must be int type.
+    elif (isinstance(type_, labcomm.BYTE) or
+          isinstance(type_, labcomm.SHORT) or
+          isinstance(type_, labcomm.INTEGER) or
+          isinstance(type_, labcomm.LONG)):
         return 0
     else:
         raise Exception("Unhandled type. " + str(type(type_)) + " " + str(type_))
@@ -137,14 +139,18 @@ def main(main_args):
     parser.add_argument('-t', '--timeout', action="store", type=float,
                         help="timeout to terminate when no changes are detected. "
                         "Requires -f.")
-    parser.add_argument('-d', '--default-columns', action="store_true",
-                        help="Fill columns for which there has not come any "
-                        "data with default values. Useful for getting output "
-                        "even if not all registered types ara actually encoded.")
+    parser.add_argument('-w', '--no-default-columns', action="store_true",
+                        help="Do not fill columns for which there is no "
+                        "data with default values. Wait instead until at least "
+                        "one sample has arrived for each registration.")
+    parser.add_argument('-a', '--trigger-all', action="store_true",
+                        help="Output one line for each sample instead of for "
+                        "each sample of the registration that has arrived with "
+                        "the highest frequency.")
     args = parser.parse_args(main_args)
-    seen = {}
-    current = {}
-    type_ = {}
+    n_samples = {}         # The number of received samples for each sample reg.
+    current = {}           # The most recent sample for each sample reg.
+    type_ = {}             # The type (declaration) of each sample reg.
     file_ = open(args.elc)
     if args.follow:
         reader = FollowingReader(file_, args.interval, args.timeout)
@@ -155,26 +161,32 @@ def main(main_args):
         try:
             o, t = d.decode()
             if o is None:
-                seen[t.name] = 0
+                n_samples[t.name] = 0
                 type_[t.name] = t
             else:
+                n_samples[t.name] += 1
                 current[t.name] = o
                 break
         except EOFError:
             break
     dump_labels(type_)
-    if args.default_columns:
+    if not args.no_default_columns:
         defaults(current, type_)
+    n_rows = 0
     while True:
         try:
             o, t = d.decode()
-            if o is not None:
-                current[t.name] = o
-                if len(current) == len(type_):
-                    # TODO: Figure out what to trigger on...
-                    # Assume that samples arrive at different rates.
-                    # Trigger on everything once we have a value for
-                    # each column.
+            if o is None:
+                continue
+            current[t.name] = o
+            n_samples[t.name] += 1
+            if len(current) < len(type_):
+                continue
+            if args.trigger_all:
+                dump(current, type_)
+            else:
+                if n_samples[t.name] > n_rows:
+                    n_rows = n_samples[t.name]
                     dump(current, type_)
         except EOFError:
             break
