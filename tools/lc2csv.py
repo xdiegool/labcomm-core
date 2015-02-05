@@ -146,7 +146,10 @@ def main(main_args):
     current = {}
     type_ = {}
     file_ = open(args.elc)
-    reader = FollowingReader(file_, args.interval, args.timeout)
+    if args.follow:
+        reader = FollowingReader(file_, args.interval, args.timeout)
+    else:
+        reader = Reader(file_)
     d = labcomm.Decoder(reader)
     while True:
         try:
