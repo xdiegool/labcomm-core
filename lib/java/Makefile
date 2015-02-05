@@ -10,6 +10,7 @@ MODULES=Constant \
 	SampleDispatcher \
 	SampleHandler \
 	SampleType \
+	BuiltinType \
 	TypeDef \
 	TypeBinding \
 	TypeDefParser \
