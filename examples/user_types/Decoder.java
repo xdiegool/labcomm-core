@@ -61,8 +61,9 @@ public class Decoder
 //  }
 
   public void onTypeDef(TypeDefParser.ParsedTypeDef d) {
-    System.out.println("onTypeDef: "+d.getName()+"("+d.getIndex()+")");
-    System.out.println(d);
+    System.out.println("ontype_def: ");
+    System.out.print((d.isSampleDef()?"sample ":"typedef ")+d);
+    System.out.println(" "+d.getName()+";");
     //for(byte b: d.getSignature()) {
     //   System.out.print(Integer.toHexString(b)+" ");
     //}

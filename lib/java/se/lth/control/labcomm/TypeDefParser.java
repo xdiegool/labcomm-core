@@ -34,9 +34,6 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         } 
         public int getIndex() {return 0;}
         public byte[] getSignature() {
-            //todo: get sample signature from decoder
-            //return dummy;
-
             if(decoder instanceof DecoderChannel) {
                 DecoderChannel dc = (DecoderChannel) decoder;
                 return dc.getSampleSignature(sampleIndex);
@@ -53,7 +50,6 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     }
 
     public interface TypeDefListener {
-        //void onTypeDef(TypeDef d);
         void onTypeDef(ParsedTypeDef d);
     }
 
@@ -67,8 +63,6 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         typeDefs = new HashMap<Integer,TypeDef>();
         typeBindings = new HashMap<Integer,Integer>();
         listeners = new HashSet<TypeDefListener>();
-
-        //typeDefs.put(0, new SelfBinding());
     }
 
     public void addListener(TypeDefListener l) {
@@ -83,28 +77,17 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     public void handle_TypeBinding(TypeBinding d) throws java.io.IOException {
         //System.out.println("TDP got TypeBinding: "+d.getSampleIndex()+" --> "+d.getTypeIndex()+"");
         TypeDef td;
-        if(d.getTypeIndex() == Constant.TYPE_BIND_SELF){
-            //TODO: make the sample_def signature a TypeDef.
-            // e.g., by looking up the signature in the decoder
-            // (how to expose that? A good option may be to
-            // make this internal to the Decoder, and just expose a
-            // Parsed{Sample,Type}Def for user code to register handlers for)
+        if(d.isSelfBinding()){
              td = new SelfBinding(d.getSampleIndex(), decoder);
-           
-            //XXX this will return a SelfBinding (w/o a signature)
-            //td = getTypeDefForIndex(d.getSampleIndex());
         } else {
             typeBindings.put(d.getSampleIndex(), d.getTypeIndex());
             td = getTypeDefForIndex(d.getSampleIndex());
             //System.out.println("handleTypeBinding: td:"+td.getIndex()+"=="+td.getName());
         }
-        
-        //ParsedSampleDef result = parseSignature(d.getSampleIndex());
         ParsedSampleDef result = parseSignature(td);
 
         Iterator<TypeDefListener> it = listeners.iterator();
         while(it.hasNext()){
-            //it.next().onTypeDef(result);            
             notifyListener(it.next(), result);
         }
     }
@@ -152,23 +135,50 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     }
 
     public class PrimitiveType extends ParsedType {
-        //TODO: instead, store tag and lookup in Constant.
-        private String name;
-        public PrimitiveType(String name) {
-            this.name = name;
+        private final String name;
+        PrimitiveType(int tag) {
+            switch(tag) {
+                case Constant.BOOLEAN:
+                    this.name = "boolean";
+                    break;
+                case Constant.BYTE:
+                    this.name = "byte";
+                    break;
+                case Constant.SHORT:
+                    this.name = "short";
+                    break;
+                case Constant.INT:
+                    this.name = "int";
+                    break;
+                case Constant.LONG:
+                    this.name = "long";
+                    break;
+                case Constant.FLOAT:
+                    this.name = "float";
+                    break;
+                case Constant.DOUBLE:
+                    this.name = "double";
+                    break;
+                case Constant.STRING:
+                    this.name = "string";
+                    break;
+                default:
+                    this.name = "??? unknown tag 0x"+Integer.toHexString(tag);    
+            }
         }
 
-        public String toString() { return name;}
+        public String toString() { 
+            return name;}
     }
 
     public class StructType extends ParsedType {
         private Field fields[];
 
-        public StructType(int nFields) {
+        StructType(int nFields) {
             this.fields = new Field[nFields];
         }
 
-        public void setField(int idx, Field f) {
+        void setField(int idx, Field f) {
             fields[idx] = f;
         }
 
@@ -188,7 +198,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         private ParsedType type;
         private String name;
 
-        public Field(String name, ParsedType type) {
+        Field(String name, ParsedType type) {
             this.name = name;
             this.type = type;
         }
@@ -202,7 +212,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         private int idx[];
         private ParsedType type;
 
-        public ArrayType(int idx[], ParsedType elementType) {
+        ArrayType(int idx[], ParsedType elementType) {
             this.idx = idx;
             this.type = elementType;
         }
@@ -223,7 +233,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
             return name;
         }
 
-        public UserType(String name) {
+        UserType(String name) {
             this.name = name;
         }
     }
@@ -233,14 +243,40 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
        private String name;
        private ParsedType type;
 
-       public ParsedTypeDef(int idx, String name){
+       ParsedTypeDef(int idx, String name){
             this.idx = idx;
             this.name = name;
        }
 
-       public ParsedTypeDef(int idx, String name, ParsedType type) {
+       ParsedTypeDef(int idx, String name, ParsedType type) {
            this(idx, name);
            this.type = type;
+       }
+
+       /** To be overridden in ParsedSampleDef
+        */
+       public boolean isSampleDef() {
+           return false;
+       }
+
+       void setType(ParsedType type) {
+           this.type = type;
+       }
+
+       ParsedType getType() {
+           return type;
+       }
+
+       int getIndex() {
+           return idx;
+       }
+
+       public String getName() {
+            return name;
+       }
+
+       public String toString() {
+          return type.toString();
        }
 
        public int hashCode() {
@@ -255,40 +291,23 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
                 return other.idx == idx && other.name.equals(name);
             }
        }
-            
-            
-
-       public void setType(ParsedType type) {
-           this.type = type;
-       }
-
-       public ParsedType getType() {
-           return type;
-       }
-
-       public int getIndex() {
-           return idx;
-       }
-
-       public String getName() {
-            return name;
-       }
-
-       public String toString() {
-          return type.toString();
-       }
     }
    
     public class ParsedSampleDef extends ParsedTypeDef{
 
         private HashSet<ParsedTypeDef> deps;
-        public ParsedSampleDef(ParsedTypeDef td) {
+        ParsedSampleDef(ParsedTypeDef td) {
             super(td.getIndex(), td.getName(), td.getType());
             this.deps = new HashSet<ParsedTypeDef>();
         }
 
-        public void addDependency(ParsedTypeDef d) {
+        void addDependency(ParsedTypeDef d) {
             deps.add(d);
+        }
+
+        @Override
+        public boolean isSampleDef() {
+            return true;
         }
         private HashSet<ParsedTypeDef> getDependencies() {
             return deps;
@@ -303,7 +322,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
 
         private LinkedList<TypeDef> typeStack;
 
-        public ParsedTypeDef newTypeDef() {
+        ParsedTypeDef newTypeDef() {
             currentParsed =new ParsedTypeDef(getCurrentIndex(), getCurrentName());
             return currentParsed;
         }
@@ -312,28 +331,28 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
             typeStack = new LinkedList<TypeDef>();
         }
 
-        public ParserState(int typeIdx) {
+        ParserState(int typeIdx) {
             this();
             pushType(typeIdx);
         }
          
-        public ParserState(TypeDef td) {
+        ParserState(TypeDef td) {
             this();
             pushType(td);
         }
          
-        public ParserState(byte sig[]) {
+        ParserState(byte sig[]) {
             this();
             bis= new ByteArrayInputStream(sig);
             in = new DataInputStream(bis);
         }
 
-        public void pushType(TypeDef td) {
+        void pushType(TypeDef td) {
             if(!typeStack.contains(td)) {
                 typeStack.push(td);
             }
         }
-        public void pushType(int typeIdx) {
+        void pushType(int typeIdx) {
             if(typeIdx >= 0x40 && !typeStack.contains(typeIdx)) {
                 //typeStack.push(typeIdx);
                 typeStack.push(typeDefs.get(typeIdx));
@@ -342,7 +361,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
             }
         }
 
-        public void popType() {
+        void popType() {
             //int tid = typeStack.pop();
             //TypeDef td2 = typeDefs.get(tid);
             TypeDef td2 = typeStack.pop();
@@ -356,19 +375,19 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
             in = new DataInputStream(bis);
         }
 
-        public boolean moreTypes() {
+        boolean moreTypes() {
             return !typeStack.isEmpty();
         }
 
-        public int getCurrentIndex() {
+        int getCurrentIndex() {
             return current.getIndex();
         }
 
-        public String getCurrentName() {
+        String getCurrentName() {
             return current.getName();
         }
 
-        public String decodeString() throws IOException {
+        String decodeString() throws IOException {
             int len = decodePacked32() & 0xffffffff;
             byte[] chars = new byte[len];
             for(int i=0; i<len; i++) {
@@ -377,7 +396,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
             return new String(chars);
         }
 
-        public int decodePacked32() throws IOException {
+        int decodePacked32() throws IOException {
             long res=0;
             byte i=0;
             boolean cont=true;
@@ -396,7 +415,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     public ParsedSampleDef parseSignature(TypeDef td) throws IOException{
 //    public void parseSignature(int typeIndex) throws IOException{
 
-        int typeIndex = td.getIndex();
+        //int typeIndex = td.getIndex();
         //System.out.println("parseSignature :"+td);
         //ParserState s = new ParserState(typeIndex);
         ParserState s = new ParserState(td);
@@ -447,39 +466,13 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     }
 
     private ParsedType lookupType(int tag, ParserState in) {
-        ParsedType result = null;
-        switch(tag) {
-            case Constant.BOOLEAN:
-                result = new PrimitiveType("boolean");
-                break;
-            case Constant.BYTE:
-                result = new PrimitiveType("byte");
-                break;
-            case Constant.SHORT:
-                result = new PrimitiveType("short");
-                break;
-            case Constant.INT:
-                result = new PrimitiveType("int");
-                break;
-            case Constant.LONG:
-                result = new PrimitiveType("long");
-                break;
-            case Constant.FLOAT:
-                result = new PrimitiveType("float");
-                break;
-            case Constant.DOUBLE:
-                result = new PrimitiveType("double");
-                break;
-            case Constant.STRING:
-                result = new PrimitiveType("string");
-                break;
-            default:
-                {
-                    TypeDef td = typeDefs.get(tag);
-                    result = new UserType(td.getName());
-                }
+        ParsedType result;
+        if(tag >= Constant.FIRST_USER_INDEX) {
+                TypeDef td = typeDefs.get(tag);
+                result = new UserType(td.getName());
                 in.pushType(tag);
-                break;
+        } else {
+                result = new PrimitiveType(tag);
         }
         return result;
     }
@@ -512,5 +505,4 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         }    
         return result;
     }
-
 }

@@ -8,9 +8,14 @@ import se.lth.control.labcomm.DecoderChannel;
 import se.lth.control.labcomm.SampleDispatcher;
 import se.lth.control.labcomm.SampleHandler;
 
-public class TypeBinding implements SampleType {
+public class TypeBinding implements BuiltinType {
     private int sampleIndex;
     private int typeIndex;
+
+  public TypeBinding(int sampleIndex, int typeIndex) {
+      this.sampleIndex = sampleIndex;
+      this.typeIndex = typeIndex;
+  }
 
   public int getSampleIndex() {
     return sampleIndex;
@@ -20,9 +25,8 @@ public class TypeBinding implements SampleType {
     return typeIndex;
   }
 
-  public TypeBinding(int sampleIndex, int typeIndex) {
-      this.sampleIndex = sampleIndex;
-      this.typeIndex = typeIndex;
+  public boolean isSelfBinding() {
+      return typeIndex == Constant.TYPE_BIND_SELF;
   }
 
   public interface Handler extends SampleHandler {
@@ -69,7 +73,6 @@ public class TypeBinding implements SampleType {
       throw new Error("Should not be called");
     }
 
-    /** return the flat signature. Intended use is on decoder side */
     public byte[] getSignature() {
       return null; // not used for matching
     }
@@ -77,10 +80,6 @@ public class TypeBinding implements SampleType {
     public void encodeTypeDef(Encoder e, int index) throws IOException{
       throw new Error("Should not be called");
     }
-
-//    public boolean canDecodeAndHandle() {
-//      return true;
-//    }
 
     public void decodeAndHandle(Decoder d,
                                 SampleHandler h) throws Exception {

@@ -8,7 +8,7 @@ import se.lth.control.labcomm.DecoderChannel;
 import se.lth.control.labcomm.SampleDispatcher;
 import se.lth.control.labcomm.SampleHandler;
 
-public class TypeDef implements SampleType {
+public class TypeDef implements BuiltinType {
     private int index;
     private String name;
     private byte signature[];
