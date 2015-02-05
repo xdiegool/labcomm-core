@@ -173,7 +173,9 @@ static int decoder_skip(struct labcomm_decoder *d, int len, int tag)
   printf("got tag 0x%x, skipping %d bytes\n", tag, len);
 #endif
   for(i = 0; i <len; i++){
+#ifdef LABCOMM_DECODER_DEBUG
     fprintf(stderr,".");
+#endif
     labcomm_read_byte(d->reader);
     if (d->reader->error < 0) {
 #ifdef LABCOMM_DECODER_DEBUG
