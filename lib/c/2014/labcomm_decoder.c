@@ -169,16 +169,22 @@ static int handle_sample_ref(struct labcomm_decoder *d, int remote_index,
 static int decoder_skip(struct labcomm_decoder *d, int len, int tag)
 {
   int i;
+#ifdef LABCOMM_DECODER_DEBUG
   printf("got tag 0x%x, skipping %d bytes\n", tag, len);
+#endif
   for(i = 0; i <len; i++){
     fprintf(stderr,".");
     labcomm_read_byte(d->reader);
     if (d->reader->error < 0) {
+#ifdef LABCOMM_DECODER_DEBUG
       fprintf(stderr, "\nerror while skipping: %d\n",  d->reader->error);
+#endif
       return d->reader->error;
     }
   }
+#ifdef LABCOMM_DECODER_DEBUG
   fprintf(stderr, "\n");
+#endif
   return tag;
 }
 
@@ -196,7 +202,9 @@ static int decode_type_binding(struct labcomm_decoder *d, int kind)
       result =  d->reader->error;
       goto out;
   }
+#ifdef LABCOMM_DECODER_DEBUG
   printf("type_binding: 0x%x -> 0x%x\n", sample_index, type_def_index);
+#endif
 out:
   return result;
 } 
@@ -439,7 +447,9 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
     }  
     labcomm_memory_free(d->memory, 1,  version);
   } else if (! d->version_ok) {
+#ifdef LABCOMM_DECODER_DEBUG
     fprintf(stderr, "No VERSION %d %d\n", remote_index, length);
+#endif
     result = -ECONNRESET;
   } else if (remote_index == LABCOMM_SAMPLE_DEF) {
     result = decode_sample_def_or_ref(d, LABCOMM_SAMPLE_DEF); 
@@ -468,7 +478,9 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
   } else if (remote_index == LABCOMM_PRAGMA) {
     result = decode_pragma(d, d, length);
   } else if (remote_index < LABCOMM_USER) {
+#ifdef LABCOMM_DECODER_DEBUG
     fprintf(stderr, "SKIP %d %d\n", remote_index, length);
+#endif
     result = decoder_skip(d, length, remote_index);
   } else {
     result = decode_and_handle(d, d, remote_index);
