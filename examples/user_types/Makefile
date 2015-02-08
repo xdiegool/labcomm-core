@@ -1,10 +1,11 @@
 LCDIR=../..
-LCCJAR=${LCDIR}/compiler/labcomm2014_compiler.jar  # the LabComm compiler
-LCLJAR=${LCDIR}/lib/java/labcomm2014.jar  # the LabComm library
+LCCJAR=${LCDIR}/compiler/labcomm2014_compiler.jar# the LabComm compiler
+LCLJAR=${LCDIR}/lib/java/labcomm2014.jar# the LabComm library
 
 EXECUTABLES=example_encoder example_decoder \
-	    Encoder.class Decoder.class \
+	    Encoder.class Decoder.class TDDecoder.class \
 	    ExampleEncoder.exe ExampleDecoder.exe
+
 include ${LCDIR}/lib/c/os_compat.mk
 
 GENDIR=gen
@@ -49,6 +50,7 @@ build :
 	java -jar ${LCDIR}/compiler/labcomm_compiler.jar --java=${GENDIR} --c=${GENDIR}/test.c --h=${GENDIR}/test.h  --python=${GENDIR}/test.py --cs=${GENDIR}/test.cs test.lc 
 
 	javac -cp ${LCDIR}/lib/java/labcomm2014.jar:. ${GENDIR}/*.java Encoder.java Decoder.java
+	javac -cp ${LCDIR}/lib/java/labcomm2014.jar:${LCCJAR}:${GENDIR}:. TDDecoder.java
 
 	${CC} ${CFLAGS} ${LDFLAGS} -Wall -Werror -Wno-unused-function \
 	    -I. -I${LCDIR}/lib/c/2014 -L${LCDIR}/lib/c \
@@ -69,6 +71,9 @@ run:
 	@echo
 
 	@java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${GENDIR} Encoder encoded_data_j
+
+	@echo "************ running Java  TypeDefdecoder: *****************"
+	java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${LCCJAR}:${GENDIR} TDDecoder encoded_data_j
 
 	@echo "************ running Java  decoder: *****************"
 	@java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${GENDIR} Decoder encoded_data_j

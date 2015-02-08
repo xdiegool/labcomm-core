@@ -13,6 +13,7 @@ MODULES=Constant \
 	BuiltinType \
 	TypeDef \
 	TypeBinding \
+	TypeDefVisitor \
 	TypeDefParser \
 	Writer \
 	WriterWrapper
@@ -35,7 +36,7 @@ gen:
 	mkdir gen
 
 gen/JAVAC: $(MODULES:%=se/lth/control/labcomm/%.java) $(MODULES:%=se/lth/control/labcomm2006/%.java) Makefile | gen
-	javac -d gen $(filter %.java, $^)
+	javac -cp ../../compiler/labcomm_compiler.jar -d gen $(filter %.java, $^) 
 	touch $@
 
 

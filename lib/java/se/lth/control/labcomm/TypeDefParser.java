@@ -15,6 +15,34 @@ import se.lth.control.labcomm.DecoderChannel;
 import se.lth.control.labcomm.TypeDef;
 import se.lth.control.labcomm.TypeBinding;
 
+// for BinaryScanner
+
+// import beaver.Scanner;
+// import beaver.Symbol;
+// import se.lth.control.labcomm2014.compiler.LabComm;
+// import se.lth.control.labcomm2014.compiler.LabCommParser;
+// 
+// import se.lth.control.labcomm2014.compiler.List;
+// import se.lth.control.labcomm2014.compiler.Program;
+// import se.lth.control.labcomm2014.compiler.Decl;
+// import se.lth.control.labcomm2014.compiler.TypeDecl;
+// import se.lth.control.labcomm2014.compiler.SampleDecl;
+// import se.lth.control.labcomm2014.compiler.Type;
+// //import se.lth.control.labcomm2014.compiler.VoidType;
+// //import se.lth.control.labcomm2014.compiler.SampleRefType;
+// import se.lth.control.labcomm2014.compiler.PrimType;
+// import se.lth.control.labcomm2014.compiler.UserType;
+// import se.lth.control.labcomm2014.compiler.StructType;
+// import se.lth.control.labcomm2014.compiler.Field;
+// import se.lth.control.labcomm2014.compiler.ArrayType;
+// import se.lth.control.labcomm2014.compiler.VariableArrayType;
+// import se.lth.control.labcomm2014.compiler.FixedArrayType;
+// import se.lth.control.labcomm2014.compiler.Dim;
+// import se.lth.control.labcomm2014.compiler.Exp;
+// import se.lth.control.labcomm2014.compiler.IntegerLiteral;
+// import se.lth.control.labcomm2014.compiler.VariableSize;
+// 
+////////////
 
 public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
 
@@ -56,6 +84,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     private HashMap<Integer,TypeDef> typeDefs;
     private HashMap<Integer,Integer> typeBindings;
     private HashSet<TypeDefListener> listeners;
+    private LinkedList<ParsedSampleDef> sampleDefs;
     private Decoder decoder;
 
     protected TypeDefParser(Decoder d) {
@@ -63,10 +92,16 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         typeDefs = new HashMap<Integer,TypeDef>();
         typeBindings = new HashMap<Integer,Integer>();
         listeners = new HashSet<TypeDefListener>();
+        sampleDefs = new LinkedList<ParsedSampleDef>();
     }
 
     public void addListener(TypeDefListener l) {
         listeners.add(l);
+    }
+
+
+    public Iterator<ParsedSampleDef> sampleDefIterator() {
+        return sampleDefs.iterator();
     }
 
     public void handle_TypeDef(TypeDef d) throws java.io.IOException {
@@ -83,8 +118,13 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
             typeBindings.put(d.getSampleIndex(), d.getTypeIndex());
             td = getTypeDefForIndex(d.getSampleIndex());
             //System.out.println("handleTypeBinding: td:"+td.getIndex()+"=="+td.getName());
+            //System.out.println("++++++++++++++++++++++++");
+            //System.out.println(symbolString());
+            //System.out.println("++++++++++++++++++++++++");
         }
         ParsedSampleDef result = parseSignature(td);
+
+        sampleDefs.add(result);
 
         Iterator<TypeDefListener> it = listeners.iterator();
         while(it.hasNext()){
@@ -131,12 +171,105 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
 // Sketch of result types "unparsed labcomm-file"
 //   
 // 
-    public abstract class ParsedType{
+
+    public LinkedList<ParsedSymbol> symbolify() {
+
+        LinkedList<ParsedSymbol> result = new LinkedList<ParsedSymbol>();
+
+        Iterator<ParsedSampleDef> sdi = sampleDefIterator();
+
+        while(sdi.hasNext()) {
+            ParsedSampleDef sd = sdi.next();
+            result.add(new SampleSymbol());
+            result.add(sd.getType());
+            result.add(new NameSymbol(sd.getName()));
+
+            Iterator<ParsedTypeDef> di = sd.getDepIterator();        
+            while(di.hasNext()) {
+                ParsedTypeDef d = di.next();
+                result.add(new TypeSymbol());
+                result.add(d.getType());
+                result.add(new NameSymbol(d.getName()));
+            }
+        }
+        return result;
+    }
+
+    public String symbolString() {
+        Iterator<ParsedSymbol> i = symbolify().iterator();
+
+        StringBuilder sb = new StringBuilder();
+
+        while(i.hasNext()) {
+            sb.append(i.next().toString());
+        }
+        return sb.toString();
+    }
+
+    public interface ParsedSymbolVisitor {
+        void visit(TypeSymbol s);
+        void visit(SampleSymbol s);
+        void visit(NameSymbol s);
+        void visit(PrimitiveType t);
+        void visit(ParsedStructType t);
+        void visit(ParsedField t);
+        void visit(ArrayType t);
+        void visit(ParsedUserType t);
+    }
+    public abstract class ParsedSymbol{
+        public abstract void accept(ParsedSymbolVisitor v);
+    }
+
+    public class TypeSymbol extends ParsedSymbol {
+        public String toString() {
+            return "typedef ";
+        }
+        public void accept(ParsedSymbolVisitor v){
+            v.visit(this);
+        }
+    }
+
+    public class SampleSymbol extends ParsedSymbol {
+        public String toString() {
+            return "sample ";
+        }
+        public void accept(ParsedSymbolVisitor v){
+            v.visit(this);
+        }
+    }
+
+    public class NameSymbol extends ParsedSymbol {
+        private String name;
+
+        public NameSymbol(String name) {
+            this.name = name;
+        }
+
+        public String toString() { 
+            return name;
+        }
+        public void accept(ParsedSymbolVisitor v){
+            v.visit(this);
+        }
+    }
+
+    public abstract class ParsedType extends ParsedSymbol{
+        //public abstract Type makeNode();
     }
 
     public class PrimitiveType extends ParsedType {
         private final String name;
+        private int tag;
+
+        String getName() {
+            return name;
+        }
+
+        int getTag() {
+            return tag;
+        }
         PrimitiveType(int tag) {
+            this.tag = tag;
             switch(tag) {
                 case Constant.BOOLEAN:
                     this.name = "boolean";
@@ -167,44 +300,68 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
             }
         }
 
+        public void accept(ParsedSymbolVisitor v) {
+            v.visit(this);
+        }
+
         public String toString() { 
             return name;}
     }
 
-    public class StructType extends ParsedType {
-        private Field fields[];
+    public class ParsedStructType extends ParsedType {
+        private ParsedField fields[];
 
-        StructType(int nFields) {
-            this.fields = new Field[nFields];
+        ParsedStructType(int nParsedFields) {
+            this.fields = new ParsedField[nParsedFields];
         }
 
-        void setField(int idx, Field f) {
+        public ParsedField[] getFields() {
+            return fields;
+        }
+
+        void setParsedField(int idx, ParsedField f) {
             fields[idx] = f;
         }
 
         public String toString() {
             StringBuilder sb = new StringBuilder();
             sb.append("struct {\n");
-            for(Field f : fields) {
+            for(ParsedField f : fields) {
                 sb.append(f.toString());
                 sb.append(";\n");        
             }
             sb.append("}");
             return sb.toString();
         }
+
+        public void accept(ParsedSymbolVisitor v) {
+            v.visit(this);
+        }
     }
 
-    public class Field {
+    public class ParsedField extends ParsedSymbol{
         private ParsedType type;
         private String name;
 
-        Field(String name, ParsedType type) {
+        ParsedField(String name, ParsedType type) {
             this.name = name;
             this.type = type;
         }
 
+        public ParsedType getType() {
+            return type;
+        }
+
+        public String getName() {
+            return name;
+        }
+
         public String toString() {
             return type.toString() + " " + name;
+        }
+
+        public void accept(ParsedSymbolVisitor v) {
+            v.visit(this);
         }
     }
 
@@ -217,6 +374,14 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
             this.type = elementType;
         }
 
+        public ParsedType getType() {
+            return type;
+        }
+
+        public int[] getIdx() {
+            return idx;
+        }
+
         public String toString() {
             StringBuilder sb = new StringBuilder();
             sb.append(type.toString());
@@ -225,16 +390,28 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
             }
             return sb.toString();
         }
+
+        public void accept(ParsedSymbolVisitor v) {
+            v.visit(this);
+        }
     }
 
-    public class UserType extends ParsedType {
+    public class ParsedUserType extends ParsedType {
         private String name;
+        public String getName() {
+            return name;
+        }
+
         public String toString() {
             return name;
         }
 
-        UserType(String name) {
+        ParsedUserType(String name) {
             this.name = name;
+        }
+
+        public void accept(ParsedSymbolVisitor v) {
+            v.visit(this);
         }
     }
 
@@ -291,6 +468,10 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
                 return other.idx == idx && other.name.equals(name);
             }
        }
+
+       public void accept(ParsedSymbolVisitor v) {
+            type.accept(v);
+       }
     }
    
     public class ParsedSampleDef extends ParsedTypeDef{
@@ -312,6 +493,10 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         private HashSet<ParsedTypeDef> getDependencies() {
             return deps;
         }
+
+        Iterator<ParsedTypeDef> getDepIterator() {
+            return deps.iterator();
+        }        
     }
 
     private class ParserState {
@@ -450,26 +635,26 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         return result;
     }
 
-    private StructType parseStruct(ParserState in) throws IOException {
+    private ParsedStructType parseStruct(ParserState in) throws IOException {
         //System.out.println("struct");
-        int numFields = in.decodePacked32();
-        StructType result = new StructType(numFields);
-        for(int i=0; i<numFields; i++) {
-            result.setField(i, parseField(in));
+        int numParsedFields = in.decodePacked32();
+        ParsedStructType result = new ParsedStructType(numParsedFields);
+        for(int i=0; i<numParsedFields; i++) {
+            result.setParsedField(i, parseParsedField(in));
         }
         return result;
     }
 
-    private Field parseField(ParserState in) throws IOException {
+    private ParsedField parseParsedField(ParserState in) throws IOException {
         String name = in.decodeString();
-        return new Field(name, parseType(in));
+        return new ParsedField(name, parseType(in));
     }
 
     private ParsedType lookupType(int tag, ParserState in) {
         ParsedType result;
         if(tag >= Constant.FIRST_USER_INDEX) {
                 TypeDef td = typeDefs.get(tag);
-                result = new UserType(td.getName());
+                result = new ParsedUserType(td.getName());
                 in.pushType(tag);
         } else {
                 result = new PrimitiveType(tag);
