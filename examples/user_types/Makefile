@@ -10,7 +10,7 @@ include ${LCDIR}/lib/c/os_compat.mk
 
 GENDIR=gen
 
-.PHONY: all cleanbuild clean distclean build run allall buildcs runwcs
+.PHONY: all cleanbuild clean distclean build run allall buildcs runwcs runjastadd
 
 all: cleanbuild run
 
@@ -71,9 +71,6 @@ run:
 	@echo
 
 	@java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${GENDIR} Encoder encoded_data_j
-
-	@echo "************ running Java  TypeDefdecoder: *****************"
-	java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${LCCJAR}:${GENDIR} TDDecoder encoded_data_j
 
 	@echo "************ running Java  decoder: *****************"
 	@java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${GENDIR} Decoder encoded_data_j
@@ -174,6 +171,17 @@ runwcs: build ExampleEncoder.exe ExampleDecoder.exe
 	@echo "************ running C# decoder: *****************"
 	@mono ./ExampleDecoder.exe encoded_data_cs
 
+runjastadd: cleanbuild
+	@echo
+	@echo "********************************************"
+	@echo "***   ************ running example with JastAdd unparsing  ***"
+	@echo "********************************************"
+	@echo
+
+	@java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${GENDIR} Encoder encoded_data_j
+
+	@echo "************ running Java  TypeDefdecoder: *****************"
+	java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${LCCJAR}:${GENDIR} TDDecoder encoded_data_j
 
 
 clean:
