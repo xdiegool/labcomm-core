@@ -211,6 +211,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         void visit(SampleSymbol s);
         void visit(NameSymbol s);
         void visit(PrimitiveType t);
+        void visit(SampleRefType t);
         void visit(ParsedStructType t);
         void visit(ParsedField t);
         void visit(ArrayType t);
@@ -255,6 +256,15 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
 
     public abstract class ParsedType extends ParsedSymbol{
         //public abstract Type makeNode();
+    }
+
+    public class SampleRefType extends ParsedType {
+        public void accept(ParsedSymbolVisitor v) {
+            v.visit(this);
+        }
+
+        public String toString() { 
+            return "sample";}
     }
 
     public class PrimitiveType extends ParsedType {
@@ -323,15 +333,23 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
             fields[idx] = f;
         }
 
+        public boolean isVoid() {
+            return fields.length == 0;
+        }
+
         public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("struct {\n");
-            for(ParsedField f : fields) {
-                sb.append(f.toString());
-                sb.append(";\n");        
+            if(isVoid()) { //HERE BE DRAGONS: void type is empty struct
+                return "void";
+            } else {
+                StringBuilder sb = new StringBuilder();
+                sb.append("struct {\n");
+                for(ParsedField f : fields) {
+                    sb.append(f.toString());
+                    sb.append(";\n");        
+                }
+                sb.append("}");
+                return sb.toString();
             }
-            sb.append("}");
-            return sb.toString();
         }
 
         public void accept(ParsedSymbolVisitor v) {
@@ -656,6 +674,8 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
                 TypeDef td = typeDefs.get(tag);
                 result = new ParsedUserType(td.getName());
                 in.pushType(tag);
+        } else if(tag == Constant.SAMPLE) {
+                result = new SampleRefType();       
         } else {
                 result = new PrimitiveType(tag);
         }

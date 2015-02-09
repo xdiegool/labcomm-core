@@ -16,12 +16,14 @@ public class Encoder
     throws Exception 
   {
     encoder = new EncoderChannel(out);
+    doavoid.register(encoder);
     theTwoInts.register(encoder);
     IntString.register(encoder);
     TwoArrays.register(encoder);
   }
 
   public void doEncode() throws java.io.IOException {
+
     TwoInts x = new TwoInts();
     x.a = 17;
     x.b = 42;
@@ -34,6 +36,9 @@ public class Encoder
     ta.fixed = new int[] {14, 25};
 //    ta.variable = new int[][] {{1,2},{0x11,0x12},{0x21,0x22},{0x31,0x32}};
     ta.variable = new int[][] {{1,2, 3, 4},{0x21,0x22,0x23,0x24}};
+
+    System.out.println("Encoding doavoid");
+    doavoid.encode(encoder);
 
     System.out.println("Encoding theTwoInts, a="+x.a+", b="+x.b);
     theTwoInts.encode(encoder, x);

@@ -26,8 +26,8 @@ import se.lth.control.labcomm2014.compiler.Decl;
 import se.lth.control.labcomm2014.compiler.TypeDecl;
 import se.lth.control.labcomm2014.compiler.SampleDecl;
 import se.lth.control.labcomm2014.compiler.Type;
-//import se.lth.control.labcomm2014.compiler.VoidType;
-//import se.lth.control.labcomm2014.compiler.SampleRefType;
+import se.lth.control.labcomm2014.compiler.VoidType;
+import se.lth.control.labcomm2014.compiler.SampleRefType;
 import se.lth.control.labcomm2014.compiler.PrimType;
 import se.lth.control.labcomm2014.compiler.UserType;
 import se.lth.control.labcomm2014.compiler.StructType;
@@ -70,13 +70,22 @@ public class TypeDefVisitor implements TypeDefParser.ParsedSymbolVisitor {
         public void visit(TypeDefParser.PrimitiveType t){
             typeStack.push(new PrimType(t.getName(), t.getTag()));
         }
+
+        public void visit(TypeDefParser.SampleRefType t){
+            typeStack.push(new SampleRefType());
+        }
+
         public void visit(TypeDefParser.ParsedStructType t){
-            List<Field> tmpF = new List<Field>();
-            for( TypeDefParser.ParsedField f : t.getFields()) {
-                f.accept(this);
-                tmpF.add(fieldStack.pop());
+            if(t.isVoid()) {
+                typeStack.push(new VoidType());
+            } else {
+                List<Field> tmpF = new List<Field>();
+                for( TypeDefParser.ParsedField f : t.getFields()) {
+                    f.accept(this);
+                    tmpF.add(fieldStack.pop());
+                }
+                typeStack.push(new StructType(tmpF));
             }
-            typeStack.push(new StructType(tmpF));
         }
         public void visit(TypeDefParser.ParsedField t){
             t.getType().accept(this);
