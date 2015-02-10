@@ -169,6 +169,22 @@ language covering most common use-cases.
   sample string a_string;
 \end{verbatim}
 
+\subsection{The void type}
+
+There is a type, \verb+void+, which can be used to send
+a sample that contains no data. 
+
+\begin{verbatim}
+typedef void an_empty_type;
+
+sample an_empty_type no_data1;
+sample void no_data2;
+\end{verbatim}
+
+\verb+void+ type can may not be used as a field in a struct or
+the element type of an array.
+
+
 \subsection{Arrays}
 
 \begin{verbatim}
@@ -198,7 +214,46 @@ only arrays of arrays.
   } a_struct;
 \end{verbatim}
 
-\section{User defined types}
+\subsection{Sample type refereces}
+
+In addition to the primitive types, a sample may contain
+a reference to a sample type. References are declared using
+the \verb+sample+ keyword.
+
+Examples:
+
+\begin{verbatim}
+sample sample a_ref;
+
+sample sample ref_list[4];
+
+sample struct { 
+    sample ref1;
+    sample ref2;
+    int x;
+    int y;
+} refs_and_ints;
+\end{verbatim}
+
+Sample references are need to be registered on both encoder and decoder
+side, using the functions
+
+\begin{verbatim}
+int labcomm_decoder_sample_ref_register(
+    struct labcomm_decoder *decoder\nonumber
+    const struct labcomm_signature *signature);
+
+int labcomm_encoder_sample_ref_register(
+    struct labcomm_encoder *encoder\nonumber
+    const struct labcomm_signature *signature);
+\end{verbatim}
+
+The value of an unregistered sample reference will be decoded as \verb+null+.
+
+\subsection{User defined types}
+
+User defined types are declared with the \verb+typedef+ reserved word,
+and can then be used in type and sample declarations.
 
 \begin{verbatim}
   typedef struct {
