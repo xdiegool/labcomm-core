@@ -4,6 +4,9 @@ typedef struct {
 
 typedef int anInt;
 
+typedef void avoid;
+sample avoid doavoid;
+
 typedef struct {
   coord x;
   coord y;

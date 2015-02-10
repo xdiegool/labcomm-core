@@ -8,6 +8,10 @@
 #include "gen/test.h"
 #include <stdio.h>
 
+static void handle_test_doavoid(test_doavoid *v,void *context) {
+  printf("Got a void.\n"); 
+}
+
 static void handle_test_twoInts(test_twoInts *v,void *context) {
   printf("Got twoInts. (%d,%d) \n", v->a, v->b); 
 }
@@ -53,6 +57,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
+  labcomm_decoder_register_test_doavoid(decoder, handle_test_doavoid, context);
   labcomm_decoder_register_test_twoInts(decoder, handle_test_twoInts, context);
   labcomm_decoder_register_test_theFirstInt(decoder, handle_test_theFirstInt, context);
   labcomm_decoder_register_test_theSecondInt(decoder, handle_test_theSecondInt, context);

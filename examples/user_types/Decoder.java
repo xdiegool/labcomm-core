@@ -15,7 +15,8 @@ public class Decoder
              TypeDefParser.TypeDefListener,
              twoInts.Handler,
              theFirstInt.Handler,
-             theSecondInt.Handler
+             theSecondInt.Handler,
+             doavoid.Handler
 {
 
   private DecoderChannel decoder;
@@ -25,6 +26,7 @@ public class Decoder
     throws Exception 
   {
     decoder = new DecoderChannel(in);
+    doavoid.register(decoder, this);
     twoInts.register(decoder, this);
     twoLines.register(decoder, this);
     theFirstInt.register(decoder, this);
@@ -71,6 +73,10 @@ public class Decoder
     //try {
     //   tdp.parseSignature(d.getIndex());
     //} catch(IOException ex) { ex.printStackTrace();}   
+  }
+
+  public void handle_doavoid() throws java.io.IOException {
+    System.out.println("Got a void.");
   }
 
   public void handle_twoInts(twoInts d) throws java.io.IOException {

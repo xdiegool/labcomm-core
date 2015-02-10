@@ -25,7 +25,8 @@ public class TDDecoder
              TypeDefParser.TypeDefListener,
              twoInts.Handler,
              theFirstInt.Handler,
-             theSecondInt.Handler
+             theSecondInt.Handler,
+             doavoid.Handler
 {
 
   private DecoderChannel decoder;
@@ -39,6 +40,7 @@ public class TDDecoder
     twoLines.register(decoder, this);
     theFirstInt.register(decoder, this);
     theSecondInt.register(decoder, this);
+    doavoid.register(decoder, this);
     this.tdp = TypeDefParser.registerTypeDefParser(decoder); 
  //   TypeDef.register(decoder, this);
  //   TypeBinding.register(decoder, this);
@@ -117,6 +119,10 @@ public class TDDecoder
 
   public void handle_theSecondInt(int d) throws java.io.IOException {
     System.out.println("Got theSecondInt: "+d);
+  }
+
+  public void handle_doavoid() throws java.io.IOException {
+    System.out.println("Got a void.");
   }
 
   public void handle_twoLines(twoLines d) throws java.io.IOException {

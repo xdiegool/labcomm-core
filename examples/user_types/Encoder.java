@@ -16,6 +16,7 @@ public class Encoder
     throws Exception 
   {
     encoder = new EncoderChannel(out);
+    doavoid.register(encoder);
     twoInts.register(encoder);
     twoLines.register(encoder);
     theFirstInt.register(encoder);
@@ -27,6 +28,9 @@ public class Encoder
     ti.a = 12;
     ti.b = 21;
 
+    System.out.println("Encoding doavoid");
+    doavoid.encode(encoder);
+      
     System.out.println("Encoding twoInts");
     twoInts.encode(encoder, ti);
       

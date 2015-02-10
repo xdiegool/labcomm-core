@@ -10,7 +10,8 @@ namespace user_types
     class Decoder : twoLines.Handler, 
                     twoInts.Handler, 
                     theFirstInt.Handler, 
-                    theSecondInt.Handler
+                    theSecondInt.Handler,
+                    doavoid.Handler
     {
         DecoderChannel dec;
 
@@ -21,6 +22,7 @@ namespace user_types
             twoInts.register(dec, this);
             theFirstInt.register(dec, this);
             theSecondInt.register(dec, this);
+            doavoid.register(dec, this);
             try
             {
                 Console.WriteLine("Running decoder.");
@@ -62,6 +64,11 @@ namespace user_types
         void theSecondInt.Handler.handle(int d)
         {
             Console.WriteLine("Got theSecondInt: "+d);
+        }
+
+        void doavoid.Handler.handle()
+        {
+            Console.WriteLine("Got a void.");
         }
 
         static void Main(string[] args)
