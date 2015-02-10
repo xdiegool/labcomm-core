@@ -15,35 +15,6 @@ import se.lth.control.labcomm.DecoderChannel;
 import se.lth.control.labcomm.TypeDef;
 import se.lth.control.labcomm.TypeBinding;
 
-// for BinaryScanner
-
-// import beaver.Scanner;
-// import beaver.Symbol;
-// import se.lth.control.labcomm2014.compiler.LabComm;
-// import se.lth.control.labcomm2014.compiler.LabCommParser;
-// 
-// import se.lth.control.labcomm2014.compiler.List;
-// import se.lth.control.labcomm2014.compiler.Program;
-// import se.lth.control.labcomm2014.compiler.Decl;
-// import se.lth.control.labcomm2014.compiler.TypeDecl;
-// import se.lth.control.labcomm2014.compiler.SampleDecl;
-// import se.lth.control.labcomm2014.compiler.Type;
-// //import se.lth.control.labcomm2014.compiler.VoidType;
-// //import se.lth.control.labcomm2014.compiler.SampleRefType;
-// import se.lth.control.labcomm2014.compiler.PrimType;
-// import se.lth.control.labcomm2014.compiler.UserType;
-// import se.lth.control.labcomm2014.compiler.StructType;
-// import se.lth.control.labcomm2014.compiler.Field;
-// import se.lth.control.labcomm2014.compiler.ArrayType;
-// import se.lth.control.labcomm2014.compiler.VariableArrayType;
-// import se.lth.control.labcomm2014.compiler.FixedArrayType;
-// import se.lth.control.labcomm2014.compiler.Dim;
-// import se.lth.control.labcomm2014.compiler.Exp;
-// import se.lth.control.labcomm2014.compiler.IntegerLiteral;
-// import se.lth.control.labcomm2014.compiler.VariableSize;
-// 
-////////////
-
 public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
 
     static class SelfBinding extends TypeDef {
@@ -144,13 +115,15 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         }
     }
 
-    //* temporary testing method */
-    public TypeDef getTypeDefForIndex(int sampleIndex) {
+    private TypeDef getTypeDefForIndex(int sampleIndex) {
         return typeDefs.get(typeBindings.get(sampleIndex));
     }
 
 
-    /** Factory method
+    /** Factory method for use by application programs:
+     *  registers a TypeDefParser for handling TypeDef and TypeBinding
+     *  on the Decoder d.
+     *
      *  @return a new TypeDefParser registered on d
      */
     public static TypeDefParser registerTypeDefParser(Decoder d) throws java.io.IOException  {
@@ -165,12 +138,6 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
 
 
 ///// parsing
-//
-//
-
-// Sketch of result types "unparsed labcomm-file"
-//   
-// 
 
     public LinkedList<ParsedSymbol> symbolify() {
 
@@ -206,6 +173,9 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         return sb.toString();
     }
 
+    /* An interface for using Visitor pattern to traverse 
+     * ParsedTypeDefs
+     */
     public interface ParsedSymbolVisitor {
         void visit(TypeSymbol s);
         void visit(SampleSymbol s);
@@ -255,7 +225,6 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     }
 
     public abstract class ParsedType extends ParsedSymbol{
-        //public abstract Type makeNode();
     }
 
     public class SampleRefType extends ParsedType {
@@ -338,7 +307,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         }
 
         public String toString() {
-            if(isVoid()) { //HERE BE DRAGONS: void type is empty struct
+            if(isVoid()) { //void type is empty struct
                 return "void";
             } else {
                 StringBuilder sb = new StringBuilder();

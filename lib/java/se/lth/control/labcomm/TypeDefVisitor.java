@@ -13,10 +13,6 @@ import java.io.EOFException;
 import se.lth.control.labcomm.TypeDef;
 import se.lth.control.labcomm.TypeDefParser;
 
-// for BinaryScanner
-
-import beaver.Scanner;
-import beaver.Symbol;
 import se.lth.control.labcomm2014.compiler.LabComm;
 import se.lth.control.labcomm2014.compiler.LabCommParser;
 
@@ -40,8 +36,10 @@ import se.lth.control.labcomm2014.compiler.Exp;
 import se.lth.control.labcomm2014.compiler.IntegerLiteral;
 import se.lth.control.labcomm2014.compiler.VariableSize;
 
-////////////
 
+/** A class for building a JastAdd AST from the parsed types
+ *  created by a TypeDefParser. This class depends on the LabComm compiler.
+ */
 public class TypeDefVisitor implements TypeDefParser.ParsedSymbolVisitor {
 
 ///// tree building
