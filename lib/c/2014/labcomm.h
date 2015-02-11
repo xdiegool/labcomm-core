@@ -72,9 +72,6 @@ typedef int (*labcomm_handle_new_datatype_callback)(
   struct labcomm_decoder *decoder,
   struct labcomm_signature *sig);
 
-void labcomm_decoder_register_new_datatype_handler(struct labcomm_decoder *d,
-		labcomm_handle_new_datatype_callback on_new_datatype);
-
 /*
  * Dynamic memory handling
  *   lifetime == 0     memory that will live for as long as the 
