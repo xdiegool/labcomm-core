@@ -40,7 +40,7 @@ import se.lth.control.labcomm2014.compiler.VariableSize;
 /** A class for building a JastAdd AST from the parsed types
  *  created by a TypeDefParser. This class depends on the LabComm compiler.
  */
-public class TypeDefVisitor implements TypeDefParser.ParsedSymbolVisitor {
+public class ASTbuilder implements TypeDefParser.ParsedSymbolVisitor {
 
 ///// tree building
 //
@@ -48,9 +48,18 @@ public class TypeDefVisitor implements TypeDefParser.ParsedSymbolVisitor {
         private LinkedList<Type> typeStack;
         private LinkedList<Field> fieldStack;
 
-        public TypeDefVisitor() {
+        public ASTbuilder() {
             this.typeStack = new LinkedList<Type>();
             this.fieldStack = new LinkedList<Field>();
+        }
+
+        private void assertStacksEmpty() throws RuntimeException {
+            if(!typeStack.isEmpty()) {
+               throw new RuntimeException("Error: type stack not empty"); 
+            }
+            if(!fieldStack.isEmpty()) {
+               throw new RuntimeException("Error: field stack not empty"); 
+            }
         }
 
         public void visit(TypeDefParser.TypeSymbol s){
@@ -119,12 +128,31 @@ public class TypeDefVisitor implements TypeDefParser.ParsedSymbolVisitor {
            Decl result = new TypeDecl(typeStack.pop(), d.getName());
            return result;
        }
+
+       private Program createAndCheckProgram(List<Decl> ds) {
+            Program p = new Program(ds);
+            LinkedList errors = new LinkedList();
+            p.errorCheck(errors);
+            if(errors.isEmpty()) {
+                return p;
+            } else {
+                //XXX temporary debug printout
+                for (Iterator iter = errors.iterator(); iter.hasNext(); ) {
+                    String s = (String)iter.next();
+                    System.err.println(s);
+                }
+                // This should not happen
+                throw new RuntimeException("Internal error: parsed labcomm declaration has errors");
+            }
+       }
        
        public Program makeProgram(TypeDefParser.ParsedTypeDef d) {
+           assertStacksEmpty();
            List<Decl> ds = new List<Decl>();
 
            ds.add(makeDecl(d));
-           return new Program(ds);
+           assertStacksEmpty();
+           return createAndCheckProgram(ds);
        }
 
        public Decl makeDecl(TypeDefParser.ParsedSampleDef d) {
@@ -133,6 +161,7 @@ public class TypeDefVisitor implements TypeDefParser.ParsedSymbolVisitor {
            return result;
        }
        public Program makeProgram(TypeDefParser.ParsedSampleDef d) {
+           assertStacksEmpty();
            List<Decl> ds = new List<Decl>();
 
            Iterator<TypeDefParser.ParsedTypeDef> it = d.getDepIterator();
@@ -142,7 +171,8 @@ public class TypeDefVisitor implements TypeDefParser.ParsedSymbolVisitor {
 
            ds.add(makeDecl(d));
 
-           return new Program(ds);
+           assertStacksEmpty();
+           return createAndCheckProgram(ds);
        }
     }
 

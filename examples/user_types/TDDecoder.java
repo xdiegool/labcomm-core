@@ -6,7 +6,7 @@ import java.io.IOException;
 import se.lth.control.labcomm.DecoderChannel;
 import se.lth.control.labcomm.TypeDef;
 import se.lth.control.labcomm.TypeDefParser;
-import se.lth.control.labcomm.TypeDefVisitor;
+import se.lth.control.labcomm.ASTbuilder;
 //import se.lth.control.labcomm.TypeBinding;
 
 import se.lth.control.labcomm2014.compiler.Program;
@@ -78,27 +78,18 @@ public class TDDecoder
   public void onTypeDef(TypeDefParser.ParsedTypeDef d) {
     if(d.isSampleDef()){
         System.out.println("onTypeDef (sample): ");
-        TypeDefVisitor v = new TypeDefVisitor();
+        ASTbuilder v = new ASTbuilder();
         Program p = v.makeProgram((TypeDefParser.ParsedSampleDef) d);
-        LinkedList errors = new LinkedList();
-        p.errorCheck(errors);
-        if(errors.isEmpty()) {
-            try {
+        try {
                 //FileOutputStream f = new FileOutputStream("/tmp/foopp"+d.getName()+".txt");
                 //PrintStream out = new PrintStream(f);
                 p.pp(System.out);
                 //p.C_genC(System.out, new Vector(), "lcname", "prefix", 2014);
                 //p.J_gen(out, "testpackage", 2014);
                 //out.close();
-            } catch (Throwable e) {
+        } catch (Throwable e) {
                 System.err.println("Exception: " + e);
                 e.printStackTrace();
-            }
-        } else {
-            for (Iterator iter = errors.iterator(); iter.hasNext(); ) {
-                String s = (String)iter.next();
-                System.out.println(s);
-            }
         }
     }
     //System.out.println(" "+d.getName()+";");

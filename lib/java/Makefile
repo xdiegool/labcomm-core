@@ -13,7 +13,7 @@ MODULES=Constant \
 	BuiltinType \
 	TypeDef \
 	TypeBinding \
-	TypeDefVisitor \
+	ASTbuilder \
 	TypeDefParser \
 	Writer \
 	WriterWrapper
