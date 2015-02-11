@@ -519,6 +519,7 @@ Field ::= Type <Name:String>;
 
 abstract Type;
 VoidType          : Type;
+SampleRefType     : Type;
 PrimType          : Type ::= <Name:String> <Token:int>;
 UserType          : Type ::= <Name:String>;
 StructType        : Type ::= Field*;
@@ -592,9 +593,10 @@ The built-in data types are encoded as follows:
 <string_length>:= 0x00..0xffffffff  
 <char>         := any UTF-8 char
 <type>         := <length> ( <basic_type> | <array_decl> | <struct_decl> | <type_id> )
-<basic_type>   := ( <boolean_type> | <byte_type> | <short_type> |
+<basic_type>   := ( <void_type> | <boolean_type> | <byte_type> | <short_type> |
                   <integer_type> | <long_type> | <float_type> |
-                  <double_type> | <string_type> )
+                  <double_type> | <string_type> | <sample_ref>)
+<void_type>    := <struct_decl> 0 //void is encoded as empty struct
 <boolean_type> := 0x20 
 <byte_type>    := 0x21 
 <short_type>   := 0x22 
@@ -603,6 +605,7 @@ The built-in data types are encoded as follows:
 <float_type>   := 0x25 
 <double_type>  := 0x26 
 <string_type>  := 0x27 
+<sample_ref>   := 0x28 
 <array_decl>   := 0x10  <number_of_indices> <indices> <type>
 <number_of_indices> := 0x00..0xffffffff  
 <indices>      := ( <variable_index> | <fixed_index> )*
