@@ -16,7 +16,8 @@ public class Decoder
              twoInts.Handler,
              theFirstInt.Handler,
              theSecondInt.Handler,
-             doavoid.Handler
+             doavoid.Handler,
+             intAndRef.Handler
 {
 
   private DecoderChannel decoder;
@@ -31,6 +32,8 @@ public class Decoder
     twoLines.register(decoder, this);
     theFirstInt.register(decoder, this);
     theSecondInt.register(decoder, this);
+    intAndRef.register(decoder, this);
+    doavoid.registerSampleRef(decoder);
     this.tdp = TypeDefParser.registerTypeDefParser(decoder); 
  //   TypeDef.register(decoder, this);
  //   TypeBinding.register(decoder, this);
@@ -90,6 +93,10 @@ public class Decoder
 
   public void handle_theSecondInt(int d) throws java.io.IOException {
     System.out.println("Got theSecondInt: "+d);
+  }
+
+  public void handle_intAndRef(intAndRef d) throws java.io.IOException {
+    System.out.println("Got intAndRef: "+d.x+", "+d.reference);
   }
 
   public void handle_twoLines(twoLines d) throws java.io.IOException {

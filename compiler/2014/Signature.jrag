@@ -174,9 +174,9 @@ aspect Signature {
     list.addInt(0, null);
   }
 
-  public void SampleRefType.genSigLineForDecl(SignatureList list, boolean decl) {
-    list.addInt(LABCOMM_SAMPLE_REF, "sample");
-  }
+//  public void SampleRefType.genSigLineForDecl(SignatureList list, boolean decl) {
+//    list.addInt(LABCOMM_SAMPLE_REF, "sample");
+//  }
   public void PrimType.genSigLineForDecl(SignatureList list, boolean decl) {
     list.addInt(getToken(), null);
   }

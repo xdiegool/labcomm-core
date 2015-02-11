@@ -181,7 +181,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         void visit(SampleSymbol s);
         void visit(NameSymbol s);
         void visit(PrimitiveType t);
-        void visit(SampleRefType t);
+        //void visit(SampleRefType t);
         void visit(ParsedStructType t);
         void visit(ParsedField t);
         void visit(ArrayType t);
@@ -227,14 +227,14 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     public abstract class ParsedType extends ParsedSymbol{
     }
 
-    public class SampleRefType extends ParsedType {
-        public void accept(ParsedSymbolVisitor v) {
-            v.visit(this);
-        }
-
-        public String toString() { 
-            return "sample";}
-    }
+//    public class SampleRefType extends ParsedType {
+//        public void accept(ParsedSymbolVisitor v) {
+//            v.visit(this);
+//        }
+//
+//        public String toString() { 
+//            return "sample";}
+//    }
 
     public class PrimitiveType extends ParsedType {
         private final String name;
@@ -273,6 +273,9 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
                     break;
                 case Constant.STRING:
                     this.name = "string";
+                    break;
+                case Constant.SAMPLE:
+                    this.name = "sample";
                     break;
                 default:
                     this.name = "??? unknown tag 0x"+Integer.toHexString(tag);    
@@ -643,8 +646,8 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
                 TypeDef td = typeDefs.get(tag);
                 result = new ParsedUserType(td.getName());
                 in.pushType(tag);
-        } else if(tag == Constant.SAMPLE) {
-                result = new SampleRefType();       
+//        } else if(tag == Constant.SAMPLE) {
+//                result = new SampleRefType();       
         } else {
                 result = new PrimitiveType(tag);
         }

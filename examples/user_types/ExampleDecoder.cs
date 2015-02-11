@@ -11,7 +11,8 @@ namespace user_types
                     twoInts.Handler, 
                     theFirstInt.Handler, 
                     theSecondInt.Handler,
-                    doavoid.Handler
+                    doavoid.Handler,
+                    intAndRef.Handler
     {
         DecoderChannel dec;
 
@@ -23,6 +24,8 @@ namespace user_types
             theFirstInt.register(dec, this);
             theSecondInt.register(dec, this);
             doavoid.register(dec, this);
+            intAndRef.register(dec, this);
+            doavoid.registerSampleRef(dec);
             try
             {
                 Console.WriteLine("Running decoder.");
@@ -69,6 +72,11 @@ namespace user_types
         void doavoid.Handler.handle()
         {
             Console.WriteLine("Got a void.");
+        }
+
+        void intAndRef.Handler.handle(intAndRef d)
+        {
+            Console.WriteLine("Got intAndRef: "+d.x+" : "+d.reference);
         }
 
         static void Main(string[] args)

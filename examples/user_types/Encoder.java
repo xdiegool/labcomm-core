@@ -21,16 +21,25 @@ public class Encoder
     twoLines.register(encoder);
     theFirstInt.register(encoder);
     theSecondInt.register(encoder);
+    intAndRef.register(encoder);
+    doavoid.registerSampleRef(encoder);
   }
 
   public void doEncode() throws java.io.IOException {
+    System.out.println("Encoding doavoid");
+    doavoid.encode(encoder);
+      
+    intAndRef iar = new intAndRef();
+    iar.x = 17;
+    iar.reference = doavoid.class;
+
+    System.out.println("Encoding intAndRef");
+    intAndRef.encode(encoder, iar);
+
     twoInts ti = new twoInts();
     ti.a = 12;
     ti.b = 21;
 
-    System.out.println("Encoding doavoid");
-    doavoid.encode(encoder);
-      
     System.out.println("Encoding twoInts");
     twoInts.encode(encoder, ti);
       

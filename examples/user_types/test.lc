@@ -7,6 +7,11 @@ typedef int anInt;
 typedef void avoid;
 sample avoid doavoid;
 
+sample struct {
+  int x;
+  sample reference;
+} intAndRef;
+
 typedef struct {
   coord x;
   coord y;

@@ -12,6 +12,10 @@ static void handle_test_doavoid(test_doavoid *v,void *context) {
   printf("Got a void.\n"); 
 }
 
+static void handle_test_intAndRef(test_intAndRef *v,void *context) {
+  printf("Got intAndRef. (%d : %s) \n", v->x, v->reference->name); 
+}
+
 static void handle_test_twoInts(test_twoInts *v,void *context) {
   printf("Got twoInts. (%d,%d) \n", v->a, v->b); 
 }
@@ -58,6 +62,9 @@ int main(int argc, char *argv[]) {
   }
 
   labcomm_decoder_register_test_doavoid(decoder, handle_test_doavoid, context);
+  labcomm_decoder_register_test_intAndRef(decoder, handle_test_intAndRef, context);
+  labcomm_decoder_sample_ref_register(decoder,labcomm_signature_test_doavoid );
+
   labcomm_decoder_register_test_twoInts(decoder, handle_test_twoInts, context);
   labcomm_decoder_register_test_theFirstInt(decoder, handle_test_theFirstInt, context);
   labcomm_decoder_register_test_theSecondInt(decoder, handle_test_theSecondInt, context);

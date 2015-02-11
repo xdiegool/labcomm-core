@@ -23,7 +23,7 @@ import se.lth.control.labcomm2014.compiler.TypeDecl;
 import se.lth.control.labcomm2014.compiler.SampleDecl;
 import se.lth.control.labcomm2014.compiler.Type;
 import se.lth.control.labcomm2014.compiler.VoidType;
-import se.lth.control.labcomm2014.compiler.SampleRefType;
+//import se.lth.control.labcomm2014.compiler.SampleRefType;
 import se.lth.control.labcomm2014.compiler.PrimType;
 import se.lth.control.labcomm2014.compiler.UserType;
 import se.lth.control.labcomm2014.compiler.StructType;
@@ -69,9 +69,9 @@ public class TypeDefVisitor implements TypeDefParser.ParsedSymbolVisitor {
             typeStack.push(new PrimType(t.getName(), t.getTag()));
         }
 
-        public void visit(TypeDefParser.SampleRefType t){
-            typeStack.push(new SampleRefType());
-        }
+//        public void visit(TypeDefParser.SampleRefType t){
+//            typeStack.push(new SampleRefType());
+//        }
 
         public void visit(TypeDefParser.ParsedStructType t){
             if(t.isVoid()) {

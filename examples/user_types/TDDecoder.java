@@ -26,7 +26,8 @@ public class TDDecoder
              twoInts.Handler,
              theFirstInt.Handler,
              theSecondInt.Handler,
-             doavoid.Handler
+             doavoid.Handler,
+             intAndRef.Handler
 {
 
   private DecoderChannel decoder;
@@ -41,6 +42,8 @@ public class TDDecoder
     theFirstInt.register(decoder, this);
     theSecondInt.register(decoder, this);
     doavoid.register(decoder, this);
+    intAndRef.register(decoder, this);
+    doavoid.registerSampleRef(decoder);
     this.tdp = TypeDefParser.registerTypeDefParser(decoder); 
  //   TypeDef.register(decoder, this);
  //   TypeBinding.register(decoder, this);
@@ -84,7 +87,7 @@ public class TDDecoder
                 //FileOutputStream f = new FileOutputStream("/tmp/foopp"+d.getName()+".txt");
                 //PrintStream out = new PrintStream(f);
                 p.pp(System.out);
-                p.C_genC(System.out, new Vector(), "lcname", "prefix", 2014);
+                //p.C_genC(System.out, new Vector(), "lcname", "prefix", 2014);
                 //p.J_gen(out, "testpackage", 2014);
                 //out.close();
             } catch (Throwable e) {
@@ -123,6 +126,10 @@ public class TDDecoder
 
   public void handle_doavoid() throws java.io.IOException {
     System.out.println("Got a void.");
+  }
+
+  public void handle_intAndRef(intAndRef d) throws java.io.IOException {
+    System.out.println("Got intAndRef: "+d.x+", "+d.reference);
   }
 
   public void handle_twoLines(twoLines d) throws java.io.IOException {
