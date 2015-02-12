@@ -29,8 +29,7 @@
 #   | ...
 #   +----+--
 #
-# LabComm2014 TYPE_DEF: (as SAMPLE_DEF, but signatures are hierarchical,
-#                         i.e., may contain references to other types
+# LabComm2014 SAMPLE_REF:
 #
 #   +----+----+----+----+
 #   | id = 0x03             (packed32)
@@ -48,10 +47,29 @@
 #   | ...
 #   +----+--
 #
-# LabComm2014 TYPE_BINDING
+# LabComm2014 TYPE_DEF: (as SAMPLE_DEF, but signatures are hierarchical,
+#                         i.e., may contain references to other types
 #
 #   +----+----+----+----+
 #   | id = 0x04             (packed32)
+#   +----+----+----+----+
+#   | length                (packed32)
+#   +----+----+----+----+
+#   | type number           (packed32)
+#   +----+----+----+----+
+#   | type name (UTF8)
+#   | ...
+#   +----+----+----+----+
+#   | signature length      (packed32)
+#   +----+----+----+----+
+#   | type signature
+#   | ...
+#   +----+--
+#
+# LabComm2014 TYPE_BINDING
+#
+#   +----+----+----+----+
+#   | id = 0x05             (packed32)
 #   +----+----+----+----+
 #   | length                (packed32)
 #   +----+----+----+----+
