@@ -489,6 +489,42 @@ not required to do so. However, if multiple \verb+TYPE_DECL+ packets are
 sent for the same \verb+typedef+, the encoder must use the same
 \verb+type_id+.
 
+\subsection{Decoding in-band type descriptions}
+
+In LabComm, the in-band data descriptions are equivalent to \footnote{in
+the sense that they contain all information needed to recreate} the data
+description source (i.e., the ``.lc-file'').
+%
+As the type declarations (a.k.a. \emph{signatures}) are written before
+sample data on every channel, they can be used to interpret data with
+an unknown (by the receiver) format.
+
+The libraries provide functionality to subscribe to (i.e., register a
+\emph{handler} for) sample and type declarations.
+
+On the low level, the handler receives an instance of the signature
+data structure corresponding to the received declaration.
+
+
+For higher-level processing, the Java library provides the
+\verb+ASTbuilder+ class, which builds an abstract syntax tree in
+the internal representation of the LabComm compiler.
+That enables the user to use the complete functionality of the
+LabComm compiler, e.g. code generation,  on declarations received in a
+LabComm stream. 
+
+
+In combination with on-the-fly compilation and class-loading (or
+linking) that makes it possible to dynamically create handlers for
+previously unknown data types. Thereby, it enables dynamic configuration
+of LabComm endpoints in static languages without the overhead of
+interpreting signatures (at the one-time cost of code generation and
+compilation).
+
+
+
+
+
 
 
 \section{Ideas/Discussion}:
@@ -563,22 +599,23 @@ first.
 
 The built-in data types are encoded as follows:
 \begin{lstlisting}[basicstyle=\footnotesize\ttfamily]
-||Type      ||Encoding/Size                                      ||
-||----------||---------------------------------------------------||
-||boolean   ||  8 bits                                           ||
-||byte      ||  8 bits                                           ||
-||short     || 16 bits                                           ||
-||integer   || 32 bits                                           ||
-||long      || 64 bits                                           ||
-||float     || 32 bits                                           ||
-||double    || 64 bits                                           ||
-||string    || length (varint), followed by UTF8 encoded string  ||
-||array     || each variable index (varint),                     ||
-||          || followed by encoded elements                      ||
-||struct    || concatenation of encoding of each element         ||
-||          || in declaration order                              ||
+||Type       ||Encoding/Size                                      ||
+||-----------||---------------------------------------------------||
+||boolean    ||  8 bits                                           ||
+||byte       ||  8 bits                                           ||
+||short      || 16 bits                                           ||
+||integer    || 32 bits                                           ||
+||long       || 64 bits                                           ||
+||float      || 32 bits                                           ||
+||double     || 64 bits                                           ||
+||sample_ref || 32 bits                                           ||
+||string     || length (varint), followed by UTF8 encoded string  ||
+||array      || each variable index (varint),                     ||
+||           || followed by encoded elements                      ||
+||struct     || concatenation of encoding of each element         ||
+||           || in declaration order                              ||
 \end{lstlisting}
-
+\pagebreak
 \subsection{Protocol grammar}
 \label{sec:ConcreteGrammar}
 \begin{lstlisting}[basicstyle=\footnotesize\ttfamily]
