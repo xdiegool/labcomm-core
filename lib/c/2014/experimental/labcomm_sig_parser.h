@@ -8,14 +8,18 @@
 #ifndef LABCOMM_SIG_PARSER_H
 #define LABCOMM_SIG_PARSER_H
 
+#include "../labcomm.h"
 #include "../labcomm_private.h"
 
-#undef DEBUG 
-#undef QUIET_STACK	   // don't print anything for push/pop
+#define DEBUG 
+#define QUIET_STACK	   // don't print anything for push/pop
 #undef DEBUG_STACK_VERBOSE // dump stack, otherwise just print value of top
 
 #undef QUIET 		//just print type and size when skipping data
-// #undef VERBOSE 		// print in great detail
+#define VERBOSE 		// print in great detail
+
+
+#undef SKIP_BY_PARSING
 
 #undef STATIC_ALLOCATION  //dynamic allocation not completely implemented
 
@@ -24,6 +28,7 @@
 #define MAX_SIGNATURES 16
 #define MAX_NAME_LEN 32 
 #define MAX_SIG_LEN 128
+#define TYPEDEF_BASE MAX_SIGNATURES
 
 #endif
 
@@ -43,21 +48,24 @@ typedef struct {
 	size_t max_signatures;                 // set by init(...)
 	size_t max_name_len;
 	size_t max_sig_len; 
+    // arrays for signatures and typedefs
+    // signatures start at index 0
+    // typedefs start at index MAX_SIGNATURES
 #ifdef STATIC_ALLOCATION
-	struct labcomm_signature sig_ts[MAX_SIGNATURES];
+	struct labcomm_signature sig_ts[2*MAX_SIGNATURES];
 
-	unsigned int signatures_length[MAX_SIGNATURES];
-	unsigned int signatures_name_length[MAX_SIGNATURES];
-	unsigned char signatures_name[MAX_SIGNATURES][MAX_NAME_LEN]; 
-	unsigned char signatures[MAX_SIGNATURES][MAX_SIG_LEN];
+	unsigned int signatures_length[2*MAX_SIGNATURES];
+	unsigned int signatures_name_length[2*MAX_SIGNATURES];
+	unsigned char signatures_name[2*MAX_SIGNATURES][MAX_NAME_LEN]; 
+	unsigned char signatures[2*MAX_SIGNATURES][MAX_SIG_LEN];
 #else
-	struct labcomm_signature *sig_ts;           // [MAX_SIGNATURES]
+	struct labcomm_signature *sig_ts;           // [2*MAX_SIGNATURES]
 
-	unsigned int *signatures_length;       // [MAX_SIGNATURES]
-	unsigned char **signatures;            // [MAX_SIGNATURES][MAX_SIG_LEN];
+	unsigned int *signatures_length;       // [2*MAX_SIGNATURES]
+	unsigned char **signatures;            // [2*MAX_SIGNATURES][MAX_SIG_LEN];
 
-	unsigned int *signatures_name_length;  // [MAX_SIGNATURES]
-	char **signatures_name;       // [MAX_SIGNATURES][MAX_NAME_LEN];
+	unsigned int *signatures_name_length;  // [2*MAX_SIGNATURES]
+	char **signatures_name;       // [2*MAX_SIGNATURES][MAX_NAME_LEN];
 #endif
 
 } labcomm_sig_parser_t;
@@ -104,17 +112,12 @@ int skip_packed_sample_data(labcomm_sig_parser_t *p, struct labcomm_signature *s
 
 #undef RETURN_STRINGS  //  not really tested
 
-#ifndef TRUE
-
-#define FALSE 0
-#define TRUE 1
-
-#endif
-
 typedef enum{
-        VERSION = LABCOMM_VERSION,
-        SAMPLE_DECL = LABCOMM_SAMPLE_DEF,
-        TYPE_DECL = LABCOMM_TYPEDEF,
+        PKG_VERSION = LABCOMM_VERSION,
+        PKG_SAMPLE_DECL = LABCOMM_SAMPLE_DEF,
+        PKG_SAMPLE_REF = LABCOMM_SAMPLE_REF,
+        PKG_TYPE_DECL = LABCOMM_TYPE_DEF,
+        PKG_TYPE_BINDING = LABCOMM_TYPE_BINDING,
 
         ARRAY_DECL = LABCOMM_ARRAY,
         STRUCT_DECL = LABCOMM_STRUCT,
@@ -126,6 +129,7 @@ typedef enum{
         TYPE_LONG  = LABCOMM_LONG,
         TYPE_FLOAT  = LABCOMM_FLOAT,
         TYPE_DOUBLE  = LABCOMM_DOUBLE,
-        TYPE_STRING  = LABCOMM_STRING
+        TYPE_STRING  = LABCOMM_STRING,
+        TYPE_SAMPLE_REF  = LABCOMM_REF
 } labcomm_type ;
 #endif
