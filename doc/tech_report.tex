@@ -169,6 +169,22 @@ language covering most common use-cases.
   sample string a_string;
 \end{verbatim}
 
+\subsection{The void type}
+
+There is a type, \verb+void+, which can be used to send
+a sample that contains no data. 
+
+\begin{verbatim}
+typedef void an_empty_type;
+
+sample an_empty_type no_data1;
+sample void no_data2;
+\end{verbatim}
+
+\verb+void+ type can may not be used as a field in a struct or
+the element type of an array.
+
+
 \subsection{Arrays}
 
 \begin{verbatim}
@@ -198,7 +214,46 @@ only arrays of arrays.
   } a_struct;
 \end{verbatim}
 
-\section{User defined types}
+\subsection{Sample type refereces}
+
+In addition to the primitive types, a sample may contain
+a reference to a sample type. References are declared using
+the \verb+sample+ keyword.
+
+Examples:
+
+\begin{verbatim}
+sample sample a_ref;
+
+sample sample ref_list[4];
+
+sample struct { 
+    sample ref1;
+    sample ref2;
+    int x;
+    int y;
+} refs_and_ints;
+\end{verbatim}
+
+Sample references are need to be registered on both encoder and decoder
+side, using the functions
+
+\begin{verbatim}
+int labcomm_decoder_sample_ref_register(
+    struct labcomm_decoder *decoder\nonumber
+    const struct labcomm_signature *signature);
+
+int labcomm_encoder_sample_ref_register(
+    struct labcomm_encoder *encoder\nonumber
+    const struct labcomm_signature *signature);
+\end{verbatim}
+
+The value of an unregistered sample reference will be decoded as \verb+null+.
+
+\subsection{User defined types}
+
+User defined types are declared with the \verb+typedef+ reserved word,
+and can then be used in type and sample declarations.
 
 \begin{verbatim}
   typedef struct {
@@ -469,6 +524,7 @@ Field ::= Type <Name:String>;
 
 abstract Type;
 VoidType          : Type;
+SampleRefType     : Type;
 PrimType          : Type ::= <Name:String> <Token:int>;
 UserType          : Type ::= <Name:String>;
 StructType        : Type ::= Field*;
@@ -526,42 +582,50 @@ The built-in data types are encoded as follows:
 \subsection{Protocol grammar}
 \label{sec:ConcreteGrammar}
 \begin{lstlisting}[basicstyle=\footnotesize\ttfamily]
-<packet>       := <id> <length> ( <version>      | 
-                                  <type_decl>    | 
-                                  <sample_decl>  |
-                                  <type_binding> |
-                                  <sample_data> )
-<version>      := <string>
-<sample_decl>  := <sample_id> <string> <type>
-<type_decl>    := <type_id> <string> <type>
-<type_binding> := <sample_id> <type_id>
-<user_id>      := 0x40..0xffffffff  
+<packet>          := <id> <length> ( <version>      | 
+                                     <type_decl>    | 
+                                     <sample_decl>  |
+                                     <sample_ref>   |
+                                     <type_binding> |
+                                     <sample_data> )
+<version>         := <string>
+<sample_decl>     := <sample_id> <string> <type>
+<sample_ref>      := <sample_id> <string> <type>
+<type_decl>       := <type_id> <string> <type>
+<type_binding>    := <sample_id> <type_id>
+<user_id>         := 0x40..0xffffffff  
 <sample_id> : <user_id>
 <type_id>   : <user_id>
-<string>       := <string_length> <char>*
-<string_length>:= 0x00..0xffffffff  
-<char>         := any UTF-8 char
-<type>         := <length> ( <basic_type> | <array_decl> | <struct_decl> | <type_id> )
-<basic_type>   := ( <boolean_type> | <byte_type> | <short_type> |
-                  <integer_type> | <long_type> | <float_type> |
-                  <double_type> | <string_type> )
-<boolean_type> := 0x20 
-<byte_type>    := 0x21 
-<short_type>   := 0x22 
-<integer_type> := 0x23 
-<long_type>    := 0x24 
-<float_type>   := 0x25 
-<double_type>  := 0x26 
-<string_type>  := 0x27 
-<array_decl>   := 0x10  <number_of_indices> <indices> <type>
-<number_of_indices> := 0x00..0xffffffff  
-<indices>      := ( <variable_index> | <fixed_index> )*
-<variable_index> := 0x00  
-<fixed_index>  := 0x01..0xffffffff  
-<struct_decl>  := 0x11  <number_of_fields> <field>*
-<number_of_fields> := 0x00..0xffffffff  
-<field>        := <string> <type>
-<sample_data>  := packed sample data sent in network order, with
+<string>          := <string_length> <char>*
+<string_length>   := 0x00..0xffffffff  
+<char>            := any UTF-8 char
+<type>            := <length> ( <basic_type>  | 
+                                <array_decl>  | 
+                                <struct_decl> | 
+                                <type_id> )
+<basic_type>      := ( <void_type> | <boolean_type> | <byte_type> | <short_type> |
+                     <integer_type> | <long_type> | <float_type> |
+                     <double_type> | <string_type> | <sample_ref_type>)
+
+<void_type>       := <struct_decl> 0 //void is encoded as empty struct
+<boolean_type>    := 0x20 
+<byte_type>       := 0x21 
+<short_type>      := 0x22 
+<integer_type>    := 0x23 
+<long_type>       := 0x24 
+<float_type>      := 0x25 
+<double_type>     := 0x26 
+<string_type>     := 0x27 
+<sample_ref_type> := 0x28 
+<array_decl>      := 0x10  <nbr_of_indices> <indices> <type>
+<nbr_of_indices>  := 0x00..0xffffffff  
+<indices>         := ( <variable_index> | <fixed_index> )*
+<variable_index>  := 0x00  
+<fixed_index>     := 0x01..0xffffffff  
+<struct_decl>     := 0x11  <nbr_of_fields> <field>*
+<nbr_of_fields>   := 0x00..0xffffffff  
+<field>           := <string> <type>
+<sample_data>     := packed sample data sent in network order, with
                   primitive type elements encoded according to
                   the sizes above
 \end{lstlisting}
@@ -571,8 +635,9 @@ The labcomm sytem packet ids are:
 \begin{lstlisting}[basicstyle=\footnotesize\ttfamily]
 version:      0x01 
 sample_decl:  0x02 
-type_decl:    0x03 
-type_binding: 0x04          
+sample_ref:   0x03 
+type_decl:    0x04 
+type_binding: 0x05          
 \end{lstlisting}
 Note that since the signature transmitted in a \verb+<sample_def>+ is
 flattened, the \verb+<type>+ transmitted in a \verb+<sample_def>+ may
