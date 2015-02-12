@@ -64,6 +64,7 @@
 #define LABCOMM_FLOAT        0x25
 #define LABCOMM_DOUBLE       0x26
 #define LABCOMM_STRING       0x27
+#define LABCOMM_REF          0x28
 
 
 /*
