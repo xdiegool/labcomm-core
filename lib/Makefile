@@ -1,19 +1,23 @@
+.PHONY: all
 all:
 	cd c ; make
 	cd csharp ; make
 	cd java ; make
 
+.PHONY: test
 test:
 	$(MAKE) -C c test
 
+.PHONY: clean
 clean:
-	cd c ; make clean
-	cd csharp ; make clean
-	cd java ; make clean
+	$(MAKE) -C c clean
+	$(MAKE) -C csharp clean
+	$(MAKE) -C java clean
 	$(MAKE) -C python clean
 
+.PHONY: distclean
 distclean:
-	cd c ; make distclean
-	cd csharp ; make clean
-	cd java ; make clean
-	$(MAKE) -C python clean
+	$(MAKE) -C c distclean
+	$(MAKE) -C csharp distclean
+	$(MAKE) -C java  distclean
+	$(MAKE) -C python distclean
