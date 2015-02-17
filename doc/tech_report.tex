@@ -560,6 +560,11 @@ Apache Avro is similar to LabComm in that it has a textual language
 for declaring data, a binary protocol for transmitting data, and code
 generation for several languages.
 
+Avro is a larger system, including RPC \emph{protocols}, support for
+using different \emph{codecs} for data compression, and \emph{schema
+resolution} to support handling schema evolution and transparent 
+interoperability between different versions of a schema.
+
 \subsubsection*{Data types} 
 
 In the table, the Avro type names are listed, and matched to the
@@ -615,8 +620,8 @@ LabComm declaration \verb+byte[_]+, i.e. a varaible length byte array.
   \hline
   What & LabComm & Avro \\ \hline
   Data description & Binary signature & JSON schema \\
-  Signature sent only once & posible & possible (stateful) \\
-  Signature sent with each sample & possible & possible (stateless) \\
+  Signature sent only once pre connection& posible & possible \\
+  Signature sent with each sample & possible & possible \\
   Data encoding & binary & binary \\
   \hline
 \end{tabular}
@@ -645,6 +650,65 @@ endianness and signedness.
                 130 ->  81 02            65 ->  82 01
                     ...                     ...   
 \end{verbatim}
+
+\paragraph{Avro Object Container Files} can be seen as a counterpart
+  to a LabComm channel: 
+Avro includes a simple object container file format. A file has a
+schema, and all objects stored in the file must be written according to
+that schema, using binary encoding. Objects are stored in blocks that
+may be compressed. Syncronization markers are used between blocks to
+permit efficient splitting of files, and enable detection of 
+corrupt blocks.
+
+
+The major difference is the sync markers that LabComm does not have, as
+LabComm assumes that, while the transport may drop packets, there will
+be no bit errors in a received packet. If data integrity is required,
+that is delegated to the reader and writer for the particular transport.
+
+\subsubsection{Fetures not in LabComm} 
+
+Avro has a set of features with no counterpart in LabComm. They include
+
+\paragraph{Codecs.}
+
+Avro has multiple codecs (for compression of the data):
+
+    \begin{verbatim}
+    Required Codecs:
+    - null : The "null" codec simply passes through data uncompressed.
+
+    - deflate : The "deflate" codec writes the data block using the deflate
+                algorithm as specified in RFC 1951, and typically implemented using the
+                zlib library. Note that this format (unlike the "zlib format" in RFC
+                1950) does not have a checksum.
+
+    Optional Codecs
+
+    - snappy:   The "snappy" codec uses Google's Snappy compression library. Each
+                compressed block is followed by the 4-byte, big-endian CRC32 checksum of
+                the uncompressed data in the block.
+
+    \end{verbatim}
+
+  \paragraph{Schema Resolution.} The main objective of LabComm is to
+    ensure correct operation at run-time. Therefore, a LabComm decoder
+    requires the signatures for each handled sample to match exactly.
+
+    Avro, on the other hand, supports the evolution of schemas and
+    provides support for reading data where the ordering of fields
+    differ (but names and types are the same), numerical types differ
+    but can be
+    \emph{promoted} (E.g., \verb+int+ can be promoted to \verb+long+,
+    \verb+float+, or \verb+double+.), and record fields have been added
+    or removed (but are nullable or have default values).
+
+    \paragraph{Schema fingerprints.} Avro defines a \emph{Parsing
+    Canonical Form} to define when two JSON schemas are ``the same''.
+    To reduce the overhead when, e.g., tagging data with the schema
+    there is support for creating a \emph{fingerprint} using 64/128/256
+    bit hashing, in combination with a centralized repository for
+    fingerprint/schema pairs.
 
 \bibliography{refs}{}
 \bibliographystyle{plain}
