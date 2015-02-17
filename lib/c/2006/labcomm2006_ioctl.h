@@ -84,23 +84,14 @@
   LABCOMM_IOC(LABCOMM_IOC_NOSIG,LABCOMM_IOC_NONE,type,nr,0)
 #define LABCOMM_IOR(type,nr,size)					\
   LABCOMM_IOC(LABCOMM_IOC_NOSIG,LABCOMM_IOC_READ,type,nr,sizeof(size))
-/* FIXME: add flag to differentiate between size and nargs */
-#define LABCOMM_IORN(type,nr,nargs)					\
-  LABCOMM_IOC(LABCOMM_IOC_NOSIG,LABCOMM_IOC_READ,type,nr,nargs)
 #define LABCOMM_IOW(type,nr,size)					\
   LABCOMM_IOC(LABCOMM_IOC_NOSIG,LABCOMM_IOC_WRITE,type,nr,sizeof(size))
-#define LABCOMM_IOWN(type,nr,nargs)					\
-  LABCOMM_IOC(LABCOMM_IOC_NOSIG,LABCOMM_IOC_WRITE,type,nr,nargs)
 #define LABCOMM_IOS(type,nr)					\
   LABCOMM_IOC(LABCOMM_IOC_USESIG,LABCOMM_IOC_READ,type,nr,0)
 #define LABCOMM_IOSR(type,nr,size)					\
   LABCOMM_IOC(LABCOMM_IOC_USESIG,LABCOMM_IOC_READ,type,nr,sizeof(size))
-#define LABCOMM_IOSRN(type,nr,nargs)					\
-  LABCOMM_IOC(LABCOMM_IOC_USESIG,LABCOMM_IOC_READ,type,nr,nargs)
 #define LABCOMM_IOSW(type,nr,size)					\
   LABCOMM_IOC(LABCOMM_IOC_USESIG,LABCOMM_IOC_WRITE,type,nr,sizeof(size))
-#define LABCOMM_IOSWN(type,nr,nargs)					\
-  LABCOMM_IOC(LABCOMM_IOC_USESIG,LABCOMM_IOC_WRITE,type,nr,nargs)
 
 #define LABCOMM_IOCTL_WRITER_GET_BYTES_WRITTEN \
   LABCOMM_IOR(0,1,int)
