@@ -36,6 +36,9 @@ gen/JAVAC: $(MODULES:%=se/lth/control/labcomm/%.java) $(MODULES:%=se/lth/control
 
 
 .PHONY: clean
-
 clean:
-	rm -rf labcomm.jar labcomm2006.jar labcomm2014.jar gen
+	rm -rf gen
+
+.PHONY: distclean
+distclean:
+	rm -rf labcomm.jar labcomm2006.jar labcomm2014.jar
