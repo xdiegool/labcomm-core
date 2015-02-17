@@ -77,14 +77,12 @@ public class EncoderChannel implements Encoder {
 
 
   private int registerTypeDef(SampleDispatcher dispatcher) throws IOException {
-      //XXX A bit crude; maybe add boolean registry.contains(...) and check
-      //    if already registered
+      // check if already registered
         try {
             return type_def_registry.getTag(dispatcher);
         } catch (IOException e) {
+            //otherwise, add to the registry
             int index = type_def_registry.add(dispatcher);
-            //System.out.println("registered "+dispatcher.getName());
-            //
             //wrap encoder to get encoded length of signature
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             EncoderChannel wrapped = new WrappedEncoder(this, baos, false);
@@ -143,7 +141,7 @@ public class EncoderChannel implements Encoder {
     begin(sample_def_registry.getTag(c));
   }
 
-  /* temporary(?) fix to allow nesting encoders to find encoded size */
+  /* aux. method used to allow nesting encoders to find encoded size */
   private void flush() throws IOException{
     data.flush();
     writer.write(bytes.toByteArray());
@@ -208,10 +206,6 @@ public class EncoderChannel implements Encoder {
   }
 
   public void encodeString(String value) throws IOException {
-    //data.writeShort(0); // HACK...
-    //data.writeUTF(value);
-
-    //kludge, to replace above hack with packed length
     ByteArrayOutputStream tmpb = new ByteArrayOutputStream();
     DataOutputStream tmps = new DataOutputStream(tmpb);
 
@@ -219,6 +213,8 @@ public class EncoderChannel implements Encoder {
     tmps.flush();
     byte[] tmp = tmpb.toByteArray();
 
+    //the two first bytes written by writeUTF is the length of
+    //the string, so we skip those
     encodePacked32(tmp.length-2);
     for (int i = 2 ; i < tmp.length ; i++) {
       encodeByte(tmp[i]);
@@ -243,6 +239,7 @@ public class EncoderChannel implements Encoder {
     try {
       index = sample_ref_registry.getTag(value);
     } catch (NullPointerException e) {
+        //we want to return 0 for unregistered ref types
     }
     data.writeInt(index);
   }

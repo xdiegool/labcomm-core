@@ -38,19 +38,12 @@ public class DecoderChannel implements Decoder {
        try {
            processSample(Constant.TYPE_DEF);
       } catch(Exception ex) {
-       System.out.println(ex.getMessage());   
-       //System.err.println("Got TypeDef: skipping "+len+" bytes"); 
        int idx = decodePacked32();
        String name = decodeString(); 
-       System.err.println("Ignoring (unhandled) TypeDef: "+idx+" "+name); 
        int siglen = decodePacked32();
-       //System.err.println("siglen="+siglen);
        for(int i=0; i<siglen; i++) {
            byte b = decodeByte();		  
-           //System.out.print(b);
-           //System.out.print(" ");
        }
-       //System.out.println();
       }
   }
 
@@ -58,8 +51,6 @@ public class DecoderChannel implements Decoder {
       try {
            processSample(Constant.TYPE_BINDING);
       } catch(Exception ex) {
-       System.out.println(ex.getMessage());   
-       //System.err.println("Got TypeBinding: skipping "+len+" bytes"); 
           for(int i=0; i<len; i++) {
               decodeByte();		  
           }
@@ -67,7 +58,6 @@ public class DecoderChannel implements Decoder {
   }
 
   private void processPragma(int len) throws IOException {
-       System.err.println("Got Pragma: skipping "+len+" bytes"); 
        for(int i=0; i<len; i++) {
            decodeByte();		  
        }
@@ -109,26 +99,26 @@ public class DecoderChannel implements Decoder {
 			          version + " != " + Constant.CURRENT_VERSION);
           }
         } break;
-	case Constant.SAMPLE_DEF: {
-          processSampleDef();
-	} break;
-	case Constant.SAMPLE_REF: {
-          processSampleRef();
-	} break;
-	case Constant.TYPE_DEF: {
-          processTypeDef(length);
-	} break;
-	case Constant.TYPE_BINDING: {
-          processTypeBinding(length);
-	} break;
-	case Constant.PRAGMA: {
-          processPragma(length);
-	} break;
-	default: {
-          processSample(tag);
-          done = true;
+        case Constant.SAMPLE_DEF: {
+            processSampleDef();
+        } break;
+        case Constant.SAMPLE_REF: {
+            processSampleRef();
+        } break;
+        case Constant.TYPE_DEF: {
+            processTypeDef(length);
+        } break;
+        case Constant.TYPE_BINDING: {
+            processTypeBinding(length);
+        } break;
+        case Constant.PRAGMA: {
+            processPragma(length);
+        } break;
+        default: {
+            processSample(tag);
+            done = true;
 
-	}
+        }
       }
     }
   }

@@ -23,7 +23,6 @@ import se.lth.control.labcomm2014.compiler.TypeDecl;
 import se.lth.control.labcomm2014.compiler.SampleDecl;
 import se.lth.control.labcomm2014.compiler.Type;
 import se.lth.control.labcomm2014.compiler.VoidType;
-//import se.lth.control.labcomm2014.compiler.SampleRefType;
 import se.lth.control.labcomm2014.compiler.PrimType;
 import se.lth.control.labcomm2014.compiler.UserType;
 import se.lth.control.labcomm2014.compiler.StructType;
@@ -42,9 +41,6 @@ import se.lth.control.labcomm2014.compiler.VariableSize;
  */
 public class ASTbuilder implements TypeDefParser.ParsedSymbolVisitor {
 
-///// tree building
-//
-//
         private LinkedList<Type> typeStack;
         private LinkedList<Field> fieldStack;
 
@@ -78,6 +74,8 @@ public class ASTbuilder implements TypeDefParser.ParsedSymbolVisitor {
             typeStack.push(new PrimType(t.getName(), t.getTag()));
         }
 
+// SampleRefs are currently represented as primitive types,
+// see comment in TypeDefParser
 //        public void visit(TypeDefParser.SampleRefType t){
 //            typeStack.push(new SampleRefType());
 //        }
@@ -136,13 +134,14 @@ public class ASTbuilder implements TypeDefParser.ParsedSymbolVisitor {
             if(errors.isEmpty()) {
                 return p;
             } else {
-                //XXX temporary debug printout
+                // This should not happen
+                // get errors and throw exception
+                StringBuilder sb = new StringBuilder();
                 for (Iterator iter = errors.iterator(); iter.hasNext(); ) {
                     String s = (String)iter.next();
-                    System.err.println(s);
+                    sb.append(s);
                 }
-                // This should not happen
-                throw new RuntimeException("Internal error: parsed labcomm declaration has errors");
+                throw new RuntimeException("Internal error: parsed labcomm declaration has errors: "+sb.toString());
             }
        }
        

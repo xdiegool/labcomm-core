@@ -76,22 +76,16 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     }
 
     public void handle_TypeDef(TypeDef d) throws java.io.IOException {
-        //System.out.println("Got TypeDef: "+d.getName()+"("+d.getIndex()+")");
         typeDefs.put(d.getIndex(), d);
     }
 
     public void handle_TypeBinding(TypeBinding d) throws java.io.IOException {
-        //System.out.println("TDP got TypeBinding: "+d.getSampleIndex()+" --> "+d.getTypeIndex()+"");
         TypeDef td;
         if(d.isSelfBinding()){
              td = new SelfBinding(d.getSampleIndex(), decoder);
         } else {
             typeBindings.put(d.getSampleIndex(), d.getTypeIndex());
             td = getTypeDefForIndex(d.getSampleIndex());
-            //System.out.println("handleTypeBinding: td:"+td.getIndex()+"=="+td.getName());
-            //System.out.println("++++++++++++++++++++++++");
-            //System.out.println(symbolString());
-            //System.out.println("++++++++++++++++++++++++");
         }
         ParsedSampleDef result = parseSignature(td);
 
@@ -109,7 +103,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
             for(ParsedTypeDef dep : ((ParsedSampleDef)d).getDependencies()) {
                 //do we want to change ParseTypeDef to have dependencies,
                 //and do recursion here?
-                //notifyListener(l, dep);
+                //if so, do notifyListener(l, dep);
                 l.onTypeDef(dep);
             }
         }
@@ -135,9 +129,6 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
 
         return res;
     }
-
-
-///// parsing
 
     public LinkedList<ParsedSymbol> symbolify() {
 
@@ -181,6 +172,8 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         void visit(SampleSymbol s);
         void visit(NameSymbol s);
         void visit(PrimitiveType t);
+        //sampleRefs are sent as primitive types
+        //Put this back if that is changed to SampleRefType
         //void visit(SampleRefType t);
         void visit(ParsedStructType t);
         void visit(ParsedField t);
@@ -227,6 +220,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     public abstract class ParsedType extends ParsedSymbol{
     }
 
+// SampleRefType currently not sent, se above
 //    public class SampleRefType extends ParsedType {
 //        public void accept(ParsedSymbolVisitor v) {
 //            v.visit(this);
@@ -529,23 +523,13 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         }
         void pushType(int typeIdx) {
             if(typeIdx >= 0x40 && !typeStack.contains(typeIdx)) {
-                //typeStack.push(typeIdx);
                 typeStack.push(typeDefs.get(typeIdx));
-            } else {
-                //throw new Error("typeIdx < 0x40");
-            }
+            } 
         }
 
         void popType() {
-            //int tid = typeStack.pop();
-            //TypeDef td2 = typeDefs.get(tid);
             TypeDef td2 = typeStack.pop();
             current = td2;
-            //if(td2 != null ) {
-            //    System.out.println(td2.getName());
-            //} else {
-            //    System.out.println("popType: null for idx "+tid);
-            //}
             bis =new ByteArrayInputStream(td2.getSignature());
             in = new DataInputStream(bis);
         }
@@ -588,11 +572,6 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     }
 
     public ParsedSampleDef parseSignature(TypeDef td) throws IOException{
-//    public void parseSignature(int typeIndex) throws IOException{
-
-        //int typeIndex = td.getIndex();
-        //System.out.println("parseSignature :"+td);
-        //ParserState s = new ParserState(typeIndex);
         ParserState s = new ParserState(td);
 
         ParsedSampleDef result=null;
@@ -614,7 +593,6 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         int idx[] = new int[numIdx];
         for(int i=0; i<numIdx; i++){
             idx[i] = in.decodePacked32(); 
-            //System.out.println(idx[i]);
         }
         int type = in.decodePacked32();
         ParsedType elementType = lookupType(type, in); 
@@ -626,7 +604,6 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     }
 
     private ParsedStructType parseStruct(ParserState in) throws IOException {
-        //System.out.println("struct");
         int numParsedFields = in.decodePacked32();
         ParsedStructType result = new ParsedStructType(numParsedFields);
         for(int i=0; i<numParsedFields; i++) {
@@ -646,6 +623,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
                 TypeDef td = typeDefs.get(tag);
                 result = new ParsedUserType(td.getName());
                 in.pushType(tag);
+// sampleRefs are sent as primitive types, see above
 //        } else if(tag == Constant.SAMPLE) {
 //                result = new SampleRefType();       
         } else {
