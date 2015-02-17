@@ -52,6 +52,6 @@ clean:
 	rm -rf gen
 
 .PHONY: distclean
-distclean:
+distclean: clean
 	rm -rf labcomm.jar labcomm2006.jar labcomm2014.jar
 
