@@ -539,6 +539,113 @@ Java primitive types. However, it is unlikely that the entire range is actually 
 way of supporting the common cases is to include run-time checks for overflow in the Java encoders
 and decoders.
 
+\section{Related work}
+  
+Two in-band self-descibing communication protocols are Apache
+Avro\cite{avro} and EDN, the extensible data notation developed for
+Clojure and Datomic\cite{EDN}.
+
+EDN encodes \emph{values} as UTF-8 strings. The documentation says
+``edn is a system for the conveyance of values. It is not a type system,
+and has no schemas.'' That said, it is \emph{extensible} in the sense
+that it has a special \emph{dispatch charachter}, \verb+#+, which can  
+be used to add a \emph{tag} to a value. A tag indicates a semantic
+interpretation of a value, and that allows the reader to support
+handlers for specific tags, enabling functionality similar to that of
+labcomm.
+
+\subsection{Apache Avro}
+
+Apache Avro is similar to LabComm in that it has a textual language
+for declaring data, a binary protocol for transmitting data, and code
+generation for several languages.
+
+\subsubsection*{Data types} 
+
+In the table, the Avro type names are listed, and matched to the
+corresponding LabComm type:
+
+\begin{tabular}{|l|c|c|}
+\hline
+  Type &            Labcomm  &               Avro \\
+  \hline Primitive types \\ \hline
+
+int    &         4 bytes     &           varint  \\
+long   &         8 bytes     &           varint  \\
+float  &         4 bytes     &           4 bytes \\
+long   &         8 bytes     &           8 bytes \\
+string &         varint + utf8[]   &     varint + utf8[] \\ 
+bytes  &         varint + byte[]   &     varint + byte[]\\
+
+  \hline Complex types  \\ \hline
+
+struct/record &  concat of fields     &  concat of fields \\ 
+arrays        &  varIdx[] : elements  &  block[]          \\
+map           &    n/a                &  block[]          \\
+union         &   n/a                 & (varint idx) : value \\
+fixed         &   byte[n]             &  the number of bytes declared in
+the schema\\
+\hline
+\end{tabular}
+
+  where 
+
+\begin{verbatim}  
+  block ::= (varint count) : elem[count]      [*1]
+  count == 0 --> no more blocks
+
+
+[*1] for arrays, count == 0 --> end of array
+     if count < 0, there are |count| elements
+     preceded by a varint block_size to allow
+     fast skipping
+\end{verbatim}  
+
+In maps, keys are strings, and values  according to the schema.
+
+In unions, the index indicates the kind of value and the
+value is encoded according to the schema.
+
+Note that the Avro data type \verb+bytes+ corresponds to the
+LabComm declaration \verb+byte[_]+, i.e. a varaible length byte array.
+
+\subsubsection*{the wire protocol}
+
+\begin{tabular}{|l|c|c|}
+  \hline
+  What & LabComm & Avro \\ \hline
+  Data description & Binary signature & JSON schema \\
+  Signature sent only once & posible & possible (stateful) \\
+  Signature sent with each sample & possible & possible (stateless) \\
+  Data encoding & binary & binary \\
+  \hline
+\end{tabular}
+
+
+Both avro and labcomm use varints when encoding data, similar in that
+they both send a sequence of bytes containing 7 bit chunks (with the
+eight bit signalling more chunks to come), but they differ in range,
+endianness and signedness.
+
+\begin{verbatim}
+                LabComm                 Avro
+                unsigned 32 bit         signed zig-zag coding
+                most significant chunk  least significant chunk
+                first                   first
+
+                0   ->  00               0  ->  00
+                1   ->  01              -1  ->  01
+                2   ->  02               1  ->  02
+                    ...                 -2  ->  03
+                                         2  ->  04
+                                            ...
+                127 ->  7f              -64 ->  7f
+                128 ->  81 00            64 ->  80 01
+                129 ->  81 01           -65 ->  81 01
+                130 ->  81 02            65 ->  82 01
+                    ...                     ...   
+\end{verbatim}
+
 \bibliography{refs}{}
 \bibliographystyle{plain}
 
