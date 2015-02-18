@@ -23,7 +23,7 @@ clean-%:
 	$(MAKE) -C $* -e clean
 
 .PHONY: distclean
-distclean: $(SUBDIRS:%=distclean-%)
+distclean: clean $(SUBDIRS:%=distclean-%)
 
 .PHONY: distclean-%
 distclean-%:
