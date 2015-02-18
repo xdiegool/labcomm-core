@@ -26,6 +26,18 @@
 #include "labcomm_ioctl.h"
 #include "labcomm_dynamic_buffer_writer.h"
 
+#ifdef DEBUG
+#define DEBUG_FPRINTF(str, ...) fprintf(str, ##__VA_ARGS__)
+#else
+#define DEBUG_FPRINTF(str, ...)
+#endif
+
+#ifdef DECODER_DEBUG
+#define DECODER_DEBUG_FPRINTF(str, ...) fprintf(str, ##__VA_ARGS__) 
+#else
+#define DECODER_DEBUG_FPRINTF(str, ...)
+#endif
+
 struct sample_entry {
   int remote_index;
   const struct labcomm_signature *signature;
@@ -166,6 +178,21 @@ static int handle_sample_ref(struct labcomm_decoder *d, int remote_index,
   return result;
 }
 
+static int decoder_skip(struct labcomm_decoder *d, int len, int tag)
+{
+  int i;
+  DECODER_DEBUG_FPRINTF(stdout, "got tag 0x%x, skipping %d bytes\n", tag, len);
+  for(i = 0; i <len; i++){
+    DECODER_DEBUG_FPRINTF(stderr, ".");
+    labcomm_read_byte(d->reader);
+    if (d->reader->error < 0) {
+      DECODER_DEBUG_FPRINTF(stderr, "\nerror while skipping: %d\n",  d->reader->error);
+      return d->reader->error;
+    }
+  }
+  DECODER_DEBUG_FPRINTF(stderr, "\n");
+  return tag;
+}
 
 static int decode_sample_def_or_ref(struct labcomm_decoder *d, int kind)
 {
@@ -200,16 +227,21 @@ static int decode_sample_def_or_ref(struct labcomm_decoder *d, int kind)
       goto free_signature_signature;
     }
   }
-  if (kind == LABCOMM_SAMPLE_DEF) {
-    result = handle_sample_def(d, remote_index, &signature);
-  } else if (kind == LABCOMM_SAMPLE_REF) {
-    result = handle_sample_ref(d, remote_index, &signature);
-    if (result == -ENOENT) {
-      /* Dummy value to silently continue */
-      result = LABCOMM_SAMPLE_REF;
-    }
-  } else {
-    result = -EINVAL;
+  switch (kind) {
+    case LABCOMM_SAMPLE_DEF: {
+      result = handle_sample_def(d, remote_index, &signature);
+      break;
+    } 
+    case LABCOMM_SAMPLE_REF: {
+      result = handle_sample_ref(d, remote_index, &signature);
+      if (result == -ENOENT) {
+        /* Dummy value to silently continue */
+        result = LABCOMM_SAMPLE_REF;
+      }
+      break;
+    } 
+    default:
+      result = -EINVAL;
   }
 free_signature_signature:
   labcomm_memory_free(d->memory, 1,  signature.signature);
@@ -249,18 +281,6 @@ static void reader_alloc(struct labcomm_decoder *d)
   }
 }
 
-static int decoder_skip(struct labcomm_decoder *d, int len, int tag)
-{
-  int i;
-  printf("got tag 0x%x, skipping %d bytes\n", tag, len);
-  for(i = 0; i <len; i++){
-    labcomm_read_byte(d->reader);
-    if (d->reader->error < 0) {
-      return d->reader->error;
-    }
-  }
-  return tag;
-}
 /* d        - decoder to read from
    registry - decoder to lookup signatures (registry != d only if
                 nesting decoders, e.g., when decoding pragma)
@@ -368,17 +388,29 @@ int labcomm_decoder_decode_one(struct labcomm_decoder *d)
     }  
     labcomm_memory_free(d->memory, 1,  version);
   } else if (! d->version_ok) {
-    fprintf(stderr, "No VERSION %d %d\n", remote_index, length);
+    DEBUG_FPRINTF(stderr, "No VERSION %d %d\n", remote_index, length);
     result = -ECONNRESET;
   } else if (remote_index == LABCOMM_SAMPLE_DEF) {
     result = decode_sample_def_or_ref(d, LABCOMM_SAMPLE_DEF); 
   } else if (remote_index == LABCOMM_SAMPLE_REF) {
     result = decode_sample_def_or_ref(d, LABCOMM_SAMPLE_REF); 
+  } else if (remote_index == LABCOMM_TYPE_DEF) {
+    result = decode_and_handle(d, d, remote_index);
+    if(result == -ENOENT) { 
+        //No handler for type_defs, skip
+        result = decoder_skip(d, length, remote_index);
+    }
+  } else if (remote_index == LABCOMM_TYPE_BINDING) {
+    result = decode_and_handle(d, d, remote_index);
+    if(result == -ENOENT) { 
+        //No handler for type_bindings, skip
+        result = decoder_skip(d, length, remote_index);
+    }
   } else if (remote_index == LABCOMM_PRAGMA) {
     result = decode_pragma(d, d, length);
   } else if (remote_index < LABCOMM_USER) {
-    fprintf(stderr, "SKIP %d %d\n", remote_index, length);
-    result = remote_index;
+    DECODER_DEBUG_FPRINTF(stderr, "SKIP %d %d\n", remote_index, length);
+    result = decoder_skip(d, length, remote_index);
   } else {
     result = decode_and_handle(d, d, remote_index);
   }
@@ -452,6 +484,133 @@ int labcomm_internal_decoder_ioctl(struct labcomm_decoder *d,
 				signature, action, va);
   return result;
 }
+
+#ifndef LABCOMM_NO_TYPEDECL
+//// Code for allowing user code to handle type_defs 
+//// (should perhaps be moved to another file)
+
+static void decode_raw_type_def(
+  struct labcomm_reader *r,
+  void (*handle)(
+    struct labcomm_raw_type_def *v,
+    void *context
+  ),
+  void *context
+)
+{
+  struct labcomm_raw_type_def v;
+  v.index = labcomm_read_packed32(r);
+  if (r->error < 0) { goto out; }
+  v.name  = labcomm_read_string(r);
+  if (r->error < 0) { goto free_name; }
+  v.length = labcomm_read_packed32(r);
+  if (r->error < 0) { goto free_name; }
+  int i;
+  v.signature_data = labcomm_memory_alloc(r->memory, 1, v.length);
+  if(v.signature_data) {
+    for(i=0; i<v.length; i++) {
+      v.signature_data[i] = labcomm_read_byte(r);
+      if (r->error < 0) { goto free_sig; }
+    }  
+    handle(&v, context);
+    }
+free_sig:
+  labcomm_memory_free(r->memory, 1, v.signature_data);
+free_name:
+  labcomm_memory_free(r->memory, 1, v.name);
+out:
+  return;
+}
+int labcomm_decoder_register_labcomm_type_def(
+  struct labcomm_decoder *d,
+  void (*handler)(
+    struct labcomm_raw_type_def *v,
+    void *context
+  ),
+  void *context
+)
+{
+  int tag = LABCOMM_TYPE_DEF;
+  struct sample_entry *entry;
+  int *remote_to_local;
+ 
+  labcomm_scheduler_data_lock(d->scheduler);
+  entry = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
+				      d->local, struct sample_entry,
+				      tag);
+  if (entry == NULL) { tag = -ENOMEM; goto unlock; }
+  entry->remote_index = tag;
+  entry->signature = NULL;
+  entry->decode = (labcomm_decoder_function) decode_raw_type_def;
+  entry->handler =(labcomm_handler_function) handler;
+  entry->context = context;
+
+  remote_to_local = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
+                                                    d->remote_to_local, int,
+                                                    tag);
+  *remote_to_local = tag;
+unlock:
+  labcomm_scheduler_data_unlock(d->scheduler);
+
+  return tag;
+}
+
+
+static void decode_type_binding(
+  struct labcomm_reader *r,
+  void (*handle)(
+    struct labcomm_type_binding *v,
+    void *context
+  ),
+  void *context
+)
+{
+  struct labcomm_type_binding v;
+  v.sample_index = labcomm_read_packed32(r);
+  if (r->error < 0) { goto out; }
+  v.type_index = labcomm_read_packed32(r);
+  if (r->error < 0) { goto out; }
+  handle(&v, context);
+out:
+  return;
+}
+
+int labcomm_decoder_register_labcomm_type_binding(
+  struct labcomm_decoder *d,
+  void (*handler)(
+    struct labcomm_type_binding *v,
+    void *context
+  ),
+  void *context
+)
+{
+  int tag = LABCOMM_TYPE_BINDING;
+  struct sample_entry *entry;
+  int *remote_to_local;
+ 
+  labcomm_scheduler_data_lock(d->scheduler);
+  entry = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
+				      d->local, struct sample_entry,
+				      tag);
+  if (entry == NULL) { tag = -ENOMEM; goto unlock; }
+  entry->remote_index = tag;
+  entry->signature = NULL;
+  entry->decode = (labcomm_decoder_function) decode_type_binding;
+  entry->handler =(labcomm_handler_function) handler;
+  entry->context = context;
+
+  remote_to_local = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
+                                                    d->remote_to_local, int,
+                                                    tag);
+  *remote_to_local = tag;
+unlock:
+  labcomm_scheduler_data_unlock(d->scheduler);
+
+  return tag;
+}
+
+//// End type_def handling
+#endif
 
 int labcomm_internal_decoder_register(
   struct labcomm_decoder *d,

@@ -30,6 +30,44 @@
 #include "labcomm_default_scheduler.h"
 #include "test/gen/test_sample.h"
 
+static struct labcomm_writer writer;
+
+static struct expect {
+  char *description;
+  int result;
+  int (*trampoline)(struct labcomm_decoder *context);
+  struct labcomm_decoder *context;
+} *expect;
+
+static void check_expect()
+{
+  struct expect *p = expect;
+
+  {
+    int i;
+    for (i = 0 ; i < writer.pos ; i++) {
+      fprintf(stderr, "%02x ", writer.data[i]);
+    }
+    fprintf(stderr, "\n");
+  }
+  if (p && p->trampoline) {
+    int err;
+    
+    expect = p + 1;
+    fprintf(stderr, "Checking '%s' expected=%d ", p->description, p->result);
+    err = p->trampoline(p->context);
+    fprintf(stderr, "actual=%d\n", err);
+    if (p->result >= 0 && p->result != err) {
+      fprintf(stderr, "FAILED\n");
+      exit(1);
+    } else if (err == 0) {
+      fprintf(stderr, "FAILED (unexpected 0)\n");
+      exit(1);
+    }
+    writer.pos = 0;
+  }
+}
+
 static unsigned char buffer[512];
 
 static int writer_alloc(struct labcomm_writer *w, 
@@ -41,6 +79,7 @@ static int writer_alloc(struct labcomm_writer *w,
   
   return 0;
 }
+
 static int writer_start(struct labcomm_writer *w, 
 			 struct labcomm_writer_action_context *action_context,
 			 int index, const struct labcomm_signature *signature,
@@ -48,15 +87,27 @@ static int writer_start(struct labcomm_writer *w,
 {
   return 0;
 }
+
+static int buf_writer_end(
+  struct labcomm_writer *w, 
+  struct labcomm_writer_action_context *action_context)
+{
+  check_expect();
+  return 0;
+}
+
 const struct labcomm_writer_action writer_action = {
   .alloc = writer_alloc,
   .start = writer_start,
+  .end = buf_writer_end,
 };
+
 static struct labcomm_writer_action_context writer_action_context = {
   .next = NULL,
   .action = &writer_action,
   .context = NULL
 }; 
+
 static struct labcomm_writer writer =  {
   .action_context = &writer_action_context,
   .data = buffer,
@@ -76,21 +127,25 @@ static int reader_alloc(struct labcomm_reader *r,
   
   return 0;
 }
+
 static int reader_fill(struct labcomm_reader *r, 
 		       struct labcomm_reader_action_context *action_context)
 {
   r->error = -ENOMEM;
   return r->error;
 }
+
 const struct labcomm_reader_action reader_action = {
   .alloc = reader_alloc,
   .fill = reader_fill,
 };
+
 static struct labcomm_reader_action_context reader_action_context = {
   .next = NULL,
   .action = &reader_action,
   .context = NULL
 }; 
+
 static struct labcomm_reader reader =  {
   .action_context = &reader_action_context,
   .data = buffer,
@@ -106,6 +161,7 @@ static test_sample_test_var encoder_var = {
   .n_2 = 1,
   .a = encoder_data,
 };
+
 static int32_t decoder_data[256];
 static test_sample_test_var decoder_var = {
   .n_0 = 1,
@@ -127,8 +183,9 @@ int test_decode_one(struct labcomm_decoder *decoder)
     reader.pos = 0;
     result = labcomm_decoder_decode_one(decoder); 
     if (result >= 0 ) {
-      fprintf(stderr, "Got result from buffer with bogus length (%d)\n",
-	      result);
+      fprintf(stderr,
+              "Got result from buffer with bogus length (%d, %d != %d)\n",
+	      result, reader.count, writer.pos);
       exit(1);
     }
   }
@@ -137,7 +194,7 @@ int test_decode_one(struct labcomm_decoder *decoder)
   reader.count = writer.pos;
   result = labcomm_decoder_decode_one(decoder);
   if (result < 0) {
-    fprintf(stderr, "Got result from buffer with correct length (%d)\n",
+    fprintf(stderr, "Got no result from buffer with correct length (%d)\n",
 	    result);
     exit(1);
   }
@@ -174,26 +231,35 @@ static void test_encode_decode(struct labcomm_encoder *encoder,
 
 int main(void)
 {
-  int err, i;
-  struct labcomm_encoder *encoder = labcomm_encoder_new(
-    &writer, 
-    labcomm_default_error_handler,
-    labcomm_default_memory,
-    labcomm_default_scheduler);
+  int i;
   struct labcomm_decoder *decoder = labcomm_decoder_new(
     &reader,
     labcomm_default_error_handler,
     labcomm_default_memory,
     labcomm_default_scheduler);
-  err = test_decode_one(decoder);
-  fprintf(stderr, "decode of version -> index %d\n", err);
-  writer.pos = 0;
+  struct expect expect_version[] = {
+    { "Version", 1, test_decode_one, decoder },
+    { 0, 0, 0 }
+  };
+  expect = expect_version;
+  struct labcomm_encoder *encoder = labcomm_encoder_new(
+    &writer, 
+    labcomm_default_error_handler,
+    labcomm_default_memory,
+    labcomm_default_scheduler);
   labcomm_decoder_register_test_sample_test_var(decoder,
 						handle_test_var, 
 						NULL);
+  struct expect expect_registration[] = {
+    { "Sampledef", -1, test_decode_one, decoder },
+#ifdef SHOULD_THIS_BE_REMOVED
+    { "Typedef", -1, test_decode_one, decoder },
+#endif
+    { "Binding", -1, test_decode_one, decoder },
+    { 0, 0, 0 }
+  };
+  expect = expect_registration;
   labcomm_encoder_register_test_sample_test_var(encoder);
-  err = test_decode_one(decoder);
-  fprintf(stderr, "decode of register -> index %d\n", err);
   test_encode_decode(encoder, decoder, 12, 1, 1);
   if (decoder_var.a[0] != encoder_var.a[0]) {
     fprintf(stderr, "Failed to decode correct value %d != %d\n", 

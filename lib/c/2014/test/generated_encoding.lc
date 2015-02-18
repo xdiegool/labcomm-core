@@ -1,4 +1,5 @@
-sample void V;
+typedef void v_t;
+sample v_t V;
 sample byte B;
 sample struct {
   int i;

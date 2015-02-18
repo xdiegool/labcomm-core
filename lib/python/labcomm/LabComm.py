@@ -175,6 +175,8 @@ DEFAULT_VERSION = "LabComm2014"
 i_VERSION     = 0x01
 i_SAMPLE_DEF  = 0x02
 i_SAMPLE_REF  = 0x03
+i_TYPE_DEF    = 0x04  
+i_TYPE_BINDING= 0x05 
 i_PRAGMA      = 0x3f
 i_USER        = 0x40 # ..0xffffffff
 
@@ -847,6 +849,13 @@ class Decoder(Codec):
         for _ in xrange(length):
             self.decode_byte()
 
+    # kludge, should really check if the index exists in self.version
+    def skip_or_raise(self, length, index):
+        if usePacketLength(self.version):
+            self.skip(length)
+        else:    
+            raise Exception("Invalid type index %d" % index)
+
     def decode(self):
         while True:
             index = self.decode_type_number()
@@ -864,6 +873,18 @@ class Decoder(Codec):
             value = None
         elif index == i_SAMPLE_REF:
             decl = self.index_to_decl[index].decode_decl(self)
+            value = None
+        elif index == i_TYPE_DEF:
+            self.skip_or_raise(length, index) 
+            decl = None
+            value = None
+        elif index == i_TYPE_BINDING:
+            self.skip_or_raise(length, index) 
+            decl = None
+            value = None
+        elif index == i_PRAGMA:
+            self.skip_or_raise(length, index) 
+            decl = None
             value = None
         elif index < i_USER:
             raise Exception("Invalid type index %d" % index)

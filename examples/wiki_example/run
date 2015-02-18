@@ -16,9 +16,9 @@ gcc -Wall -Werror -o example_encoder -I../../lib/c/2014 \
     example.c \
     ../../lib/c/liblabcomm2014.a || exit 1
 
-javac -cp ../../lib/java:. *.java || exit 1
+javac -cp ../../lib/java/labcomm.jar:. *.java || exit 1
 
 # Run through all executables (c->java->Python)
 ./example_encoder one two || exit 1
-java -cp ../../lib/java:. example_decoder_encoder example.encoded example.javaencoded || exit 1
+java -cp ../../lib/java/labcomm.jar:. example_decoder_encoder example.encoded example.javaencoded || exit 1
 PYTHONPATH=../../lib/python ./example_decoder.py example.javaencoded || exit 1

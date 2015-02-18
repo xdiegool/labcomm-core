@@ -39,20 +39,7 @@
 struct labcomm_encoder;
 struct labcomm_decoder;
 
-/*
- * Signature entry
- */
-struct labcomm_signature {
-  char *name;
-  int (*encoded_size)(void *); /* void* refers to sample_data */
-  int size;
-  unsigned char *signature; 
-  int index;
-#ifdef LABCOMM_EXPERIMENTAL_CACHED_ENCODED_SIZE
-  int cached_encoded_size; // -1 if not initialized or type is variable size
-#endif
-};
-
+#include "labcomm_type_signature.h"
 /*
  * Error handling.
  */
@@ -84,9 +71,6 @@ const char *labcomm_error_get_str(enum labcomm_error error_id);
 typedef int (*labcomm_handle_new_datatype_callback)(
   struct labcomm_decoder *decoder,
   struct labcomm_signature *sig);
-
-void labcomm_decoder_register_new_datatype_handler(struct labcomm_decoder *d,
-		labcomm_handle_new_datatype_callback on_new_datatype);
 
 /*
  * Dynamic memory handling

@@ -35,5 +35,12 @@ public class Constant {
   public static final int FLOAT            = 0x25;
   public static final int DOUBLE           = 0x26;
   public static final int STRING           = 0x27;
+  public static final int SAMPLE           = 0x28;
 
+
+  /*
+   * Other predefined symbols
+   */
+
+  public static final int TYPE_BIND_SELF   = 0x00;
 }

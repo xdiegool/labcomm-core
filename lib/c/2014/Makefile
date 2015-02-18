@@ -20,6 +20,7 @@ OBJS=labcomm$(VERSION).o \
      labcomm$(VERSION)_decoder.o \
      labcomm$(VERSION)_dynamic_buffer_writer.o \
      labcomm$(VERSION)_fd_reader.o \
+	 labcomm$(VERSION)_type_signature.o \
      labcomm$(VERSION)_fd_writer.o \
      labcomm$(VERSION)_pthread_scheduler.o 
 
@@ -29,8 +30,12 @@ ifeq ($(LABCOMM_EXPERIMENTAL),true)
 	    experimental/labcomm_thr_reader_writer.o \
 	    experimental/ThrottleDrv/ethernet_drv.o \
 	    experimental/ThrottleDrv/throttle_drv.o \
-	    experimental/labcomm_udp_reader_writer.o\
-	    experimental/labcomm_sig_parser.o 
+	    experimental/labcomm_udp_reader_writer.o
+endif
+
+# Enable experimental objects by `make LABCOMM_SIG_PARSER=true`
+ifeq ($(LABCOMM_SIG_PARSER),true)
+    OBJS += experimental/labcomm_sig_parser.o 
 endif
 
 LABCOMM_JAR=../../../compiler/labcomm$(LIBVERSION)_compiler.jar
@@ -83,8 +88,8 @@ distclean: clean
 ../liblabcomm$(LIBVERSION).a: $(OBJS)
 	ar -r $@ $^
 
-# Enable experimental objects by `make LABCOMM_EXPERIMENTAL=true`
-ifeq ($(LABCOMM_EXPERIMENTAL),true)
+# Enable sig parser objects by `make LABCOMM_SIG_PARSER=true`
+ifeq ($(LABCOMM_SIG_PARSER),true)
 experimental/test_sig_parser : experimental/labcomm_sig_parser.o experimental/test_sig_parser.c
 endif
 

@@ -15,8 +15,6 @@
  * - The RETURN_STRINGS and where/if to allocate strings is to be decided, it
  *   is currently not used
  *
- * - TYPE_DECL is not tested (is it ever sent?)
- *
  * - The dynamic allocation of the parser is not quite dynamic, the sizes are
  *   set through the init function, and are then static.
  *   This should be adapted when allocation is parameterized/user-definable
@@ -66,7 +64,7 @@ static int unpack_varint(unsigned char *buf,
         unsigned char cont = TRUE;
 
         do {
-                char c = buf[idx+i];
+                unsigned char c = buf[idx+i];
                 res = (res << 7) | (c & 0x7f);
                 cont = c & 0x80;
                 i++;
@@ -218,6 +216,7 @@ void getStr(labcomm_sig_parser_t *b, unsigned char *dest, size_t size) {
 	if( size > rem )
 		size = rem;
 	strncpy((char *)dest, (char *)&b->c[b->idx], size);
+    dest[size] = 0;
 	b->idx += size;
 }
 
@@ -271,6 +270,7 @@ static size_t labcomm_sizeof_primitive(unsigned int type)
 			return 2;
 		case TYPE_INTEGER :
 		case TYPE_FLOAT :
+		case TYPE_SAMPLE_REF :
 			return 4;
 		case TYPE_LONG :
 		case TYPE_DOUBLE :
@@ -340,7 +340,65 @@ int encoded_size_parse_sig(struct labcomm_signature *sig, void *sample)
 	return -1;
 }
 
-static int accept_signature(labcomm_sig_parser_t *d)
+static int accept_signature(labcomm_sig_parser_t *d, 
+                            labcomm_type type,
+                            unsigned int start,
+                            unsigned int uid, char *name)
+{
+    get_varint(d); // ignore sig len
+    VERBOSE_PRINTF("\ntype = ");
+    accept_type(d);
+    //printf(" : ");
+    //unsigned int dt = pop(d);
+#ifdef USE_TYPE_AND_SIZE
+    unsigned int type = pop_val(d);
+    unsigned int enc_size = pop_val(d);
+#else
+    pop_val(d); // unsigned int type
+    pop_val(d); // unsigned int enc_size
+#endif
+    if(type != PKG_SAMPLE_DECL) {
+        if(type == PKG_SAMPLE_REF) {
+            INFO_PRINTF("accept_signature: ignoring sample ref\n");
+            return TRUE;
+        } else if (type == PKG_TYPE_DECL) {
+            INFO_PRINTF("accept_signature: ignoring typedef\n");
+            return TRUE;
+        } else {
+            error("decl is neither sample, ref, or typedef???");
+            return FALSE;
+        }
+    }
+    unsigned int end = d->idx;
+    unsigned int len = end-start;
+
+    struct labcomm_signature *newsig = get_sig_t(d, uid);
+//		newsig->type = type;
+    if(len <= d->max_sig_len) {
+        d->signatures_length[uid-LABCOMM_USER] = len;
+        memcpy(d->signatures[uid-LABCOMM_USER], &d->c[start], len);
+        newsig->size = len;
+        newsig->signature = d->signatures[uid-LABCOMM_USER];
+        newsig->name = name;
+    } else {
+        error("sig longer than max length (this ought to be dynamic...)");
+    }
+    VERBOSE_PRINTF("signature for uid %x: %s (start=%x,end=%x,len=%d)\n", uid, get_signature_name(d, uid), start,end, len);
+    INFO_PRINTF("accept_signature: %s\n", newsig->name);
+#ifdef LABCOMM_EXPERIMENTAL_CACHED_ENCODED_SIZE
+    if(! d->current_decl_is_varsize) {
+        newsig->cached_encoded_size = enc_size;
+        newsig->encoded_size = encoded_size_static;
+        INFO_PRINTF(".... is static size = %d\n", enc_size);
+    } else {
+        newsig->cached_encoded_size = -1;
+        newsig->encoded_size = encoded_size_parse_sig;
+        INFO_PRINTF(".... is variable size\n");
+    }
+#endif
+    return TRUE;
+}
+static int accept_decl(labcomm_sig_parser_t *d, labcomm_type type)
 {
 	if(accept_user_id(d)) {
 		unsigned int uid = pop_val(d);
@@ -354,54 +412,24 @@ static int accept_signature(labcomm_sig_parser_t *d)
 		free(str);
 #endif
 		unsigned char lenlen = labcomm_varint_sizeof(nlen);
-        get_varint(d); // ignore sig len
-		VERBOSE_PRINTF("\ntype = ");
-		accept_type(d);
-		//printf(" : ");
-		//unsigned int dt = pop(d);
-#ifdef USE_TYPE_AND_SIZE
-		unsigned int type = pop_val(d);
-		unsigned int enc_size = pop_val(d);
-#else
-		pop_val(d); // unsigned int type
-		pop_val(d); // unsigned int enc_size
-#endif
-		unsigned int end = d->idx;
-		unsigned int len = end-start;
 
-		struct labcomm_signature *newsig = get_sig_t(d, uid);
-//		newsig->type = type;
-		if(len <= d->max_sig_len) {
-			d->signatures_length[uid-LABCOMM_USER] = len;
-			memcpy(d->signatures[uid-LABCOMM_USER], &d->c[start], len);
-			newsig->size = len;
-			newsig->signature = d->signatures[uid-LABCOMM_USER];
-		} else {
-			error("sig longer than max length (this ought to be dynamic...)");
-		}
-
+        if(type != PKG_SAMPLE_DECL) {
+            // don't record typedefs and samplerefs (for now)
+            // to avoid number clashes with sample defs
+            // in the parser struct 
+            return accept_signature(d, type, start, uid, (char *) &d->c[nstart+lenlen]);
+        }
 		if(nlen < d->max_name_len) { // leave 1 byte for terminating NULL
+            char *name;
 			d->signatures_name_length[uid-LABCOMM_USER] = nlen;
 			memcpy(d->signatures_name[uid-LABCOMM_USER], &d->c[nstart+lenlen], nlen);
 			d->signatures_name[uid-LABCOMM_USER][nlen]=0;
-			newsig->name = d->signatures_name[uid-LABCOMM_USER];
+			name = d->signatures_name[uid-LABCOMM_USER];
+            return accept_signature(d, type, start, uid, name);
 		} else {
 			error("sig name longer than max length (this ought to be dynamic...");
+            return FALSE;
 		}
-		VERBOSE_PRINTF("signature for uid %x: %s (start=%x,end=%x, nlen=%d,len=%d)\n", uid, get_signature_name(d, uid), start,end, nlen, len);
-		INFO_PRINTF("SIG: %s\n", newsig->name);
-#ifdef LABCOMM_EXPERIMENTAL_CACHED_ENCODED_SIZE
-		if(! d->current_decl_is_varsize) {
-			newsig->cached_encoded_size = enc_size;
-			newsig->encoded_size = encoded_size_static;
-			INFO_PRINTF(".... is static size = %d\n", enc_size);
-		} else {
-			newsig->cached_encoded_size = -1;
-			newsig->encoded_size = encoded_size_parse_sig;
-			INFO_PRINTF(".... is variable size\n");
-		}
-#endif
-		return TRUE;
 	} else {
 		error("sample_decl with uid < LABCOMM_USER");
 		return FALSE;
@@ -412,7 +440,7 @@ static int accept_signature(labcomm_sig_parser_t *d)
 int accept_packet(labcomm_sig_parser_t *d) {
         size_t nbytes;
         unsigned int type = peek_varint(d, &nbytes) ;
-    if(type == VERSION ) {
+    if(type == PKG_VERSION ) {
 		advancen(d, nbytes);//consume type field
         get_varint(d); //ignore length field
 		VERBOSE_PRINTF("got version.\n");
@@ -422,19 +450,37 @@ int accept_packet(labcomm_sig_parser_t *d) {
             char *str = (char *) pop_ptr(d);
             free(str);
 #endif
-    }else if(type == TYPE_DECL ) {
-		//XXX is this used? If so, is it correct?
-		advancen(d, nbytes);
-		d->current_decl_is_varsize = FALSE; // <-- a conveniance flag in labcomm_sig_parser_t
-		VERBOSE_PRINTF("type_decl ");
-        get_varint(d); //ignore length field
-		accept_signature(d);
-	} else if (type == SAMPLE_DECL) {
+	} else if (type == PKG_SAMPLE_DECL) {
 		d->current_decl_is_varsize = FALSE; // <-- a conveniance flag in labcomm_sig_parser_t
 		advancen(d, nbytes);
 		VERBOSE_PRINTF("sample_decl ");
         get_varint(d); //ignore length field
-		accept_signature(d);
+		accept_decl(d, type);
+	} else if (type == PKG_SAMPLE_REF) {
+		d->current_decl_is_varsize = FALSE; // <-- a conveniance flag in labcomm_sig_parser_t
+		advancen(d, nbytes);
+		VERBOSE_PRINTF("sample_ref ");
+        get_varint(d); //ignore length field
+		accept_decl(d, type);
+    }else if(type == PKG_TYPE_DECL ) {
+		d->current_decl_is_varsize = FALSE; // <-- a conveniance flag in labcomm_sig_parser_t
+		advancen(d, nbytes);//consume type field
+		VERBOSE_PRINTF("type_decl ");
+        get_varint(d); //ignore length field
+		accept_decl(d, type);
+	} else if (type == PKG_TYPE_BINDING) {
+		VERBOSE_PRINTF("type_binding ");
+		advancen(d, nbytes);
+        get_varint(d); //ignore length field
+#ifdef VERBOSE        
+        int sid = 
+#endif            
+            get_varint(d); //ignore sample id field
+#ifdef VERBOSE        
+        int tid =
+#endif            
+            get_varint(d); //ignore type id field
+		VERBOSE_PRINTF("sid=0x%x, tid=0x%x\n ", sid, tid);
 	} else if(type >= LABCOMM_USER) {
 #ifdef EXIT_WHEN_RECEIVING_DATA
 		printf("*** got sample data, exiting\n");
@@ -447,7 +493,7 @@ int accept_packet(labcomm_sig_parser_t *d) {
         error("got unknown type (<LABCOMM_USER)");
 		exit(1);
 #else
-        int len = get_varint(d); //ignore length field
+        int len = get_varint(d); // length field
         printf("got unknown tag: 0x%x, skipping %d bytes\n",type, len);
         advancen(d, len);
 #endif
@@ -464,13 +510,14 @@ static int accept_user_id(labcomm_sig_parser_t *d){
 		push_val(d, uid);
 		return TRUE;
 	} else {
+        error("uid < LABCOMM_USER");
 		return FALSE;
 	}
 }
 
 static int accept_string(labcomm_sig_parser_t *d){
 	unsigned int len = get_varint(d);
-	unsigned char *str=malloc(len);
+	unsigned char *str=malloc(len+1); // len is without terminating null
 	getStr(d, str, len);
 	VERBOSE_PRINTF("%s", str);
 #ifdef RETURN_STRINGS
@@ -527,6 +574,11 @@ static int accept_type(labcomm_sig_parser_t *d){
 			labcomm_sig_parser_t_set_varsize(d);
 			push_val(d, 0);
 			break;
+		case TYPE_SAMPLE_REF :
+			VERBOSE_PRINTF("sample\n");
+			advancen(d, nbytes);
+			push_val(d,  4);
+			break;
 		case ARRAY_DECL :
 			accept_array_decl(d);
 			pop_val(d); // ignore element type
@@ -537,7 +589,10 @@ static int accept_type(labcomm_sig_parser_t *d){
 			// push(d, pop(d) is a NOP --> leave size on stack
 			break;
 		default :
-			printf("accept_type default (type==%x) should not happen\n", type);
+            //should we distinguish between SAMPLE_DEF and TYPE_DEF here?
+			//printf("accept_type default (type==%x) should not happen\n", type);
+			VERBOSE_PRINTF("user type 0x%x\n",type);
+			advancen(d, nbytes);
 			push_val(d, 0);
 			push_val(d, type);
 			return FALSE;
@@ -601,7 +656,11 @@ static int accept_struct_decl(labcomm_sig_parser_t *d){
 	if(tid == STRUCT_DECL) {
 		advancen(d, nbytes);
 		unsigned int nf = get_varint(d);
-		VERBOSE_PRINTF("%d field struct:\n", nf);
+        if(nf == 0) {
+            VERBOSE_PRINTF("void\n");
+        } else {
+            VERBOSE_PRINTF("%d field struct:\n", nf);
+        }
 		int i;
 #ifdef USE_UNUSED_VARS
 		int numVar=0;
@@ -708,7 +767,7 @@ static int skip_array(labcomm_sig_parser_t *d, unsigned char *sig, int len, int 
 
 int skip_struct(labcomm_sig_parser_t *d, unsigned char *sig, unsigned int len, int *pos) {
 	size_t nbytes;
-	unsigned int nFields = unpack_varint(sig,*pos, &nbytes);
+	int nFields = unpack_varint(sig,*pos, &nbytes);
 	*pos += nbytes;
 	unsigned int i;
 	unsigned int skipped=0;
@@ -719,7 +778,7 @@ int skip_struct(labcomm_sig_parser_t *d, unsigned char *sig, unsigned int len, i
 #ifdef DEBUG
 		VERBOSE_PRINTF("field #%d:\n----namelen==%d\n",i,namelen);
 		char name[namelen+1]; //HERE BE DRAGONS. alloca?
-		strncpy(name, sig+*pos+nbytes, namelen);
+		strncpy(name, (const char *)sig+*pos+nbytes, namelen);
 		name[namelen]=0;
 		VERBOSE_PRINTF("----name = %s\n",name);
 #endif
@@ -797,7 +856,7 @@ int skip_type(unsigned int type, labcomm_sig_parser_t *d,
 }
 #else
 int skip_type(unsigned int type, labcomm_sig_parser_t *d,
-		unsigned char *sig, unsigned int len, int *pos)
+		const char *sig, unsigned int len, int *pos)
 {
 	int skipped=0;
 	VERBOSE_PRINTF("skip_type %x\n", type);
@@ -849,7 +908,7 @@ int skip_packed_sample_data(labcomm_sig_parser_t *d, struct labcomm_signature *s
 	unsigned int skipped = 0;	//skipped byte counter
 	while(pos < sig->size) {
 		size_t nbytes;
-		unsigned int type = unpack_varint(sig->signature,pos, &nbytes);
+		int type = unpack_varint(sig->signature,pos, &nbytes);
 		pos+=nbytes;
 		skipped += skip_type(type, d, sig->signature, sig->size, &pos);
 	}

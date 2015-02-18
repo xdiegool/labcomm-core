@@ -1,8 +1,10 @@
 package se.lth.control.labcomm;
 
-public interface SampleDispatcher {
+import java.io.IOException;
+
+public interface SampleDispatcher <T extends SampleType>{
     
-  public Class getSampleClass();
+  public Class<T> getSampleClass();
     
   public String getName();
 
@@ -10,6 +12,12 @@ public interface SampleDispatcher {
 
   public void decodeAndHandle(Decoder decoder,
 			      SampleHandler handler) throws Exception;
+
+  /** @return true if the type depends on one or more typedefs
+   */
+  public boolean hasDependencies();
+
+  public void encodeTypeDef(Encoder e, int index) throws IOException;
 
   /** return the tag SAMPLE_DEF or TYPE_DEF, for use
    *  by encoder.register.

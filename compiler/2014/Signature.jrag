@@ -158,7 +158,6 @@ aspect Signature {
   }
 
   public void TypeDecl.genSigLineForDecl(SignatureList list, boolean decl) {
-     //System.out.println("************ TypeDecl.genSigLine("+decl+").... for "+getName());
     if(decl){
       getType().genSigLineForDecl(list, decl);
     }else{
@@ -167,7 +166,6 @@ aspect Signature {
   }
 
   public void SampleDecl.genSigLineForDecl(SignatureList list, boolean decl) {
-     //System.out.println("************ SampleDecl.genSigLine("+decl+").... for "+getName());
     getType().genSigLineForDecl(list, decl);
   }
 
@@ -176,25 +174,20 @@ aspect Signature {
     list.addInt(0, null);
   }
 
-  public void SampleRefType.genSigLineForDecl(SignatureList list, boolean decl) {
-    list.addInt(LABCOMM_SAMPLE_REF, "sample");
-  }
+//  public void SampleRefType.genSigLineForDecl(SignatureList list, boolean decl) {
+//    list.addInt(LABCOMM_SAMPLE_REF, "sample");
+//  }
   public void PrimType.genSigLineForDecl(SignatureList list, boolean decl) {
     list.addInt(getToken(), null);
   }
 
+  /* For UserType, the decl parameter is ignored, as a UserType
+   * will always be a TypeRef
+   */
   public void UserType.genSigLineForDecl(SignatureList list, boolean decl) {
-    if(decl){
-     //System.out.println("************ UserType.genSigLine("+decl+").... for "+getName());
-      TypeDecl thet=lookupType(getName());
-      //System.out.println("************ thet: "+thet.getName() +":"+thet.getType());
-      thet.genSigLineForDecl(list, decl);
-    }else{
-     //System.out.println("************ UserType.genSigLine("+decl+").... for "+getName());
+      
       TypeDecl thet = lookupType(getName());
-     // System.out.println("************ thet: "+thet.getName() +":"+thet.getType());
       list.addTypeRef(thet, null);
-    }
   }
 
   public void ArrayType.genSigLineForDecl(SignatureList list, boolean decl) {

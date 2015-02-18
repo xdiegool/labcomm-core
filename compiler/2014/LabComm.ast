@@ -1,39 +1,37 @@
 Program ::= Decl*;
 
-//TODO: Add signatures to the abstract grammar, so that
-//they can be extended and refined by more than one aspect.
-//sketch:
-Signature		::= SignatureList FlatSignatureList:SignatureList; 
-SignatureList		::= SignatureLine*;
-abstract SignatureLine 	::= <Indent:int> <Comment:String>; 
-abstract DataSignatureLine : SignatureLine;
-ByteArraySignatureLine : DataSignatureLine ::= <Data:byte[]>;
-IntSignatureLine : DataSignatureLine ::= <Data:int>;
-StringSignatureLine : DataSignatureLine ::= <Data:String>;
-TypeRefSignatureLine   	: SignatureLine ::= Decl;
-
-
-//abstract Decl ::= Type <Name:String>;
-// the signature list be defined as  a non-terminal attribute:
 abstract Decl ::= Type <Name:String> /Signature/;
-TypeDecl : Decl;
+
+TypeDecl   : Decl;
 SampleDecl : Decl;
+
+//Signatures are in the abstract grammar, so that
+//they can be extended and refined by aspects.
+
+Signature                 ::= SignatureList FlatSignatureList:SignatureList; 
+SignatureList             ::= SignatureLine*;
+abstract SignatureLine 	  ::= <Indent:int> <Comment:String>; 
+abstract DataSignatureLine : SignatureLine;
+ByteArraySignatureLine     : DataSignatureLine ::= <Data:byte[]>;
+IntSignatureLine           : DataSignatureLine ::= <Data:int>;
+StringSignatureLine        : DataSignatureLine ::= <Data:String>;
+TypeRefSignatureLine       : SignatureLine     ::= Decl;
 
 Field ::= Type <Name:String>;
 
 abstract Type;
-VoidType          : Type;
-SampleRefType     : Type;
-PrimType          : Type ::= <Name:String> <Token:int>;
-UserType          : Type ::= <Name:String>;
-StructType        : Type ::= Field*;
-ParseArrayType    : Type ::= Type Dim*;
-abstract ArrayType :Type ::= Type Exp*;
-VariableArrayType : ArrayType;
-FixedArrayType    : ArrayType;
+VoidType           : Type;
+//SampleRefType      : Type;
+PrimType           : Type ::= <Name:String> <Token:int>;
+UserType           : Type ::= <Name:String>;
+StructType         : Type ::= Field*;
+ParseArrayType     : Type ::= Type Dim*;
+abstract ArrayType : Type ::= Type Exp*;
+VariableArrayType  : ArrayType;
+FixedArrayType     : ArrayType;
 
 Dim ::= Exp*;
 
 abstract Exp;
 IntegerLiteral : Exp ::= <Value:String>;
-VariableSize : Exp;
+VariableSize   : Exp;

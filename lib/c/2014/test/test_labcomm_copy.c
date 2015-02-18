@@ -199,6 +199,7 @@ int main(int argc, char **argv)
 
   while (labcomm_decoder_decode_one(decoder) > 0) ;
 
+  printf("cache_s1.i = %d, s1.i = %d\n", cache_s1.i, s1.i);
   assert(cache_s1.i == s1.i);
   puts("S1 copied ok");
 

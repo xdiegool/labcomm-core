@@ -10,28 +10,40 @@ MODULES=Constant \
 	SampleDispatcher \
 	SampleHandler \
 	SampleType \
+	BuiltinType \
+	TypeDef \
+	TypeBinding \
+	ASTbuilder \
+	TypeDefParser \
 	Writer \
 	WriterWrapper
 
 all: labcomm.jar labcomm2014.jar labcomm2006.jar
 
-labcomm.jar: gen/JAVAC
+labcomm.jar: gen/JAVAC osgi-manifest-all.txt
 	echo $@
-	cd gen ; jar cfm ../$@ ../osgi-manifest.txt se/lth/control/labcomm/*.class se/lth/control/labcomm2006/*.class
+	cd gen ; jar cfm ../$@ ../osgi-manifest-all.txt \
+		se/lth/control/labcomm/*.class \
+		se/lth/control/labcomm2006/*.class
 
-labcomm2014.jar: gen/JAVAC
+labcomm2014.jar: gen/JAVAC osgi-manifest-2014.txt
 	echo $@
-	cd gen ; jar cfm ../$@ ../osgi-manifest.txt se/lth/control/labcomm/*.class
+	cd gen ; jar cfm ../$@ ../osgi-manifest-2014.txt \
+		se/lth/control/labcomm/*.class
 
-labcomm2006.jar: gen/JAVAC
+labcomm2006.jar: gen/JAVAC osgi-manifest-2006.txt
 	echo $@
-	cd gen ; jar cfm ../$@ ../osgi-manifest.txt se/lth/control/labcomm2006/*.class
+	cd gen ; jar cfm ../$@ ../osgi-manifest-2006.txt \
+		se/lth/control/labcomm2006/*.class
 
 gen:
 	mkdir gen
 
-gen/JAVAC: $(MODULES:%=se/lth/control/labcomm/%.java) $(MODULES:%=se/lth/control/labcomm2006/%.java) Makefile | gen
-	javac -d gen $(filter %.java, $^)
+gen/JAVAC: $(MODULES:%=se/lth/control/labcomm/%.java) \
+	   $(MODULES:%=se/lth/control/labcomm2006/%.java) \
+	   Makefile | gen
+	javac -cp ../../compiler/labcomm_compiler.jar -d gen \
+		$(filter %.java, $^) 
 	touch $@
 
 
@@ -40,5 +52,5 @@ clean:
 	rm -rf gen
 
 .PHONY: distclean
-distclean:
+distclean: clean
 	rm -rf labcomm.jar labcomm2006.jar labcomm2014.jar

@@ -47,19 +47,19 @@
     UNWRAP_ac( __VA_ARGS__) = UNWRAP_ac(__VA_ARGS__)->next;		\
   }
 
-int labcomm_reader_alloc(struct labcomm_reader *r, 
+int labcomm_reader_alloc(struct labcomm_reader *r,
                          struct labcomm_reader_action_context *action_context)
 {
   UNWRAP(alloc, r, action_context);
 }
 
-int labcomm_reader_free(struct labcomm_reader *r, 
+int labcomm_reader_free(struct labcomm_reader *r,
                         struct labcomm_reader_action_context *action_context)
 {
   UNWRAP(free, r, action_context);
 }
 
-int labcomm_reader_start(struct labcomm_reader *r, 
+int labcomm_reader_start(struct labcomm_reader *r,
                          struct labcomm_reader_action_context *action_context,
 			 int local_index, int remote_index,
 			 const struct labcomm_signature *signature,
@@ -68,41 +68,41 @@ int labcomm_reader_start(struct labcomm_reader *r,
   UNWRAP(start, r, action_context, local_index, remote_index, signature, value);
 }
 
-int labcomm_reader_end(struct labcomm_reader *r, 
+int labcomm_reader_end(struct labcomm_reader *r,
                        struct labcomm_reader_action_context *action_context)
 {
   UNWRAP(end, r, action_context);
 }
 
-int labcomm_reader_fill(struct labcomm_reader *r, 
+int labcomm_reader_fill(struct labcomm_reader *r,
                         struct labcomm_reader_action_context *action_context)
 {
   UNWRAP(fill, r, action_context);
 }
 
-int labcomm_reader_ioctl(struct labcomm_reader *r, 
+int labcomm_reader_ioctl(struct labcomm_reader *r,
                          struct labcomm_reader_action_context *action_context,
                          int local_index, int remote_index,
-                         const struct labcomm_signature *signature, 
+                         const struct labcomm_signature *signature,
                          uint32_t ioctl_action, va_list args)
 {
-  UNWRAP(ioctl, r, action_context, 
+  UNWRAP(ioctl, r, action_context,
 	 local_index, remote_index, signature, ioctl_action, args);
 }
 
-int labcomm_writer_alloc(struct labcomm_writer *w, 
+int labcomm_writer_alloc(struct labcomm_writer *w,
                          struct labcomm_writer_action_context *action_context)
 {
   UNWRAP(alloc, w, action_context);
 }
 
-int labcomm_writer_free(struct labcomm_writer *w, 
+int labcomm_writer_free(struct labcomm_writer *w,
                         struct labcomm_writer_action_context *action_context)
 {
   UNWRAP(free, w, action_context);
 }
 
-int labcomm_writer_start(struct labcomm_writer *w, 
+int labcomm_writer_start(struct labcomm_writer *w,
                          struct labcomm_writer_action_context *action_context,
                          int index, const struct labcomm_signature *signature,
                          void *value)
@@ -110,26 +110,26 @@ int labcomm_writer_start(struct labcomm_writer *w,
   UNWRAP(start, w, action_context, index, signature, value);
 }
 
-int labcomm_writer_end(struct labcomm_writer *w, 
+int labcomm_writer_end(struct labcomm_writer *w,
                        struct labcomm_writer_action_context *action_context)
 {
   UNWRAP(end, w, action_context);
-} 
+}
 
-int labcomm_writer_flush(struct labcomm_writer *w, 
+int labcomm_writer_flush(struct labcomm_writer *w,
                          struct labcomm_writer_action_context *action_context)
 {
   UNWRAP(flush, w, action_context);
-} 
+}
 
-int labcomm_writer_ioctl(struct labcomm_writer *w, 
-                         struct labcomm_writer_action_context *action_context, 
-                         int index, 
-                         const struct labcomm_signature *signature, 
+int labcomm_writer_ioctl(struct labcomm_writer *w,
+                         struct labcomm_writer_action_context *action_context,
+                         int index,
+                         const struct labcomm_signature *signature,
                          uint32_t ioctl_action, va_list args)
 {
   UNWRAP(ioctl, w, action_context, index, signature, ioctl_action, args);
-} 
+}
 
 #undef UNWRAP
 #undef UNWRAP_ac
@@ -137,12 +137,12 @@ int labcomm_writer_ioctl(struct labcomm_writer *w,
 
 
 
-static const char *labcomm_error_string[] = { 
+static const char *labcomm_error_string[] = {
 #define LABCOMM_ERROR(name, description) description ,
 #include "labcomm_error.h"
 #undef LABCOMM_ERROR
 };
-static const int labcomm_error_string_count = (sizeof(labcomm_error_string) / 
+static const int labcomm_error_string_count = (sizeof(labcomm_error_string) /
 					       sizeof(labcomm_error_string[0]));
 
 
@@ -175,7 +175,7 @@ void labcomm2014_on_error_fprintf(enum labcomm_error error_id, size_t nbr_va_arg
    fprintf(stderr, "}\n");
 
    va_end(arg_pointer);
- } 
+ }
 #else
  ; // If labcomm can't be compiled with stdio the user will have to make an own error callback functionif he/she needs error reporting.
 #endif
@@ -207,8 +207,8 @@ void *labcomm_signature_array_ref(struct labcomm_memory *memory,
     *first = index;
     *last = index + 1;
     *data = labcomm_memory_alloc(memory, 0, size);
-    if (*data) { 
-      memset(*data, 0, size); 
+    if (*data) {
+      memset(*data, 0, size);
     }
   } else if (index < *first || *last <= index) {
     void *old_data = *data;
@@ -221,8 +221,8 @@ void *labcomm_signature_array_ref(struct labcomm_memory *memory,
     *data = labcomm_memory_alloc(memory, 0, n * size);
     if (*data) {
       memset(*data, 0, n * size);
-      memcpy(*data + (old_first - *first) * size, 
-	     old_data, 
+      memcpy(*data + (old_first - *first) * size,
+	     old_data,
 	     (old_last - old_first) * size);
     }
 //    dump(old_data, size, old_first, old_last);
@@ -236,7 +236,7 @@ void *labcomm_signature_array_ref(struct labcomm_memory *memory,
   }
 }
 
-static int local_index = 0x40;
+static int local_index = LABCOMM_USER;
 
 void labcomm_set_local_index(struct labcomm_signature *signature)
 {
@@ -255,6 +255,11 @@ int labcomm_get_local_index(const struct labcomm_signature *signature)
 			       "Signature not set: %s\n", signature->name);
   }
   return signature->index;
+}
+
+int labcomm_get_local_type_index(const struct labcomm_signature *signature)
+{
+    return labcomm_get_local_index(signature);
 }
 
 int labcomm_internal_sizeof(const struct labcomm_signature *signature,

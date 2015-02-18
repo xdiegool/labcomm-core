@@ -1,0 +1,7 @@
+Bundle-Description: Provides Labcomm to bundles
+Bundle-ManifestVersion: 2
+Bundle-Name: Labcomm OSGi
+Bundle-SymbolicName: se.lth.control.labcomm2006
+Bundle-Vendor: LTH
+Bundle-Version: 1.0.0
+Export-Package: se.lth.control.labcomm2006;version="1.0.0"

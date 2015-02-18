@@ -35,25 +35,56 @@ public class DecoderChannel implements Decoder {
   }	   
 
   private void processTypeDef(int len) throws IOException {
-       System.err.println("Got TypeDef: skipping "+len+" bytes"); 
-       for(int i=0; i<len; i++) {
-           decodeByte();		  
+       try {
+           processSample(Constant.TYPE_DEF);
+      } catch(Exception ex) {
+       int idx = decodePacked32();
+       String name = decodeString(); 
+       int siglen = decodePacked32();
+       for(int i=0; i<siglen; i++) {
+           byte b = decodeByte();		  
        }
+      }
   }
 
   private void processTypeBinding(int len) throws IOException {
-       System.err.println("Got TypeBinding: skipping "+len+" bytes"); 
+      try {
+           processSample(Constant.TYPE_BINDING);
+      } catch(Exception ex) {
+          for(int i=0; i<len; i++) {
+              decodeByte();		  
+          }
+      } 
+  }
+
+  private void processPragma(int len) throws IOException {
        for(int i=0; i<len; i++) {
            decodeByte();		  
        }
   }
 
-  private void processPragma(int len) throws IOException {
-       System.err.println("Got Pragma: skipping "+len+" bytes"); 
-       for(int i=0; i<len; i++) {
-           decodeByte();		  
-       }
-  }
+  private void processSample(int tag) throws IOException {
+	  DecoderRegistry.Entry e = def_registry.get(tag);
+	  if (e == null) {
+	    throw new IOException("Unhandled tag " + tag);
+	  }
+	  SampleDispatcher d = e.getDispatcher();
+	  if (d == null) {
+	    throw new IOException("No dispatcher for '" + e.getName() + "'");
+	  }
+	  SampleHandler h = e.getHandler();
+	  if (h == null) {
+	    throw new IOException("No handler for '" + e.getName() +"'");
+	  }
+      try {
+        //XXX why does decodeAndHandle throw Exception and not IOException?
+        d.decodeAndHandle(this, h);
+      } catch (IOException ex) {
+          throw ex;
+      } catch (Exception ex) {
+          ex.printStackTrace();
+      }
+  }	  
 
   public void runOne() throws Exception {
     boolean done = false;
@@ -68,37 +99,26 @@ public class DecoderChannel implements Decoder {
 			          version + " != " + Constant.CURRENT_VERSION);
           }
         } break;
-	case Constant.SAMPLE_DEF: {
-          processSampleDef();
-	} break;
-	case Constant.SAMPLE_REF: {
-          processSampleRef();
-	} break;
-	case Constant.TYPE_DEF: {
-          processTypeDef(length);
-	} break;
-	case Constant.TYPE_BINDING: {
-          processTypeBinding(length);
-	} break;
-	case Constant.PRAGMA: {
-          processPragma(length);
-	} break;
-	default: {
-	  DecoderRegistry.Entry e = def_registry.get(tag);
-	  if (e == null) {
-	    throw new IOException("Unhandled tag " + tag);
-	  }
-	  SampleDispatcher d = e.getDispatcher();
-	  if (d == null) {
-	    throw new IOException("No dispatcher for '" + e.getName() + "'");
-	  }
-	  SampleHandler h = e.getHandler();
-	  if (h == null) {
-	    throw new IOException("No handler for '" + e.getName() +"'");
-	  }
-	  d.decodeAndHandle(this, h);
-	  done = true;
-	}
+        case Constant.SAMPLE_DEF: {
+            processSampleDef();
+        } break;
+        case Constant.SAMPLE_REF: {
+            processSampleRef();
+        } break;
+        case Constant.TYPE_DEF: {
+            processTypeDef(length);
+        } break;
+        case Constant.TYPE_BINDING: {
+            processTypeBinding(length);
+        } break;
+        case Constant.PRAGMA: {
+            processPragma(length);
+        } break;
+        default: {
+            processSample(tag);
+            done = true;
+
+        }
       }
     }
   }
@@ -196,5 +216,16 @@ public class DecoderChannel implements Decoder {
 
   }
     
+  /* Package visible methods for use from TypeDefParser */
+
+  String getSampleName(int idx) {
+    DecoderRegistry.Entry e = def_registry.get(idx); 
+    return e.getName();  
+  }
+
+  byte[] getSampleSignature(int idx) {
+    DecoderRegistry.Entry e = def_registry.get(idx); 
+    return e.getSignature();  
+  }
 }
 

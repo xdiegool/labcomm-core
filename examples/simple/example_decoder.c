@@ -8,6 +8,10 @@
 #include "gen/simple.h"
 #include <stdio.h>
 
+static void handle_simple_doavoid(simple_doavoid *v, void *context) {
+  printf("Got a void.\n");
+}
+
 static void handle_simple_theTwoInts(simple_TwoInts *v,void *context) {
   printf("Got theTwoInts. a=%d, b=%d\n", v->a, v->b);
 }
@@ -69,6 +73,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
+  labcomm_decoder_register_simple_doavoid(decoder, handle_simple_doavoid, context);
   labcomm_decoder_register_simple_theTwoInts(decoder, handle_simple_theTwoInts, context);
   labcomm_decoder_register_simple_anotherTwoInts(decoder, handle_simple_anotherTwoInts, context);
   labcomm_decoder_register_simple_IntString(decoder, handle_simple_IntString, context);

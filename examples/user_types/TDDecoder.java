@@ -6,9 +6,19 @@ import java.io.IOException;
 import se.lth.control.labcomm.DecoderChannel;
 import se.lth.control.labcomm.TypeDef;
 import se.lth.control.labcomm.TypeDefParser;
+import se.lth.control.labcomm.ASTbuilder;
 //import se.lth.control.labcomm.TypeBinding;
 
-public class Decoder
+import se.lth.control.labcomm2014.compiler.Program;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+
+import java.util.Vector;
+import java.util.LinkedList;
+import java.util.Iterator;
+
+
+public class TDDecoder
   implements twoLines.Handler,
 //             TypeDef.Handler,
 //             TypeBinding.Handler,
@@ -23,15 +33,15 @@ public class Decoder
   private DecoderChannel decoder;
   private TypeDefParser tdp;
 
-  public Decoder(InputStream in) 
+  public TDDecoder(InputStream in) 
     throws Exception 
   {
     decoder = new DecoderChannel(in);
-    doavoid.register(decoder, this);
     twoInts.register(decoder, this);
     twoLines.register(decoder, this);
     theFirstInt.register(decoder, this);
     theSecondInt.register(decoder, this);
+    doavoid.register(decoder, this);
     intAndRef.register(decoder, this);
     doavoid.registerSampleRef(decoder);
     this.tdp = TypeDefParser.registerTypeDefParser(decoder); 
@@ -66,9 +76,23 @@ public class Decoder
 //  }
 
   public void onTypeDef(TypeDefParser.ParsedTypeDef d) {
-    System.out.println("ontype_def: ");
-    System.out.print((d.isSampleDef()?"sample ":"typedef ")+d);
-    System.out.println(" "+d.getName()+";");
+    if(d.isSampleDef()){
+        System.out.println("onTypeDef (sample): ");
+        ASTbuilder v = new ASTbuilder();
+        Program p = v.makeProgram((TypeDefParser.ParsedSampleDef) d);
+        try {
+                //FileOutputStream f = new FileOutputStream("/tmp/foopp"+d.getName()+".txt");
+                //PrintStream out = new PrintStream(f);
+                p.pp(System.out);
+                //p.C_genC(System.out, new Vector(), "lcname", "prefix", 2014);
+                //p.J_gen(out, "testpackage", 2014);
+                //out.close();
+        } catch (Throwable e) {
+                System.err.println("Exception: " + e);
+                e.printStackTrace();
+        }
+    }
+    //System.out.println(" "+d.getName()+";");
     //for(byte b: d.getSignature()) {
     //   System.out.print(Integer.toHexString(b)+" ");
     //}
@@ -76,10 +100,6 @@ public class Decoder
     //try {
     //   tdp.parseSignature(d.getIndex());
     //} catch(IOException ex) { ex.printStackTrace();}   
-  }
-
-  public void handle_doavoid() throws java.io.IOException {
-    System.out.println("Got a void.");
   }
 
   public void handle_twoInts(twoInts d) throws java.io.IOException {
@@ -95,6 +115,10 @@ public class Decoder
     System.out.println("Got theSecondInt: "+d);
   }
 
+  public void handle_doavoid() throws java.io.IOException {
+    System.out.println("Got a void.");
+  }
+
   public void handle_intAndRef(intAndRef d) throws java.io.IOException {
     System.out.println("Got intAndRef: "+d.x+", "+d.reference);
   }
@@ -107,7 +131,7 @@ public class Decoder
 
 
   public static void main(String[] arg) throws Exception {
-    Decoder example = new Decoder(
+    TDDecoder example = new TDDecoder(
       new FileInputStream(new File(arg[0]))
     );
   }

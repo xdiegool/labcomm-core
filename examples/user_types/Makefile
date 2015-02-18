@@ -1,15 +1,16 @@
 LCDIR=../..
-LCCJAR=${LCDIR}/compiler/labcomm2014_compiler.jar  # the LabComm compiler
-LCLJAR=${LCDIR}/lib/java/labcomm2014.jar  # the LabComm library
+LCCJAR=${LCDIR}/compiler/labcomm2014_compiler.jar# the LabComm compiler
+LCLJAR=${LCDIR}/lib/java/labcomm2014.jar# the LabComm library
 
 EXECUTABLES=example_encoder example_decoder \
-	    Encoder.class Decoder.class \
+	    Encoder.class Decoder.class TDDecoder.class \
 	    ExampleEncoder.exe ExampleDecoder.exe
+
 include ${LCDIR}/lib/c/os_compat.mk
 
 GENDIR=gen
 
-.PHONY: all cleanbuild clean distclean build run allall buildcs runwcs
+.PHONY: all cleanbuild clean distclean build run allall buildcs runwcs runjastadd
 
 all: cleanbuild run
 
@@ -49,6 +50,7 @@ build :
 	java -jar ${LCDIR}/compiler/labcomm_compiler.jar --java=${GENDIR} --c=${GENDIR}/test.c --h=${GENDIR}/test.h  --python=${GENDIR}/test.py --cs=${GENDIR}/test.cs test.lc 
 
 	javac -cp ${LCDIR}/lib/java/labcomm2014.jar:. ${GENDIR}/*.java Encoder.java Decoder.java
+	javac -cp ${LCDIR}/lib/java/labcomm2014.jar:${LCCJAR}:${GENDIR}:. TDDecoder.java
 
 	${CC} ${CFLAGS} ${LDFLAGS} -Wall -Werror -Wno-unused-function \
 	    -I. -I${LCDIR}/lib/c/2014 -L${LCDIR}/lib/c \
@@ -122,7 +124,7 @@ runwcs: build ExampleEncoder.exe ExampleDecoder.exe
 	@PYTHONPATH=${LCDIR}/lib/python ../wiki_example/example_decoder.py encoded_data_j LabComm2014
 
 	@echo "************ running C# decoder: *****************"
-	@LD_LIBRARY_PATH=${LCDIR}/lib/c/ ./ExampleDecoder.exe encoded_data_j
+	@LD_LIBRARY_PATH=${LCDIR}/lib/c/ mono ./ExampleDecoder.exe encoded_data_j
 
 	@echo "************ running C encoder: *****************"
 	@LD_LIBRARY_PATH=${LCDIR}/lib/c/ ./example_encoder encoded_data_c
@@ -137,7 +139,7 @@ runwcs: build ExampleEncoder.exe ExampleDecoder.exe
 	@PYTHONPATH=${LCDIR}/lib/python ../wiki_example/example_decoder.py encoded_data_c LabComm2014
 
 	@echo "************ running C# decoder: *****************"
-	@./ExampleDecoder.exe encoded_data_c
+	@mono ./ExampleDecoder.exe encoded_data_c
 
 	@echo "************ running python encoder: *****************"
 	@PYTHONPATH=${LCDIR}/lib/python:${GENDIR} ./example_encoder.py encoded_data_p LabComm2014
@@ -152,10 +154,10 @@ runwcs: build ExampleEncoder.exe ExampleDecoder.exe
 	PYTHONPATH=${LCDIR}/lib/python ../wiki_example/example_decoder.py encoded_data_p LabComm2014
 
 	@echo "************ running C# decoder: *****************"
-	@./ExampleDecoder.exe encoded_data_p
+	@mono ./ExampleDecoder.exe encoded_data_p
 
 	@echo "************ running C# encoder: *****************"
-	@./ExampleEncoder.exe encoded_data_cs
+	@mono ./ExampleEncoder.exe encoded_data_cs
 
 	@echo "************ running Java  decoder: *****************"
 	@java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${GENDIR} Decoder encoded_data_cs
@@ -167,8 +169,19 @@ runwcs: build ExampleEncoder.exe ExampleDecoder.exe
 	@PYTHONPATH=${LCDIR}/lib/python ../wiki_example/example_decoder.py encoded_data_cs LabComm2014
 
 	@echo "************ running C# decoder: *****************"
-	@./ExampleDecoder.exe encoded_data_cs
+	@mono ./ExampleDecoder.exe encoded_data_cs
 
+runjastadd: cleanbuild
+	@echo
+	@echo "********************************************"
+	@echo "***   ************ running example with JastAdd unparsing  ***"
+	@echo "********************************************"
+	@echo
+
+	@java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${GENDIR} Encoder encoded_data_j
+
+	@echo "************ running Java  TypeDefdecoder: *****************"
+	java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${LCCJAR}:${GENDIR} TDDecoder encoded_data_j
 
 
 clean:
