@@ -22,7 +22,7 @@ all: labcomm.jar labcomm2014.jar labcomm2006.jar
 
 labcomm.jar: gen/JAVAC
 	echo $@
-	cd gen ; jar cfm ../$@ \
+	cd gen ; jar cf ../$@ \
 		se/lth/control/labcomm/*.class \
 		se/lth/control/labcomm2006/*.class
 
