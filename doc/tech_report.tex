@@ -666,6 +666,63 @@ LabComm assumes that, while the transport may drop packets, there will
 be no bit errors in a received packet. If data integrity is required,
 that is delegated to the reader and writer for the particular transport.
 
+\subsubsection{Representation of hierarchical data types}
+
+For a type that contains fields of other user types, like
+\begin{verbatim}
+typedef struct {
+  int x;
+  int y;
+} Point;
+
+sample struct {
+  Point start;
+  Point end;
+} line;
+\end{verbatim}
+
+LabComm encodes both the flattened signature and the 
+typedef which allows the hierarchical type structure to be
+reconstructed.
+%
+The avro encoding is quite similar. 
+The \verb+Line+ example, corresponds to the two schemas
+\begin{verbatim}
+{"namespace": "example.avro",
+ "type": "record",
+ "name": "Point",
+ "fields": [
+     {"name": "x", "type": "int"},
+     {"name": "y", "type": "int"}
+ ]
+}
+\end{verbatim}
+and
+\begin{verbatim}
+{"namespace": "example.avro",
+ "type": "record",
+ "name": "Line",
+ "fields": [
+     {"name": "start", "type": "Point"},
+     {"name": "end",   "type": "Point"}
+ ]
+}
+\end{verbatim}
+which is encoded in an Object Container File as
+\begin{verbatim}
+{"type":"record",
+ "name":"Line",
+ "namespace":"example.avro",
+ "fields":[{"name":"start",
+            "type":{"type":"record",
+                    "name":"Point",
+                    "fields":[{"name":"x","type":"int"},
+                              {"name":"y","type":"int"}]}},
+           {"name":"end",
+            "type":"Point"}
+ ]
+}
+\end{verbatim}
 \subsubsection{Fetures not in LabComm} 
 
 Avro has a set of features with no counterpart in LabComm. They include
