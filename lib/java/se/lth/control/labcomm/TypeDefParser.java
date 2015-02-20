@@ -420,6 +420,10 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
            return false;
        }
 
+        Iterator<ParsedTypeDef> getDepIterator() {
+           throw new Error("ParseTypeDef has no dependencies"); 
+        }        
+
        void setType(ParsedType type) {
            this.type = type;
        }

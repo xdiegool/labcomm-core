@@ -32,6 +32,8 @@ public class TDDecoder
 
   private DecoderChannel decoder;
   private TypeDefParser tdp;
+  private final ASTbuilder astBuilder;
+  private Program curAST;
 
   public TDDecoder(InputStream in) 
     throws Exception 
@@ -45,6 +47,7 @@ public class TDDecoder
     intAndRef.register(decoder, this);
     doavoid.registerSampleRef(decoder);
     this.tdp = TypeDefParser.registerTypeDefParser(decoder); 
+    this.astBuilder = new ASTbuilder(tdp);
  //   TypeDef.register(decoder, this);
  //   TypeBinding.register(decoder, this);
 
@@ -78,8 +81,7 @@ public class TDDecoder
   public void onTypeDef(TypeDefParser.ParsedTypeDef d) {
     if(d.isSampleDef()){
         System.out.println("onTypeDef (sample): ");
-        ASTbuilder v = new ASTbuilder();
-        Program p = v.makeProgram((TypeDefParser.ParsedSampleDef) d);
+        Program p = astBuilder.makeProgram(d, curAST);
         try {
                 //FileOutputStream f = new FileOutputStream("/tmp/foopp"+d.getName()+".txt");
                 //PrintStream out = new PrintStream(f);
@@ -91,6 +93,7 @@ public class TDDecoder
                 System.err.println("Exception: " + e);
                 e.printStackTrace();
         }
+        curAST = p;
     }
     //System.out.println(" "+d.getName()+";");
     //for(byte b: d.getSignature()) {
