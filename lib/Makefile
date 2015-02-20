@@ -1,23 +1,29 @@
+SUBDIRS=c csharp java python
+
 .PHONY: all
-all:
-	cd c ; make
-	cd csharp ; make
-	cd java ; make
+all: $(SUBDIRS:%=make-%)
+
+.PHONY: make-%
+make-%:
+	$(MAKE) -C $*
 
 .PHONY: test
-test:
-	$(MAKE) -C c test
+test: $(SUBDIRS:%=test-%)
+
+.PHONY: test-%
+test-%:
+	$(MAKE) -C $* test
 
 .PHONY: clean
-clean:
-	$(MAKE) -C c clean
-	$(MAKE) -C csharp clean
-	$(MAKE) -C java clean
-	$(MAKE) -C python clean
+clean: $(SUBDIRS:%=clean-%)
+
+.PHONY: clean-%
+clean-%:
+	$(MAKE) -C $* clean
 
 .PHONY: distclean
-distclean:
-	$(MAKE) -C c distclean
-	$(MAKE) -C csharp distclean
-	$(MAKE) -C java  distclean
-	$(MAKE) -C python distclean
+distclean: clean $(SUBDIRS:%=distclean-%)
+
+.PHONY: distclean-%
+distclean-%:
+	$(MAKE) -C $* distclean

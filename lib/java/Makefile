@@ -18,6 +18,7 @@ MODULES=Constant \
 	Writer \
 	WriterWrapper
 
+.PHONY: all
 all: labcomm.jar labcomm2014.jar labcomm2006.jar
 
 labcomm.jar: gen/JAVAC
@@ -44,6 +45,9 @@ gen/JAVAC: $(MODULES:%=se/lth/control/labcomm/%.java) \
             $(filter %.java, $^)
 	touch $@
 
+
+.PHONY: test
+test:
 
 .PHONY: clean
 clean:
