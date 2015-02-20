@@ -1,12 +1,12 @@
-SUBDIRS=compiler lib test examples
+SUBDIRS=compiler lib test examples packaging
 export LABCOMM_JAR=$(shell pwd)/compiler/labcomm_compiler.jar
 export LABCOMM=java -jar $(LABCOMM_JAR) 
 
 .PHONY: all
-all: $(SUBDIRS:%=make-%)
+all: $(SUBDIRS:%=all-%)
 
-.PHONY: make-%
-make-%:
+.PHONY: all-%
+all-%:
 	LD_LIBRARY_PATH=`pwd`/lib/c $(MAKE) -C $*
 
 .PHONY: test
@@ -29,3 +29,7 @@ distclean: clean $(SUBDIRS:%=distclean-%)
 .PHONY: distclean-%
 distclean-%:
 	$(MAKE) -C $* distclean
+
+.PHONY: srpm
+srpm:
+	make -C packaging $@

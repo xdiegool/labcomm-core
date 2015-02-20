@@ -1,0 +1,125 @@
+#!/bin/sh
+
+spec() {
+cat << 'EOF'
+Name:      labcomm
+Version:   __VERSION__
+Release:   1
+Summary:   LabComm communication protocol
+License:   GPLv3
+
+# https://gitlab.control.lth.se/anders_blomdell/labcomm/repository/archive.tar.gz?__COMMIT__
+Source0:  labcomm.__DESCRIBE__.tar.gz
+
+BuildRequires: gcc
+BuildRequires: ant
+BuildRequires: java
+BuildRequires: mono-core
+
+%description
+LabComm communication protocol
+
+%package devel
+Summary: LabComm communication protocol
+Requires: %{name} = %{version}-%{release}
+
+%description devel
+LabComm communication protocol
+
+%
+%prep
+%setup -q -c -a 0
+
+%build
+pwd
+make
+
+%install
+
+# 
+# C 
+#
+install -d ${RPM_BUILD_ROOT}/%{_libdir}
+install lib/c/liblabcomm2006.a ${RPM_BUILD_ROOT}/%{_libdir}/
+install lib/c/liblabcomm2006.so.1 ${RPM_BUILD_ROOT}/%{_libdir}/liblabcomm2006.so.__VERSION__
+ln -s liblabcomm2006.so.__VERSION__ ${RPM_BUILD_ROOT}/%{_libdir}/liblabcomm2006.so
+install lib/c/liblabcomm2014.a ${RPM_BUILD_ROOT}/%{_libdir}/
+install lib/c/liblabcomm2014.so.1 ${RPM_BUILD_ROOT}/%{_libdir}/liblabcomm2014.so.__VERSION__
+ln -s liblabcomm2014.so.__VERSION__ ${RPM_BUILD_ROOT}/%{_libdir}/liblabcomm2014.so
+install -d ${RPM_BUILD_ROOT}/%{_includedir}/labcomm
+install lib/c/2014/*h ${RPM_BUILD_ROOT}/%{_includedir}/labcomm
+install -d ${RPM_BUILD_ROOT}/%{_includedir}/labcomm2006
+install lib/c/2006/*h ${RPM_BUILD_ROOT}/%{_includedir}/labcomm2006
+
+#
+# java 
+#
+install -d ${RPM_BUILD_ROOT}/usr/lib
+install -m u=r,g=r,o=r compiler/labcomm2014_compiler.jar ${RPM_BUILD_ROOT}/usr/lib
+install -m u=r,g=r,o=r compiler/labcomm2006_compiler.jar ${RPM_BUILD_ROOT}/usr/lib
+install -m u=r,g=r,o=r lib/java/labcomm2014.jar ${RPM_BUILD_ROOT}/usr/lib
+install -m u=r,g=r,o=r lib/java/labcomm2006.jar ${RPM_BUILD_ROOT}/usr/lib
+
+install -d ${RPM_BUILD_ROOT}/%{_bindir}
+install -m u=rx,g=rx,o=rx \
+        compiler/labcomm2014 ${RPM_BUILD_ROOT}/%{_bindir}/labcomm2014
+install -m u=rx,g=rx,o=rx \
+        compiler/labcomm2006 ${RPM_BUILD_ROOT}/%{_bindir}/labcomm2006
+ls -l ${RPM_BUILD_ROOT}/%{_bindir}
+
+#
+# C#
+#
+install -d ${RPM_BUILD_ROOT}/usr/lib
+install -m u=r,g=r,o=r lib/csharp/labcomm.dll ${RPM_BUILD_ROOT}/usr/lib
+
+#
+# Python
+#
+install -d ${RPM_BUILD_ROOT}/%{python_sitelib}/labcomm
+install lib/python/labcomm/* ${RPM_BUILD_ROOT}/%{python_sitelib}/labcomm
+
+%files
+%defattr (-, root, root)
+%exclude /usr/lib/debug
+%exclude /usr/lib/labcomm2014_compiler.jar
+%exclude /usr/lib/labcomm2006_compiler.jar
+/usr/lib/*
+%{_libdir}/*
+
+%files devel
+%defattr (-, root, root)
+/usr/lib/labcomm2014_compiler.jar
+/usr/lib/labcomm2006_compiler.jar
+%{_includedir}/*
+%{_bindir}/*
+
+EOF
+}
+
+# Create a suitable directory for rpmbuild
+rm -rf rpmbuild
+mkdir -p rpmbuild/BUILD
+mkdir -p rpmbuild/SPECS
+mkdir -p rpmbuild/RPMS
+mkdir -p rpmbuild/SRPMS
+mkdir -p rpmbuild/SOURCES
+rm -rf rpmbuild/SOURCES/*
+
+# Create spec and .tar.gz
+DESCRIBE=$(git describe | sed -e 's/^v\(.*\)/\1/')
+VERSION=$(echo ${DESCRIBE} | sed -e 's/-/./g')
+COMMIT=$(git rev-parse HEAD)
+(
+    spec | \
+        sed -e "s/__VERSION__/${VERSION}/g" | \
+        sed -e "s/__DESCRIBE__/${DESCRIBE}/g" | \
+        sed -e "s/__COMMIT__/${COMMIT}/g" \
+) > rpmbuild/SPECS/labcomm.spec
+(
+    cd $(git rev-parse --show-toplevel)
+    git archive --format tar HEAD
+) > rpmbuild/SOURCES/labcomm.${DESCRIBE}.tar.gz
+rpmbuild --define "_topdir $(pwd)/rpmbuild" \
+         -bs rpmbuild/SPECS/labcomm.spec
+mv rpmbuild/SRPMS/* .
