@@ -1,0 +1,9 @@
+// Example-Template:
+table(cells) ::= <<
+<tbody>
+$cells:{cell| 
+  <tr>
+    $cell:{val | <td>$val$</td>}$
+  </tr>
+}$</tbody>
+>>

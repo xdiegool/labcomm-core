@@ -1,0 +1,6 @@
+test3a(object,attr) ::= <<
+Hello, $attr$ $object$!
+>>
+test3b(object,attr) ::= <<
+Goodbye, $object$!
+>>
