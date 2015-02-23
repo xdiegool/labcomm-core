@@ -1,0 +1,3 @@
+aspect TestTT {
+    syn String Decl.getTypeName() = getType().getTypeName();
+}

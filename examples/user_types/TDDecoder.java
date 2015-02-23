@@ -10,12 +10,18 @@ import se.lth.control.labcomm.ASTbuilder;
 //import se.lth.control.labcomm.TypeBinding;
 
 import se.lth.control.labcomm2014.compiler.Program;
+import se.lth.control.labcomm2014.compiler.Decl;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 
 import java.util.Vector;
 import java.util.LinkedList;
 import java.util.Iterator;
+
+import org.jastadd.tinytemplate.TinyTemplate;
+import org.jastadd.tinytemplate.TemplateContext;
+import org.jastadd.tinytemplate.SimpleContext;
+import org.jastadd.tinytemplate.TemplateParser.SyntaxError;
 
 
 public class TDDecoder
@@ -78,6 +84,28 @@ public class TDDecoder
 //    System.out.println("Got TypeBinding: "+d.getSampleIndex()+" --> "+d.getTypeIndex()+"");
 //  }
 
+
+  private void doTT(TemplateContext ctx, String name) {
+        ctx.expand(name+".decl", System.out);
+        System.out.println();
+  }
+
+  private void doTestTT(Program p, TinyTemplate tt, String name){
+    for(Decl d : p.getDecls()) {
+        doTT(new SimpleContext(tt, d), name);
+    }
+  }
+
+  public void testTT(Program p, InputStream templates, String name) {
+        try {
+            doTestTT(p, new TinyTemplate(templates), name);
+        } catch(SyntaxError e) {
+            System.err.println("SyntaxError in template: "+e);
+            e.printStackTrace();
+        }
+    }
+
+
   public void onTypeDef(TypeDefParser.ParsedTypeDef d) {
     if(d.isSampleDef()){
         System.out.println("onTypeDef (sample): ");
@@ -85,10 +113,15 @@ public class TDDecoder
         try {
                 //FileOutputStream f = new FileOutputStream("/tmp/foopp"+d.getName()+".txt");
                 //PrintStream out = new PrintStream(f);
-                p.pp(System.out);
+                //p.pp(System.out);
                 //p.C_genC(System.out, new Vector(), "lcname", "prefix", 2014);
                 //p.J_gen(out, "testpackage", 2014);
                 //out.close();
+                //p.testTT("foo.type = [[#getTypeName ]] foo.name = [[ #getName ]] foo.decl = [[ $if(#isSampleDecl) SAMPLE_DECL $else TYPE_DECL $endif : $include(foo.name) ::TYPE:: $include(foo.type) ]]");
+                FileInputStream fis1 = new FileInputStream(new File("Test.tt"));
+                testTT(p, fis1, "foo");
+                FileInputStream fis2 = new FileInputStream(new File("Test.tt"));
+                testTT(p, fis2, "bar");
         } catch (Throwable e) {
                 System.err.println("Exception: " + e);
                 e.printStackTrace();

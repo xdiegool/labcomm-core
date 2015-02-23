@@ -1,5 +1,6 @@
 LCDIR=../..
 LCCJAR=${LCDIR}/compiler/labcomm2014_compiler.jar# the LabComm compiler
+TTJAR=${LCDIR}/compiler/tools/aspectgen.jar# the tinytemplate lib
 LCLJAR=${LCDIR}/lib/java/labcomm2014.jar# the LabComm library
 
 EXECUTABLES=example_encoder example_decoder \
@@ -23,7 +24,7 @@ test: allall
 ###############################################
 
 LCC=java -jar ${LCCJAR}
-CLASSPATH=.:${LCLJAR}
+CLASSPATH=.:${LCLJAR}:${TTJAR}
 
 ${LCCJAR} :
 	$MAKE -C ${LCDIR} make-compiler
@@ -47,10 +48,11 @@ ExampleDecoder.exe: ExampleDecoder.cs gen/test.cs labcomm.dll Makefile
 
 build : 
 	mkdir -p ${GENDIR}
-	java -jar ${LCDIR}/compiler/labcomm_compiler.jar --java=${GENDIR} --c=${GENDIR}/test.c --h=${GENDIR}/test.h  --python=${GENDIR}/test.py --cs=${GENDIR}/test.cs test.lc 
+	java  -cp ${LCDIR}/compiler/labcomm_compiler.jar:${TTJAR} LabComm --java=${GENDIR} --c=${GENDIR}/test.c --h=${GENDIR}/test.h  --python=${GENDIR}/test.py --cs=${GENDIR}/test.cs test.lc 
 
-	javac -cp ${LCDIR}/lib/java/labcomm2014.jar:. ${GENDIR}/*.java Encoder.java Decoder.java
-	javac -cp ${LCDIR}/lib/java/labcomm2014.jar:${LCCJAR}:${GENDIR}:. TDDecoder.java
+
+	javac -cp ${LCDIR}/lib/java/labcomm2014.jar:${TTJAR}:. ${GENDIR}/*.java Encoder.java Decoder.java
+	javac -cp ${LCDIR}/lib/java/labcomm2014.jar:${LCCJAR}:${TTJAR}:${GENDIR}:. TDDecoder.java
 
 	${CC} ${CFLAGS} ${LDFLAGS} -Wall -Werror -Wno-unused-function \
 	    -I. -I${LCDIR}/lib/c/2014 -L${LCDIR}/lib/c \
@@ -178,10 +180,10 @@ runjastadd: cleanbuild
 	@echo "********************************************"
 	@echo
 
-	@java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${GENDIR} Encoder encoded_data_j
+	@java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${TTJAR}:${GENDIR} Encoder encoded_data_j
 
 	@echo "************ running Java  TypeDefdecoder: *****************"
-	java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${LCCJAR}:${GENDIR} TDDecoder encoded_data_j
+	java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${LCCJAR}:${TTJAR}:${GENDIR} TDDecoder encoded_data_j
 
 
 clean:

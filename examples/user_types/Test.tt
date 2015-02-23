@@ -1,0 +1,10 @@
+foo.type = [[#getTypeName ]] 
+foo.name = [[ #getName ]] 
+foo.decl = [[ $if(#isSampleDecl) SAMPLE_DECL $else TYPE_DECL $endif : $include(foo.name) ::TYPE:: $include(foo.type) ]]
+
+bar.type = [[->#getTypeName<-]] 
+bar.name = [["#getName"]] 
+bar.decl = [[declare a ($if(#isSampleDecl) sample $else type $endif 
+    with name = $include(bar.name) 
+    and type $include(bar.type)) ]]
+

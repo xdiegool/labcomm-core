@@ -139,7 +139,7 @@
   <echo message = "compiling"/>
   <javac debug="true" srcdir="." destdir="${outdir}"
          includes="*.java 2006/*.java 2014/*.java gen/**/*.java" 
-         classpath="${outdir}:${tools}/beaver-rt.jar:${tools}/junit.jar"
+         classpath="${outdir}:${tools}/beaver-rt.jar:${tools}/junit.jar:${tools}/aspectgen.jar"
          includeantruntime="false"
          fork="true" memoryMaximumSize="128M">
     <!--compilerarg value="-Xlint"/-->
