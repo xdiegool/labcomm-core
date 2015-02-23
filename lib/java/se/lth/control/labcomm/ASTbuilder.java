@@ -124,8 +124,13 @@ public class ASTbuilder implements TypeDefParser.ParsedSymbolVisitor {
   
 
     public Decl makeDecl(TypeDefParser.ParsedTypeDef d) {
+        Decl result;
         d.getType().accept(this);
-        Decl result = new TypeDecl(typeStack.pop(), d.getName());
+        if(d.isSampleDef()) {
+            result = new SampleDecl(typeStack.pop(), d.getName());
+        } else {
+            result = new TypeDecl(typeStack.pop(), d.getName());
+        }
         return result;
     }
 
