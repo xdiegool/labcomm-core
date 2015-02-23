@@ -1,0 +1,12 @@
+// Example-Template:
+structDecl(name,decls) ::= <<
+struct $name$ { $decls:{d| 
+    $d.name$ : $d.type$};separator=";"$;
+};
+>>
+
+varDecls(decls) ::= <<
+variables { $decls:{d| 
+    $d.type$ $d.name$$if(d.initval)$ = $d.initval$$endif$};separator=","$;
+};
+>>

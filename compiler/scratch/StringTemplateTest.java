@@ -89,6 +89,44 @@ public class StringTemplateTest {
         System.out.println(st2.render());
     }
 
+    static class Pair {
+        String a;
+        String b;
+
+        Pair(String a, String b) {
+            this.a = a;
+            this.b = b;
+        }
+
+        public String getA() {return a;}
+        public String getB() {return b;}
+
+        public String toString() {return "("+a+", "+b+")";}
+    }
+
+    public static void test8() {
+        ST st = new ST("a pair: <$p.A$,$p.B$>", '$', '$');
+        st.add("p", new Pair("Gustav", "Helge"));
+        System.out.println(st.render());
+    }
+
+    public static void test9() {
+        STGroup group = new STGroupFile("test9.stg", '$', '$');
+        ST st = group.getInstanceOf("structDecl");
+        st.add("name", "testStruct");
+        st.addAggr("decls.{type, name}", "int", "foo");
+        st.addAggr("decls.{type, name}", "long", "bar");
+        st.addAggr("decls.{type, name}", "boolean", "sna");
+        System.out.println(st.render());
+
+        ST st2 = group.getInstanceOf("varDecls");
+        st2.addAggr("decls.{type, name, initval}", "int", "foo", "17");
+        st2.addAggr("decls.{type, name, initval}", "long", "bar", "4200");
+        st2.addAggr("decls.{type, name, initval}", "float", "baz", null);
+        st2.addAggr("decls.{type, name, n/a}", "boolean", "sna", "this is ignored");
+        System.out.println(st2.render());
+    }
+
     public static void main(String a[]){
         test1();
         test2();
@@ -97,5 +135,7 @@ public class StringTemplateTest {
         test5();
         test6();
         test7();
+        test8();
+        test9();
     }
 }
