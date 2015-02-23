@@ -406,7 +406,7 @@ aspect C_Declarations {
   
   public void Decl.C_emitEncoderDeclaration(C_env env) {
   }
-//
+
   public void SampleDecl.C_emitEncoderDeclaration(C_env env) {
     env.println("int labcomm"+env.verStr+"_encoder_register_" + 
 		env.prefix + getName() + "(");
@@ -1252,6 +1252,7 @@ aspect C_TypeDependencies {
         }
     } 
   }
+
   public void Decl.C_emitUserTypeRefs(C_env env, String via, boolean outputCode) {
     if( isReferenced() ) {
         Iterator<Decl> it = type_references().iterator();
@@ -1283,27 +1284,15 @@ aspect C_Signature {
   eq TypeDecl.C_DeclTypeString() = "LABCOMM_TYPEDEF";
 
   public void Decl.C_emitSignature(C_env env) {
-  if( (isReferenced() || isSampleDecl())){ 
-    Signature signature = getSignature();
-    signature.C_emitSignature(env, !isSampleDecl());
-  } else {
-    env.println("// not emitting signature for "+getName()+isReferenced()+isSampleDecl());  
-  }
-  C_emitFlatSignature(env);
-
-
-//  if(env.versionHasMetaData()) { 
-//    if(isReferenced() || isSampleDecl()){
-//        env.println("(int (*)(void *))labcomm"+env.verStr+"_signature_" + 
-//	 	env.prefix + getName() + "_emit_signature");
-//    } else {
-//        env.println("NULL");  // HERE BE DRAGONS! Is it worth the size saving to skip emitting the emit_signature function for unused types?
-//                              //                  The code won't likely end up in a target system anyway?
-//    }
-//  }
-//  env.unindent();
-//  env.println(" };");
-//
+    if( (isReferenced() || isSampleDecl())){
+      Signature signature = getSignature();
+      signature.C_emitSignature(env, !isSampleDecl());
+      C_emitFlatSignature(env);
+    } else {
+      env.println("// not emitting signature for " + getName() +
+                  "referenced=" + isReferenced() +
+                  "sampledecl=" + isSampleDecl());
+    }
   }
 
   public void ASTNode.C_emitFlatSignature(C_env env) {
@@ -1312,7 +1301,7 @@ aspect C_Signature {
                     " not declared");
   }
 
-  public void Decl.C_emitFlatSignature(C_env env) {
+  public void TypeDecl.C_emitFlatSignature(C_env env) {
     C_emitSizeofValue(env);
     env.println("static struct labcomm"+env.verStr+"_signature " +
                 "signature_" + env.prefix + getName() + " = {");
