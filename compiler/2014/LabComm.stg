@@ -1,0 +1,14 @@
+structDecl(name,fields) ::= <<
+struct $name$ { $fields:{d|
+    $d.type$ $d.name$};separator=";"$;
+}
+>>
+
+arrayDecl(name, dims, type) ::= <<
+$type$ $name$ { $dims:{dim|
+    [$dim$]};separator=""$;
+>>
+
+sampleDecl(name,type) ::= <<
+sample $type$ $name$;
+>>
