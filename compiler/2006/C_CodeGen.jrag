@@ -1143,9 +1143,6 @@ aspect C_Encoder {
     env.println(")");
     env.println("{");
     env.indent();
-    C_emitUserTypeDeps(env, null, false); //XXX HERE BE DRAGONS
-                                          //currently set to false to turn off
-                                          //outputting of code
     env.println("return labcomm"+env.verStr+"_internal_encoder_register(");
     env.indent();
     env.println("e,");
@@ -1194,42 +1191,6 @@ aspect C_EncoderIoctl {
     env.println("}");
   }
 
-}
-
-aspect C_TypeDependencies {
-  public void Decl.C_emitUserTypeDeps(C_env env, String via, boolean outputCode) {
-    if( hasDependencies() ) {
-        Iterator<Decl> it = type_dependencies().iterator();
-        while(it.hasNext()) {
-            Decl t = it.next();
-
-            t.C_emitUserTypeDeps(env, t.getName(), outputCode);
-            if(outputCode) {
-               System.out.println("Decl.C_emitUserTypeDeps registering "+t.getName());
-               env.println("labcomm"+env.verStr+"_encoder_register_"+env.prefix + t.getName()+"(e);");
-            } else {  // Just output a comment
-	        String refpath = (via == null) ? "directly" : "indirectly via "+via;
-	       env.println(" //Depends ("+refpath+") on "+t.getName() );
-            }
-        }
-    } 
-  }
-  public void Decl.C_emitUserTypeRefs(C_env env, String via, boolean outputCode) {
-    if( isReferenced() ) {
-        Iterator<Decl> it = type_references().iterator();
-        while(it.hasNext()) {
-            Decl t = it.next();
-
-            t.C_emitUserTypeRefs(env, t.getName(), outputCode);
-            if(outputCode) {
-               env.println("labcomm"+env.verStr+"_encoder_register_"+env.prefix + t.getName()+"(e);");
-            } else {  // Just output a comment
-	        String refpath = (via == null) ? "directly" : "indirectly via "+via;
-	       env.println(" //Is referenced ("+refpath+")  by "+t.getName() );
-            }
-        }
-    } 
-  }
 }
 
 aspect C_Signature {

@@ -1244,7 +1244,6 @@ aspect C_TypeDependencies {
 
             t.C_emitUserTypeDeps(env, t.getName(), outputCode);
             if(outputCode) {
-               System.out.println("Decl.C_emitUserTypeDeps registering "+t.getName());
                env.println("labcomm"+env.verStr+"_encoder_type_register_"+env.prefix + t.getName()+"(e);");
             } else {  // Just output a comment
 	        String refpath = (via == null) ? "directly" : "indirectly via "+via;
