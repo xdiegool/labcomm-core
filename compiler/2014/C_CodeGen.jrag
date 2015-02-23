@@ -1284,7 +1284,7 @@ aspect C_Signature {
   eq TypeDecl.C_DeclTypeString() = "LABCOMM_TYPEDEF";
 
   public void Decl.C_emitSignature(C_env env) {
-    if( (isReferenced() || isSampleDecl())){
+    if( (true || isReferenced() || isSampleDecl())){
       Signature signature = getSignature();
       signature.C_emitSignature(env, !isSampleDecl());
       C_emitFlatSignature(env);
@@ -1480,10 +1480,14 @@ aspect C_Constructor {
     env.println("}"); 
   }
 
-  public void Decl.C_emitConstructor(C_env env) {
-//  }
-//XXX
-//  public void SampleDecl.C_emitConstructor(C_env env) {
+  public void TypeDecl.C_emitConstructor(C_env env) {
+    if (isReferenced()) {
+      env.println("labcomm"+env.verStr+"_set_local_index(&signature_" +
+                  env.prefix + getName() + ");");
+    }
+  }
+
+  public void SampleDecl.C_emitConstructor(C_env env) {
     env.println("labcomm"+env.verStr+"_set_local_index(&signature_" + 
 		env.prefix + getName() + ");");
   }
