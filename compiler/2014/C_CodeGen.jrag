@@ -270,18 +270,20 @@ aspect C_Type {
   }
 
   public void TypeDecl.C_emitType(C_env env) {
-    env.println("#ifndef PREDEFINED_" + env.prefix + getName());
+    env.println("#ifndef LABCOMM_DEFINED_" + env.prefix + getName());
     env.print("typedef ");
     getType().C_emitType(env, env.prefix + getName());
     env.println(";");
+    env.println("#define LABCOMM_DEFINED_" + env.prefix + getName());
     env.println("#endif");
   }
 
   public void SampleDecl.C_emitType(C_env env) {
-    env.println("#ifndef PREDEFINED_" + env.prefix + getName());
+    env.println("#ifndef LABCOMM_DEFINED_" + env.prefix + getName());
     env.print("typedef ");
     getType().C_emitType(env, env.prefix + getName());
     env.println(";");
+    env.println("#define LABCOMM_DEFINED_" + env.prefix + getName());
     env.println("#endif");
     env.println("extern const struct labcomm"+env.verStr+"_signature " +
                 "*labcomm"+env.verStr+"_signature_" + env.prefix + getName() + 
