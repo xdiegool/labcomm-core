@@ -2,8 +2,9 @@ package se.lth.control.labcomm;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
@@ -16,6 +17,10 @@ import se.lth.control.labcomm.TypeDef;
 import se.lth.control.labcomm.TypeBinding;
 
 public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
+
+    public interface TypeDefListener {
+        void onTypeDef(ParsedTypeDef d);
+    }
 
     static class SelfBinding extends TypeDef {
 
@@ -48,9 +53,24 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         }
     }
 
-    public interface TypeDefListener {
-        void onTypeDef(ParsedTypeDef d);
+    static class EmptyIterator<T>  implements java.util.Iterator {
+        @Override
+        public boolean hasNext() {
+            return false;
+        }
+
+        @Override
+        public T next() {
+            throw new NoSuchElementException();
+        }
+
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
+
+    static EmptyIterator<ParsedTypeDef> emptyIterator =
+        new EmptyIterator<>();
 
     private HashMap<Integer,TypeDef> typeDefs;
     private HashMap<Integer,Integer> typeBindings;
@@ -403,15 +423,37 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
        private int idx;
        private String name;
        private ParsedType type;
+       private final TypeDefParser source;
+
+       ParsedTypeDef(TypeDefParser source, int idx, String name){
+           this.source = source;
+           this.idx = idx;
+           this.name = name;
+       }
+
+       ParsedTypeDef(TypeDefParser source, 
+                     int idx, String name, ParsedType type) {
+           this(source, idx, name);
+           this.type = type;
+       }
 
        ParsedTypeDef(int idx, String name){
-            this.idx = idx;
-            this.name = name;
+           this(null, idx, name);
        }
 
        ParsedTypeDef(int idx, String name, ParsedType type) {
            this(idx, name);
            this.type = type;
+       }
+
+       /** @return true if source is same as
+        */
+       public boolean checkSource(TypeDefParser o) {
+           boolean result = source == o;
+           System.err.println("ParsedTypeDef.checkSource: source = "+source);
+           System.err.println("ParsedTypeDef.checkSource: o "+o);
+           System.err.println("ParsedTypeDef.checkSource: "+result);
+           return result;
        }
 
        /** To be overridden in ParsedSampleDef
@@ -421,7 +463,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
        }
 
         Iterator<ParsedTypeDef> getDepIterator() {
-           throw new Error("ParseTypeDef has no dependencies"); 
+            return emptyIterator;  
         }        
 
        void setType(ParsedType type) {
@@ -465,8 +507,9 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     public class ParsedSampleDef extends ParsedTypeDef{
 
         private HashSet<ParsedTypeDef> deps;
+
         ParsedSampleDef(ParsedTypeDef td) {
-            super(td.getIndex(), td.getName(), td.getType());
+            super(td.source, td.getIndex(), td.getName(), td.getType());
             this.deps = new HashSet<ParsedTypeDef>();
         }
 
@@ -496,7 +539,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         private LinkedList<TypeDef> typeStack;
 
         ParsedTypeDef newTypeDef() {
-            currentParsed =new ParsedTypeDef(getCurrentIndex(), getCurrentName());
+            currentParsed =new ParsedTypeDef(TypeDefParser.this, getCurrentIndex(), getCurrentName());
             return currentParsed;
         }
 

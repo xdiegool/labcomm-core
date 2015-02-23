@@ -158,13 +158,17 @@ public class ASTbuilder implements TypeDefParser.ParsedSymbolVisitor {
     /** Create a labcomm AST for the ParsedTypeDef d, including
      *  all declarations from p.
      *
-     *  This copies the declarations in p, and creates a new AST.
      *
-     *  If d is a sampleDecl, include the typedefs it depends on.
+     *  If p is not null, and the source of d matches the 
+     *  TypeDefParser this ASTbuilder was created for, 
+     *  creates a new AST containing the declarations in p
+     *  and d and (if d is a sampleDecl) its dependencies.
+     *
+     *  Otherwise, makeProgram(d)
      */
     public Program makeProgram(TypeDefParser.ParsedTypeDef d,
                                Program p) {
-        if(p != null) {
+        if(p != null && d.checkSource(tdp)) {
            return makeProgram(d, p.getDecls().fullCopy());
         } else {
            return makeProgram(d);
