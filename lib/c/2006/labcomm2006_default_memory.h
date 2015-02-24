@@ -18,9 +18,12 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#ifndef __LABCOMM2006_DEFAULT_MEMORY_H__
+#define __LABCOMM2006_DEFAULT_MEMORY_H__
 
 #include <stdlib.h>
 #include "labcomm2006.h"
 
 extern struct labcomm2006_memory *labcomm2006_default_memory;
 
+#endif

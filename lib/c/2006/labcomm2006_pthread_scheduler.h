@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _LABCOMM_PTHREAD_SCHEDULER_H_
-#define _LABCOMM_PTHREAD_SCHEDULER_H_
+#ifndef __LABCOMM2006_PTHREAD_SCHEDULER_H__
+#define __LABCOMM2006_PTHREAD_SCHEDULER_H__
 
 #include "labcomm2006.h"
 

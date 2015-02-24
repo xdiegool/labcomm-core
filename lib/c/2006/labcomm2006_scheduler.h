@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _LABCOMM_SCHEDULER_H_
-#define _LABCOMM_SCHEDULER_H_
+#ifndef __LABCOMM2006_SCHEDULER_H__
+#define __LABCOMM2006_SCHEDULER_H__
 
 #ifdef LABCOMM_COMPAT
   #include LABCOMM_COMPAT

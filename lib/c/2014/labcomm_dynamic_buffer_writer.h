@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _LABCOMM_DYNAMIC_BUFFER_READER_WRITER_H_
-#define _LABCOMM_DYNAMIC_BUFFER_READER_WRITER_H_
+#ifndef __LABCOMM_DYNAMIC_BUFFER_READER_WRITER_H__
+#define __LABCOMM_DYNAMIC_BUFFER_READER_WRITER_H__
 
 #include "labcomm.h"
 

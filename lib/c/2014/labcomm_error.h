@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __LABCOMM_ERROR_H__
-#define __LABCOMM_ERROR_H__
+#ifndef __LABCOMM_ERROR_H___
+#define __LABCOMM_ERROR_H___
 
 enum labcomm_error {
 #define LABCOMM_ERROR(name, description) name ,

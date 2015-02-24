@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __LABCOMM_IOCTL_H__
-#define __LABCOMM_IOCTL_H__
+#ifndef __LABCOMM2006_IOCTL_H__
+#define __LABCOMM2006_IOCTL_H__
 
 #include "labcomm2006.h"
 

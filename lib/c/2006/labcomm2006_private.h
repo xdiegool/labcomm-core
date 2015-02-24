@@ -20,8 +20,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _LABCOMM_PRIVATE_H_
-#define _LABCOMM_PRIVATE_H_
+#ifndef __LABCOMM2006_PRIVATE_H__
+#define __LABCOMM2006_PRIVATE_H__
 
 #ifdef LABCOMM_COMPAT
   #include LABCOMM_COMPAT

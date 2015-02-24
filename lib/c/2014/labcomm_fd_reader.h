@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _LABCOMM_FD_READER_H_
-#define _LABCOMM_FD_READER_H_
+#ifndef __LABCOMM_FD_READER_H__
+#define __LABCOMM_FD_READER_H__
 
 #include "labcomm.h"
 

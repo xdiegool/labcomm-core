@@ -18,7 +18,11 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#ifndef __LABCOMM_DEFAULT_SCHEDULER_H__
+#define __LABCOMM_DEFAULT_SCHEDULER_H__
 
 #include "labcomm.h"
 
 extern struct labcomm_scheduler *labcomm_default_scheduler;
+
+#endif

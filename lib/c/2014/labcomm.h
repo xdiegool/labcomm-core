@@ -20,8 +20,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _LABCOMM_H_
-#define _LABCOMM_H_
+#ifndef __LABCOMM_H__
+#define __LABCOMM_H__
 
 #include <stdarg.h>
 

@@ -1,5 +1,5 @@
 /*
-  labcomm.h -- user interface for handling encoding and decoding of
+  labcomm2006.h -- user interface for handling encoding and decoding of
                labcomm samples.
 
   Copyright 2006-2013 Anders Blomdell <anders.blomdell@control.lth.se>
@@ -20,8 +20,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _LABCOMM_H_
-#define _LABCOMM_H_
+#ifndef __LABCOMM2006_H__
+#define __LABCOMM2006_H__
 
 #include <stdarg.h>
 

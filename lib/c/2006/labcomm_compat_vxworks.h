@@ -1,5 +1,5 @@
-#ifndef _LABCOMM2006_COMPAT_VXWORKS_H_
-#define _LABCOMM2006_COMPAT_VXWORKS_H_
+#ifndef __LABCOMM2006_COMPAT_VXWORKS_H__
+#define __LABCOMM2006_COMPAT_VXWORKS_H__
 
 #ifndef __VXWORKS__
 #error "__VXWORKS__" not defined

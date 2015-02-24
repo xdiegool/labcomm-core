@@ -1,3 +1,4 @@
+
 /*
   labcomm2006_fd_reader.c -- a reader for unix style file-descriptors
 
@@ -19,8 +20,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _LABCOMM_FD_READER_H_
-#define _LABCOMM_FD_READER_H_
+#ifndef __LABCOMM2006_FD_READER_H__
+#define __LABCOMM2006_FD_READER_H__
 
 #include "labcomm2006.h"
 

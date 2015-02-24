@@ -18,7 +18,11 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#ifndef __LABCOMM2006_DEFAULT_ERROR_HANDLER_H__
+#define __LABCOMM2006_DEFAULT_ERROR_HANDLER_H__
 
 #include "labcomm2006.h"
 
 extern struct labcomm2006_error_handler *labcomm2006_default_error_handler;
+
+#endif
