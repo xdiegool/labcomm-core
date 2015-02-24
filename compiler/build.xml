@@ -139,7 +139,7 @@
   <echo message = "compiling"/>
   <javac debug="true" srcdir="." destdir="${outdir}"
          includes="*.java 2006/*.java 2014/*.java gen/**/*.java" 
-         classpath="${outdir}:${tools}/beaver-rt.jar:${tools}/junit.jar:${tools}/aspectgen.jar"
+         classpath="${outdir}:${tools}/beaver-rt.jar:${tools}/junit.jar:${tools}/aspectgen.jar:${tools}/ST-4.0.8.jar"
          includeantruntime="false"
          fork="true" memoryMaximumSize="128M">
     <!--compilerarg value="-Xlint"/-->
@@ -163,6 +163,7 @@
     <fileset dir="${outdir}" 
              includes="${package_path}/*.class"/>
     <zipfileset src="tools/beaver-rt.jar" includes="beaver/*.class"/>
+    <zipfileset src="tools/ST-4.0.8.jar" includes="**/*.class"/>
     <manifest>
       <attribute name="Main-Class" 
                  value="${package}.LabComm"/>
@@ -186,6 +187,7 @@
     <fileset dir="${outdir}" 
              includes="**/*.class"/>
     <zipfileset src="tools/beaver-rt.jar" includes="beaver/*.class"/>
+    <zipfileset src="tools/ST-4.0.8.jar" includes="**/*.class"/>
     <manifest>
       <attribute name="Main-Class" 
                  value="LabComm"/>

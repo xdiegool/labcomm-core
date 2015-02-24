@@ -1,3 +1,44 @@
+import org.stringtemplate.v4.ST;
+import org.stringtemplate.v4.STGroup;
+import org.stringtemplate.v4.STGroupDir;
+import org.stringtemplate.v4.STGroupFile;
+
+
 aspect TestTT {
     syn String Decl.getTypeName() = getType().getTypeName();
+
+    void Program.template_gen(String filename) throws IOException {
+        System.out.println("TODO: generate from template "+filename);
+
+        STGroup group = new STGroupFile(filename, '$', '$');
+        ST st = group.getInstanceOf("program");
+        for(Decl d: getDecls()) {
+            st.addAggr("decls.{kind, type, name}", 
+                d.isSampleDecl()?"sample":"typedef", 
+                d.ttTypeString(group), 
+                d.getName());
+        }
+        System.out.println(st.render());
+    }
+
+    syn String ASTNode.ttTypeString(STGroup group) = "";
+
+    eq PrimType.ttTypeString(STGroup group) = getTypeName();
+
+    eq UserType.ttTypeString(STGroup group) = getName();
+
+    eq Field.ttTypeString(STGroup group) = getType().ttTypeString(group);
+
+    eq StructType.ttTypeString(STGroup group) {
+        ST st = group.getInstanceOf("structType");
+        for(Field f: getFields()) {
+            st.addAggr("fields.{type, name}", 
+                f.ttTypeString(group), 
+                f.getName());
+        }
+        return st.render();
+    }
+    eq ArrayType.ttTypeString(STGroup group) = "array...";
+
+    eq Decl.ttTypeString(STGroup group) = getType().ttTypeString(group);
 }

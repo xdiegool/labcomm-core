@@ -1,0 +1,11 @@
+program(decls) ::= <<
+program {
+    $decls:{d | $d.kind$ $d.type$ $d.name$};separator=";\n\n"$;
+};
+>>
+
+structType(fields) ::= <<
+struct {
+  $fields:{f | $f.type$ $f.name$}; separator=";\n"$;
+}
+>>

@@ -119,6 +119,14 @@ public class LabComm {
     }
   }
 
+  private static void genTemplate(Program p, String filename) {
+    try {
+      p.template_gen(filename);
+    } catch (IOException e) {
+      System.err.println("IOException: " + filename + " " + e);
+    }
+  }
+
   /** Helper class to contain command line options 
       and their associated behaviour
    **/
@@ -141,6 +149,7 @@ public class LabComm {
     String typeinfoFile = null;
     String rapidFile = null;
     String fileName = null;
+    String stgFile = null;
 
    Opts(String[] args) {
      this.args = args;
@@ -225,6 +234,8 @@ public class LabComm {
           typeinfoFile = args[i].substring(11);
         } else if (args[i].equals("--rapid")) {
           rapidFile = coreName + ".sys";
+        } else if (args[i].startsWith("--template=")) {
+          stgFile = args[i].substring(11);
         } else if (i == args.length - 1) {
           fileName = args[i];
         } else {
@@ -361,6 +372,17 @@ public class LabComm {
      return wroteFile;
     }
 
+   boolean generateTemplate(Program ast) {
+     boolean wroteFile = false; 
+     if (stgFile != null) {
+       printStatus("Template: " , stgFile);
+       genTemplate(ast, stgFile);
+       wroteFile = true;
+     }
+     return wroteFile;
+   }
+  
+
     private void printStatus(String kind, String filename){
        if (verbose) { 
          System.err.println("Generating "+kind+": " + filename); 
@@ -389,6 +411,7 @@ public class LabComm {
         fileWritten |= opts.generateRAPID(ast);
         fileWritten |= opts.generatePrettyPrint(ast);
         fileWritten |= opts.generateTypeinfo(ast);
+        fileWritten |= opts.generateTemplate(ast);
 
         // if no output to files, prettyprint on stdout
 	if (!fileWritten) {
