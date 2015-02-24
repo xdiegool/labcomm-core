@@ -138,9 +138,9 @@ int labcomm2014_writer_ioctl(struct labcomm2014_writer *w,
 
 
 static const char *labcomm2014_error_string[] = {
-#define LABCOMM_ERROR(name, description) description ,
+#define LABCOMM2014_ERROR(name, description) description ,
 #include "labcomm2014_error.h"
-#undef LABCOMM_ERROR
+#undef LABCOMM2014_ERROR
 };
 static const int labcomm2014_error_string_count = (sizeof(labcomm2014_error_string) /
 					       sizeof(labcomm2014_error_string[0]));
@@ -241,7 +241,7 @@ static int local_index = LABCOMM_USER;
 void labcomm2014_set_local_index(struct labcomm2014_signature *signature)
 {
   if (signature->index != 0) {
-    labcomm2014_error_fatal_global(LABCOMM_ERROR_SIGNATURE_ALREADY_SET,
+    labcomm2014_error_fatal_global(LABCOMM2014_ERROR_SIGNATURE_ALREADY_SET,
 			       "Signature already set: %s\n", signature->name);
   }
   signature->index = local_index;
@@ -251,7 +251,7 @@ void labcomm2014_set_local_index(struct labcomm2014_signature *signature)
 int labcomm2014_get_local_index(const struct labcomm2014_signature *signature)
 {
   if (signature->index == 0) {
-    labcomm2014_error_fatal_global(LABCOMM_ERROR_SIGNATURE_NOT_SET,
+    labcomm2014_error_fatal_global(LABCOMM2014_ERROR_SIGNATURE_NOT_SET,
 			       "Signature not set: %s\n", signature->name);
   }
   return signature->index;

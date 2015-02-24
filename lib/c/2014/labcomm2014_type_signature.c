@@ -30,7 +30,7 @@ static labcomm2014_bool sig_dump_checked(struct labcomm2014_signature_data *sign
 /* buf (out)   : byte array to write signature into
    len (in/out): input: buf size, out: signature length
 
-   return TRUE if aborted due to overrun
+   return LABCOMM2014_TRUE if aborted due to overrun
  */
 labcomm2014_bool labcomm2014_signature_dump(struct labcomm2014_signature_data *signature, 
                            char *buf, int *len)
@@ -62,7 +62,7 @@ static labcomm2014_bool sig_dump_checked(struct labcomm2014_signature_data *sign
       buf += inner_len;
     } else {
       //printf("neither data nor ref, bailing out.\n");
-      return TRUE;
+      return LABCOMM2014_TRUE;
     }
     p+=1;
   }
@@ -70,7 +70,7 @@ static labcomm2014_bool sig_dump_checked(struct labcomm2014_signature_data *sign
 }
 
 /* compare signature (flattened, if needed) to other
-   return TRUE if equal
+   return LABCOMM2014_TRUE if equal
 */
 labcomm2014_bool labcomm2014_signature_cmp( struct labcomm2014_signature_data *s1,
                            struct labcomm2014_signature_data *s2)
@@ -84,7 +84,7 @@ labcomm2014_bool labcomm2014_signature_cmp( struct labcomm2014_signature_data *s
   labcomm2014_bool res2 = labcomm2014_signature_dump(s2, buf2, &len2);
   if(res1 || res2) {
     printf("WARNING: OVERRUN\n");
-    return FALSE;
+    return LABCOMM2014_FALSE;
   } else {
     return(len1 == len2 && memcmp(buf1, buf2, len1)==0);
   }

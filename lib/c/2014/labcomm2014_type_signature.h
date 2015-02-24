@@ -4,8 +4,8 @@
 //XXX move to common.h
 #ifndef labcomm2014_bool
 #define labcomm2014_bool char
-#define TRUE 1
-#define FALSE 0
+#define LABCOMM2014_TRUE 1
+#define LABCOMM2014_FALSE 0
 #endif
 
 /*
@@ -112,7 +112,7 @@ int labcomm2014_decoder_register_labcomm2014_type_binding(
 void labcomm2014_signature_print(struct labcomm2014_signature_data *signature);
 
 /* compare signatures (flattened, if needed) to other
-*  return TRUE if equal
+*  return LABCOMM2014_TRUE if equal
 */
 labcomm2014_bool labcomm2014_signature_cmp( struct labcomm2014_signature_data *s2,
                            struct labcomm2014_signature_data *s1);
@@ -121,7 +121,7 @@ labcomm2014_bool labcomm2014_signature_cmp( struct labcomm2014_signature_data *s
  * buf (out)   : byte array to write signature into
  * len (in/out): input: buf size, out: signature length
  *
- * return TRUE if aborted due to overrun
+ * return LABCOMM2014_TRUE if aborted due to overrun
  */
 labcomm2014_bool labcomm2014_signature_dump(struct labcomm2014_signature_data *signature, 
                            char *buf, int *len);

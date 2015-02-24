@@ -241,7 +241,7 @@ static inline char *labcomm2006_read_string(struct labcomm2006_reader *r)
   length = labcomm2006_read_packed32(r);
   result = labcomm2006_memory_alloc(r->memory, 1, length + 1);
   if (!result) {
-    labcomm2006_on_error_fprintf(LABCOMM_ERROR_MEMORY, 4, "%d byte at %s:%d",
+    labcomm2006_on_error_fprintf(LABCOMM2006_ERROR_MEMORY, 4, "%d byte at %s:%d",
                      length+1, __FUNCTION__, __LINE__);
     return NULL;
   }

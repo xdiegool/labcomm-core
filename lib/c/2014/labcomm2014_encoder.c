@@ -87,7 +87,7 @@ struct labcomm2014_encoder *labcomm2014_encoder_new(
   struct labcomm2014_memory *memory,
   struct labcomm2014_scheduler *scheduler)
 {
-    return internal_encoder_new(writer,error,memory,scheduler,TRUE);
+    return internal_encoder_new(writer,error,memory,scheduler,LABCOMM2014_TRUE);
 }
 void labcomm2014_encoder_free(struct labcomm2014_encoder* e)
 {
@@ -310,7 +310,7 @@ static int calc_sig_encoded_size(struct labcomm2014_encoder *e,
                                  const struct labcomm2014_signature *sig)
 {
   int result=0;
-  map_signature(sig_size, &result, sig, FALSE);
+  map_signature(sig_size, &result, sig, LABCOMM2014_FALSE);
   return result;
 }
 
@@ -344,7 +344,7 @@ static int internal_reg_type(
   labcomm2014_write_packed32(e->writer, index);
   labcomm2014_write_string(e->writer, signature->name);
   labcomm2014_write_packed32(e->writer, sig_size);
-  do_write_signature(e, signature, FALSE);
+  do_write_signature(e, signature, LABCOMM2014_FALSE);
 
   labcomm2014_writer_end(e->writer, e->writer->action_context);
   result = e->writer->error;
@@ -359,7 +359,7 @@ int labcomm2014_internal_encoder_type_register(
   const struct labcomm2014_signature *signature)
 {
 #ifndef LABCOMM_WITHOUT_TYPE_DEFS
-  return internal_reg_type(e, signature, FALSE);
+  return internal_reg_type(e, signature, LABCOMM2014_FALSE);
 #else
   return 0;
 #endif

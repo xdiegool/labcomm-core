@@ -23,9 +23,9 @@
 #define __LABCOMM2014_ERROR_H___
 
 enum labcomm2014_error {
-#define LABCOMM_ERROR(name, description) name ,
+#define LABCOMM2014_ERROR(name, description) name ,
 #include "labcomm2014_error.h"
-#undef LABCOMM_ERROR
+#undef LABCOMM2014_ERROR
 };
 
 struct labcomm2014_error_handler;
@@ -41,30 +41,30 @@ void labcomm2014_error_fatal_global(enum labcomm2014_error error,
 			 
 #endif
 
-#ifdef LABCOMM_ERROR
+#ifdef LABCOMM2014_ERROR
 
-LABCOMM_ERROR(LABCOMM_ERROR_SIGNATURE_ALREADY_SET, 
-	      "Signature has already been set")
-LABCOMM_ERROR(LABCOMM_ERROR_SIGNATURE_NOT_SET, 
-	      "Signature has not been set")
+LABCOMM2014_ERROR(LABCOMM2014_ERROR_SIGNATURE_ALREADY_SET,
+                  "Signature has already been set")
+LABCOMM2014_ERROR(LABCOMM2014_ERROR_SIGNATURE_NOT_SET,
+                  "Signature has not been set")
 
-LABCOMM_ERROR(LABCOMM_ERROR_ENC_NO_REG_SIGNATURE, 
-	      "Encoder has no registration for this signature")
-LABCOMM_ERROR(LABCOMM_ERROR_ENC_BUF_FULL,
-	      "The labcomm2014 buffer is full")
-LABCOMM_ERROR(LABCOMM_ERROR_DEC_UNKNOWN_DATATYPE,
-	      "Decoder: Unknown datatype")
-LABCOMM_ERROR(LABCOMM_ERROR_DEC_INDEX_MISMATCH, 
-	      "Decoder: index mismatch")
-LABCOMM_ERROR(LABCOMM_ERROR_DEC_TYPE_NOT_FOUND,
-	      "Decoder: type not found")
-LABCOMM_ERROR(LABCOMM_ERROR_UNIMPLEMENTED_FUNC,
-	      "This function is not yet implemented")
-LABCOMM_ERROR(LABCOMM_ERROR_MEMORY,
-	      "Could not allocate memory")
-LABCOMM_ERROR(LABCOMM_ERROR_USER_DEF,     
-	      "User defined error")
-LABCOMM_ERROR(LABCOMM_ERROR_BAD_WRITER,
-	      "Decoder: writer_ioctl() failed")
+LABCOMM2014_ERROR(LABCOMM2014_ERROR_ENC_NO_REG_SIGNATURE,
+                  "Encoder has no registration for this signature")
+LABCOMM2014_ERROR(LABCOMM2014_ERROR_ENC_BUF_FULL,
+                  "The labcomm2014 buffer is full")
+LABCOMM2014_ERROR(LABCOMM2014_ERROR_DEC_UNKNOWN_DATATYPE,
+                  "Decoder: Unknown datatype")
+LABCOMM2014_ERROR(LABCOMM2014_ERROR_DEC_INDEX_MISMATCH,
+                  "Decoder: index mismatch")
+LABCOMM2014_ERROR(LABCOMM2014_ERROR_DEC_TYPE_NOT_FOUND,
+                  "Decoder: type not found")
+LABCOMM2014_ERROR(LABCOMM2014_ERROR_UNIMPLEMENTED_FUNC,
+                  "This function is not yet implemented")
+LABCOMM2014_ERROR(LABCOMM2014_ERROR_MEMORY,
+                  "Could not allocate memory")
+LABCOMM2014_ERROR(LABCOMM2014_ERROR_USER_DEF,
+                  "User defined error")
+LABCOMM2014_ERROR(LABCOMM2014_ERROR_BAD_WRITER,
+                  "Decoder: writer_ioctl() failed")
 
 #endif
