@@ -1,19 +1,27 @@
 program(decls) ::= <<
 program {
-    $decls:{d | $d.kind$ $decl(d.type, d.name)$};separator=";\n\n"$;
+    $decls:{d | $declKind(d.obj)$ $formatDecl(d.obj, d.type, d.name)$};separator=";\n\n"$;
 };
 >>
 
-decl(type,name) ::= <<
-$type$ $name$
+declKind(decl) ::= <<
+$if(decl.SampleDecl)$sample$else$typedef$endif$
+>>
+
+formatDecl(obj, type, name) ::= <<
+$if(obj.arrayType)$$fooArrayType(obj, name)$$else$$type$ $name$$endif$
 >>
 
 structType(fields) ::= <<
 struct {
-  $fields:{f | $f.type$ $f.name$}; separator=";\n"$;
+  $fields:{f | $formatDecl(f.obj, f.type, f.name)$}; separator=";\n"$;
 }
 >>
 
 arrayType(type, dims) ::= <<
 $type$ $dims:{d | [$d$]}$
+>>
+
+fooArrayType(obj, name) ::= <<
+$obj.TypeName$ $name$$obj.ArrayDims:{d | [$d.TTString$]}$
 >>

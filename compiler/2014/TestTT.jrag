@@ -3,9 +3,13 @@ import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.STGroupDir;
 import org.stringtemplate.v4.STGroupFile;
 
+import java.util.LinkedList;
+
 
 aspect TestTT {
-    syn String Decl.getTypeName() = getType().getTypeName();
+    syn String ASTNode.getTypeName() = "";
+    eq Decl.getTypeName() = getType().getTypeName();
+    eq Field.getTypeName() = getType().getTypeName();
 
     void Program.template_gen(String filename) throws IOException {
         System.out.println("TODO: generate from template "+filename);
@@ -13,8 +17,8 @@ aspect TestTT {
         STGroup group = new STGroupFile(filename, '$', '$');
         ST st = group.getInstanceOf("program");
         for(Decl d: getDecls()) {
-            st.addAggr("decls.{kind, type, name}", 
-                d.isSampleDecl()?"sample":"typedef", 
+            st.addAggr("decls.{obj, type, name}", 
+                d, 
                 d.ttTypeString(group), 
                 d.getName());
         }
@@ -25,6 +29,8 @@ aspect TestTT {
 
     eq PrimType.ttTypeString(STGroup group) = getTypeName();
 
+    eq VoidType.ttTypeString(STGroup group) = "void";
+
     eq UserType.ttTypeString(STGroup group) = getName();
 
     eq Field.ttTypeString(STGroup group) = getType().ttTypeString(group);
@@ -32,7 +38,8 @@ aspect TestTT {
     eq StructType.ttTypeString(STGroup group) {
         ST st = group.getInstanceOf("structType");
         for(Field f: getFields()) {
-            st.addAggr("fields.{type, name}", 
+            st.addAggr("fields.{obj, type, name}", 
+                f, 
                 f.ttTypeString(group), 
                 f.getName());
         }
@@ -42,14 +49,28 @@ aspect TestTT {
         ST st = group.getInstanceOf("arrayType");
         st.add("type", getType().ttTypeString(group));
         for(Exp d: getExps()) {
-            st.add("dims", d.ttString());
+            st.add("dims", d.getTTString());
         }
         return st.render();
     }
 
-    syn String Exp.ttString() = "";
-    eq IntegerLiteral.ttString() = getValue();
-    eq VariableSize.ttString() = "_";
+    syn String Exp.getTTString() = "";
+    eq IntegerLiteral.getTTString() = getValue();
+    eq VariableSize.getTTString() = "_";
 
     eq Decl.ttTypeString(STGroup group) = getType() != null ? getType().ttTypeString(group) : "null type???";
+
+    syn boolean ASTNode.isArrayType() = false;
+    eq ArrayType.isArrayType() = true;
+    eq Field.isArrayType() = getType().isArrayType();
+
+    syn LinkedList<Exp> ASTNode.getArrayDims() = null;
+    eq Field.getArrayDims() = getType().getArrayDims();
+    eq ArrayType.getArrayDims() {
+        LinkedList<Exp> result = new LinkedList<Exp>();
+        for(Exp e : getExps()) {
+           result.add(e); 
+        }
+        return result;
+    }
 }

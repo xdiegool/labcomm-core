@@ -3,6 +3,8 @@ aspect User_Types {
   eq Type.getTypeName() = getClass().getName();
   eq PrimType.getTypeName() = getName();
   eq UserType.getTypeName() = getName();
+  //HERE BE DRAGONS, line below added for template experiments
+  eq ArrayType.getTypeName() = getType().getTypeName();
 
   syn boolean Type.isUserType();
   eq Type.isUserType() = false;
