@@ -143,6 +143,26 @@ public class StringTemplateTest {
         st2.addAggr("helems.{type, name, initval}", "float", "baz", null);
         st2.addAggr("helems.{type, name, n/a}", "boolean", "sna", "this is ignored");
         System.out.println(st2.render());
+
+        ST st3 = group.getInstanceOf("nested3");
+        st3.add("name", "foo");
+        st3.add("names", "x");
+        st3.add("types", "int");
+        st3.add("names", "y");
+        st3.add("types", "long");
+        st3.add("names", "b");
+        st3.add("types", "boolean");
+        st3.add("names", "f");
+        st3.add("types", "float");
+        System.out.println(st3.render());
+
+        ST st4 = group.getInstanceOf("nested4");
+        st4.add("name", "bar");
+        st4.addAggr("helems.{type, name, initval}", "int", "foo", "17");
+        st4.addAggr("helems.{type, name, initval}", "long", "bar", "4200");
+        st4.addAggr("helems.{type, name, initval}", "float", "baz", null);
+        st4.addAggr("helems.{type, name, n/a}", "boolean", "sna", "this is ignored");
+        System.out.println(st4.render());
     }
 
     public static void main(String a[]){
