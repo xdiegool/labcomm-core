@@ -1,5 +1,5 @@
 /*
-  labcomm_ioctl.h -- labcomm ioctl declarations
+  labcomm2014_ioctl.h -- labcomm2014 ioctl declarations
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -19,10 +19,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __LABCOMM_IOCTL_H___
-#define __LABCOMM_IOCTL_H___
+#ifndef __LABCOMM2014_IOCTL_H___
+#define __LABCOMM2014_IOCTL_H___
 
-#include "labcomm.h"
+#include "labcomm2014.h"
 
 /*
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -35,7 +35,7 @@
  *  | +----------------------------------------------- direction (2)
  *  +------------------------------------------------- signature (1)
  *  
- * type 0-31     are reserved for labcomm library use
+ * type 0-31     are reserved for labcomm2014 library use
  */
 
 

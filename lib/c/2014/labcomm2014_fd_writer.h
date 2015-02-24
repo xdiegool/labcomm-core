@@ -1,7 +1,7 @@
 /*
-  test_default_scheduler.h -- LabComm default scheduler
+  labcomm2014_fd_writer.c -- a writer for unix style file-descriptors
 
-  Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
+  Copyright 2006-2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
   This file is part of LabComm.
 
@@ -18,11 +18,14 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __LABCOMM_DEFAULT_SCHEDULER_H__
-#define __LABCOMM_DEFAULT_SCHEDULER_H__
 
-#include "labcomm.h"
+#ifndef __LABCOMM2014_FD_WRITER_H__
+#define __LABCOMM2014_FD_WRITER_H__
 
-extern struct labcomm_scheduler *labcomm_default_scheduler;
+#include "labcomm2014.h"
+
+struct labcomm2014_writer *labcomm2014_fd_writer_new(struct labcomm2014_memory *memory,
+					     int fd, int close_on_free);
 
 #endif
+

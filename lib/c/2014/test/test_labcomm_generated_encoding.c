@@ -1,5 +1,5 @@
 /*
-  test_labcomm_generated_encoding.c -- LabComm tests of generated encoding
+  test_labcomm2014_generated_encoding.c -- LabComm tests of generated encoding
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -23,19 +23,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "labcomm_private.h"
-#include "labcomm_default_error_handler.h"
-#include "labcomm_default_memory.h"
-#include "labcomm_pthread_scheduler.h"
+#include "labcomm2014_private.h"
+#include "labcomm2014_default_error_handler.h"
+#include "labcomm2014_default_memory.h"
+#include "labcomm2014_pthread_scheduler.h"
 #include "test/gen/generated_encoding.h"
 
 #define IOCTL_WRITER_ASSERT_BYTES 4096
 #define IOCTL_WRITER_RESET 4097
 
 #define EXPECT(...)							\
-  {									\
+  {                                                                     \
     int expected[] = __VA_ARGS__;					\
-    labcomm_encoder_ioctl(encoder, IOCTL_WRITER_ASSERT_BYTES,		\
+    labcomm2014_encoder_ioctl(encoder, IOCTL_WRITER_ASSERT_BYTES,       \
 			  __LINE__,					\
 			  sizeof(expected)/sizeof(expected[0]),		\
 			  expected);					\
@@ -45,12 +45,12 @@
 #define IS_VARIABLE(i) (i < 0)
 
 static unsigned char buffer[128];
-struct labcomm_writer *writer;
+struct labcomm2014_writer *writer;
 static int seen_variable[1024];
 
 static int buf_writer_alloc(
-  struct labcomm_writer *w, 
-  struct labcomm_writer_action_context *action_context)
+  struct labcomm2014_writer *w, 
+  struct labcomm2014_writer_action_context *action_context)
 {
   writer = w; /* Hack */
   w->data_size = sizeof(buffer);
@@ -62,32 +62,32 @@ static int buf_writer_alloc(
 }
 
 static int buf_writer_free(
-  struct labcomm_writer *w, 
-  struct labcomm_writer_action_context *action_context)
+  struct labcomm2014_writer *w, 
+  struct labcomm2014_writer_action_context *action_context)
 {
   return 0;
 }
 
 static int buf_writer_start(
-  struct labcomm_writer *w,
-  struct labcomm_writer_action_context *action_context,
+  struct labcomm2014_writer *w,
+  struct labcomm2014_writer_action_context *action_context,
   int index,
-  const struct labcomm_signature *signature,
+  const struct labcomm2014_signature *signature,
   void *value)
 {
   return 0;
 }
 
 static int buf_writer_end(
-  struct labcomm_writer *w, 
-  struct labcomm_writer_action_context *action_context)
+  struct labcomm2014_writer *w, 
+  struct labcomm2014_writer_action_context *action_context)
 {
   return 0;
 }
 
 static int buf_writer_flush(
-  struct labcomm_writer *w, 
-  struct labcomm_writer_action_context *action_context)
+  struct labcomm2014_writer *w, 
+  struct labcomm2014_writer_action_context *action_context)
 {
   fprintf(stderr, "Should not come here %s:%d\n", __FILE__, __LINE__);
   exit(1);
@@ -96,9 +96,9 @@ static int buf_writer_flush(
 }
 
 static int buf_writer_ioctl(
-  struct labcomm_writer *w, 
-  struct labcomm_writer_action_context *action_context,
-  int signature_index, const struct labcomm_signature *signature,
+  struct labcomm2014_writer *w, 
+  struct labcomm2014_writer_action_context *action_context,
+  int signature_index, const struct labcomm2014_signature *signature,
   uint32_t action, va_list arg)
 {
   int result = -ENOTSUP;
@@ -157,7 +157,7 @@ static int buf_writer_ioctl(
   return result;
 }
 
-const struct labcomm_writer_action writer_action = {
+const struct labcomm2014_writer_action writer_action = {
   .alloc = buf_writer_alloc,
   .free = buf_writer_free,
   .start = buf_writer_start,
@@ -166,12 +166,12 @@ const struct labcomm_writer_action writer_action = {
   .ioctl = buf_writer_ioctl
 };
 
-static struct labcomm_writer_action_context action_context = {
+static struct labcomm2014_writer_action_context action_context = {
   .next = NULL,
   .action = &writer_action,
   .context = NULL
 }; 
-static struct labcomm_writer buffer_writer = {
+static struct labcomm2014_writer buffer_writer = {
   .action_context = &action_context,
   .data = buffer,
   .data_size = sizeof(buffer),
@@ -180,7 +180,7 @@ static struct labcomm_writer buffer_writer = {
   .error = 0,
 };
 
-void dump_encoder(struct labcomm_encoder *encoder)
+void dump_encoder(struct labcomm2014_encoder *encoder)
 {
   int i;
   
@@ -194,83 +194,83 @@ int main(void)
 {
   generated_encoding_B B = 1;
   generated_encoding_R R;
-  struct labcomm_encoder *encoder;
+  struct labcomm2014_encoder *encoder;
   int i;
 
   for (i = 0 ; i < sizeof(seen_variable)/sizeof(seen_variable[0]) ; i++) {
     seen_variable[i] = -1;
   }
 
-  encoder = labcomm_encoder_new(
+  encoder = labcomm2014_encoder_new(
     &buffer_writer, 
-    labcomm_default_error_handler,
-    labcomm_default_memory,
-    labcomm_pthread_scheduler_new(labcomm_default_memory));
+    labcomm2014_default_error_handler,
+    labcomm2014_default_memory,
+    labcomm2014_pthread_scheduler_new(labcomm2014_default_memory));
   EXPECT({ 0x01, 0x0c, 0x0b, 
            'L', 'a', 'b', 'C', 'o', 'm', 'm', '2','0', '1', '4' });
 
-  labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
+  labcomm2014_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   /* Register twice to make sure that only one registration gets encoded */
-  labcomm_encoder_register_generated_encoding_V(encoder);
-  labcomm_encoder_register_generated_encoding_V(encoder);
+  labcomm2014_encoder_register_generated_encoding_V(encoder);
+  labcomm2014_encoder_register_generated_encoding_V(encoder);
   EXPECT({ 0x02, 0x06, VARIABLE(0), 0x01, 'V', 0x02, 0x11, 0x00,
            0x04, 0x08, VARIABLE(1), 0x03, 'v', '_', 't', 0x02, 0x11, 0x00,
            0x04, 0x05, VARIABLE(2), 0x01, 'V', 0x01, VARIABLE(1),
            0x05, 0x02, VARIABLE(0), VARIABLE(2) });
 
-  labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
+  labcomm2014_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   /* Register twice to make sure that only one registration gets encoded */
-  labcomm_encoder_register_generated_encoding_B(encoder);
-  labcomm_encoder_register_generated_encoding_B(encoder);
+  labcomm2014_encoder_register_generated_encoding_B(encoder);
+  labcomm2014_encoder_register_generated_encoding_B(encoder);
   EXPECT({ 0x02, 0x05, VARIABLE(3), 0x01, 'B', 0x01, 0x21,
            0x05, 0x02, VARIABLE(3), LABCOMM_BIND_SELF });
 
-  labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
+  labcomm2014_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   /* Register twice to make sure that only one registration gets encoded */
-  labcomm_encoder_register_generated_encoding_R(encoder);
-  labcomm_encoder_register_generated_encoding_R(encoder);
+  labcomm2014_encoder_register_generated_encoding_R(encoder);
+  labcomm2014_encoder_register_generated_encoding_R(encoder);
   EXPECT({ 0x02, 0x08, VARIABLE(4), 0x01, 'R', 0x04, 0x10, 0x01, 0x04, 0x28,
            0x05, 0x02, VARIABLE(4), LABCOMM_BIND_SELF });
 
-  labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
+  labcomm2014_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   /* Register twice to make sure that only one registration gets encoded */
-  labcomm_encoder_sample_ref_register(encoder, 
-                                      labcomm_signature_generated_encoding_V);
-  labcomm_encoder_sample_ref_register(encoder, 
-                                      labcomm_signature_generated_encoding_V);
+  labcomm2014_encoder_sample_ref_register(encoder, 
+                                      labcomm2014_signature_generated_encoding_V);
+  labcomm2014_encoder_sample_ref_register(encoder, 
+                                      labcomm2014_signature_generated_encoding_V);
   EXPECT({0x03, 0x06, VARIABLE(5), 0x01, 'V', 0x02, 0x11, 0x00});
 
-  labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
+  labcomm2014_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   /* Register twice to make sure that only one registration gets encoded */
-  labcomm_encoder_sample_ref_register(encoder, 
-                                      labcomm_signature_generated_encoding_B);
-  labcomm_encoder_sample_ref_register(encoder, 
-                                      labcomm_signature_generated_encoding_B);
+  labcomm2014_encoder_sample_ref_register(encoder, 
+                                      labcomm2014_signature_generated_encoding_B);
+  labcomm2014_encoder_sample_ref_register(encoder, 
+                                      labcomm2014_signature_generated_encoding_B);
   EXPECT({0x03, 0x05, VARIABLE(6), 0x01, 'B', 0x01, 0x21});
 
-  labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
+  labcomm2014_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   /* Register twice to make sure that only one registration gets encoded */
-  labcomm_encoder_sample_ref_register(encoder, 
-                                      labcomm_signature_generated_encoding_R);
-  labcomm_encoder_sample_ref_register(encoder, 
-                                      labcomm_signature_generated_encoding_R);
+  labcomm2014_encoder_sample_ref_register(encoder, 
+                                      labcomm2014_signature_generated_encoding_R);
+  labcomm2014_encoder_sample_ref_register(encoder, 
+                                      labcomm2014_signature_generated_encoding_R);
   EXPECT({0x03, 0x08, VARIABLE(7), 0x01, 'R', 0x04, 0x10, 0x01, 0x04, 0x28});
 
-  labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
-  // was: labcomm_encode_generated_encoding_V(encoder, &V);
-  labcomm_encode_generated_encoding_V(encoder);
+  labcomm2014_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
+  // was: labcomm2014_encode_generated_encoding_V(encoder, &V);
+  labcomm2014_encode_generated_encoding_V(encoder);
   EXPECT({VARIABLE(10), 0x00 });
 
-  labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
-  labcomm_encode_generated_encoding_B(encoder, &B);
+  labcomm2014_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
+  labcomm2014_encode_generated_encoding_B(encoder, &B);
   EXPECT({VARIABLE(20), 0x01, 1});
 
-  labcomm_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
-  R.a[0] = labcomm_signature_generated_encoding_V;
-  R.a[1] = labcomm_signature_generated_encoding_B;
-  R.a[2] = labcomm_signature_generated_encoding_UnusedE;
-  R.a[3] = labcomm_signature_generated_encoding_R;
-  labcomm_encode_generated_encoding_R(encoder, &R);
+  labcomm2014_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
+  R.a[0] = labcomm2014_signature_generated_encoding_V;
+  R.a[1] = labcomm2014_signature_generated_encoding_B;
+  R.a[2] = labcomm2014_signature_generated_encoding_UnusedE;
+  R.a[3] = labcomm2014_signature_generated_encoding_R;
+  labcomm2014_encode_generated_encoding_R(encoder, &R);
   EXPECT({VARIABLE(4), 0x10, 0x00, 0x00, 0x00, VARIABLE(5),
                              0x00, 0x00, 0x00, VARIABLE(6),
                              0x00, 0x00, 0x00, 0x00,

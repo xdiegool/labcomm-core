@@ -1,5 +1,5 @@
 /*
-  labcomm_fd_reader.c -- a reader for unix style file-descriptors
+  labcomm2014_dynamic_buffer_writer.h -- LabComm dynamic memory writer.
 
   Copyright 2006-2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -19,13 +19,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __LABCOMM_FD_READER_H__
-#define __LABCOMM_FD_READER_H__
+#ifndef __LABCOMM2014_DYNAMIC_BUFFER_READER_WRITER_H__
+#define __LABCOMM2014_DYNAMIC_BUFFER_READER_WRITER_H__
 
-#include "labcomm.h"
+#include "labcomm2014.h"
 
-struct labcomm_reader *labcomm_fd_reader_new(struct labcomm_memory *memory,
-					     int fd, int close_fd_on_free);
+extern const struct labcomm2014_writer_action *labcomm2014_dynamic_buffer_writer_action;
+
+struct labcomm2014_writer *labcomm2014_dynamic_buffer_writer_new(
+  struct labcomm2014_memory *memory);
 
 #endif
-

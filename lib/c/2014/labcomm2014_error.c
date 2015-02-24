@@ -1,5 +1,5 @@
 /*
-  test_default_error_handler.h -- LabComm default error handler
+  labcomm2014_error.c -- labcomm2014 error handling
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -18,11 +18,22 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __LABCOMM_DEFAULT_ERROR_HANDLER_H__
-#define __LABCOMM_DEFAULT_ERROR_HANDLER_H__
 
-#include "labcomm.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include "labcomm2014_error.h"
 
-extern struct labcomm_error_handler *labcomm_default_error_handler;
+void labcomm2014_error_fatal_global(enum labcomm2014_error error,
+				char *format,
+				...)
+{
+  va_list args;
 
-#endif
+  fprintf(stderr, "Fatal error %d\n", error);
+  va_start(args, format);
+  vprintf(format, args);
+  va_end(args);
+
+  exit(1);
+}

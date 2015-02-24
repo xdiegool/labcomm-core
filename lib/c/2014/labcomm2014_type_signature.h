@@ -1,9 +1,9 @@
-#ifndef LABCOMM_TYPE_SIGNATURE_H
-#define LABCOMM_TYPE_SIGNATURE_H
+#ifndef __LABCOMM2014_TYPE_SIGNATURE_H__
+#define __LABCOMM2014_TYPE_SIGNATURE_H__
 
 //XXX move to common.h
-#ifndef labcomm_bool
-#define labcomm_bool char
+#ifndef labcomm2014_bool
+#define labcomm2014_bool char
 #define TRUE 1
 #define FALSE 0
 #endif
@@ -19,7 +19,7 @@
 #define LABCOMM_SIGDEF_BYTES_OR_SIGNATURE          \
   union {                                   \
     char *bytes;                            \
-    struct labcomm_signature* signature;            \
+    struct labcomm2014_signature* signature;            \
   } u;
 
 #define LABCOMM_SIGDEF_BYTES(l, b) { l, .u.bytes=b }
@@ -31,7 +31,7 @@
 #define LABCOMM_SIGDEF_BYTES_OR_SIGNATURE          \
   struct {                                  \
     char *bytes;                            \
-    const struct labcomm_signature *signature;            \
+    const struct labcomm2014_signature *signature;            \
   } u;
 
 #define LABCOMM_SIGDEF_BYTES(l, b) { l, { b, 0 } }
@@ -40,13 +40,13 @@
 
 #endif
 
-struct labcomm_signature_data {
+struct labcomm2014_signature_data {
   int length;
   LABCOMM_SIGDEF_BYTES_OR_SIGNATURE
 };
 
 #endif
-struct labcomm_signature {
+struct labcomm2014_signature {
   char *name;
   int (*encoded_size)(void *); /* void* refers to sample_data */
   int size;
@@ -54,7 +54,7 @@ struct labcomm_signature {
   int index;
 #ifndef LABCOMM_NO_TYPEDECL
   int tdsize;
-  struct labcomm_signature_data *treedata;
+  struct labcomm2014_signature_data *treedata;
 #endif  
 #ifdef LABCOMM_EXPERIMENTAL_CACHED_ENCODED_SIZE
   int cached_encoded_size; // -1 if not initialized or type is variable size
@@ -65,7 +65,7 @@ struct labcomm_signature {
  * between decoder and signature parser
  */
 
-struct labcomm_raw_type_def {
+struct labcomm2014_raw_type_def {
     char *name;
     int index;
     int length;
@@ -75,7 +75,7 @@ struct labcomm_raw_type_def {
 /* a struct for type bindings
  */
 
-struct labcomm_type_binding {
+struct labcomm2014_type_binding {
     int sample_index;
     int type_index;
 };
@@ -88,19 +88,19 @@ struct labcomm_type_binding {
 /* register a handler for type_defs and type bindings
  */
 
-int labcomm_decoder_register_labcomm_type_def(
-  struct labcomm_decoder *d,
+int labcomm2014_decoder_register_labcomm2014_type_def(
+  struct labcomm2014_decoder *d,
   void (*handler)(
-    struct labcomm_raw_type_def *v,
+    struct labcomm2014_raw_type_def *v,
     void *context
   ),
   void *context
 );
 
-int labcomm_decoder_register_labcomm_type_binding(
-  struct labcomm_decoder *d,
+int labcomm2014_decoder_register_labcomm2014_type_binding(
+  struct labcomm2014_decoder *d,
   void (*handler)(
-    struct labcomm_type_binding *v,
+    struct labcomm2014_type_binding *v,
     void *context
   ),
   void *context
@@ -109,13 +109,13 @@ int labcomm_decoder_register_labcomm_type_binding(
 /* Dump signature bytes on stdout 
  */
 
-void labcomm_signature_print(struct labcomm_signature_data *signature);
+void labcomm2014_signature_print(struct labcomm2014_signature_data *signature);
 
 /* compare signatures (flattened, if needed) to other
 *  return TRUE if equal
 */
-labcomm_bool labcomm_signature_cmp( struct labcomm_signature_data *s2,
-                           struct labcomm_signature_data *s1);
+labcomm2014_bool labcomm2014_signature_cmp( struct labcomm2014_signature_data *s2,
+                           struct labcomm2014_signature_data *s1);
 
 /* flatten and dump signature to a byte array.
  * buf (out)   : byte array to write signature into
@@ -123,7 +123,7 @@ labcomm_bool labcomm_signature_cmp( struct labcomm_signature_data *s2,
  *
  * return TRUE if aborted due to overrun
  */
-labcomm_bool labcomm_signature_dump(struct labcomm_signature_data *signature, 
+labcomm2014_bool labcomm2014_signature_dump(struct labcomm2014_signature_data *signature, 
                            char *buf, int *len);
 
 /* maps function f on each byte in the signature
@@ -132,8 +132,8 @@ labcomm_bool labcomm_signature_dump(struct labcomm_signature_data *signature,
  * otherwise, when a type ref is encountered, f is called with the first
  * argument zero and the type ref as the second argument.
  */ 
-void map_signature( void(*f)(char, const struct labcomm_signature *, void *), 
+void map_signature( void(*f)(char, const struct labcomm2014_signature *, void *), 
                     void *context,
-                    const struct labcomm_signature *signature, labcomm_bool flatten);
+                    const struct labcomm2014_signature *signature, labcomm2014_bool flatten);
 
 #endif

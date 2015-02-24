@@ -1,5 +1,5 @@
 /*
-  labcomm_error.c -- labcomm error handling
+  test_default_memory.c -- LabComm default memory allocator
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -20,20 +20,30 @@
 */
 
 #include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include "labcomm_error.h"
+#include "labcomm2014.h"
+#include "labcomm2014_private.h"
 
-void labcomm_error_fatal_global(enum labcomm_error error,
-				char *format,
-				...)
+void *default_alloc(struct labcomm2014_memory *m, int lifetime, size_t size)
 {
-  va_list args;
-
-  fprintf(stderr, "Fatal error %d\n", error);
-  va_start(args, format);
-  vprintf(format, args);
-  va_end(args);
-
-  exit(1);
+  return malloc(size);
 }
+
+void *default_realloc(struct labcomm2014_memory *m, int lifetime, 
+		      void *ptr, size_t size)
+{
+  return realloc(ptr, size);
+}
+
+void default_free(struct labcomm2014_memory *m, int lifetime, void *ptr)
+{
+  free(ptr);
+}
+
+struct labcomm2014_memory memory = {
+  .alloc = default_alloc,
+  .realloc = default_realloc,
+  .free = default_free,
+  .context = NULL
+};
+
+struct labcomm2014_memory *labcomm2014_default_memory = &memory;

@@ -1,13 +1,13 @@
-#include "labcomm.h"
+#include "labcomm2014.h"
 #include <string.h>   // for memcmp
 #include <stdio.h>   // for debug printf
 
 /* Dump signature bytes on stdout 
  */
 
-void labcomm_signature_print(struct labcomm_signature_data *signature)
+void labcomm2014_signature_print(struct labcomm2014_signature_data *signature)
 {
-  struct labcomm_signature_data *p = signature ;
+  struct labcomm2014_signature_data *p = signature ;
   while (p->length != -1) {
     if (p->length) {
       int i;
@@ -15,7 +15,7 @@ void labcomm_signature_print(struct labcomm_signature_data *signature)
         printf("%02x ", p->u.bytes[i]);
       }
     } else if(p->u.signature){
-      labcomm_signature_print(p->u.signature->treedata);
+      labcomm2014_signature_print(p->u.signature->treedata);
     } else {
       printf("neither data nor ref, bailing out.\n");
       return;
@@ -24,7 +24,7 @@ void labcomm_signature_print(struct labcomm_signature_data *signature)
   }
   printf("\n");
 }
-static labcomm_bool sig_dump_checked(struct labcomm_signature_data *signature, 
+static labcomm2014_bool sig_dump_checked(struct labcomm2014_signature_data *signature, 
                             char *buf, int *len, int buflen);
 
 /* buf (out)   : byte array to write signature into
@@ -32,7 +32,7 @@ static labcomm_bool sig_dump_checked(struct labcomm_signature_data *signature,
 
    return TRUE if aborted due to overrun
  */
-labcomm_bool labcomm_signature_dump(struct labcomm_signature_data *signature, 
+labcomm2014_bool labcomm2014_signature_dump(struct labcomm2014_signature_data *signature, 
                            char *buf, int *len)
 {
   int buflen = *len;
@@ -43,10 +43,10 @@ labcomm_bool labcomm_signature_dump(struct labcomm_signature_data *signature,
 /* internal function with bounds checking for buf.
  * buflen: capacity of buf
  */
-static labcomm_bool sig_dump_checked(struct labcomm_signature_data *signature, 
+static labcomm2014_bool sig_dump_checked(struct labcomm2014_signature_data *signature, 
                             char *buf, int *len, int buflen)
 {
-  struct labcomm_signature_data *p = signature;
+  struct labcomm2014_signature_data *p = signature;
   while ( (p->length != -1) && (*len < buflen)) {
     if (p->length) {
       int i;
@@ -72,16 +72,16 @@ static labcomm_bool sig_dump_checked(struct labcomm_signature_data *signature,
 /* compare signature (flattened, if needed) to other
    return TRUE if equal
 */
-labcomm_bool labcomm_signature_cmp( struct labcomm_signature_data *s1,
-                           struct labcomm_signature_data *s2)
+labcomm2014_bool labcomm2014_signature_cmp( struct labcomm2014_signature_data *s1,
+                           struct labcomm2014_signature_data *s2)
 {
   int buflen=512;
   char buf1[buflen];
   int len1=buflen;
   char buf2[buflen];
   int len2=buflen;
-  labcomm_bool res1 = labcomm_signature_dump(s1, buf1, &len1);
-  labcomm_bool res2 = labcomm_signature_dump(s2, buf2, &len2);
+  labcomm2014_bool res1 = labcomm2014_signature_dump(s1, buf1, &len1);
+  labcomm2014_bool res2 = labcomm2014_signature_dump(s2, buf2, &len2);
   if(res1 || res2) {
     printf("WARNING: OVERRUN\n");
     return FALSE;
@@ -89,7 +89,7 @@ labcomm_bool labcomm_signature_cmp( struct labcomm_signature_data *s1,
     return(len1 == len2 && memcmp(buf1, buf2, len1)==0);
   }
 }
-/* maps a function f(char b, struct labcomm_signature *s, void *context) 
+/* maps a function f(char b, struct labcomm2014_signature *s, void *context) 
  * on each byte (or type ref) in the signature. 
  *
  * If flatten, the signature is flattened to a byte array, and the 
@@ -100,11 +100,11 @@ labcomm_bool labcomm_signature_cmp( struct labcomm_signature_data *s1,
  *
  * The context parameter is passed on, unaltered, to f
  */ 
-void map_signature( void(*f)(char, const struct labcomm_signature *, void *), 
+void map_signature( void(*f)(char, const struct labcomm2014_signature *, void *), 
                     void *context,
-                    const struct labcomm_signature *signature, labcomm_bool flatten)
+                    const struct labcomm2014_signature *signature, labcomm2014_bool flatten)
 {
-  struct labcomm_signature_data* p = signature->treedata;
+  struct labcomm2014_signature_data* p = signature->treedata;
   while (p->length != -1) {
     //fprintf(stderr, "%p %x\n", p, p->length);
     if (p->length) {

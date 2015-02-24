@@ -1,5 +1,5 @@
 /*
-  labcomm_fd_writer.c -- a writer for unix style file-descriptors
+  labcomm2014_fd_reader.c -- a reader for unix style file-descriptors
 
   Copyright 2006-2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -19,13 +19,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __LABCOMM_FD_WRITER_H__
-#define __LABCOMM_FD_WRITER_H__
+#ifndef __LABCOMM2014_FD_READER_H__
+#define __LABCOMM2014_FD_READER_H__
 
-#include "labcomm.h"
+#include "labcomm2014.h"
 
-struct labcomm_writer *labcomm_fd_writer_new(struct labcomm_memory *memory,
-					     int fd, int close_on_free);
+struct labcomm2014_reader *labcomm2014_fd_reader_new(struct labcomm2014_memory *memory,
+					     int fd, int close_fd_on_free);
 
 #endif
 

@@ -1,5 +1,5 @@
 /*
-  labcomm_pthread_scheduler.h -- labcomm pthread based task coordination
+  labcomm2014_memory.c -- dynamic memory handlig dispatcher
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -19,13 +19,22 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __LABCOMM_PTHREAD_SCHEDULER_H__
-#define __LABCOMM_PTHREAD_SCHEDULER_H__
+#include "labcomm2014_private.h"
 
-#include "labcomm.h"
+void *labcomm2014_memory_alloc(struct labcomm2014_memory *m, int lifetime, 
+			   size_t size) 
+{
+  return m->alloc(m, lifetime, size);
+}
 
-struct labcomm_scheduler *labcomm_pthread_scheduler_new(
-  struct labcomm_memory *memory);
+void *labcomm2014_memory_realloc(struct labcomm2014_memory *m, int lifetime, 
+			     void *ptr, size_t size) 
+{
+  return m->realloc(m, lifetime, ptr, size);
+}
 
-#endif
-
+void labcomm2014_memory_free(struct labcomm2014_memory *m, int lifetime, 
+			 void *ptr)
+{
+  m->free(m, lifetime, ptr);
+}

@@ -1,10 +1,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <labcomm_fd_reader.h>
-#include <labcomm_default_error_handler.h>
-#include <labcomm_default_memory.h>
-#include <labcomm_default_scheduler.h>
+#include <labcomm2014_fd_reader.h>
+#include <labcomm2014_default_error_handler.h>
+#include <labcomm2014_default_memory.h>
+#include <labcomm2014_default_scheduler.h>
 #include "gen/simple.h"
 #include <stdio.h>
 
@@ -57,33 +57,33 @@ static void handle_simple_TwoFixedArrays(simple_TwoFixedArrays *d,void *context)
 
 int main(int argc, char *argv[]) {
   int fd;
-  struct labcomm_decoder *decoder;
+  struct labcomm2014_decoder *decoder;
   void  *context = NULL;
 
   char *filename = argv[1];
   printf("C decoder reading from %s\n", filename);
   fd = open(filename, O_RDONLY);
-  decoder = labcomm_decoder_new(labcomm_fd_reader_new(
-				  labcomm_default_memory, fd, 1), 
-				labcomm_default_error_handler, 
-				labcomm_default_memory,
-				labcomm_default_scheduler);
+  decoder = labcomm2014_decoder_new(labcomm2014_fd_reader_new(
+				  labcomm2014_default_memory, fd, 1), 
+				labcomm2014_default_error_handler, 
+				labcomm2014_default_memory,
+				labcomm2014_default_scheduler);
   if (!decoder) { 
     printf("Failed to allocate decoder %s:%d\n", __FUNCTION__, __LINE__);
     return 1;
   }
 
-  labcomm_decoder_register_simple_doavoid(decoder, handle_simple_doavoid, context);
-  labcomm_decoder_register_simple_theTwoInts(decoder, handle_simple_theTwoInts, context);
-  labcomm_decoder_register_simple_anotherTwoInts(decoder, handle_simple_anotherTwoInts, context);
-  labcomm_decoder_register_simple_IntString(decoder, handle_simple_IntString, context);
-  labcomm_decoder_register_simple_TwoArrays(decoder, handle_simple_TwoArrays, context);
-  labcomm_decoder_register_simple_TwoFixedArrays(decoder, handle_simple_TwoFixedArrays, context);
+  labcomm2014_decoder_register_simple_doavoid(decoder, handle_simple_doavoid, context);
+  labcomm2014_decoder_register_simple_theTwoInts(decoder, handle_simple_theTwoInts, context);
+  labcomm2014_decoder_register_simple_anotherTwoInts(decoder, handle_simple_anotherTwoInts, context);
+  labcomm2014_decoder_register_simple_IntString(decoder, handle_simple_IntString, context);
+  labcomm2014_decoder_register_simple_TwoArrays(decoder, handle_simple_TwoArrays, context);
+  labcomm2014_decoder_register_simple_TwoFixedArrays(decoder, handle_simple_TwoFixedArrays, context);
 
   printf("Decoding:\n");
-  labcomm_decoder_run(decoder);
+  labcomm2014_decoder_run(decoder);
   printf("--- End Of File ---:\n");
-  labcomm_decoder_free(decoder);
+  labcomm2014_decoder_free(decoder);
 
   return 0;
 }

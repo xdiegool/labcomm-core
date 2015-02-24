@@ -1,5 +1,5 @@
 /*
-  test_labcomm_basic_type_encoding.c -- LabComm tests of basic encoding
+  test_labcomm2014_basic_type_encoding.c -- LabComm tests of basic encoding
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -23,13 +23,13 @@
 #include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
-#include "labcomm_private.h"
+#include "labcomm2014_private.h"
 
 static int line;
 
 static unsigned char buffer[128];
 
-static struct labcomm_writer writer =  {
+static struct labcomm2014_writer writer =  {
   .action_context = NULL,
   .data = buffer,
   .data_size = sizeof(buffer),
@@ -38,7 +38,7 @@ static struct labcomm_writer writer =  {
   .error = 0,
 };
 
-static struct labcomm_reader reader =  {
+static struct labcomm2014_reader reader =  {
   .action_context = NULL,
   .data = buffer,
   .data_size = sizeof(buffer),
@@ -53,11 +53,11 @@ typedef uint32_t packed32;
     type decoded;							\
     line = __LINE__;							\
     writer.pos = 0;							\
-    labcomm_write_##ltype(&writer, value);				\
+    labcomm2014_write_##ltype(&writer, value);				\
     writer_assert(#ltype, expect_count, (uint8_t*)expect_bytes);	\
     reader.count = writer.pos;						\
     reader.pos = 0;							\
-    decoded = labcomm_read_##ltype(&reader);				\
+    decoded = labcomm2014_read_##ltype(&reader);				\
     if (decoded != value) {						\
       fprintf(stderr, "Decode error" format " != " format " @%s:%d \n", \
 	      value, decoded, __FILE__, __LINE__);					\

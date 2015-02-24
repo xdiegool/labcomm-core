@@ -1,7 +1,7 @@
 /*
-  labcomm_dynamic_buffer_writer.h -- LabComm dynamic memory writer.
+  test_default_error_handler.c -- LabComm default error handler
 
-  Copyright 2006-2013 Anders Blomdell <anders.blomdell@control.lth.se>
+  Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
   This file is part of LabComm.
 
@@ -19,14 +19,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __LABCOMM_DYNAMIC_BUFFER_READER_WRITER_H__
-#define __LABCOMM_DYNAMIC_BUFFER_READER_WRITER_H__
+#include "labcomm2014.h"
 
-#include "labcomm.h"
-
-extern const struct labcomm_writer_action *labcomm_dynamic_buffer_writer_action;
-
-struct labcomm_writer *labcomm_dynamic_buffer_writer_new(
-  struct labcomm_memory *memory);
-
-#endif
+struct labcomm2014_error_handler *labcomm2014_default_error_handler = NULL;

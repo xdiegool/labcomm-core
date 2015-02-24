@@ -1,5 +1,5 @@
 /*
-  labcomm_time.c -- labcomm time handling
+  test_default_scheduler.h -- LabComm default scheduler
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -18,25 +18,11 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#ifndef __LABCOMM2014_DEFAULT_SCHEDULER_H__
+#define __LABCOMM2014_DEFAULT_SCHEDULER_H__
 
-#include <errno.h>
-#include "labcomm_scheduler_private.h"
+#include "labcomm2014.h"
 
-#define TIME_time(time, ...) time
-#define TIME(func, ...)						\
-  if (TIME_time(__VA_ARGS__) &&				\
-      TIME_time(__VA_ARGS__)->action->func) {			\
-    return TIME_time(__VA_ARGS__)->action->func(__VA_ARGS__);	\
-  }									\
-  return -ENOSYS;
+extern struct labcomm2014_scheduler *labcomm2014_default_scheduler;
 
-int labcomm_time_free(struct labcomm_time *s)
-{
-  TIME(free, s);
-}
-
-int labcomm_time_add_usec(struct labcomm_time *s, uint32_t usec)
-{
-  TIME(add_usec, s, usec);
-}
-
+#endif

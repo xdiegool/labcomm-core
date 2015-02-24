@@ -1,5 +1,5 @@
 /*
-  test_labcomm_pthread_scheduler.c -- test labcomm pthread based task 
+  test_labcomm2014_pthread_scheduler.c -- test labcomm2014 pthread based task 
                                       coordination
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
@@ -22,13 +22,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "labcomm_default_memory.h"
-#include "labcomm_scheduler.h"
-#include "labcomm_pthread_scheduler.h"
+#include "labcomm2014_default_memory.h"
+#include "labcomm2014_scheduler.h"
+#include "labcomm2014_pthread_scheduler.h"
 
 #define TICK 100000
 struct func_arg {
-  struct labcomm_scheduler *scheduler;
+  struct labcomm2014_scheduler *scheduler;
   int i;
 };
 
@@ -38,11 +38,11 @@ static void func(void *arg)
   
   printf("%p %d\n", arg, func_arg->i);
   if (func_arg->i == 999) {
-    labcomm_scheduler_wakeup(func_arg->scheduler);
+    labcomm2014_scheduler_wakeup(func_arg->scheduler);
   }
 }
 
-void enqueue(struct labcomm_scheduler *scheduler, 
+void enqueue(struct labcomm2014_scheduler *scheduler, 
 	     int first, int last)
 {
   int i;
@@ -52,16 +52,16 @@ void enqueue(struct labcomm_scheduler *scheduler,
     
     tmp->scheduler = scheduler;
     tmp->i = i;
-    labcomm_scheduler_enqueue(scheduler, i*TICK, func, tmp);
+    labcomm2014_scheduler_enqueue(scheduler, i*TICK, func, tmp);
   }
 }
 
 int main(int argc, char *argv[])
 {
-  struct labcomm_scheduler *scheduler;
-  struct labcomm_time *time;
+  struct labcomm2014_scheduler *scheduler;
+  struct labcomm2014_time *time;
 
-  scheduler = labcomm_pthread_scheduler_new(labcomm_default_memory);
+  scheduler = labcomm2014_pthread_scheduler_new(labcomm2014_default_memory);
   enqueue(scheduler, 0, 5);
   enqueue(scheduler, 0, 1);
   enqueue(scheduler, 1, 3);
@@ -71,12 +71,12 @@ int main(int argc, char *argv[])
     
     tmp->scheduler = scheduler;
     tmp->i = 999;
-    labcomm_scheduler_enqueue(scheduler, 6*TICK, func, tmp);
+    labcomm2014_scheduler_enqueue(scheduler, 6*TICK, func, tmp);
   }
-  time = labcomm_scheduler_now(scheduler);
-  labcomm_time_add_usec(time, 12*TICK);
-  labcomm_scheduler_sleep(scheduler, NULL);
-  labcomm_scheduler_sleep(scheduler, time);
+  time = labcomm2014_scheduler_now(scheduler);
+  labcomm2014_time_add_usec(time, 12*TICK);
+  labcomm2014_scheduler_sleep(scheduler, NULL);
+  labcomm2014_scheduler_sleep(scheduler, time);
 
   return 0;
 }

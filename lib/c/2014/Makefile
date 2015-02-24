@@ -1,5 +1,5 @@
 ## Macros
-VERSION=
+VERSION=2014
 LIBVERSION=2014
 
 include ../os_compat.mk

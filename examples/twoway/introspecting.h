@@ -23,22 +23,22 @@
 #ifndef __INTROSPECTING_H__
 #define __INTROSPECTING_H__
 
-#include <labcomm.h>
-#include <labcomm_ioctl.h>
-#include <labcomm_fd_reader.h>
-#include <labcomm_fd_writer.h>
+#include <labcomm2014.h>
+#include <labcomm2014_ioctl.h>
+#include <labcomm2014_fd_reader.h>
+#include <labcomm2014_fd_writer.h>
 
 struct introspecting {
-  struct labcomm_reader *reader;
-  struct labcomm_writer *writer;
+  struct labcomm2014_reader *reader;
+  struct labcomm2014_writer *writer;
 };
 
 extern struct introspecting *introspecting_new(
-  struct labcomm_reader *reader,
-  struct labcomm_writer *writer,
-  struct labcomm_error_handler *error,
-  struct labcomm_memory *memory,
-  struct labcomm_scheduler *scheduler);
+  struct labcomm2014_reader *reader,
+  struct labcomm2014_writer *writer,
+  struct labcomm2014_error_handler *error,
+  struct labcomm2014_memory *memory,
+  struct labcomm2014_scheduler *scheduler);
 
 #define HAS_SIGNATURE LABCOMM_IOS('i',2)
 enum introspecting_status { introspecting_unknown, 

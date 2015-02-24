@@ -1,5 +1,5 @@
 /*
-  test_default_error_handler.c -- LabComm default error handler
+  test_default_error_handler.h -- LabComm default error handler
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -18,7 +18,11 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#ifndef __LABCOMM2014_DEFAULT_ERROR_HANDLER_H__
+#define __LABCOMM2014_DEFAULT_ERROR_HANDLER_H__
 
-#include "labcomm.h"
+#include "labcomm2014.h"
 
-struct labcomm_error_handler *labcomm_default_error_handler = NULL;
+extern struct labcomm2014_error_handler *labcomm2014_default_error_handler;
+
+#endif

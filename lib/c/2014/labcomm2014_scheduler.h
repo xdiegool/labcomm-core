@@ -1,5 +1,5 @@
 /*
-  labcomm_scheduler.h -- labcomm task coordination
+  labcomm2014_scheduler.h -- labcomm2014 task coordination
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __LABCOMM_SCHEDULER_H__
-#define __LABCOMM_SCHEDULER_H__
+#ifndef __LABCOMM2014_SCHEDULER_H__
+#define __LABCOMM2014_SCHEDULER_H__
 
 #ifdef LABCOMM_COMPAT
   #include LABCOMM_COMPAT
@@ -29,29 +29,29 @@
   #include <stdint.h>
 #endif
 
-struct labcomm_time;
+struct labcomm2014_time;
 
-int labcomm_time_free(struct labcomm_time *t);
-int labcomm_time_add_usec(struct labcomm_time *t, uint32_t usec);
+int labcomm2014_time_free(struct labcomm2014_time *t);
+int labcomm2014_time_add_usec(struct labcomm2014_time *t, uint32_t usec);
 
-struct labcomm_scheduler;
+struct labcomm2014_scheduler;
 
-int labcomm_scheduler_free(struct labcomm_scheduler *s);
+int labcomm2014_scheduler_free(struct labcomm2014_scheduler *s);
 
 /* Lock and event handling */
-int labcomm_scheduler_writer_lock(struct labcomm_scheduler *s);
-int labcomm_scheduler_writer_unlock(struct labcomm_scheduler *s);
-int labcomm_scheduler_data_lock(struct labcomm_scheduler *s);
-int labcomm_scheduler_data_unlock(struct labcomm_scheduler *s);
+int labcomm2014_scheduler_writer_lock(struct labcomm2014_scheduler *s);
+int labcomm2014_scheduler_writer_unlock(struct labcomm2014_scheduler *s);
+int labcomm2014_scheduler_data_lock(struct labcomm2014_scheduler *s);
+int labcomm2014_scheduler_data_unlock(struct labcomm2014_scheduler *s);
 
 /* Time handling */
-struct labcomm_time *labcomm_scheduler_now(struct labcomm_scheduler *s);
-int labcomm_scheduler_sleep(struct labcomm_scheduler *s,
-			    struct labcomm_time *wakeup);
-int labcomm_scheduler_wakeup(struct labcomm_scheduler *s);
+struct labcomm2014_time *labcomm2014_scheduler_now(struct labcomm2014_scheduler *s);
+int labcomm2014_scheduler_sleep(struct labcomm2014_scheduler *s,
+			    struct labcomm2014_time *wakeup);
+int labcomm2014_scheduler_wakeup(struct labcomm2014_scheduler *s);
 
 /* Deferred action handling */
-int labcomm_scheduler_enqueue(struct labcomm_scheduler *s,
+int labcomm2014_scheduler_enqueue(struct labcomm2014_scheduler *s,
 			      uint32_t delay,
 			      void (*deferred)(void *context),
 			      void *context);

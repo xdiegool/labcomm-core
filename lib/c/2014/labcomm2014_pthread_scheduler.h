@@ -1,5 +1,5 @@
 /*
-  test_default_memory.c -- LabComm default memory allocator
+  labcomm2014_pthread_scheduler.h -- labcomm2014 pthread based task coordination
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -19,31 +19,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdlib.h>
-#include "labcomm.h"
-#include "labcomm_private.h"
+#ifndef __LABCOMM2014_PTHREAD_SCHEDULER_H__
+#define __LABCOMM2014_PTHREAD_SCHEDULER_H__
 
-void *default_alloc(struct labcomm_memory *m, int lifetime, size_t size)
-{
-  return malloc(size);
-}
+#include "labcomm2014.h"
 
-void *default_realloc(struct labcomm_memory *m, int lifetime, 
-		      void *ptr, size_t size)
-{
-  return realloc(ptr, size);
-}
+struct labcomm2014_scheduler *labcomm2014_pthread_scheduler_new(
+  struct labcomm2014_memory *memory);
 
-void default_free(struct labcomm_memory *m, int lifetime, void *ptr)
-{
-  free(ptr);
-}
+#endif
 
-struct labcomm_memory memory = {
-  .alloc = default_alloc,
-  .realloc = default_realloc,
-  .free = default_free,
-  .context = NULL
-};
-
-struct labcomm_memory *labcomm_default_memory = &memory;

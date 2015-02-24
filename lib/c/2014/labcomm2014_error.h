@@ -1,5 +1,5 @@
 /*
-  labcomm_error.h -- labcomm error declarations
+  labcomm2014_error.h -- labcomm2014 error declarations
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -19,23 +19,23 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __LABCOMM_ERROR_H___
-#define __LABCOMM_ERROR_H___
+#ifndef __LABCOMM2014_ERROR_H___
+#define __LABCOMM2014_ERROR_H___
 
-enum labcomm_error {
+enum labcomm2014_error {
 #define LABCOMM_ERROR(name, description) name ,
-#include "labcomm_error.h"
+#include "labcomm2014_error.h"
 #undef LABCOMM_ERROR
 };
 
-struct labcomm_error_handler;
+struct labcomm2014_error_handler;
 
-void labcomm_error_warning(struct labcomm_error_handler *e,
-			   enum labcomm_error,
+void labcomm2014_error_warning(struct labcomm2014_error_handler *e,
+			   enum labcomm2014_error,
 			   char *format,
 			   ...);
 			 
-void labcomm_error_fatal_global(enum labcomm_error error,
+void labcomm2014_error_fatal_global(enum labcomm2014_error error,
 				char *format,
 				...);
 			 
@@ -51,7 +51,7 @@ LABCOMM_ERROR(LABCOMM_ERROR_SIGNATURE_NOT_SET,
 LABCOMM_ERROR(LABCOMM_ERROR_ENC_NO_REG_SIGNATURE, 
 	      "Encoder has no registration for this signature")
 LABCOMM_ERROR(LABCOMM_ERROR_ENC_BUF_FULL,
-	      "The labcomm buffer is full")
+	      "The labcomm2014 buffer is full")
 LABCOMM_ERROR(LABCOMM_ERROR_DEC_UNKNOWN_DATATYPE,
 	      "Decoder: Unknown datatype")
 LABCOMM_ERROR(LABCOMM_ERROR_DEC_INDEX_MISMATCH, 

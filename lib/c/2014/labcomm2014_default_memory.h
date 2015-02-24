@@ -1,5 +1,5 @@
 /*
-  labcomm_memory.c -- dynamic memory handlig dispatcher
+  test_default_memory.h -- LabComm default memory allocator
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -18,23 +18,12 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#ifndef __LABCOMM2014_DEFAULT_MEMORY_H__
+#define __LABCOMM2014_DEFAULT_MEMORY_H__
 
-#include "labcomm_private.h"
+#include <stdlib.h>
+#include "labcomm2014.h"
 
-void *labcomm_memory_alloc(struct labcomm_memory *m, int lifetime, 
-			   size_t size) 
-{
-  return m->alloc(m, lifetime, size);
-}
+extern struct labcomm2014_memory *labcomm2014_default_memory;
 
-void *labcomm_memory_realloc(struct labcomm_memory *m, int lifetime, 
-			     void *ptr, size_t size) 
-{
-  return m->realloc(m, lifetime, ptr, size);
-}
-
-void labcomm_memory_free(struct labcomm_memory *m, int lifetime, 
-			 void *ptr)
-{
-  m->free(m, lifetime, ptr);
-}
+#endif

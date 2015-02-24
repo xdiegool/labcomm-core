@@ -1,5 +1,5 @@
 /*
-  test_default_memory.h -- LabComm default memory allocator
+  labcomm2014_time.c -- labcomm2014 time handling
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -18,12 +18,25 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __LABCOMM_DEFAULT_MEMORY_H__
-#define __LABCOMM_DEFAULT_MEMORY_H__
 
-#include <stdlib.h>
-#include "labcomm.h"
+#include <errno.h>
+#include "labcomm2014_scheduler_private.h"
 
-extern struct labcomm_memory *labcomm_default_memory;
+#define TIME_time(time, ...) time
+#define TIME(func, ...)						\
+  if (TIME_time(__VA_ARGS__) &&				\
+      TIME_time(__VA_ARGS__)->action->func) {			\
+    return TIME_time(__VA_ARGS__)->action->func(__VA_ARGS__);	\
+  }									\
+  return -ENOSYS;
 
-#endif
+int labcomm2014_time_free(struct labcomm2014_time *s)
+{
+  TIME(free, s);
+}
+
+int labcomm2014_time_add_usec(struct labcomm2014_time *s, uint32_t usec)
+{
+  TIME(add_usec, s, usec);
+}
+

@@ -1,5 +1,5 @@
 /*
-  labcomm_pthread_scheduler.c -- labcomm pthread based task coordination
+  labcomm2014_pthread_scheduler.c -- labcomm2014 pthread based task coordination
 
   Copyright 2013 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -23,18 +23,18 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <pthread.h>
-#include "labcomm.h"
-#include "labcomm_scheduler.h"
-#include "labcomm_scheduler_private.h"
-#include "labcomm_pthread_scheduler.h"
+#include "labcomm2014.h"
+#include "labcomm2014_scheduler.h"
+#include "labcomm2014_scheduler_private.h"
+#include "labcomm2014_pthread_scheduler.h"
 
 #ifdef LABCOMM_COMPAT
   #include LABCOMM_COMPAT
 #endif 
 
 struct pthread_time {
-  struct labcomm_time time;
-  struct labcomm_memory *memory;
+  struct labcomm2014_time time;
+  struct labcomm2014_memory *memory;
   struct timespec abstime;
 };
 
@@ -47,8 +47,8 @@ struct pthread_deferred {
 };
 
 struct pthread_scheduler {
-  struct labcomm_scheduler scheduler;
-  struct labcomm_memory *memory;
+  struct labcomm2014_scheduler scheduler;
+  struct labcomm2014_memory *memory;
   int wakeup;
   pthread_mutex_t writer_mutex;
   pthread_mutex_t data_mutex;
@@ -58,7 +58,7 @@ struct pthread_scheduler {
   struct pthread_deferred deferred_with_delay;
 };
 
-static struct labcomm_time_action time_action;
+static struct labcomm2014_time_action time_action;
 
 static int queue_empty(struct pthread_deferred *queue)
 {
@@ -100,11 +100,11 @@ static int timespec_compare(struct timespec *t1, struct timespec *t2)
   }
 }
 
-static struct labcomm_time *time_new(struct labcomm_memory *memory)
+static struct labcomm2014_time *time_new(struct labcomm2014_memory *memory)
 {
   struct pthread_time *time;
 
-  time = labcomm_memory_alloc(memory, 0, sizeof(*time));
+  time = labcomm2014_memory_alloc(memory, 0, sizeof(*time));
   if (time == NULL) {
     return NULL;
   } else {
@@ -116,17 +116,17 @@ static struct labcomm_time *time_new(struct labcomm_memory *memory)
   }
 }
 
-static int time_free(struct labcomm_time *t)
+static int time_free(struct labcomm2014_time *t)
 {
   struct pthread_time *time = t->context;
-  struct labcomm_memory *memory = time->memory;
+  struct labcomm2014_memory *memory = time->memory;
   
-  labcomm_memory_free(memory, 0, time);
+  labcomm2014_memory_free(memory, 0, time);
   
   return 0;
 }
  
-static int time_add_usec(struct labcomm_time *t, uint32_t usec)
+static int time_add_usec(struct labcomm2014_time *t, uint32_t usec)
 {
   struct pthread_time *time = t->context;
 
@@ -135,7 +135,7 @@ static int time_add_usec(struct labcomm_time *t, uint32_t usec)
   return 0;
 }
 
-static struct labcomm_time_action time_action = {
+static struct labcomm2014_time_action time_action = {
   .free = time_free,
   .add_usec = time_add_usec
 };
@@ -146,10 +146,10 @@ static int run_action(struct pthread_scheduler *scheduler,
   /* Called with data_lock held */
   element->prev->next = element->next;
   element->next->prev = element->prev;
-  labcomm_scheduler_data_unlock(&scheduler->scheduler);
+  labcomm2014_scheduler_data_unlock(&scheduler->scheduler);
   element->action(element->context);
-  labcomm_memory_free(scheduler->memory, 1, element);
-  labcomm_scheduler_data_lock(&scheduler->scheduler);
+  labcomm2014_memory_free(scheduler->memory, 1, element);
+  labcomm2014_scheduler_data_lock(&scheduler->scheduler);
   return 0;
 }
 
@@ -175,44 +175,44 @@ out:
   return 0;
 }
 
-static int scheduler_free(struct labcomm_scheduler *s)
+static int scheduler_free(struct labcomm2014_scheduler *s)
 {
   struct pthread_scheduler *scheduler = s->context;
-  struct labcomm_memory *memory = scheduler->memory;
+  struct labcomm2014_memory *memory = scheduler->memory;
   
-  labcomm_memory_free(memory, 0, scheduler);
+  labcomm2014_memory_free(memory, 0, scheduler);
 
   return 0;
 }
  
-static int scheduler_writer_lock(struct labcomm_scheduler *s)
+static int scheduler_writer_lock(struct labcomm2014_scheduler *s)
 {
   struct pthread_scheduler *scheduler = s->context;
 
-  labcomm_scheduler_data_lock(&scheduler->scheduler);
+  labcomm2014_scheduler_data_lock(&scheduler->scheduler);
   run_deferred(scheduler);  /* Run deferred tasks before taking lock */
-  labcomm_scheduler_data_unlock(&scheduler->scheduler);
+  labcomm2014_scheduler_data_unlock(&scheduler->scheduler);
   if (pthread_mutex_lock(&scheduler->writer_mutex) != 0) {
     return -errno;
   }
   return 0;
 }
  
-static int scheduler_writer_unlock(struct labcomm_scheduler *s)
+static int scheduler_writer_unlock(struct labcomm2014_scheduler *s)
 {
   struct pthread_scheduler *scheduler = s->context;
 
   if (pthread_mutex_unlock(&scheduler->writer_mutex) != 0) {
     return -errno;
   }
-  labcomm_scheduler_data_lock(&scheduler->scheduler);
+  labcomm2014_scheduler_data_lock(&scheduler->scheduler);
   run_deferred(scheduler);  /* Run deferred tasks after releasing lock */
-  labcomm_scheduler_data_unlock(&scheduler->scheduler);
+  labcomm2014_scheduler_data_unlock(&scheduler->scheduler);
   
   return 0;
 }
 
-static int scheduler_data_lock(struct labcomm_scheduler *s)
+static int scheduler_data_lock(struct labcomm2014_scheduler *s)
 {
   struct pthread_scheduler *scheduler = s->context;
 
@@ -223,7 +223,7 @@ static int scheduler_data_lock(struct labcomm_scheduler *s)
   return 0;
 }
  
-static int scheduler_data_unlock(struct labcomm_scheduler *s)
+static int scheduler_data_unlock(struct labcomm2014_scheduler *s)
 {
   struct pthread_scheduler *scheduler = s->context;
 
@@ -235,20 +235,20 @@ static int scheduler_data_unlock(struct labcomm_scheduler *s)
   return 0;
 }
 
-static struct labcomm_time *scheduler_now(struct labcomm_scheduler *s)
+static struct labcomm2014_time *scheduler_now(struct labcomm2014_scheduler *s)
 {
   struct pthread_scheduler *scheduler = s->context;
 
   return time_new(scheduler->memory);
 }
  
-static int scheduler_sleep(struct labcomm_scheduler *s,
-			   struct labcomm_time *t)
+static int scheduler_sleep(struct labcomm2014_scheduler *s,
+			   struct labcomm2014_time *t)
 {
   struct pthread_scheduler *scheduler = s->context;
   struct pthread_time *time = t?t->context:NULL;
 
-  labcomm_scheduler_data_lock(&scheduler->scheduler);
+  labcomm2014_scheduler_data_lock(&scheduler->scheduler);
   while (1) {
     struct timespec *wakeup, now;
 
@@ -281,23 +281,23 @@ static int scheduler_sleep(struct labcomm_scheduler *s,
 			&scheduler->data_mutex);
     }
   }
-  labcomm_scheduler_data_unlock(&scheduler->scheduler);
+  labcomm2014_scheduler_data_unlock(&scheduler->scheduler);
   
   return 0;
 }
 
-static int scheduler_wakeup(struct labcomm_scheduler *s)
+static int scheduler_wakeup(struct labcomm2014_scheduler *s)
 {
   struct pthread_scheduler *scheduler = s->context;
 
-  labcomm_scheduler_data_lock(&scheduler->scheduler);
+  labcomm2014_scheduler_data_lock(&scheduler->scheduler);
   scheduler->wakeup = 1;
   pthread_cond_signal(&scheduler->data_cond);
-  labcomm_scheduler_data_unlock(&scheduler->scheduler);
+  labcomm2014_scheduler_data_unlock(&scheduler->scheduler);
   return 0;
 }
 
-static int scheduler_enqueue(struct labcomm_scheduler *s,
+static int scheduler_enqueue(struct labcomm2014_scheduler *s,
 			     uint32_t delay,
 			     void (*deferred)(void *context),
 			     void *context)
@@ -306,7 +306,7 @@ static int scheduler_enqueue(struct labcomm_scheduler *s,
   int result = 0;
   struct pthread_deferred *element, *insert_before;
 
-  element = labcomm_memory_alloc(scheduler->memory, 1, sizeof(*element));
+  element = labcomm2014_memory_alloc(scheduler->memory, 1, sizeof(*element));
   if (element == NULL) {
     result = -ENOMEM;
     goto out;
@@ -314,7 +314,7 @@ static int scheduler_enqueue(struct labcomm_scheduler *s,
   
   element->action = deferred;
   element->context = context;
-  labcomm_scheduler_data_lock(&scheduler->scheduler);
+  labcomm2014_scheduler_data_lock(&scheduler->scheduler);
   if (delay == 0) {
     insert_before = &scheduler->deferred;
   } else {
@@ -330,13 +330,13 @@ static int scheduler_enqueue(struct labcomm_scheduler *s,
   element->prev->next = element;
   element->next->prev = element;
   pthread_cond_signal(&scheduler->data_cond);
-  labcomm_scheduler_data_unlock(&scheduler->scheduler);
+  labcomm2014_scheduler_data_unlock(&scheduler->scheduler);
 
 out:
   return result;
 }
 
-static const struct labcomm_scheduler_action scheduler_action = {
+static const struct labcomm2014_scheduler_action scheduler_action = {
   .free = scheduler_free,
   .writer_lock = scheduler_writer_lock,
   .writer_unlock = scheduler_writer_unlock,
@@ -348,13 +348,13 @@ static const struct labcomm_scheduler_action scheduler_action = {
   .enqueue = scheduler_enqueue  
 };
 
-struct labcomm_scheduler *labcomm_pthread_scheduler_new(
-  struct labcomm_memory *memory)
+struct labcomm2014_scheduler *labcomm2014_pthread_scheduler_new(
+  struct labcomm2014_memory *memory)
 {
-  struct labcomm_scheduler *result = NULL;
+  struct labcomm2014_scheduler *result = NULL;
   struct pthread_scheduler *scheduler;
 
-  scheduler = labcomm_memory_alloc(memory, 0, sizeof(*scheduler));
+  scheduler = labcomm2014_memory_alloc(memory, 0, sizeof(*scheduler));
   if (scheduler == NULL) {
     goto out;
   } else {
@@ -386,7 +386,7 @@ destroy_data_mutex:
 destroy_writer_mutex:
   pthread_mutex_destroy(&scheduler->writer_mutex);
 free_scheduler:
-  labcomm_memory_free(memory, 0, scheduler);
+  labcomm2014_memory_free(memory, 0, scheduler);
 out:
   return result;
   

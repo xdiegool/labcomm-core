@@ -23,18 +23,18 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "labcomm_private.h"
+#include "labcomm2014_private.h"
 #include "decimating.h"
 #include "gen/decimating_messages.h"
 
 struct decimating_private {
   struct decimating decimating;
-  struct labcomm_error_handler *error;
-  struct labcomm_memory *memory;
-  struct labcomm_scheduler *scheduler;
+  struct labcomm2014_error_handler *error;
+  struct labcomm2014_memory *memory;
+  struct labcomm2014_scheduler *scheduler;
   int encoder_initialized;
-  struct labcomm_reader_action_context reader_action_context;
-  struct labcomm_writer_action_context writer_action_context;
+  struct labcomm2014_reader_action_context reader_action_context;
+  struct labcomm2014_writer_action_context writer_action_context;
   LABCOMM_SIGNATURE_ARRAY_DEF(writer_decimation, 
 			      struct decimation {
 				int n;
@@ -50,25 +50,25 @@ static void set_decimation(
   struct decimating_private *decimating = context;
   struct decimation *decimation;
 
-  labcomm_scheduler_data_lock(decimating->scheduler);
+  labcomm2014_scheduler_data_lock(decimating->scheduler);
   decimation = LABCOMM_SIGNATURE_ARRAY_REF(decimating->memory,
 					   decimating->writer_decimation, 
 					   struct decimation, 
 					   value->signature_index);
   decimation->n = value->decimation;
   decimation->current = 0;
-  labcomm_scheduler_data_unlock(decimating->scheduler);
+  labcomm2014_scheduler_data_unlock(decimating->scheduler);
 }
 
 static int wrap_reader_alloc(
-  struct labcomm_reader *r, 
-  struct labcomm_reader_action_context *action_context)
+  struct labcomm2014_reader *r, 
+  struct labcomm2014_reader_action_context *action_context)
 {
   struct decimating_private *decimating = action_context->context;
   
-  labcomm_decoder_register_decimating_messages_set_decimation(
+  labcomm2014_decoder_register_decimating_messages_set_decimation(
     r->decoder, set_decimation, decimating);
-  return labcomm_reader_alloc(r, action_context->next);
+  return labcomm2014_reader_alloc(r, action_context->next);
 }
 
 struct send_set_decimation {
@@ -80,11 +80,11 @@ struct send_set_decimation {
 static void send_set_decimation(void *arg)
 {
   struct send_set_decimation *msg = arg;
-  struct labcomm_memory *memory = msg->decimating->memory;
+  struct labcomm2014_memory *memory = msg->decimating->memory;
 
-  labcomm_encode_decimating_messages_set_decimation(
+  labcomm2014_encode_decimating_messages_set_decimation(
     msg->decimating->decimating.writer->encoder, &msg->set_decimation);
-  labcomm_memory_free(memory, 1, msg);
+  labcomm2014_memory_free(memory, 1, msg);
 }
 
 static void enqueue_decimation(struct decimating_private *decimating,
@@ -92,21 +92,21 @@ static void enqueue_decimation(struct decimating_private *decimating,
 			       int amount) 
 {
   struct send_set_decimation *msg;
-  msg = labcomm_memory_alloc(decimating->memory, 1, sizeof(*msg));
+  msg = labcomm2014_memory_alloc(decimating->memory, 1, sizeof(*msg));
   if (msg) {
     msg->decimating = decimating;
     msg->set_decimation.decimation = amount;
     msg->set_decimation.signature_index = remote_index;
     
-    labcomm_scheduler_enqueue(decimating->scheduler, 0, 
+    labcomm2014_scheduler_enqueue(decimating->scheduler, 0, 
 			      send_set_decimation, msg);
   }
 }
 
 static int wrap_reader_start(
-  struct labcomm_reader *r, 
-  struct labcomm_reader_action_context *action_context,
-  int local_index, int remote_index, const struct labcomm_signature *signature,
+  struct labcomm2014_reader *r, 
+  struct labcomm2014_reader_action_context *action_context,
+  int local_index, int remote_index, const struct labcomm2014_signature *signature,
   void *value)
 {
   struct decimating_private *decimating = action_context->context;
@@ -114,26 +114,26 @@ static int wrap_reader_start(
   if (value == NULL) {
     int *decimation, amount;
     
-    labcomm_scheduler_data_lock(decimating->scheduler);
+    labcomm2014_scheduler_data_lock(decimating->scheduler);
     decimation = LABCOMM_SIGNATURE_ARRAY_REF(decimating->memory,
 					     decimating->reader_decimation, 
 					     int,
 					     local_index);
     amount = *decimation;
-    labcomm_scheduler_data_unlock(decimating->scheduler);
+    labcomm2014_scheduler_data_unlock(decimating->scheduler);
     if (remote_index != 0 && amount != 0) {
       enqueue_decimation(decimating, remote_index, amount);
     }
   }
-  return labcomm_reader_start(r, action_context->next, 
+  return labcomm2014_reader_start(r, action_context->next, 
                               local_index, remote_index, signature, value);
 }
 
 static int wrap_reader_ioctl(
-  struct labcomm_reader *r,   
-  struct labcomm_reader_action_context *action_context,
+  struct labcomm2014_reader *r,   
+  struct labcomm2014_reader_action_context *action_context,
   int local_index, int remote_index,
-  const struct labcomm_signature *signature, 
+  const struct labcomm2014_signature *signature, 
   uint32_t action, va_list args)
 {
   struct decimating_private *decimating = action_context->context;
@@ -147,26 +147,26 @@ static int wrap_reader_ioctl(
     amount = va_arg(va, int);
     va_end(va);
    
-    labcomm_scheduler_data_lock(decimating->scheduler);
+    labcomm2014_scheduler_data_lock(decimating->scheduler);
     decimation = LABCOMM_SIGNATURE_ARRAY_REF(decimating->memory,
 					     decimating->reader_decimation, 
 					     int,
 					     local_index);
     *decimation = amount;
-    labcomm_scheduler_data_unlock(decimating->scheduler);
+    labcomm2014_scheduler_data_unlock(decimating->scheduler);
     if (remote_index) {
       enqueue_decimation(decimating, remote_index, amount);
     }
     
   } else {
-    return labcomm_reader_ioctl(r, action_context->next,
+    return labcomm2014_reader_ioctl(r, action_context->next,
 				local_index, remote_index, signature, 
 				action, args);
   }
   return 0;
 }
 
-struct labcomm_reader_action decimating_reader_action = {
+struct labcomm2014_reader_action decimating_reader_action = {
   .alloc = wrap_reader_alloc,
   .free = NULL,
   .start = wrap_reader_start,
@@ -179,25 +179,25 @@ static void register_signatures(void *context)
 {
   struct decimating_private *decimating = context;
 
-  labcomm_encoder_register_decimating_messages_set_decimation(
+  labcomm2014_encoder_register_decimating_messages_set_decimation(
     decimating->decimating.writer->encoder);
 }
 
 static int wrap_writer_alloc(
-  struct labcomm_writer *w, 
-  struct labcomm_writer_action_context *action_context)
+  struct labcomm2014_writer *w, 
+  struct labcomm2014_writer_action_context *action_context)
 {
   struct decimating_private *decimating = action_context->context;
 
-  labcomm_scheduler_enqueue(decimating->scheduler, 
+  labcomm2014_scheduler_enqueue(decimating->scheduler, 
 			    0, register_signatures, decimating);
-  return labcomm_writer_alloc(w, action_context->next);
+  return labcomm2014_writer_alloc(w, action_context->next);
 }
 
 static int wrap_writer_start(
-  struct labcomm_writer *w, 
-  struct labcomm_writer_action_context *action_context, 
-  int index, const struct labcomm_signature *signature,
+  struct labcomm2014_writer *w, 
+  struct labcomm2014_writer_action_context *action_context, 
+  int index, const struct labcomm2014_signature *signature,
   void *value)
 {
   struct decimating_private *decimating = action_context->context;
@@ -207,7 +207,7 @@ static int wrap_writer_start(
   if (index < LABCOMM_USER) {
     result = 0;
   } else {
-    labcomm_scheduler_data_lock(decimating->scheduler);
+    labcomm2014_scheduler_data_lock(decimating->scheduler);
     decimation = LABCOMM_SIGNATURE_ARRAY_REF(decimating->memory, 
                                              decimating->writer_decimation, 
                                              struct decimation, index);
@@ -218,16 +218,16 @@ static int wrap_writer_start(
       decimation->current = 0;
       result = 0;
     }
-    labcomm_scheduler_data_unlock(decimating->scheduler);
+    labcomm2014_scheduler_data_unlock(decimating->scheduler);
   }
   if (result == 0) {
-    result = labcomm_writer_start(w, action_context->next,
+    result = labcomm2014_writer_start(w, action_context->next,
 				 index, signature, value);
   }
   return result;
 }
 
-struct labcomm_writer_action decimating_writer_action = {
+struct labcomm2014_writer_action decimating_writer_action = {
   .alloc = wrap_writer_alloc,
   .free = NULL, 
   .start = wrap_writer_start,
@@ -237,11 +237,11 @@ struct labcomm_writer_action decimating_writer_action = {
 };
 
 struct decimating *decimating_new(
-  struct labcomm_reader *reader,
-  struct labcomm_writer *writer,
-  struct labcomm_error_handler *error,
-  struct labcomm_memory *memory,
-  struct labcomm_scheduler *scheduler)
+  struct labcomm2014_reader *reader,
+  struct labcomm2014_writer *writer,
+  struct labcomm2014_error_handler *error,
+  struct labcomm2014_memory *memory,
+  struct labcomm2014_scheduler *scheduler)
 {
   struct decimating_private *result;
 

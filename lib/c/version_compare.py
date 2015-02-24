@@ -9,7 +9,9 @@ class File:
 
     def __init__(self, path, match, replacement):
         def replace(s):
-            return re.sub('[ \t]+', ' ', s).replace(match, replacement).strip()
+            r = re.sub('[ \t]+', ' ', s).replace(match, replacement)
+            r = r.strip() + '\n'
+            return r
         self.name = path.replace(match, replacement)
         self.path = path
         with open(path) as f:
@@ -50,7 +52,7 @@ if __name__ == '__main__':
         else:
             equal = True
             for l in difflib.unified_diff(a.lines, b.lines, a.path, b.path):
-                print l
+                print l,
                 equal = False
             if equal:
                 print "Identical", a.path, b.path

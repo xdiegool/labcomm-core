@@ -1,10 +1,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <labcomm_fd_reader.h>
-#include <labcomm_default_error_handler.h>
-#include <labcomm_default_memory.h>
-#include <labcomm_default_scheduler.h>
+#include <labcomm2014_fd_reader.h>
+#include <labcomm2014_default_error_handler.h>
+#include <labcomm2014_default_memory.h>
+#include <labcomm2014_default_scheduler.h>
 #include "gen/test.h"
 #include <stdio.h>
 
@@ -28,11 +28,11 @@ static void handle_test_theSecondInt(int *v,void *context) {
   printf("Got theSecondInt. (%d) \n", *v); 
 }
 
-static void handle_type_def(struct labcomm_raw_type_def *v,void *context) {
+static void handle_type_def(struct labcomm2014_raw_type_def *v,void *context) {
   printf("Got type_def. (0x%x) %s\n", v->index, v->name); 
 }
 
-static void handle_type_binding(struct labcomm_type_binding *v,void *context) {
+static void handle_type_binding(struct labcomm2014_type_binding *v,void *context) {
   printf("Got type binding. 0x%x --> 0x%x\n", v->sample_index, v->type_index); 
 }
 
@@ -45,37 +45,37 @@ static void handle_test_twoLines(test_twoLines *v,void *context) {
 
 int main(int argc, char *argv[]) {
   int fd;
-  struct labcomm_decoder *decoder;
+  struct labcomm2014_decoder *decoder;
   void  *context = NULL;
 
   char *filename = argv[1];
   printf("C decoder reading from %s\n", filename);
   fd = open(filename, O_RDONLY);
-  decoder = labcomm_decoder_new(labcomm_fd_reader_new(
-				  labcomm_default_memory, fd, 1), 
-				labcomm_default_error_handler, 
-				labcomm_default_memory,
-				labcomm_default_scheduler);
+  decoder = labcomm2014_decoder_new(labcomm2014_fd_reader_new(
+				  labcomm2014_default_memory, fd, 1), 
+				labcomm2014_default_error_handler, 
+				labcomm2014_default_memory,
+				labcomm2014_default_scheduler);
   if (!decoder) { 
     printf("Failed to allocate decoder %s:%d\n", __FUNCTION__, __LINE__);
     return 1;
   }
 
-  labcomm_decoder_register_test_doavoid(decoder, handle_test_doavoid, context);
-  labcomm_decoder_register_test_intAndRef(decoder, handle_test_intAndRef, context);
-  labcomm_decoder_sample_ref_register(decoder,labcomm_signature_test_doavoid );
+  labcomm2014_decoder_register_test_doavoid(decoder, handle_test_doavoid, context);
+  labcomm2014_decoder_register_test_intAndRef(decoder, handle_test_intAndRef, context);
+  labcomm2014_decoder_sample_ref_register(decoder,labcomm2014_signature_test_doavoid );
 
-  labcomm_decoder_register_test_twoInts(decoder, handle_test_twoInts, context);
-  labcomm_decoder_register_test_theFirstInt(decoder, handle_test_theFirstInt, context);
-  labcomm_decoder_register_test_theSecondInt(decoder, handle_test_theSecondInt, context);
-  labcomm_decoder_register_test_twoLines(decoder, handle_test_twoLines, context);
-  labcomm_decoder_register_labcomm_type_def(decoder, handle_type_def, context);
-  labcomm_decoder_register_labcomm_type_binding(decoder, handle_type_binding, context);
+  labcomm2014_decoder_register_test_twoInts(decoder, handle_test_twoInts, context);
+  labcomm2014_decoder_register_test_theFirstInt(decoder, handle_test_theFirstInt, context);
+  labcomm2014_decoder_register_test_theSecondInt(decoder, handle_test_theSecondInt, context);
+  labcomm2014_decoder_register_test_twoLines(decoder, handle_test_twoLines, context);
+  labcomm2014_decoder_register_labcomm2014_type_def(decoder, handle_type_def, context);
+  labcomm2014_decoder_register_labcomm2014_type_binding(decoder, handle_type_binding, context);
 
   printf("Decoding:\n");
-  labcomm_decoder_run(decoder);
+  labcomm2014_decoder_run(decoder);
   printf("--- End Of File ---:\n");
-  labcomm_decoder_free(decoder);
+  labcomm2014_decoder_free(decoder);
 
   return 0;
 }

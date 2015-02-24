@@ -23,18 +23,18 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "labcomm_private.h"
+#include "labcomm2014_private.h"
 #include "introspecting.h"
 #include "gen/introspecting_messages.h"
 
 struct introspecting_private {
   struct introspecting introspecting;
-  struct labcomm_error_handler *error;
-  struct labcomm_memory *memory;
-  struct labcomm_scheduler *scheduler;
+  struct labcomm2014_error_handler *error;
+  struct labcomm2014_memory *memory;
+  struct labcomm2014_scheduler *scheduler;
 
-  struct labcomm_reader_action_context reader_action_context;
-  struct labcomm_writer_action_context writer_action_context;
+  struct labcomm2014_reader_action_context reader_action_context;
+  struct labcomm2014_writer_action_context writer_action_context;
   LABCOMM_SIGNATURE_ARRAY_DEF(remote, 
 			      struct remote {
 				char *name;
@@ -44,13 +44,13 @@ struct introspecting_private {
   LABCOMM_SIGNATURE_ARRAY_DEF(local, 
 			      struct local {
 				enum introspecting_status status;
-				const struct labcomm_signature *signature;
+				const struct labcomm2014_signature *signature;
 			      });
 };
 
 static struct local *get_local(struct introspecting_private *introspecting,
 			       int index,
-			       const struct labcomm_signature *signature)
+			       const struct labcomm2014_signature *signature)
 {
   /* Called with data_lock held */
   struct local *local;
@@ -91,7 +91,7 @@ static void handles_signature(
   struct introspecting_private *introspecting = context;
   struct remote *remote;
 
-  labcomm_scheduler_data_lock(introspecting->scheduler);
+  labcomm2014_scheduler_data_lock(introspecting->scheduler);
   remote = LABCOMM_SIGNATURE_ARRAY_REF(introspecting->memory,
 				       introspecting->remote, 
 				       struct remote, 
@@ -119,25 +119,25 @@ static void handles_signature(
       }
     }
   }
-  labcomm_scheduler_data_unlock(introspecting->scheduler);
+  labcomm2014_scheduler_data_unlock(introspecting->scheduler);
 }
 
 static int wrap_reader_alloc(
-  struct labcomm_reader *r, 
-  struct labcomm_reader_action_context *action_context)
+  struct labcomm2014_reader *r, 
+  struct labcomm2014_reader_action_context *action_context)
 {
   struct introspecting_private *introspecting = action_context->context;
 
-  labcomm_decoder_register_introspecting_messages_handles_signature(
+  labcomm2014_decoder_register_introspecting_messages_handles_signature(
     introspecting->introspecting.reader->decoder, 
     handles_signature, introspecting);
-  return labcomm_reader_alloc(r, action_context->next);
+  return labcomm2014_reader_alloc(r, action_context->next);
 }
 
 struct handles_signature {
   struct introspecting_private *introspecting;
   int index;
-  const struct labcomm_signature *signature;
+  const struct labcomm2014_signature *signature;
 };
 
 static void send_handles_signature(void *arg)
@@ -149,14 +149,14 @@ static void send_handles_signature(void *arg)
   handles_signature.name = h->signature->name;
   handles_signature.signature.n_0 = h->signature->size;
   handles_signature.signature.a = h->signature->signature;
-  labcomm_encode_introspecting_messages_handles_signature(
+  labcomm2014_encode_introspecting_messages_handles_signature(
     h->introspecting->introspecting.writer->encoder, &handles_signature);
 }
 
 static int wrap_reader_start(
-  struct labcomm_reader *r, 
-  struct labcomm_reader_action_context *action_context,
-  int local_index, int remote_index, const struct labcomm_signature *signature,
+  struct labcomm2014_reader *r, 
+  struct labcomm2014_reader_action_context *action_context,
+  int local_index, int remote_index, const struct labcomm2014_signature *signature,
   void *value)
 {
   struct introspecting_private *introspecting = action_context->context;
@@ -164,23 +164,23 @@ static int wrap_reader_start(
   if (value == NULL) {
     struct handles_signature *handles_signature;
 
-    handles_signature = labcomm_memory_alloc(introspecting->memory, 1,
+    handles_signature = labcomm2014_memory_alloc(introspecting->memory, 1,
 					     sizeof(*handles_signature));
     handles_signature->introspecting = introspecting;
     handles_signature->index = local_index;
     handles_signature->signature = signature;
-    labcomm_scheduler_enqueue(introspecting->scheduler, 
+    labcomm2014_scheduler_enqueue(introspecting->scheduler, 
 			      0, send_handles_signature, handles_signature);
   }
-  return labcomm_reader_start(r, action_context->next, 
+  return labcomm2014_reader_start(r, action_context->next, 
 			      local_index, remote_index, signature, value);
 }
 
  void encode_handles_signature(
-  struct labcomm_encoder *encoder,
+  struct labcomm2014_encoder *encoder,
   void *context)
 {
-  const struct labcomm_signature *signature = context;
+  const struct labcomm2014_signature *signature = context;
   introspecting_messages_handles_signature handles_signature;
   int index = 0;
 
@@ -189,11 +189,11 @@ static int wrap_reader_start(
   handles_signature.signature.n_0 = signature->size;
   handles_signature.signature.a = signature->signature;
 
-  labcomm_encode_introspecting_messages_handles_signature(
+  labcomm2014_encode_introspecting_messages_handles_signature(
     NULL, &handles_signature);
 }
 
-struct labcomm_reader_action introspecting_reader_action = {
+struct labcomm2014_reader_action introspecting_reader_action = {
   .alloc = wrap_reader_alloc,
   .free = NULL,
   .start = wrap_reader_start,
@@ -206,25 +206,25 @@ static void register_encoder_signatures(void *context)
 {
   struct introspecting_private *introspecting = context;
 
-  labcomm_encoder_register_introspecting_messages_handles_signature(
+  labcomm2014_encoder_register_introspecting_messages_handles_signature(
     introspecting->introspecting.writer->encoder);
 }
 
 static int wrap_writer_alloc(
-  struct labcomm_writer *w, 
-  struct labcomm_writer_action_context *action_context)
+  struct labcomm2014_writer *w, 
+  struct labcomm2014_writer_action_context *action_context)
 {
   struct introspecting_private *introspecting = action_context->context;
 
-  labcomm_scheduler_enqueue(introspecting->scheduler, 
+  labcomm2014_scheduler_enqueue(introspecting->scheduler, 
 			    0, register_encoder_signatures, introspecting);
-  return labcomm_writer_alloc(w, action_context->next);
+  return labcomm2014_writer_alloc(w, action_context->next);
 }
 
 static int wrap_writer_start(
-  struct labcomm_writer *w, 
-  struct labcomm_writer_action_context *action_context, 
-  int index, const struct labcomm_signature *signature,
+  struct labcomm2014_writer *w, 
+  struct labcomm2014_writer_action_context *action_context, 
+  int index, const struct labcomm2014_signature *signature,
   void *value)
 {
   struct introspecting_private *introspecting = action_context->context;
@@ -232,18 +232,18 @@ static int wrap_writer_start(
   if (index >= LABCOMM_USER && value == NULL) {
     struct local *local;
 
-    labcomm_scheduler_data_lock(introspecting->scheduler);
+    labcomm2014_scheduler_data_lock(introspecting->scheduler);
     local = get_local(introspecting, index, signature);
     local->status = introspecting_registered;
-    labcomm_scheduler_data_unlock(introspecting->scheduler);
+    labcomm2014_scheduler_data_unlock(introspecting->scheduler);
   }
-  return labcomm_writer_start(w, action_context->next, index, signature, value);
+  return labcomm2014_writer_start(w, action_context->next, index, signature, value);
 }
 
 static int wrap_writer_ioctl(
-  struct labcomm_writer *w, 
-  struct labcomm_writer_action_context *action_context, 
-  int index, const struct labcomm_signature *signature, 
+  struct labcomm2014_writer *w, 
+  struct labcomm2014_writer_action_context *action_context, 
+  int index, const struct labcomm2014_signature *signature, 
   uint32_t ioctl_action, va_list args)
 {
   struct introspecting_private *introspecting = action_context->context;
@@ -253,20 +253,20 @@ static int wrap_writer_ioctl(
       struct local *local;
       int result;
 
-      labcomm_scheduler_data_lock(introspecting->scheduler);
+      labcomm2014_scheduler_data_lock(introspecting->scheduler);
       local = get_local(introspecting, index, signature);
       result = local->status;
-      labcomm_scheduler_data_unlock(introspecting->scheduler);
+      labcomm2014_scheduler_data_unlock(introspecting->scheduler);
       return result;
     }
     default: {
-      return labcomm_writer_ioctl(w, action_context->next, index, signature, 
+      return labcomm2014_writer_ioctl(w, action_context->next, index, signature, 
 				  ioctl_action, args);  
     } break;
   }
 }
 
-struct labcomm_writer_action introspecting_writer_action = {
+struct labcomm2014_writer_action introspecting_writer_action = {
   .alloc = wrap_writer_alloc,
   .free = NULL, 
   .start = wrap_writer_start,
@@ -276,11 +276,11 @@ struct labcomm_writer_action introspecting_writer_action = {
 };
 
 extern struct introspecting *introspecting_new(
-  struct labcomm_reader *reader,
-  struct labcomm_writer *writer,
-  struct labcomm_error_handler *error,
-  struct labcomm_memory *memory,
-  struct labcomm_scheduler *scheduler)
+  struct labcomm2014_reader *reader,
+  struct labcomm2014_writer *writer,
+  struct labcomm2014_error_handler *error,
+  struct labcomm2014_memory *memory,
+  struct labcomm2014_scheduler *scheduler)
 {
   struct introspecting_private *result;
 
