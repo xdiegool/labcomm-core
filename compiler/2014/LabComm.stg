@@ -12,3 +12,33 @@ $type$ $name$ { $dims:{dim|
 sampleDecl(name,type) ::= <<
 sample $type$ $name$;
 >>
+
+
+
+Signature(bytes) ::= <<
+signature bytes : { $bytes; separator=", "$};, '$', '$');
+>>
+
+//SignatureList             ::= SignatureLine*;
+//abstract SignatureLine 	  ::= <Indent:int> <Comment:String>; 
+//abstract DataSignatureLine : SignatureLine;
+//ByteArraySignatureLine     : DataSignatureLine ::= <Data:byte[]>;
+//IntSignatureLine           : DataSignatureLine ::= <Data:int>;
+//StringSignatureLine        : DataSignatureLine ::= <Data:String>;
+//TypeRefSignatureLine       : SignatureLine     ::= Decl;
+
+Field(type, name) ::= <<
+$type$ $name$;
+>>
+
+// abstract Type;
+// VoidType           : Type;
+// //SampleRefType      : Type;
+// PrimType           : Type ::= <Name:String> <Token:int>;
+// UserType           : Type ::= <Name:String>;
+// StructType         : Type ::= Field*;
+// ParseArrayType     : Type ::= Type Dim*;
+// abstract ArrayType : Type ::= Type Exp*;
+// VariableArrayType  : ArrayType;
+// FixedArrayType     : ArrayType;
+

@@ -1,0 +1,14 @@
+// Example-Template:
+parens(x) ::= << (( $x$ )) >>
+
+nested(elems) ::= <<
+nested { 
+    $elems:parens();separator=",\n"$;  
+};
+>>
+
+nested2(name, helems) :: <<
+nested2 "$name$" { $helems:{e| 
+    $e.name$ $e.type:parens()$$if(e.initval)$ = $e.initval$$endif$};separator=";"$;
+};
+>>

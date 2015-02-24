@@ -127,6 +127,24 @@ public class StringTemplateTest {
         System.out.println(st2.render());
     }
 
+    public static void test10() {
+        STGroup group = new STGroupFile("test10.stg", '$', '$');
+        ST st = group.getInstanceOf("nested");
+        st.add("elems", "e1");
+        st.add("elems", "e2");
+        st.add("elems", "e3");
+        st.add("elems", "e4");
+        System.out.println(st.render());
+
+        ST st2 = group.getInstanceOf("nested2");
+        st2.add("name", "theNameOfTheNest   with spaces!");
+        st2.addAggr("helems.{type, name, initval}", "int", "foo", "17");
+        st2.addAggr("helems.{type, name, initval}", "long", "bar", "4200");
+        st2.addAggr("helems.{type, name, initval}", "float", "baz", null);
+        st2.addAggr("helems.{type, name, n/a}", "boolean", "sna", "this is ignored");
+        System.out.println(st2.render());
+    }
+
     public static void main(String a[]){
         test1();
         test2();
@@ -137,5 +155,6 @@ public class StringTemplateTest {
         test7();
         test8();
         test9();
+        test10();
     }
 }
