@@ -8,10 +8,6 @@ declKind(decl) ::= <<
 $if(decl.SampleDecl)$sample$else$typedef$endif$
 >>
 
-oldPrettyDecl(obj) ::= <<
-$if(obj.arrayType)$$fooArrayType(obj)$$else$$(obj.TemplateType)(obj)$$endif$
->>
-
 prettyDecl(obj, name) ::= <<
 $(obj.TemplateType)(obj,name)$
 >>
@@ -30,8 +26,13 @@ void $name$
 
 StructType(obj, name) ::= <<
 struct {
-  $obj.TTFields:{f |$prettyDecl(f, f.Name)$ };separator=";\n"$;
+  $obj.TTFields:{f |$prettyDecl(f, f.Name)$};separator=";\n"$;
 } $name$
+>>
+
+//Field ignores the name parameter, and uses obj.name
+Field(obj, name) ::= <<
+$prettyDecl(obj.Type, obj.name)$
 >>
 
 ArrayType(obj, name) ::= <<

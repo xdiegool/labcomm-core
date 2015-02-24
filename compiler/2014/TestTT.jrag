@@ -22,55 +22,8 @@ aspect TestTT {
         System.out.println(st.render());
     }
 
-    syn String ASTNode.ttTypeString(STGroup group) = "";
-
-    eq PrimType.ttTypeString(STGroup group) = getTypeName();
-
-    eq VoidType.ttTypeString(STGroup group) = "void";
-
-    eq UserType.ttTypeString(STGroup group) = getName();
-
-    eq Field.ttTypeString(STGroup group) = getType().ttTypeString(group);
-
-    eq StructType.ttTypeString(STGroup group) {
-        ST st = group.getInstanceOf("structType");
-        for(Field f: getFields()) {
-            st.addAggr("fields.{obj, type, name}", 
-                f, 
-                f.ttTypeString(group), 
-                f.getName());
-        }
-        return st.render();
-    }
-    eq ArrayType.ttTypeString(STGroup group) {
-        ST st = group.getInstanceOf("arrayType");
-        st.add("type", getType().ttTypeString(group));
-        for(Exp d: getExps()) {
-            st.add("dims", d.getTTString());
-        }
-        return st.render();
-    }
-
-    syn String Exp.getTTString() = "";
-    eq IntegerLiteral.getTTString() = getValue();
-    eq VariableSize.getTTString() = "_";
-
-    eq Decl.ttTypeString(STGroup group) = getType() != null ? getType().ttTypeString(group) : "null type???";
-
-//    syn boolean ASTNode.isArrayType() = false;
-//    eq ArrayType.isArrayType() = true;
-//    eq Field.isArrayType() = getType().isArrayType();
-
-    syn String ASTNode.getTemplateType() = getClass().getName();
-    eq Type.getTemplateType() = "Type???";
-    eq PrimType.getTemplateType() = "PrimType";
-    eq VoidType.getTemplateType() = "VoidType";
-    eq UserType.getTemplateType() = "UserType";
-
-    eq StructType.getTemplateType() = "StructType";
-    eq ArrayType.getTemplateType() =  "ArrayType";
-
-    eq Field.getTemplateType() = getType().getTemplateType();
+    //These are needed as the JastAdd List is not deemed iterable
+    //by StringTemplate
 
     syn LinkedList<Exp> ASTNode.getArrayDims() = null;
     eq Field.getArrayDims() = getType().getArrayDims();
@@ -83,13 +36,34 @@ aspect TestTT {
     }
     syn LinkedList<Field> StructType.getTTFields() {
         LinkedList<Field> result = new LinkedList<Field>();
-        for(Field f : getFieldList()) {
+        for(Field f : getFields()) {
            result.add(f); 
+        }
+        return result;
+    }
+    syn LinkedList<SignatureLine> SignatureList.getTTFields() {
+        LinkedList<SignatureLine> result = new LinkedList<SignatureLine>();
+        for(SignatureLine l : getSignatureLines()) {
+           result.add(l); 
         }
         return result;
     }
 }
 
-aspect testTT2 {
+aspect testTTPretty {
+    syn String Exp.getTTString() = "";
+    eq IntegerLiteral.getTTString() = getValue();
+    eq VariableSize.getTTString() = "_";
+
+    syn String ASTNode.getTemplateType() = getClass().getName();
+    eq PrimType.getTemplateType() = "PrimType";
+    eq VoidType.getTemplateType() = "VoidType";
+    eq UserType.getTemplateType() = "UserType";
+
+    eq StructType.getTemplateType() = "StructType";
+    eq ArrayType.getTemplateType() =  "ArrayType";
+    eq Field.getTemplateType() =  "Field";
+
+
 
 }
