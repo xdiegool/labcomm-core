@@ -68,4 +68,8 @@ aspect testTTPretty {
 }
 aspect testTTSig {
     syn Decl UserType.getTypeDecl() = decl();
+
+    syn String Exp.getEncoding();
+    eq IntegerLiteral.getEncoding() = getValue();
+    eq VariableSize.getEncoding() = "0";
 }

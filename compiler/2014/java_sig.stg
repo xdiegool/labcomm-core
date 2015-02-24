@@ -5,51 +5,58 @@ program {
 >>
 
 declSig(decl) ::= <<
-$if(decl.SampleDecl)$$sampleSig(decl)$$endif$
+//$decl.Name$
+$if(decl.SampleDecl)$$sampleSig(decl)$$else$//Typedefs have no static signature$endif$
 >>
 
-dispatch(obj, name) ::= <<
-$(obj.TemplateType)(obj,name)$
+dispatch(TMPL, obj, name) ::= <<
+$([TMPL,obj.TemplateType])(obj,name)$
 >>
 
 sampleSig(decl) ::= <<
   private static byte[] signature = new byte[] {
-   $dispatch(decl.Type, decl.Name)$
+   $dispatch("JAVA_SIG_", decl.Type, decl.Name)$
   }; 
 >>
 
-PrimType(obj, name) ::= <<
-// $obj.TypeName$  $name$
+EncodeString(str) ::=  <<
+$length(str.Bytes)$, $str.Bytes;separator=", "$
+>>
+
+JAVA_SIG_PrimType(obj, name) ::= <<
+// $obj.TypeName$ 
 $obj.Token$ 
 >>
 
-UserType(obj, name) ::= <<
-//$obj.TypeName$ $name$  
-$dispatch(obj.TypeDecl, name)$
+JAVA_SIG_UserType(obj, name) ::= <<
+$dispatch("JAVA_SIG_", obj.TypeDecl, name)$
 >>
 
-VoidType(obj, name) ::= <<
+JAVA_SIG_VoidType(obj, name) ::= <<
 // void 
-0x11, 0
+17, 0
 >>
 
-StructType(obj, name) ::= <<
-// struct {
-  0x11, $length(obj.TTFields)$
-  $obj.TTFields:{f |$dispatch(f, f.Name)$};separator=",\n"$
+JAVA_SIG_StructType(obj, name) ::= <<
+// struct $length(obj.TTFields)$ fields {
+  17, $length(obj.TTFields)$,
+  $obj.TTFields:{f |$dispatch("JAVA_SIG_", f, f.Name)$};separator=",\n"$
 //} 
 >>
 
 //Field ignores the name parameter, and uses obj.name
-Field(obj, name) ::= <<
-$dispatch(obj.Type, obj.name)$
+JAVA_SIG_Field(obj, name) ::= <<
+//$obj.TypeName$ $obj.Name$
+$EncodeString(name)$,
+$dispatch("JAVA_SIG_", obj.Type, obj.Name)$
 >>
 
-ArrayType(obj, name) ::= <<
-$obj.TypeName$ $name$$obj.ArrayDims:{d | [$d.TTString$]}$
+JAVA_SIG_ArrayType(obj, name) ::= <<
+//$obj.TypeName$ $name$$obj.ArrayDims:{d | [$d.TTString$]}$
+16, $length(obj.ArrayDims)$, $obj.ArrayDims:{d | $d.Encoding$};separator=", "$
 >>
 
-TypeDecl(obj, name) ::= <<
-$dispatch(obj.Type, obj.name)$
+JAVA_SIG_TypeDecl(obj, name) ::= <<
+$dispatch("JAVA_SIG_", obj.Type, obj.name)$
 >>
 
