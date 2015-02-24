@@ -12,15 +12,12 @@ aspect TestTT {
     eq Field.getTypeName() = getType().getTypeName();
 
     void Program.template_gen(String filename) throws IOException {
-        System.out.println("TODO: generate from template "+filename);
+        System.out.println("Generating output from template "+filename);
 
         STGroup group = new STGroupFile(filename, '$', '$');
         ST st = group.getInstanceOf("program");
         for(Decl d: getDecls()) {
-            st.addAggr("decls.{obj, type, name}", 
-                d, 
-                d.ttTypeString(group), 
-                d.getName());
+            st.add("decls",d);
         }
         System.out.println(st.render());
     }
@@ -60,9 +57,20 @@ aspect TestTT {
 
     eq Decl.ttTypeString(STGroup group) = getType() != null ? getType().ttTypeString(group) : "null type???";
 
-    syn boolean ASTNode.isArrayType() = false;
-    eq ArrayType.isArrayType() = true;
-    eq Field.isArrayType() = getType().isArrayType();
+//    syn boolean ASTNode.isArrayType() = false;
+//    eq ArrayType.isArrayType() = true;
+//    eq Field.isArrayType() = getType().isArrayType();
+
+    syn String ASTNode.getTemplateType() = getClass().getName();
+    eq Type.getTemplateType() = "Type???";
+    eq PrimType.getTemplateType() = "PrimType";
+    eq VoidType.getTemplateType() = "VoidType";
+    eq UserType.getTemplateType() = "UserType";
+
+    eq StructType.getTemplateType() = "StructType";
+    eq ArrayType.getTemplateType() =  "ArrayType";
+
+    eq Field.getTemplateType() = getType().getTemplateType();
 
     syn LinkedList<Exp> ASTNode.getArrayDims() = null;
     eq Field.getArrayDims() = getType().getArrayDims();
@@ -73,4 +81,15 @@ aspect TestTT {
         }
         return result;
     }
+    syn LinkedList<Field> StructType.getTTFields() {
+        LinkedList<Field> result = new LinkedList<Field>();
+        for(Field f : getFieldList()) {
+           result.add(f); 
+        }
+        return result;
+    }
+}
+
+aspect testTT2 {
+
 }
