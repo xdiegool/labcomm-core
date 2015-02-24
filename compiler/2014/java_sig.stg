@@ -1,0 +1,55 @@
+program(decls) ::= <<
+program {
+    $decls:{d | $declSig(d)$};separator="\n\n"$
+};
+>>
+
+declSig(decl) ::= <<
+$if(decl.SampleDecl)$$sampleSig(decl)$$endif$
+>>
+
+dispatch(obj, name) ::= <<
+$(obj.TemplateType)(obj,name)$
+>>
+
+sampleSig(decl) ::= <<
+  private static byte[] signature = new byte[] {
+   $dispatch(decl.Type, decl.Name)$
+  }; 
+>>
+
+PrimType(obj, name) ::= <<
+// $obj.TypeName$  $name$
+$obj.Token$ 
+>>
+
+UserType(obj, name) ::= <<
+//$obj.TypeName$ $name$  
+$dispatch(obj.TypeDecl, name)$
+>>
+
+VoidType(obj, name) ::= <<
+// void 
+0x11, 0
+>>
+
+StructType(obj, name) ::= <<
+// struct {
+  0x11, $length(obj.TTFields)$
+  $obj.TTFields:{f |$dispatch(f, f.Name)$};separator=",\n"$
+//} 
+>>
+
+//Field ignores the name parameter, and uses obj.name
+Field(obj, name) ::= <<
+$dispatch(obj.Type, obj.name)$
+>>
+
+ArrayType(obj, name) ::= <<
+$obj.TypeName$ $name$$obj.ArrayDims:{d | [$d.TTString$]}$
+>>
+
+TypeDecl(obj, name) ::= <<
+$dispatch(obj.Type, obj.name)$
+>>
+

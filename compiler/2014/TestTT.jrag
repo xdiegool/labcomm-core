@@ -64,6 +64,8 @@ aspect testTTPretty {
     eq ArrayType.getTemplateType() =  "ArrayType";
     eq Field.getTemplateType() =  "Field";
 
-
-
+    eq TypeDecl.getTemplateType() =  "TypeDecl";
+}
+aspect testTTSig {
+    syn Decl UserType.getTypeDecl() = decl();
 }
