@@ -38,7 +38,18 @@ aspect TestTT {
         }
         return st.render();
     }
-    eq ArrayType.ttTypeString(STGroup group) = "array...";
+    eq ArrayType.ttTypeString(STGroup group) {
+        ST st = group.getInstanceOf("arrayType");
+        st.add("type", getType().ttTypeString(group));
+        for(Exp d: getExps()) {
+            st.add("dims", d.ttString());
+        }
+        return st.render();
+    }
 
-    eq Decl.ttTypeString(STGroup group) = getType().ttTypeString(group);
+    syn String Exp.ttString() = "";
+    eq IntegerLiteral.ttString() = getValue();
+    eq VariableSize.ttString() = "_";
+
+    eq Decl.ttTypeString(STGroup group) = getType() != null ? getType().ttTypeString(group) : "null type???";
 }
