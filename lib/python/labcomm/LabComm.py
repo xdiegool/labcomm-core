@@ -691,6 +691,8 @@ class Codec(object):
         
     def add_decl(self, decl, index=0):
         if index == 0:
+            if decl in self.decl_to_index:
+                return False
             index = self.decl_index
             self.decl_index += 1
         self.index_to_decl[index] = decl
@@ -699,9 +701,12 @@ class Codec(object):
             self.name_to_decl[decl.name] = decl
         except:
             pass
+        return True
         
     def add_ref(self, ref, index=0):
         if index == 0:
+            if ref.sample in self.ref_to_index:
+                return False
             index = self.ref_index
             self.ref_index += 1
         self.index_to_ref[index] = ref.sample
@@ -710,7 +715,8 @@ class Codec(object):
             self.name_to_ref[ref.sample.name] = ref.sample
         except:
             pass
-
+        return True
+    
     def add_binding(self, name, decl):
         self.type_to_name[decl] = name
         self.name_to_type[name] = decl
@@ -744,15 +750,13 @@ class Encoder(Codec):
         self.writer.write(packer.pack(format, *args))
 
     def add_decl(self, decl, index=0):
-        super(Encoder, self).add_decl(decl, index)
-        if index == 0:
+        if super(Encoder, self).add_decl(decl, index) and index == 0:
             decl.encode_decl(self)
             self.writer.mark()
  
     def add_ref(self, decl, index=0):
         ref = sample_ref(name=decl.name, decl=decl.decl, sample=decl)
-        super(Encoder, self).add_ref(ref, index)
-        if index == 0:
+        if super(Encoder, self).add_ref(ref, index) and index == 0:
             ref.encode_decl(self)
             self.writer.mark()
  
