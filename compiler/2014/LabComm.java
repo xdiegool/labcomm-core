@@ -36,6 +36,9 @@ public class LabComm {
     println("[ Misc options ]");
     println(" --pretty=PFILE          Pretty prints to PFILE");
     println(" --typeinfo=TIFILE       Generates typeinfo in TIFILE");
+    println("[ Template options ]");
+    println(" --template=TPLFILE      Generates output according to TPLFILE");
+    println(" --templateOpt=KEY:VAL   Sets option for template");
   }
     
   /** To be cleaned up.
@@ -119,9 +122,9 @@ public class LabComm {
     }
   }
 
-  private static void genTemplate(Program p, String filename) {
+  private static void genTemplate(Program p, String filename, Map<String,String> opts) {
     try {
-      p.template_gen(filename);
+      p.template_gen(filename, opts);
     } catch (IOException e) {
       System.err.println("IOException: " + filename + " " + e);
     }
@@ -150,6 +153,7 @@ public class LabComm {
     String rapidFile = null;
     String fileName = null;
     String stgFile = null;
+    Map<String,String> templateOpts=new HashMap<String,String>();
 
    Opts(String[] args) {
      this.args = args;
@@ -236,6 +240,12 @@ public class LabComm {
           rapidFile = coreName + ".sys";
         } else if (args[i].startsWith("--template=")) {
           stgFile = args[i].substring(11);
+        } else if (args[i].startsWith("--templateOpt=")) {
+          String keyval = args[i].substring(14);
+          int idx=keyval.indexOf(':');
+          String key = keyval.substring(0,idx);
+          String val = keyval.substring(idx+1);
+          templateOpts.put(key, val);
         } else if (i == args.length - 1) {
           fileName = args[i];
         } else {
@@ -376,7 +386,7 @@ public class LabComm {
      boolean wroteFile = false; 
      if (stgFile != null) {
        printStatus("Template: " , stgFile);
-       genTemplate(ast, stgFile);
+       genTemplate(ast, stgFile, templateOpts);
        wroteFile = true;
      }
      return wroteFile;

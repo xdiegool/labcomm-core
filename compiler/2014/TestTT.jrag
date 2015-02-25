@@ -4,6 +4,7 @@ import org.stringtemplate.v4.STGroupDir;
 import org.stringtemplate.v4.STGroupFile;
 
 import java.util.LinkedList;
+import java.util.Map;
 
 
 aspect TestTT {
@@ -11,11 +12,15 @@ aspect TestTT {
     eq Decl.getTypeName() = getType().getTypeName();
     eq Field.getTypeName() = getType().getTypeName();
 
-    void Program.template_gen(String filename) throws IOException {
+    void Program.template_gen(String filename, Map<String,String> opts) throws IOException {
         System.out.println("Generating output from template "+filename);
 
         STGroup group = new STGroupFile(filename, '$', '$');
         ST st = group.getInstanceOf("program");
+        for(String opt: opts.keySet()) {
+            st.addAggr("opts.{key,val}", opt, opts.get(opt));
+            st.add(opt, opts.get(opt));
+        }
         for(Decl d: getDecls()) {
             st.add("decls",d);
         }

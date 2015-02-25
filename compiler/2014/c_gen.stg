@@ -1,7 +1,13 @@
-program(decls) ::= <<
+program(decls, opts, lcName, prefix) ::= <<
+/* template opts:
+      $opts;separator="\n"$
+lcName=$lcName$
+prefix=$prefix$
+*/
+
 #include "labcomm.h"
 #include "labcomm_private.h"
-#include "minimal.h" //TODO: send lcName
+#include "$lcName$.h" 
 
 //TODO gen dependency signatures
 
@@ -18,26 +24,26 @@ $([TMPL,obj.TemplateType])(obj,name, data)$
 >>
 
 processSampleDecl(decl) ::= <<
-static int sizeof_minimal_$decl.Name$(void *vv) //TODO: send lcName
+static int sizeof_$lcName$_$decl.Name$(void *vv) //TODO: send lcName
 {
   int result = 0;
   result += 32 //TODO: calc size;
   return result;
 }
 
-static struct labcomm_signature signature_minimal_$decl.Name$ = {
+static struct labcomm_signature signature_$lcName$_$decl.Name$ = {
   "$decl.Name$",
-  sizeof_minimal_$decl.Name$,
-  sizeof(signature_bytes_minimal_$decl.Name$),
-  signature_bytes_minimal_$decl.Name$,
+  sizeof_$lcName$_$decl.Name$,
+  sizeof(signature_bytes_$lcName$_$decl.Name$),
+  signature_bytes_$lcName$_$decl.Name$,
   0,
-  sizeof(signature_tree_minimal_$decl.Name$),
-  signature_tree_minimal_$decl.Name$
+  sizeof(signature_tree_$lcName$_$decl.Name$),
+  signature_tree_$lcName$_$decl.Name$
  };
 
-const struct labcomm_signature *labcomm_signature_minimal_$decl.Name$ = &signature_minimal_$decl.Name$;
+const struct labcomm_signature *labcomm_signature_$lcName$_$decl.Name$ = &signature_$lcName$_$decl.Name$;
 
-static void decode_minimal_$decl.Name$(
+static void decode_$lcName$_$decl.Name$(
   struct labcomm_reader *r,
   void (*handle)(
     minimal_$decl.Name$ *v,
@@ -51,7 +57,7 @@ static void decode_minimal_$decl.Name$(
   handle(&v, context);
 }
 
-int labcomm_decoder_register_minimal_$decl.Name$(
+int labcomm_decoder_register_$lcName$_$decl.Name$(
   struct labcomm_decoder *d,
   void (*handler)(
     minimal_$decl.Name$ *v,
@@ -62,13 +68,13 @@ int labcomm_decoder_register_minimal_$decl.Name$(
 {
   return labcomm_internal_decoder_register(
     d,
-    &signature_minimal_$decl.Name$,
-    (labcomm_decoder_function)decode_minimal_$decl.Name$,
+    &signature_$lcName$_$decl.Name$,
+    (labcomm_decoder_function)decode_$lcName$_$decl.Name$,
     (labcomm_handler_function)handler,
     context
   );
 }
-int labcomm_decoder_ioctl_minimal_$decl.Name$(
+int labcomm_decoder_ioctl_$lcName$_$decl.Name$(
   struct labcomm_decoder *d,
   int ioctl_action,
   ...
@@ -78,13 +84,13 @@ int labcomm_decoder_ioctl_minimal_$decl.Name$(
   va_list va;
   va_start(va, ioctl_action);
   result = labcomm_internal_decoder_ioctl(
-    d, &signature_minimal_$decl.Name$, 
+    d, &signature_$lcName$_$decl.Name$, 
     ioctl_action, va);
   va_end(va);
   return result;
 }
 
-static int encode_minimal_$decl.Name$(
+static int encode_$lcName$_$decl.Name$(
   struct labcomm_writer *w
   , minimal_$decl.Name$ *v
 )
