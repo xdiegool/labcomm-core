@@ -1,0 +1,10 @@
+gen
+labcomm.dll
+ExampleDecoder.exe
+ExampleEncoder.exe
+encoded_data_c
+encoded_data_cs
+encoded_data_j
+encoded_data_p
+example_decoder
+example_encoder
