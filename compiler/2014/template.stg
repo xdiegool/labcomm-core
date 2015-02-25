@@ -1,0 +1,60 @@
+program(decls) ::= <<
+program {
+    $decls:{d | $processDecl(d)$};separator="\n\n"$
+};
+>>
+
+processDecl(decl) ::= <<
+//$decl.Name$
+$if(decl.SampleDecl)$$processSampleDecl(decl)$$else$processTypeDecl(decl)$endif$
+>>
+
+dispatch(obj, name) ::= <<
+$(obj.TemplateType)(obj,name)$
+>>
+
+processSampleDecl(decl) ::= <<
+   //SAMPLE_DECL $decl.Name$
+   $dispatch(decl.Type, decl.Name)$
+
+>>
+
+processTypeDecl(decl) ::= <<
+   //TYPE_DECL $decl.Name$
+   $dispatch(decl.Type, decl.Name)$
+
+>>
+
+PrimType(obj, name) ::= <<
+// PRIMTYPE ($obj.TypeName$) $name$ 
+>>
+
+UserType(obj, name) ::= <<
+// USER_TYPE ($obj.TypeName$) $name$
+$dispatch(obj.TypeDecl, name)$
+>>
+
+VoidType(obj, name) ::= <<
+// VOIDTYPE ($obj.TypeName$) $name$ 
+>>
+
+StructType(obj, name) ::= <<
+// STRUCTTYPE $length(obj.TTFields)$ fields {
+  $obj.TTFields:{f |$dispatch(f, f.Name)$};separator=",\n"$
+>>
+
+//Field ignores the name parameter, and uses obj.name
+Field(obj, name) ::= <<
+//FIELD $obj.TypeName$ $obj.Name$
+$dispatch(obj.Type, obj.Name)$
+>>
+
+ArrayType(obj, name) ::= <<
+//ARRAY $obj.TypeName$ $name$$obj.ArrayDims:{d | [$d.TTString$]}$
+>>
+
+TypeDecl(obj, name) ::= <<
+//TYPEDECL $name$
+$dispatch(obj.Type, obj.name)$
+>>
+
