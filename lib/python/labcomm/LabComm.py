@@ -759,24 +759,29 @@ class Encoder(Codec):
         self.writer.write(packer.pack(format, *args))
 
     def add_decl(self, decl, index=0):
-        if super(Encoder, self).add_decl(decl, index) and index == 0:
-            decl.encode_decl(self)
-            self.writer.mark()
+        if index == 0:
+            self.writer.mark_begin(decl, None)
+            if super(Encoder, self).add_decl(decl, index):
+                decl.encode_decl(self)
+            self.writer.mark_end(decl, None)
  
     def add_ref(self, decl, index=0):
         ref = sample_ref(name=decl.name, decl=decl.decl, sample=decl)
-        if super(Encoder, self).add_ref(ref, index) and index == 0:
-            ref.encode_decl(self)
-            self.writer.mark()
+        if index == 0:
+            self.writer.mark_begin(decl, None)
+            if super(Encoder, self).add_ref(ref, index):
+                ref.encode_decl(self)
+            self.writer.mark_end(decl, None)
  
     def encode(self, object, decl=None):
         if decl == None:
             name = self.type_to_name[object.__class__]
             decl = self.name_to_decl[name]
+        self.writer.mark_begin(decl, object)
         self.encode_type_number(decl)
         with length_encoder(self) as e:
             decl.encode(e, object)
-        self.writer.mark()
+        self.writer.mark_end(decl, object)
 
     def encode_type_number(self, decl):
         try:

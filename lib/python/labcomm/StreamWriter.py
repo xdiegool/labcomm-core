@@ -10,7 +10,10 @@ class StreamWriter:
         self.stream.write(data)
         pass
 
-    def mark(self):
+    def mark_begin(self, decl, value):
+        pass
+
+    def mark_end(self, decl, value):
         self.stream.flush()
         pass
 
