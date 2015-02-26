@@ -389,7 +389,7 @@ class SAMPLE(primitive):
 #
 # Aggregate types
 #
-class sample_def_or_ref(type_decl):
+class sampledef_or_sampleref_or_typedef(type_decl):
     def __init__(self, name=None, decl=None):
         self.name = name
         self.decl = decl
@@ -402,8 +402,8 @@ class sample_def_or_ref(type_decl):
             with length_encoder(e1) as e2:
                 self.decl.encode_decl(e2)
 
-    def encode(self, encoder, object):
-        self.decl.encode(encoder, object)
+    def encode(self, encoder, value):
+        self.decl.encode(encoder, value)
 
     def decode_decl(self, decoder):
         index = decoder.decode_type_number()
@@ -438,7 +438,7 @@ class sample_def_or_ref(type_decl):
     def __repr__(self):
         return "%s('%s', %s)" % (self.type_name, self.name, self.decl)
 
-class sample_def(sample_def_or_ref):
+class sample_def(sampledef_or_sampleref_or_typedef):
     type_index = i_SAMPLE_DEF
     type_name = 'sample'
 
@@ -448,7 +448,7 @@ class sample_def(sample_def_or_ref):
     def add_index(self, decoder, index, decl):
         decoder.add_decl(decl, index)
     
-class sample_ref(sample_def_or_ref):
+class sample_ref(sampledef_or_sampleref_or_typedef):
     type_index = i_SAMPLE_REF
     type_name = 'sample_ref'
     
@@ -465,6 +465,16 @@ class sample_ref(sample_def_or_ref):
 
     def add_index(self, decoder, index, decl):
         decoder.add_ref(decl, index)
+
+class typedef(sampledef_or_sampleref_or_typedef):
+    type_index = i_TYPE_DEF
+    type_name = 'typedef'
+
+    def encode_decl(self, encoder):
+        self.decl.encode_decl(encoder)
+
+    def encode(self, encoder, value):
+        self.decl.encode(encoder, value)
 
 class array(type_decl):
     def __init__(self, indices, decl):

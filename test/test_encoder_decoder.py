@@ -53,6 +53,12 @@ class Test:
                 result.append((decl, values))
             return result
     
+        elif decl.__class__ == labcomm.typedef:
+            result = []
+            for values in self.generate(decl.decl):
+                result.append(values)
+            return result
+
         elif decl.__class__ == labcomm.struct:
             result = []
             if len(decl.field) == 0:
@@ -164,7 +170,6 @@ class Test:
             print>>sys.stderr, "Checking", signature.name,
             for decl,value in self.generate(signature):
                 sys.stderr.write('.')
-                #print name,decl,value,value.__class__
                 self.next.acquire()
                 self.received_value = None
                 self.received_decl = None
@@ -176,7 +181,7 @@ class Test:
                     self.failed = True
                 elif value != self.received_value:
                     print>>sys.stderr, "Coding error"
-                    print>>sys.stderr,value == self.received_value
+                    print>>sys.stderr, value == self.received_value
                     print>>sys.stderr, "Got:     ", self.received_value 
                     print>>sys.stderr, "         ", self.received_decl 
                     print>>sys.stderr, "Expected:", value
