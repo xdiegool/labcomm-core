@@ -226,6 +226,15 @@ class primitive(object):
     def decode_decl(self, decoder):
         return self
 
+    def __eq__(self, other):
+        return self.__class__ == other.__class__
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+    
+    def __hash__(self):
+        return hash(self.__class__)
+
 class BOOLEAN(primitive):
     def encode_decl(self, encoder):
         return encoder.encode_type(i_BOOLEAN)
@@ -368,9 +377,6 @@ class SAMPLE(primitive):
     def new_instance(self):
         return ""
 
-    def __eq__(self, other):
-        return self.__class__ == other.__class__
-
     def __repr__(self):
         return "labcomm.SAMPLE()"
 
@@ -413,13 +419,16 @@ class sample_def_or_ref(object):
         return self.decl.new_instance()
 
     def __eq__(self, other):
-        return (type(self) == type(other) and 
+        return (self.__class__ == other.__class__ and 
                 self.name == other.name and
                 self.decl == other.decl)
         
     def __ne__(self, other):
-        return not self == other
+        return not self.__eq__(other)
 
+    def __hash__(self):
+        return hash(self.__class__) ^ hash(self.name) ^ hash(self.decl)
+    
     def __repr__(self):
         return "%s('%s', %s)" % (self.type_name, self.name, self.decl)
 
@@ -432,7 +441,7 @@ class sample_def(sample_def_or_ref):
 
     def add_index(self, decoder, index, decl):
         decoder.add_decl(decl, index)
-
+    
 class sample_ref(sample_def_or_ref):
     type_index = i_SAMPLE_REF
     type_name = 'sample_ref'
@@ -453,17 +462,20 @@ class sample_ref(sample_def_or_ref):
 
 class array(object):
     def __init__(self, indices, decl):
-        self.indices = indices
+        self.indices = tuple(indices)
         self.decl = decl
         
     def __eq__(self, other):
-        return (type(self) == type(other) and 
+        return (self.__class__ == other.__class__ and 
                 self.indices == other.indices and
                 self.decl == other.decl)
         
     def __ne__(self, other):
-        return not self == other
+        return not self.__eq__(other)
 
+    def __hash__(self):
+        return hash(self.__class__) ^ hash(self.indices) ^ hash(self.decl)
+    
     def encode_decl(self, encoder):
         encoder.encode_type(i_ARRAY)
         encoder.encode_packed32(len(self.indices))
@@ -506,7 +518,6 @@ class array(object):
     def encode_indices(self, encoder, value):
         depth = len(self.indices)
         shape = self.shape(value)
-        #if len(shape) != len(self.indices):
         if len(shape) < len(self.indices):
             raise Exception("Actual dimension %s differs from declared %s" %
                             (shape, self.indices))
@@ -519,7 +530,6 @@ class array(object):
         return depth
 
     def encode_value(self, encoder, value, depth):
-        # if depth and isinstance(value, list):
         if depth:
             for e in value:
                 self.encode_value(encoder, e, depth - 1)
@@ -582,14 +592,14 @@ class struct:
         self.field = tuple(field)
 
     def __eq__(self, other):
-        return (type(self) == type(other) and 
+        return (self.__class__ == other.__class__ and 
                 self.field == other.field)
         
     def __ne__(self, other):
-        return not self == other
+        return not self.__eq__(other)
 
     def __hash__(self):
-        return hash(self.field)
+        return hash(self.__class__) ^ hash(self.field)
 
     def encode_decl(self, encoder):
         encoder.encode_type(i_STRUCT)
@@ -597,7 +607,6 @@ class struct:
         for (name, decl) in self.field:
             encoder.encode_string(name)
             encoder.encode_type_number(decl)
-            #type.encode_decl(encoder)
 
     def encode(self, encoder, obj):
         if isinstance(obj, dict):
@@ -641,7 +650,7 @@ class struct:
 SAMPLE_DEF = sample_def()
 SAMPLE_REF = sample_ref()
 
-ARRAY = array(None, None)
+ARRAY = array([], None)
 STRUCT = struct([])
 
 class anonymous_object(dict):
@@ -767,7 +776,6 @@ class Encoder(Codec):
         self.encode_type_number(decl)
         with length_encoder(self) as e:
             decl.encode(e, object)
-#        decl.encode(self, object)
         self.writer.mark()
 
     def encode_type_number(self, decl):
@@ -794,7 +802,6 @@ class Encoder(Codec):
 
     def encode_type(self, index):
         self.encode_packed32(index)
-#        self.pack("!i", index)
             
     def encode_boolean(self, v):
         if v:
@@ -824,7 +831,6 @@ class Encoder(Codec):
         s = v.encode("utf8")
 	self.encode_packed32(len(s));
 	self.pack("%ds" % len(s),s)
-#        self.pack("!i%ds" % len(s), len(s), s)
 
 class Decoder(Codec):
     def __init__(self, reader, version=DEFAULT_VERSION):
