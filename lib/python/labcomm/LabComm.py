@@ -220,9 +220,15 @@ def indent(i, s):
     return ("\n%s" % (" " * i)).join(s.split("\n"))
 
 #
+# Base type for all decl's
+#
+class type_decl(object):
+    pass
+
+#
 # Primitive types
 #
-class primitive(object):
+class primitive(type_decl):
     def decode_decl(self, decoder):
         return self
 
@@ -383,7 +389,7 @@ class SAMPLE(primitive):
 #
 # Aggregate types
 #
-class sample_def_or_ref(object):
+class sample_def_or_ref(type_decl):
     def __init__(self, name=None, decl=None):
         self.name = name
         self.decl = decl
@@ -460,7 +466,7 @@ class sample_ref(sample_def_or_ref):
     def add_index(self, decoder, index, decl):
         decoder.add_ref(decl, index)
 
-class array(object):
+class array(type_decl):
     def __init__(self, indices, decl):
         self.indices = tuple(indices)
         self.decl = decl
@@ -587,7 +593,7 @@ class array(object):
         return "labcomm.array(%s,\n    %s)" % (
             self.indices, indent(4, self.decl.__repr__()))
     
-class struct:
+class struct(type_decl):
     def __init__(self, field):
         self.field = tuple(field)
 
@@ -759,6 +765,8 @@ class Encoder(Codec):
         self.writer.write(packer.pack(format, *args))
 
     def add_decl(self, decl, index=0):
+        if not isinstance(decl, type_decl):
+            decl = decl.signature
         if index == 0:
             self.writer.mark_begin(decl, None)
             if super(Encoder, self).add_decl(decl, index):
@@ -766,6 +774,8 @@ class Encoder(Codec):
             self.writer.mark_end(decl, None)
  
     def add_ref(self, decl, index=0):
+        if not isinstance(decl, type_decl):
+            decl = decl.signature
         ref = sample_ref(name=decl.name, decl=decl.decl, sample=decl)
         if index == 0:
             self.writer.mark_begin(decl, None)
@@ -777,6 +787,8 @@ class Encoder(Codec):
         if decl == None:
             name = self.type_to_name[object.__class__]
             decl = self.name_to_decl[name]
+        if not isinstance(decl, type_decl):
+            decl = decl.signature
         self.writer.mark_begin(decl, object)
         self.encode_type_number(decl)
         with length_encoder(self) as e:

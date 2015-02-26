@@ -37,7 +37,7 @@ def get_signatures(path):
     with fp as fp:
         m = imp.load_module('signatures', fp, pathname, description)
         pass
-    return m.sample
+    return map(lambda s: s.signature, m.sample)
 
 class Test:
     
@@ -117,7 +117,7 @@ class Test:
             return ['string', u'sträng' ]
     
         elif decl.__class__ == labcomm.SAMPLE:
-            return [ s for n,s in self.signatures ]
+            return self.signatures
     
         print>>sys.stderr, decl
         raise Exception("unhandled decl %s" % decl.__class__)
@@ -154,14 +154,14 @@ class Test:
         decoder = threading.Thread(target=self.decode, args=(p.stdout,))
         decoder.start()
         encoder = labcomm.Encoder(labcomm.StreamWriter(p.stdin))
-        for name,signature in self.signatures:
+        for signature in self.signatures:
             encoder.add_decl(signature)
             pass
-        if self.uses_refs([ s for n,s in self.signatures ]):
-            for name,signature in self.signatures:
+        if self.uses_refs(self.signatures):
+            for signature in self.signatures:
                 encoder.add_ref(signature)
-        for name,signature in self.signatures:
-            print>>sys.stderr, "Checking", name,
+        for signature in self.signatures:
+            print>>sys.stderr, "Checking", signature.name,
             for decl,value in self.generate(signature):
                 sys.stderr.write('.')
                 #print name,decl,value,value.__class__

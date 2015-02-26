@@ -91,13 +91,13 @@ aspect Python_CodeGen {
     //}
     //env.unindent();
     //env.println("]");
-    env.println("sample = [");
+    env.println("sample = tuple([");
     env.indent();
     for (int i = 0 ; i < getNumDecl() ; i++) {
       getDecl(i).Python_genSampleListEntry(env);
     }
     env.unindent();
-    env.println("]");
+    env.println("])");
   }
 
 }
@@ -211,7 +211,7 @@ aspect PythonTypes {
   }
 
   public void SampleDecl.Python_genSampleListEntry(Python_env env) {
-    env.println("('" + getName() + "', " + getName() + ".signature),");
+    env.println(getName()+ ",");
   }
 
   public String Exp.Python_getValue() {
