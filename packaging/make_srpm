@@ -49,7 +49,7 @@ ln -s liblabcomm2014.so.__VERSION__ ${RPM_BUILD_ROOT}/%{_libdir}/liblabcomm2014.
 install -d ${RPM_BUILD_ROOT}/%{_includedir}/labcomm
 install lib/c/2014/*h ${RPM_BUILD_ROOT}/%{_includedir}/labcomm
 install -d ${RPM_BUILD_ROOT}/%{_includedir}/labcomm2006
-install lib/c/2006/*h ${RPM_BUILD_ROOT}/%{_includedir}/labcomm2006
+install lib/c/2006/*h ${RPM_BUILD_ROOT}/%{_includedir}/labcomm
 
 #
 # java 
