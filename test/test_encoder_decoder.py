@@ -3,7 +3,7 @@
 
 import argparse
 import imp
-import labcomm
+import labcomm2014
 import math
 import os
 import re
@@ -47,25 +47,25 @@ class Test:
         pass
 
     def generate(self, decl):
-        if decl.__class__ == labcomm.sample:
+        if decl.__class__ == labcomm2014.sample:
             result = []
             for values in self.generate(decl.decl):
                 result.append((decl, values))
             return result
     
-        elif decl.__class__ == labcomm.typedef:
+        elif decl.__class__ == labcomm2014.typedef:
             result = []
             for values in self.generate(decl.decl):
                 result.append(values)
             return result
 
-        elif decl.__class__ == labcomm.struct:
+        elif decl.__class__ == labcomm2014.struct:
             result = []
             if len(decl.field) == 0:
                 result.append({})
             else:
                 values1 = self.generate(decl.field[0][1])
-                values2 = self.generate(labcomm.struct(decl.field[1:]))
+                values2 = self.generate(labcomm2014.struct(decl.field[1:]))
                 for v1 in values1:
                     for v2 in values2:
                         v = dict(v2)
@@ -73,7 +73,7 @@ class Test:
                         result.append(v)
             return result
         
-        elif decl.__class__ == labcomm.array:
+        elif decl.__class__ == labcomm2014.array:
             if len(decl.indices) == 1:
                 values = self.generate(decl.decl)
                 if decl.indices[0] == 0:
@@ -81,7 +81,7 @@ class Test:
                 else:
                     lengths = [ decl.indices[0] ]
             else:
-                values = self.generate(labcomm.array(decl.indices[1:],
+                values = self.generate(labcomm2014.array(decl.indices[1:],
                                                      decl.decl))
                 if decl.indices[0] == 0:
                     lengths = [1, 2]
@@ -96,33 +96,33 @@ class Test:
                     result.append(element)
             return result
     
-        elif decl.__class__ == labcomm.BOOLEAN:
+        elif decl.__class__ == labcomm2014.BOOLEAN:
             return [False, True]
     
-        elif decl.__class__ == labcomm.BYTE:
+        elif decl.__class__ == labcomm2014.BYTE:
             return [0, 127, 128, 255]
     
-        elif decl.__class__ == labcomm.SHORT:
+        elif decl.__class__ == labcomm2014.SHORT:
             return [-32768, 0, 32767]
     
-        elif decl.__class__ == labcomm.INTEGER:
+        elif decl.__class__ == labcomm2014.INTEGER:
             return [-2147483648, 0, 2147483647]
     
-        elif decl.__class__ == labcomm.LONG:
+        elif decl.__class__ == labcomm2014.LONG:
             return [-9223372036854775808, 0, 9223372036854775807]
     
-        elif decl.__class__ == labcomm.FLOAT:
+        elif decl.__class__ == labcomm2014.FLOAT:
             def tofloat(v):
                 return struct.unpack('f', struct.pack('f', v))[0]
             return [tofloat(-math.pi), 0.0, tofloat(math.pi)]
     
-        elif decl.__class__ == labcomm.DOUBLE:
+        elif decl.__class__ == labcomm2014.DOUBLE:
             return [-math.pi, 0.0, math.pi]
     
-        elif decl.__class__ == labcomm.STRING:
+        elif decl.__class__ == labcomm2014.STRING:
             return ['string', u'sträng' ]
     
-        elif decl.__class__ == labcomm.SAMPLE:
+        elif decl.__class__ == labcomm2014.SAMPLE:
             return self.signatures
     
         print>>sys.stderr, decl
@@ -130,19 +130,19 @@ class Test:
 
     def uses_refs(self, decls):
         for decl in decls:
-            if decl.__class__ == labcomm.sample:
+            if decl.__class__ == labcomm2014.sample:
                 if self.uses_refs([ decl.decl ]):
                     return True
     
-            elif decl.__class__ == labcomm.struct:
+            elif decl.__class__ == labcomm2014.struct:
                 if self.uses_refs([ d for n,d in decl.field ]):
                     return True
         
-            elif decl.__class__ == labcomm.array:
+            elif decl.__class__ == labcomm2014.array:
                 if self.uses_refs([ decl.decl ]):
                     return True
 
-            elif decl.__class__ == labcomm.SAMPLE:
+            elif decl.__class__ == labcomm2014.SAMPLE:
                 return True
 
         return False
@@ -159,7 +159,7 @@ class Test:
         self.next = threading.Condition()
         decoder = threading.Thread(target=self.decode, args=(p.stdout,))
         decoder.start()
-        encoder = labcomm.Encoder(labcomm.StreamWriter(p.stdin))
+        encoder = labcomm2014.Encoder(labcomm2014.StreamWriter(p.stdin))
         for signature in self.signatures:
             encoder.add_decl(signature)
             pass
@@ -202,7 +202,7 @@ class Test:
         pass
 
     def decode(self, f):
-        decoder = labcomm.Decoder(labcomm.StreamReader(f))
+        decoder = labcomm2014.Decoder(labcomm2014.StreamReader(f))
         try:
             while True:
                 value,decl = decoder.decode()

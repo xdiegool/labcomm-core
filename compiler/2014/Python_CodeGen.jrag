@@ -80,8 +80,7 @@ aspect Python_CodeGen {
     env.println("#!/usr/bin/python");
     env.println("# Auto generated " + baseName);
     env.println();
-    env.println("import labcomm");
-    env.println("import StringIO");
+    env.println("import labcomm2014");
     env.println();
     Python_genTypes(env);
     env.println("typedef = tuple([");
@@ -119,7 +118,7 @@ aspect PythonTypes {
   public void TypeDecl.Python_genSignature(Python_env env) {
     env.println("class " + getName() + "(object):");
     env.indent();
-    env.println("signature = labcomm.typedef('" + getName() + "',");
+    env.println("signature = labcomm2014.typedef('" + getName() + "',");
     env.indent();
     getType().Python_genSignature(env);
     env.unindent();
@@ -131,7 +130,7 @@ aspect PythonTypes {
   public void SampleDecl.Python_genSignature(Python_env env) {
     env.println("class " + getName() + "(object):");
     env.indent();
-    env.println("signature = labcomm.sample('" + getName() + "', ");
+    env.println("signature = labcomm2014.sample('" + getName() + "', ");
     env.indent();
     getType().Python_genSignature(env);
     env.unindent();
@@ -153,20 +152,20 @@ aspect PythonTypes {
 
   public void PrimType.Python_genSignature(Python_env env) {
     switch (getToken()) {
-      case LABCOMM_BOOLEAN: { env.print("labcomm.BOOLEAN()"); } break;
-      case LABCOMM_BYTE: { env.print("labcomm.BYTE()"); } break;
-      case LABCOMM_SHORT: { env.print("labcomm.SHORT()"); } break;
-      case LABCOMM_INT: { env.print("labcomm.INTEGER()"); } break;
-      case LABCOMM_LONG: { env.print("labcomm.LONG()"); } break;
-      case LABCOMM_FLOAT: { env.print("labcomm.FLOAT()"); } break;
-      case LABCOMM_DOUBLE: { env.print("labcomm.DOUBLE()"); } break;
-      case LABCOMM_STRING: { env.print("labcomm.STRING()"); } break;
-      case LABCOMM_SAMPLE: { env.print("labcomm.SAMPLE()"); } break;
+      case LABCOMM_BOOLEAN: { env.print("labcomm2014.BOOLEAN()"); } break;
+      case LABCOMM_BYTE: { env.print("labcomm2014.BYTE()"); } break;
+      case LABCOMM_SHORT: { env.print("labcomm2014.SHORT()"); } break;
+      case LABCOMM_INT: { env.print("labcomm2014.INTEGER()"); } break;
+      case LABCOMM_LONG: { env.print("labcomm2014.LONG()"); } break;
+      case LABCOMM_FLOAT: { env.print("labcomm2014.FLOAT()"); } break;
+      case LABCOMM_DOUBLE: { env.print("labcomm2014.DOUBLE()"); } break;
+      case LABCOMM_STRING: { env.print("labcomm2014.STRING()"); } break;
+      case LABCOMM_SAMPLE: { env.print("labcomm2014.SAMPLE()"); } break;
     }
   }
 
   public void ArrayType.Python_genSignature(Python_env env) {
-    env.print("labcomm.array([");
+    env.print("labcomm2014.array([");
     for (int i = 0 ; i < getNumExp() ; i++) {
       if (i > 0) { env.print(", "); }
       env.print(getExp(i).Python_getValue());
@@ -179,7 +178,7 @@ aspect PythonTypes {
   }
 
   public void StructType.Python_genSignature(Python_env env) {
-    env.println("labcomm.struct([");
+    env.println("labcomm2014.struct([");
     env.indent();
     for (int i = 0 ; i < getNumField() ; i++) {
       if (i > 0) { env.println(","); }
@@ -190,7 +189,7 @@ aspect PythonTypes {
   }
 
   public void VoidType.Python_genSignature(Python_env env) {
-    env.println("labcomm.struct([])");
+    env.println("labcomm2014.struct([])");
   }
 
   public void Field.Python_genSignature(Python_env env) {

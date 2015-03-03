@@ -5,9 +5,9 @@ import sys
 import socket
 import rwsocket
 
-if not any('labcomm' in p for p in sys.path):
+if not any('labcomm2014' in p for p in sys.path):
     sys.path.append('../../lib/python')
-import labcomm
+import labcomm2014
 
 
 if __name__ == "__main__":
@@ -19,7 +19,7 @@ if __name__ == "__main__":
     sock.connect(addr)
     print "Connected!"
 
-    d = labcomm.Decoder(labcomm.StreamReader(sock))
+    d = labcomm2014.Decoder(labcomm2014.StreamReader(sock))
 
     while True:
         try:

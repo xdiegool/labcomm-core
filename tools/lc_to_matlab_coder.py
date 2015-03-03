@@ -4,11 +4,11 @@ import sys
 import imp
 import subprocess
 import os
-import labcomm
+import labcomm2014
 
 TRANSLATE={
-    labcomm.SHORT() : 'short',
-    labcomm.DOUBLE() : 'double'
+    labcomm2014.SHORT() : 'short',
+    labcomm2014.DOUBLE() : 'double'
 }
 
 def compile_lc(lc):
@@ -22,46 +22,46 @@ def compile_lc(lc):
     return (lc_import.typedef, lc_import.sample)
 
 def gen_binding(decl, lc_prefix, prefix, suffix):
-    if isinstance(decl, labcomm.sample):
-        if isinstance(decl.decl, labcomm.typedef):
+    if isinstance(decl, labcomm2014.sample):
+        if isinstance(decl.decl, labcomm2014.typedef):
             print "%(n1)s = coder.cstructname(%(n1)s, '%(lc)s_%(n2)s')" % dict(
                 n1=decl.name, n2=decl.decl.name, lc=lc_prefix)
         else:
             print "%(n1)s = coder.cstructname(%(n1)s, '%(lc)s_%(n2)s')" % dict(
                 n1=decl.name, n2=decl.name, lc=lc_prefix)
         gen_binding(decl.decl, lc_prefix, '%s.' % decl.name, suffix)
-    elif isinstance(decl, labcomm.typedef):
+    elif isinstance(decl, labcomm2014.typedef):
         print "%(p)s%(s)s = coder.cstructname(%(p)s%(s)s, '%(lc)s_%(n)s')" % dict(
             n=decl.name, lc=lc_prefix, p=prefix, s=suffix)
         gen_binding(decl.decl, lc_prefix, prefix, suffix)
-    elif isinstance(decl, labcomm.array):
+    elif isinstance(decl, labcomm2014.array):
          raise Exception("Array unhandled")
-    elif isinstance(decl, labcomm.struct):
+    elif isinstance(decl, labcomm2014.struct):
         for n, d in decl.field:
             gen_binding(d, lc_prefix, '%sFields.%s' % (prefix, n), suffix)
-    elif isinstance(decl, labcomm.primitive):
+    elif isinstance(decl, labcomm2014.primitive):
         pass
     else:
         raise Exception("Unhandled type. %s", decl)
     
 def gen_sample(lc_prefix, decl):
-    if isinstance(decl, labcomm.sample):
+    if isinstance(decl, labcomm2014.sample):
         print "%s = " % decl.name,
         gen_sample(lc_prefix, decl.decl)
         print
         gen_binding(decl, lc_prefix, '', '')
-    elif isinstance(decl, labcomm.typedef):
+    elif isinstance(decl, labcomm2014.typedef):
         # Expand in place
         gen_sample(lc_prefix, decl.decl)
-    elif isinstance(decl, labcomm.array):
+    elif isinstance(decl, labcomm2014.array):
          raise Exception("Array unhandled")
-    elif isinstance(decl, labcomm.struct):
+    elif isinstance(decl, labcomm2014.struct):
         print "struct(..."
         for n, d in decl.field:
             print "'%s, " % n,
             gen_sample(lc_prefix, d)
         print ")..."
-    elif isinstance(decl, labcomm.primitive):
+    elif isinstance(decl, labcomm2014.primitive):
         print "%s(0), ..." % TRANSLATE[decl]
     else:
         raise Exception("Unhandled type. %s", decl)  

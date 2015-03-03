@@ -1,5 +1,3 @@
-import labcomm
-
 class StreamWriter:
     
     def __init__(self, stream):
