@@ -11,9 +11,9 @@ MODULES=Constant\
 	SampleType 
 
 .PHONY: all
-all: labcomm.dll
+all: labcomm2014.dll
 
-labcomm.dll: $(MODULES:%=se/lth/control/labcomm/%.cs) Makefile
+labcomm2014.dll: $(MODULES:%=se/lth/control/labcomm2014/%.cs) Makefile
 	mcs -out:$@ -target:library $(filter %.cs, $^)
 
 .PHONY: test
@@ -24,4 +24,4 @@ clean:
 
 .PHONY: distclean
 distclean:
-	rm -f labcomm.dll
+	rm -f labcomm2014.dll

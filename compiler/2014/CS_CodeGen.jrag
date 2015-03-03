@@ -210,7 +210,7 @@ aspect CS_CodeGen {
       env.indent();
     }
     env.println("using System;");
-    env.println("using se.lth.control.labcomm;");
+    env.println("using se.lth.control.labcomm2014;");
     for (int i = 0; i < getNumDecl(); i++) {
       Decl d = getDecl(i);
       try {

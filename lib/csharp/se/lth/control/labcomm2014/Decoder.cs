@@ -1,6 +1,6 @@
 using System;
 
-namespace se.lth.control.labcomm {
+namespace se.lth.control.labcomm2014 {
 
   public interface Decoder {
 

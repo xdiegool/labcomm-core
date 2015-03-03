@@ -1,4 +1,4 @@
-﻿using se.lth.control.labcomm;
+﻿using se.lth.control.labcomm2014;
 using System;
 using System.Collections.Generic;
 using System.Linq;

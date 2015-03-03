@@ -34,15 +34,15 @@ ${LCLJAR} :
 
 cleanbuild: clean build
 
-labcomm.dll:
-	ln -sf ../../lib/csharp/labcomm.dll $@
+labcomm2014.dll:
+	ln -sf ../../lib/csharp/labcomm2014.dll $@
 
-ExampleEncoder.exe: ExampleEncoder.cs gen/test.cs labcomm.dll Makefile
-	mcs -out:$@ $(filter %.cs, $^) -lib:../../lib/csharp/ -r:labcomm
+ExampleEncoder.exe: ExampleEncoder.cs gen/test.cs labcomm2014.dll Makefile
+	mcs -out:$@ $(filter %.cs, $^) -lib:../../lib/csharp/ -r:labcomm2014
 	chmod a+x $@
 
-ExampleDecoder.exe: ExampleDecoder.cs gen/test.cs labcomm.dll Makefile
-	mcs -out:$@ $(filter %.cs, $^) -lib:../../lib/csharp/ -r:labcomm
+ExampleDecoder.exe: ExampleDecoder.cs gen/test.cs labcomm2014.dll Makefile
+	mcs -out:$@ $(filter %.cs, $^) -lib:../../lib/csharp/ -r:labcomm2014
 	chmod a+x $@
 
 build : 

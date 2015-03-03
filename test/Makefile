@@ -1,5 +1,5 @@
 TESTS=basic simple nested ref
-LABCOMM_JAR=../compiler/labcomm_compiler.jar
+LABCOMM_JAR=../compiler/labcomm2014_compiler.jar
 LABCOMM=java -jar $(LABCOMM_JAR)
 
 include ../lib/c/os_compat.mk
@@ -78,13 +78,13 @@ gen/%/cs_relay.cs:  gen/%/typeinfo relay_gen_cs.py Makefile
 	./relay_gen_cs.py $< > $@
 
 .PRECIOUS: gen/%/labcomm.dll
-gen/%/labcomm.dll:
-	ln -s ../../../lib/csharp/labcomm.dll $@
+gen/%/labcomm2014.dll:
+	ln -s ../../../lib/csharp/labcomm2014.dll $@
 
 .PRECIOUS: gen/%/cs_relay.exe
 gen/%/cs_relay.exe: gen/%/cs_relay.cs gen/%/cs_code.cs \
-		    gen/%/labcomm.dll Makefile
-	mcs -out:$@ $(filter %.cs, $^) -lib:../lib/csharp/ -r:labcomm
+		    gen/%/labcomm2014.dll Makefile
+	mcs -out:$@ $(filter %.cs, $^) -lib:../lib/csharp/ -r:labcomm2014
 
 # Java relay test rules
 .PRECIOUS: gen/%/java_code

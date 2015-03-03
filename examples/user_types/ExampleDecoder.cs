@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using se.lth.control.labcomm;
+using se.lth.control.labcomm2014;
 
 namespace user_types
 {
