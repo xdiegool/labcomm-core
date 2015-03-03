@@ -5,7 +5,6 @@ namespace se.lth.control.labcomm {
   public interface Encoder {
     
     void register(SampleDispatcher dispatcher);
-    void registerSampleRef(SampleDispatcher dispatcher);
     void begin(Type c);
     void end(Type c);
 
@@ -17,8 +16,6 @@ namespace se.lth.control.labcomm {
     void encodeFloat(float value);
     void encodeDouble(double value);
     void encodeString(String value);
-    void encodePacked32(Int64 value);
-    void encodeSampleRef(Type value);
     
   }
 

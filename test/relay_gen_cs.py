@@ -74,13 +74,7 @@ if __name__ == '__main__':
         result.append('    %s.register(decoder, this);' % func)
         pass
     for func,arg in shuffle(sample):
-        result.append('    %s.registerSampleRef(decoder);' % func)
-        pass
-    for func,arg in shuffle(sample):
         result.append('    %s.register(encoder);' % func)
-        pass
-    for func,arg in shuffle(sample):
-        result.append('    %s.registerSampleRef(encoder);' % func)
         pass
     
     result.extend(split_match('^[^|]*\|(.*)$', """

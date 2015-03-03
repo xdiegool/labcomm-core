@@ -96,7 +96,6 @@ $(TEST_DIR)/gen/%.o: $(TEST_DIR)/%.c | $(TEST_DIR)/gen
 .PRECIOUS: $(TEST_DIR)/gen/%.h
 $(TEST_DIR)/gen/%.c $(TEST_DIR)/gen/%.h: $(TEST_DIR)/%.lc | $(TEST_DIR)/gen
 	$(LABCOMM) \
-		--ver=$(VERSION) \
 		--c=$(TEST_DIR)/gen/$*.c \
 		--h=$(TEST_DIR)/gen/$*.h \
 		$<

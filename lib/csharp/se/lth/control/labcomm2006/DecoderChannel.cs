@@ -2,14 +2,13 @@ namespace se.lth.control.labcomm {
 
   using System;
   using System.IO;
-  using System.Runtime.InteropServices;
   using System.Text;
+  using System.Runtime.InteropServices;
 
   public class DecoderChannel : Decoder {
 
     private Stream stream;
-    private DecoderRegistry def_registry = new DecoderRegistry();
-    private DecoderRegistry ref_registry = new DecoderRegistry();
+    private DecoderRegistry registry = new DecoderRegistry();
     byte[] buf = new byte[8];
 
     public DecoderChannel(Stream stream) {
@@ -19,40 +18,18 @@ namespace se.lth.control.labcomm {
     public void runOne() {
       bool done = false;
       while (!done) {
-	int tag = decodePacked32();
-        int length = decodePacked32();
+	int tag = decodeInt();
+
 	switch (tag) {
-        case Constant.VERSION: {
-          String version = decodeString();
-          if (version != Constant.CURRENT_VERSION) {
-  	    throw new IOException("LabComm version mismatch " +
-			          version + " != " + Constant.CURRENT_VERSION);
-          }
-        } break;
         case Constant.SAMPLE_DEF: {
-          int index = decodePacked32();
+          int index = decodeInt();
           String name = decodeString();
-          int signature_length = decodePacked32();
-          byte[] signature = new byte[signature_length];
-          ReadBytes(signature, signature_length);
-	  def_registry.add(index, name, signature);
-        } break;
-        case Constant.SAMPLE_REF: {
-          int index = decodePacked32();
-          String name = decodeString();
-          int signature_length = decodePacked32();
-          byte[] signature = new byte[signature_length];
-          ReadBytes(signature, signature_length);
-	  ref_registry.add(index, name, signature);
-        } break;
-        case Constant.TYPE_DEF: 
-        case Constant.TYPE_BINDING: {
-            for(int i=0; i<length;i++){
-                decodeByte();
-            }                
+	  MemoryStream signature = new MemoryStream();
+	  collectFlatSignature(new EncoderChannel(signature));
+	  registry.add(index, name, signature.ToArray());
         } break;
         default: {
-          DecoderRegistry.Entry e = def_registry.get(tag);
+          DecoderRegistry.Entry e = registry.get(tag);
           if (e == null) {
             throw new IOException("Unhandled tag " + tag);
           }
@@ -77,13 +54,45 @@ namespace se.lth.control.labcomm {
       }
     }
 
-    public void register(SampleDispatcher dispatcher, 
-			 SampleHandler handler) {
-      def_registry.add(dispatcher, handler);
+    private void collectFlatSignature(Encoder e) {
+      int type = decodeInt();
+      e.encodeInt(type);
+      switch (type) {
+        case Constant.ARRAY: {
+          int dimensions = decodeInt();
+          e.encodeInt(dimensions);
+          for (int i = 0 ; i < dimensions ; i++) {
+             e.encodeInt(decodeInt());
+          }
+          collectFlatSignature(e);
+        } break;
+        case Constant.STRUCT: {
+          int fields = decodeInt();
+          e.encodeInt(fields);
+          for (int i = 0 ; i < fields ; i++) {
+            e.encodeString(decodeString());
+            collectFlatSignature(e);
+          }
+        } break;
+        case Constant.BOOLEAN:
+        case Constant.BYTE:
+        case Constant.SHORT:
+        case Constant.INT:
+        case Constant.LONG:
+        case Constant.FLOAT:
+        case Constant.DOUBLE:
+        case Constant.STRING: {
+        } break;
+        default: {
+          throw new IOException("Unimplemented type=" + type);
+        }
+      }
+      e.end(null);
     }
 
-    public void registerSampleRef(SampleDispatcher dispatcher) {
-      ref_registry.add(dispatcher, null);
+    public void register(SampleDispatcher dispatcher, 
+			 SampleHandler handler) {
+      registry.add(dispatcher, handler);
     }
 
     private void ReadBytes(byte[] result, int length) {
@@ -147,33 +156,10 @@ namespace se.lth.control.labcomm {
     }
 
     public String decodeString() {
-      int length = decodePacked32();
+      int length = decodeInt();
       byte[] buf = new byte[length];
       ReadBytes(buf, length);
       return Encoding.UTF8.GetString(buf);
-    }
-
-    public int decodePacked32() {
-      Int64 res = 0;
-      bool cont = true; 
-
-      do {
-        Int64 c = decodeByte();
-	res = (res << 7) | (c & 0x7f);
-        cont = (c & 0x80) != 0;
-      } while(cont);
-
-      return (int) (res & 0xffffffff);
-    }
-
-    public Type decodeSampleRef() {
-      int index = (int)ReadInt(4);
-      try {
-        DecoderRegistry.Entry e = ref_registry.get(index);
-        return e.getSampleDispatcher().getSampleClass();
-      } catch (NullReferenceException) {
-        return null;
-      }
     }
 
   }

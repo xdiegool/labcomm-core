@@ -8,8 +8,6 @@ aspect CS_CodeGenEnv {
 
   public class CS_env {
 
-    public final int version;
-    public final String verStr;
     private int indent;
     private int depth;
     private CS_printer printer;
@@ -77,19 +75,17 @@ aspect CS_CodeGenEnv {
       }
     }
 
-    private CS_env(int indent, CS_printer printer, int version) {
-      this.version = version;
+    private CS_env(int indent, CS_printer printer) {
       this.indent = indent;
       this.printer = printer;
-      this.verStr = LabCommVersion.versionString(version);
     }
 
-    public CS_env(File f, int version) {
-      this(0, new CS_printer(f), version);
+    public CS_env(File f) {
+      this(0, new CS_printer(f));
     }
 
-    public CS_env(PrintStream out, int version) {
-      this(0, new CS_printer(out), version);
+    public CS_env(PrintStream out) {
+      this(0, new CS_printer(out));
     }
 
     public void close() throws IOException {
@@ -202,9 +198,9 @@ aspect CS_Void {
 aspect CS_CodeGen {
 
   public void Program.CS_gen(String file, 
-			     String namespace, int version) throws IOException {
+			     String namespace) throws IOException {
     // Registration class
-    CS_env env = new CS_env(new File(file), version);
+    CS_env env = new CS_env(new File(file));
     if (namespace != null && namespace.length() > 0) {
       env.println("namespace " + namespace + "{");
       env.indent();
@@ -244,7 +240,6 @@ aspect CS_Register {
   }
 
   public void TypeDecl.CS_emitTypeRegister(CS_env env) {
-    // TODO
   }
 
 }
@@ -258,56 +253,15 @@ aspect CS_Class {
   }
 
   public void Decl.CS_emitDeclPP(CS_env env){
-	env.println("/* ");
-	pp(env.getPrintStream());
-	
-	CS_emitUserTypeDeps(env,null,false);
-	CS_emitUserTypeRefs(env,null,false);
-	env.println("*/");
-  
-  }
-  
-  public void Decl.CS_emitUserTypeDeps(CS_env env, String via, boolean outputCode){
-	Iterator<Decl> it = type_dependencies().iterator();
-	while(it.hasNext()) {
-	    Decl t = it.next();
-
-	    t.CS_emitUserTypeDeps(env, t.getName(), outputCode);
-	    if( outputCode && t.getType().isUserType() ) {
-	       env.println(t.getName()+".register(e);");
-	    } else {  // Just output a comment
-		String refpath = (via == null) ? "directly" : "indirectly via "+via;
-	       env.println(" //Depends ("+refpath+") on "+t.getName() );
-	    }
-	}
-  }
-  
-  public void Decl.CS_emitUserTypeRefs(CS_env env, String via, boolean outputCode){
-     if( isReferenced() ) {
-        Iterator<Decl> it = type_references().iterator();
-        while(it.hasNext()) {
-            Decl t = it.next();
-
-            t.CS_emitUserTypeRefs(env, t.getName(), outputCode);
-            if(outputCode) {
-               env.println(t.getName()+".register(e);");
-            } else {  // Just output a comment
-	        String refpath = (via == null) ? "directly" : "indirectly via "+via;
-	       env.println(" //Is referenced ("+refpath+")  by "+t.getName() );
-            }
-        }
-    }
+    env.println("/* ");
+    pp(env.getPrintStream());
+    env.println("*/");
   }
   
   public void Decl.CS_emitRegisterEncoder(CS_env env) {
     env.println("public static void register(Encoder e){");
     env.indent();
     env.println("e.register(dispatcher);");
-    env.unindent();
-    env.println("}");
-    env.println("public static void registerSampleRef(Encoder e) {");
-    env.indent();
-    env.println("e.registerSampleRef(dispatcher);");
     env.unindent();
     env.println("}");
     env.println();
@@ -317,12 +271,6 @@ aspect CS_Class {
     env.println("public static void register(Decoder d, Handler h) {");
     env.indent();
     env.println("d.register(dispatcher, h);");
-    env.unindent();
-    env.println("}");
-    env.println();
-    env.println("public static void registerSampleRef(Decoder d) {");
-    env.indent();
-    env.println("d.registerSampleRef(dispatcher);");
     env.unindent();
     env.println("}");
     env.println();
@@ -339,11 +287,6 @@ aspect CS_Class {
       env.println();
       env.indent();
       getType().CS_emitInstance(env);
-      if( isReferenced()) {
-        CS_emitRegisterEncoder(env);
-	CS_emitDispatcher(env,false);
-      }
-      CS_emitSignature(env);
       CS_emitEncoder(env);
       CS_emitDecoder(env);
       env.unindent();
@@ -381,22 +324,18 @@ aspect CS_Class {
 
   public void Decl.CS_emitSignature(CS_env env) {
     CS_emitFlatSignature(env);
-//    if(isReferenced() || isSampleDecl()){
-//      Signature signature = getSignature();
-//      signature.CS_emitSignature(env, !isSampleDecl());
-//    }
   }
 
   public void Decl.CS_emitFlatSignature(CS_env env){
     env.println("private static byte[] signature = new byte[] {");
     env.indent();
-    SignatureList signature = flatSignature(env.version);
+    SignatureList signature = flatSignature(2006);
     for (int i = 0 ; i < signature.size() ; i++) {
       String comment = signature.getComment(i);
       if (comment != null) {
         env.println(signature.getIndent(i) + "// " + comment);
       }
-      byte[] data = signature.getData(i, env.version);
+      byte[] data = signature.getData(i, 2006);
       if (data != null) {
         env.print(signature.getIndent(i));
         for (int j = 0 ; j < data.length ; j++) {
@@ -413,7 +352,7 @@ aspect CS_Class {
 
   //XXX TODO: refactor: split into a static class ("TypeDefSingleton"?)and a (smaller) dispatcher
   public void Decl.CS_emitDispatcher(CS_env env, boolean isSample) {
-    String genericStr = ""; //env.versionHasMetaData()?"<"+getName()+">":""; 
+    String genericStr = "";
     env.println("private static Dispatcher dispatcher = new Dispatcher();");
     env.println();
     env.println("public SampleDispatcher getDispatcher() {");
@@ -467,8 +406,8 @@ aspect CS_Class {
 //    env.println();
 //  env.println("public void encodeSignatureMetadata(Encoder e, int index){");
 //  env.indent();
-//  env.println("e.encodePacked32(Constant.TYPE_DEF);");
-//  env.println("e.encodePacked32(index);");
+//  env.println("e.encodeInt(Constant.TYPE_DEF);");
+//  env.println("e.encodeInt(index);");
 //  env.println("e.encodeString(getName());");
 //  env.println("emitSignature(e);");
 //  env.unindent();
@@ -553,7 +492,6 @@ aspect CS_Class {
       case LABCOMM_FLOAT: { env.print("e.encodeFloat"); } break;
       case LABCOMM_DOUBLE: { env.print("e.encodeDouble"); } break;
       case LABCOMM_STRING: { env.print("e.encodeString"); } break;
-      case LABCOMM_SAMPLE: { env.print("e.encodeSampleRef"); } break;
     }
     env.println("(" + name + ");");
   }
@@ -593,7 +531,7 @@ aspect CS_Class {
   }
 
   public String VariableSize.CS_emitEncoder(CS_env env, String name) {
-    env.println("e.encodePacked32(" + name + ");");
+    env.println("e.encodeInt(" + name + ");");
     return name;
   }
 
@@ -648,7 +586,6 @@ aspect CS_Class {
       case LABCOMM_FLOAT: { env.println("d.decodeFloat();"); } break;
       case LABCOMM_DOUBLE: { env.println("d.decodeDouble();"); } break;
       case LABCOMM_STRING: { env.println("d.decodeString();"); } break;
-      case LABCOMM_SAMPLE: { env.println("d.decodeSampleRef();"); } break;
       default: {
         throw new Error("PrimType.CS_emitDecoder(CS_env env, String name)" + 
                         " unknown token type");
@@ -706,7 +643,7 @@ aspect CS_Class {
   }
 
   public void VariableSize.CS_emitDecoder(CS_env env) {
-    env.print("d.decodePacked32()");
+    env.print("d.decodeInt()");
   }
 
   public void StructType.CS_emitDecoder(CS_env env, String name) {
@@ -892,51 +829,51 @@ aspect CS_Class {
 }
 
 aspect CS_Signature {
-    public void Signature.CS_emitSignature(CS_env env, boolean decl){
- 
-      SignatureList sl = getSignatureList();
-      sl.CS_emitSignature(env, decl);
-    }
 
-    public abstract void SignatureLine.CS_emitSignature(CS_env env, boolean decl);
-
-    public void TypeRefSignatureLine.CS_emitSignature(CS_env env, boolean isDecl){
-      env.print(getIndentString());
-      env.println("e.encodePacked32(e.getTypeId( typeof("+decl.getName()+")));");
-    }
-
-    public void DataSignatureLine.CS_emitSignature(CS_env env, boolean decl){
-        byte[] data = getData(env.version);
-          if (data != null) {
-              env.print(getIndentString());
-              for (int j = 0 ; j < data.length ; j++) {
-                  //env.print("e.encodeByte((byte)"+data[j]+");");
-                  env.print("e.encodeByte((byte)"+ String.format("0x%02X ", data[j]) +"); ");
-              }
-              env.println();
-          }
+  public void Signature.CS_emitSignature(CS_env env, boolean decl) {
+    SignatureList sl = getSignatureList();
+    sl.CS_emitSignature(env, decl);
   }
-    public void SignatureList.CS_emitSignature(CS_env env, boolean decl) {
-      env.println("private static void emitSignature(Encoder e){");
-      env.indent();
-      for (int i = 0 ; i < size() ; i++) {
-        String comment = getComment(i);
-        if (comment != null && comment.length() > 0) {
-            env.println(getIndent(i) + "// " + comment);
-        }
-        SignatureLine l = getSignatureLine(i);
-        l.CS_emitSignature(env, decl);
+
+  public abstract void SignatureLine.CS_emitSignature(CS_env env, boolean decl);
+
+  public void TypeRefSignatureLine.CS_emitSignature(CS_env env, boolean isDecl) {
+    env.print(getIndentString());
+    env.println("e.encodeInt(e.getTypeId( typeof("+decl.getName()+")));");
+  }
+
+  public void DataSignatureLine.CS_emitSignature(CS_env env, boolean decl) {
+    byte[] data = getData(2006);
+    if (data != null) {
+      env.print(getIndentString());
+      for (int j = 0 ; j < data.length ; j++) {
+        env.print("e.encodeByte((byte)"+ String.format("0x%02X ", data[j]) +"); ");
       }
-      env.println("}");
-      env.unindent();
+      env.println();
+    }
+  }
+  
+  public void SignatureList.CS_emitSignature(CS_env env, boolean decl) {
+    env.println("private static void emitSignature(Encoder e){");
+    env.indent();
+    for (int i = 0 ; i < size() ; i++) {
+      String comment = getComment(i);
+      if (comment != null && comment.length() > 0) {
+          env.println(getIndent(i) + "// " + comment);
+      }
+      SignatureLine l = getSignatureLine(i);
+      l.CS_emitSignature(env, decl);
+    }
+    env.println("}");
+    env.unindent();
   }
 
 }
 
 aspect CS_Info {
 
-  public void Program.CS_info(PrintStream out, String namespace, int version) {
-    CS_env env = new CS_env(out, version);
+  public void Program.CS_info(PrintStream out, String namespace) {
+    CS_env env = new CS_env(out);
     if (namespace == null) {
       namespace = ""; 
     } else {

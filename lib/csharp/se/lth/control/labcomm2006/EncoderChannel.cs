@@ -10,38 +10,19 @@ namespace se.lth.control.labcomm {
     private Stream writer;
     private MemoryStream bytes = new MemoryStream();
     private EncoderRegistry def_registry = new EncoderRegistry();
-    private EncoderRegistry ref_registry = new EncoderRegistry();
     byte[] buf = new byte[8];
     private int current_tag; 
 
     public EncoderChannel(Stream writer) {
       this.writer = writer;
-
-      begin(Constant.VERSION);
-      encodeString(Constant.CURRENT_VERSION);
-      end(null);
     }
 
     public void register(SampleDispatcher dispatcher) {
       int index = def_registry.add(dispatcher);
       begin(Constant.SAMPLE_DEF);
-      encodePacked32(index);
+      encodeInt(index);
       encodeString(dispatcher.getName());
       byte[] signature = dispatcher.getSignature();
-      encodePacked32(signature.Length);
-      for (int i = 0 ; i < signature.Length ; i++) {
-	encodeByte(signature[i]);
-      }
-      end(null);
-    }
-
-    public void registerSampleRef(SampleDispatcher dispatcher) {
-      int index = ref_registry.add(dispatcher);
-      begin(Constant.SAMPLE_REF);
-      encodePacked32(index);
-      encodeString(dispatcher.getName());
-      byte[] signature = dispatcher.getSignature();
-      encodePacked32(signature.Length);
       for (int i = 0 ; i < signature.Length ; i++) {
 	encodeByte(signature[i]);
       }
@@ -51,6 +32,7 @@ namespace se.lth.control.labcomm {
     private void begin(int tag) {
       current_tag = tag;
       bytes.SetLength(0);
+      encodeInt(tag);
     }
 
     public void begin(Type c) {
@@ -58,23 +40,9 @@ namespace se.lth.control.labcomm {
     }
 
     public void end(Type c) {
-      WritePacked32(writer, current_tag);
-      WritePacked32(writer, bytes.Length);
       bytes.WriteTo(writer);
       bytes.SetLength(0);
       writer.Flush();
-    }
-
-    private void WritePacked32(Stream s, Int64 value) {
-      Int64 v = value & 0xffffffff;
-      int i;
-  
-      for (i = 0 ; i == 0 || v != 0 ; i++, v = (v >> 7)) {
-        buf[i] = (byte)(v & 0x7f | (i!=0?0x80:0x00));
-      }
-      for (i = i - 1 ; i >= 0 ; i--) {
-        s.WriteByte(buf[i]);
-      }      
     }
 
     private void WriteInt(Int64 value, int length) {
@@ -124,22 +92,10 @@ namespace se.lth.control.labcomm {
 
     public void encodeString(String value) {
       byte[] buf = Encoding.UTF8.GetBytes(value);
-      encodePacked32(buf.Length);
+      encodeInt(buf.Length);
       bytes.Write(buf, 0, buf.Length);
     }
 
-    public void encodePacked32(Int64 value) {
-      WritePacked32(bytes, value);
-    }
-
-    public void encodeSampleRef(Type value) {
-      int index = 0;
-      try {
-        index = ref_registry.getTag(value);
-      } catch (NullReferenceException) {
-      }
-      WriteInt(index, 4);
-    }
-
   }
+
 }

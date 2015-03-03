@@ -53,12 +53,6 @@ class Test:
                 result.append((decl, values))
             return result
     
-        elif decl.__class__ == labcomm.typedef:
-            result = []
-            for values in self.generate(decl.decl):
-                result.append(values)
-            return result
-
         elif decl.__class__ == labcomm.struct:
             result = []
             if len(decl.field) == 0:
@@ -128,26 +122,6 @@ class Test:
         print>>sys.stderr, decl
         raise Exception("unhandled decl %s" % decl.__class__)
 
-    def uses_refs(self, decls):
-        for decl in decls:
-            if decl.__class__ == labcomm.sample:
-                if self.uses_refs([ decl.decl ]):
-                    return True
-    
-            elif decl.__class__ == labcomm.struct:
-                if self.uses_refs([ d for n,d in decl.field ]):
-                    return True
-        
-            elif decl.__class__ == labcomm.array:
-                if self.uses_refs([ decl.decl ]):
-                    return True
-
-            elif decl.__class__ == labcomm.SAMPLE:
-                return True
-
-        return False
-        
-
     def run(self):
         print>>sys.stderr, 'Testing', self.program
         p = subprocess.Popen(self.program, 
@@ -163,9 +137,6 @@ class Test:
         for signature in self.signatures:
             encoder.add_decl(signature)
             pass
-        if self.uses_refs(self.signatures):
-            for signature in self.signatures:
-                encoder.add_ref(signature)
         for signature in self.signatures:
             print>>sys.stderr, "Checking", signature.name,
             for decl,value in self.generate(signature):

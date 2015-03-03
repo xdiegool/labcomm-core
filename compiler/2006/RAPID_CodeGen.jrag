@@ -1,16 +1,14 @@
 
 aspect RAPID_env {
 	public class RAPID_env {
-                public final int version;
 		private String prefix;
 		private StringBuilder types;
 		private StringBuilder constants;
 		private StringBuilder procedures;
 		private PrintStream ps;
 
-		public RAPID_env(PrintStream ps, String prefix, int version)
+		public RAPID_env(PrintStream ps, String prefix)
 		{
-			this.version = version;
 			this.types = new StringBuilder();
 			this.constants = new StringBuilder();
 			this.procedures = new StringBuilder();
@@ -77,11 +75,11 @@ aspect RAPID_CodeGen {
 		throw new UnsupportedOperationException();
 	}
 
-	public void Program.RAPID_gen(String file, String prefix, int version)
+	public void Program.RAPID_gen(String file, String prefix)
 			throws IOException
 	{
 		PrintStream ps = new PrintStream(new FileOutputStream(new File(file)));
-		RAPID_env env = new RAPID_env(ps, prefix, version);
+		RAPID_env env = new RAPID_env(ps, prefix);
 		RAPID_gen(env);
 	}
 
@@ -105,13 +103,13 @@ aspect RAPID_CodeGen {
 	public void Decl.RAPID_emitFlatSignature(RAPID_env env, String sig_len_name, String sig_name) {
 		System.out.println("***WARNING! Code not tested after reorganization of signatures.");
 		System.out.println("            (Tell a developer to) remove this warning when tested");
-		SignatureList sig = flatSignature(env.version);
+		SignatureList sig = flatSignature(2006);
 		StringBuilder sb = new StringBuilder();
 		sb.append("[");
 		byte[] d = null;
 		int sig_len = 0;
 		for (int i = 0; i < sig.size(); i++) {
-			d = sig.getData(i, env.version);
+			d = sig.getData(i, 2006);
 			for (int j = 0; d != null && j < d.length; j++) {
 				sb.append(d[j] + ",");
 				sig_len++;

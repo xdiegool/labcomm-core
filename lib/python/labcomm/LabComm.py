@@ -1,95 +1,5 @@
 #!/usr/bin/python
 #
-# LabComm2014 packet has the following layout
-#
-#   +----+----+----+----+
-#   | id                    (packed32)
-#   +----+----+----+----+
-#   | length                (packed32)
-#   +----+----+----+----+
-#   | data
-#   | ...
-#   +----+--
-#
-# LabComm2014 SAMPLE_DEF:
-#
-#   +----+----+----+----+
-#   | id = 0x02             (packed32)
-#   +----+----+----+----+
-#   | length                (packed32)
-#   +----+----+----+----+
-#   | type number           (packed32)
-#   +----+----+----+----+
-#   | type name (UTF8)
-#   | ...
-#   +----+----+----+----+
-#   | signature length      (packed32)
-#   +----+----+----+----+
-#   | type signature
-#   | ...
-#   +----+--
-#
-# LabComm2014 SAMPLE_REF:
-#
-#   +----+----+----+----+
-#   | id = 0x03             (packed32)
-#   +----+----+----+----+
-#   | length                (packed32)
-#   +----+----+----+----+
-#   | type number           (packed32)
-#   +----+----+----+----+
-#   | type name (UTF8)
-#   | ...
-#   +----+----+----+----+
-#   | signature length      (packed32)
-#   +----+----+----+----+
-#   | type signature
-#   | ...
-#   +----+--
-#
-# LabComm2014 TYPE_DEF: (as SAMPLE_DEF, but signatures are hierarchical,
-#                         i.e., may contain references to other types
-#
-#   +----+----+----+----+
-#   | id = 0x04             (packed32)
-#   +----+----+----+----+
-#   | length                (packed32)
-#   +----+----+----+----+
-#   | type number           (packed32)
-#   +----+----+----+----+
-#   | type name (UTF8)
-#   | ...
-#   +----+----+----+----+
-#   | signature length      (packed32)
-#   +----+----+----+----+
-#   | type signature
-#   | ...
-#   +----+--
-#
-# LabComm2014 TYPE_BINDING
-#
-#   +----+----+----+----+
-#   | id = 0x05             (packed32)
-#   +----+----+----+----+
-#   | length                (packed32)
-#   +----+----+----+----+
-#   | sample number         (packed32)
-#   +----+----+----+----+
-#   | type number           (packed32)
-#   +----+----+----+----+
-#
-# LabComm2014 User data:
-#
-#   +----+----+----+----+
-#   | id >= 0x00000040      (packed32)
-#   +----+----+----+----+
-#   | length                (packed32)
-#   +----+----+----+----+
-#   | user data
-#   | ...
-#   +----+--
-#   
-#
 # LabComm2006 packets has the following layout
 #
 #   +----+----+----+----+
@@ -169,15 +79,8 @@
 import types
 import struct as packer
 
-DEFAULT_VERSION = "LabComm2014"
-
 # Allowed packet tags
-i_VERSION     = 0x01
 i_SAMPLE_DEF  = 0x02
-i_SAMPLE_REF  = 0x03
-i_TYPE_DEF    = 0x04  
-i_TYPE_BINDING= 0x05 
-i_PRAGMA      = 0x3f
 i_USER        = 0x40 # ..0xffffffff
 
 # Predefined types
@@ -192,12 +95,14 @@ i_LONG    = 0x24
 i_FLOAT   = 0x25
 i_DOUBLE  = 0x26
 i_STRING  = 0x27
-i_SAMPLE  = 0x28
 
 
 # Version testing
 def usePacketLength(version):
-    return version in [ None, "LabComm2014" ]
+    if version != "LabComm2006":
+        import sys
+        print>>sys.stderr, "No version please %s" % version
+    return False
 
 class length_encoder:
     def __init__(self, encoder):
@@ -369,38 +274,19 @@ class STRING(primitive):
     def __repr__(self):
         return "labcomm.STRING()"
 
-class SAMPLE(primitive):
-
-    def encode_decl(self, encoder):
-        return encoder.encode_type(i_SAMPLE)
-
-    def encode(self, encoder, value):
-        return encoder.encode_int(encoder.ref_to_index.get(value, 0))
-    
-    def decode(self, decoder, obj=None):
-        return decoder.decode_ref()
-
-    def new_instance(self):
-        return ""
-
-    def __repr__(self):
-        return "labcomm.SAMPLE()"
-
 #
 # Aggregate types
 #
-class sampledef_or_sampleref_or_typedef(type_decl):
+class sampledef(type_decl):
     def __init__(self, name=None, decl=None):
         self.name = name
         self.decl = decl
 
     def encode_decl(self, encoder):
         encoder.encode_type(self.type_index)
-        with length_encoder(encoder) as e1:
-            e1.encode_type(self.get_index(encoder))
-            e1.encode_string(self.name)
-            with length_encoder(e1) as e2:
-                self.decl.encode_decl(e2)
+        encoder.encode_type(self.get_index(encoder))
+        encoder.encode_string(self.name)
+        self.decl.encode_decl(encoder)
 
     def encode(self, encoder, value):
         self.decl.encode(encoder, value)
@@ -408,8 +294,6 @@ class sampledef_or_sampleref_or_typedef(type_decl):
     def decode_decl(self, decoder):
         index = decoder.decode_type_number()
         name = decoder.decode_string()
-        if usePacketLength(decoder.version):
-            length = decoder.decode_packed32()
         decl = decoder.decode_decl()
         result = self.__class__.__new__(self.__class__)
         result.__init__(name=name, decl=decl)
@@ -438,7 +322,7 @@ class sampledef_or_sampleref_or_typedef(type_decl):
     def __repr__(self):
         return "%s('%s', %s)" % (self.type_name, self.name, self.decl)
 
-class sample_def(sampledef_or_sampleref_or_typedef):
+class sample_def(sampledef):
     type_index = i_SAMPLE_DEF
     type_name = 'sample'
 
@@ -448,34 +332,6 @@ class sample_def(sampledef_or_sampleref_or_typedef):
     def add_index(self, decoder, index, decl):
         decoder.add_decl(decl, index)
     
-class sample_ref(sampledef_or_sampleref_or_typedef):
-    type_index = i_SAMPLE_REF
-    type_name = 'sample_ref'
-    
-    def __init__(self, name=None, decl=None, sample=None):
-        self.name = name
-        self.decl = decl
-        if sample == None and name != None and decl != None:
-            self.sample = sample_def(name, decl)
-        else:
-            self.sample = sample
-
-    def get_index(self, encoder):
-        return encoder.ref_to_index[self.sample]
-
-    def add_index(self, decoder, index, decl):
-        decoder.add_ref(decl, index)
-
-class typedef(sampledef_or_sampleref_or_typedef):
-    type_index = i_TYPE_DEF
-    type_name = 'typedef'
-
-    def encode_decl(self, encoder):
-        self.decl.encode_decl(encoder)
-
-    def encode(self, encoder, value):
-        self.decl.encode(encoder, value)
-
 class array(type_decl):
     def __init__(self, indices, decl):
         self.indices = tuple(indices)
@@ -664,7 +520,6 @@ class struct(type_decl):
         return result
 
 SAMPLE_DEF = sample_def()
-SAMPLE_REF = sample_ref()
 
 ARRAY = array([], None)
 STRUCT = struct([])
@@ -699,7 +554,6 @@ class Codec(object):
 
     def predefined_types(self):
         self.add_decl(SAMPLE_DEF, i_SAMPLE_DEF)
-        self.add_decl(SAMPLE_REF, i_SAMPLE_REF)
 
         self.add_decl(ARRAY, i_ARRAY)
         self.add_decl(STRUCT, i_STRUCT)
@@ -712,7 +566,6 @@ class Codec(object):
         self.add_decl(FLOAT(), i_FLOAT)
         self.add_decl(DOUBLE(), i_DOUBLE)
         self.add_decl(STRING(), i_STRING)
-        self.add_decl(SAMPLE(), i_SAMPLE)
         
     def add_decl(self, decl, index=0):
         if index == 0:
@@ -758,18 +611,9 @@ class Codec(object):
         
 
 class Encoder(Codec):
-    def __init__(self, writer, version=DEFAULT_VERSION, codec=None):
+    def __init__(self, writer, codec=None):
         super(Encoder, self).__init__(codec)
         self.writer = writer
-        self.version = version
-        if self.version in [ "LabComm2014" ]:
-            self.encode_type(i_VERSION)
-            with length_encoder(self) as e:
-                e.encode_string(version)
-        elif self.version in [ None,  "LabComm2006" ]:
-            pass
-        else:
-            raise Exception("Unsupported labcomm version %s" % self.version)    
 
     def pack(self, format, *args):
         self.writer.write(packer.pack(format, *args))
@@ -783,16 +627,6 @@ class Encoder(Codec):
                 decl.encode_decl(self)
             self.writer.mark_end(decl, None)
  
-    def add_ref(self, decl, index=0):
-        if not isinstance(decl, type_decl):
-            decl = decl.signature
-        ref = sample_ref(name=decl.name, decl=decl.decl, sample=decl)
-        if index == 0:
-            self.writer.mark_begin(decl, None)
-            if super(Encoder, self).add_ref(ref, index):
-                ref.encode_decl(self)
-            self.writer.mark_end(decl, None)
- 
     def encode(self, object, decl=None):
         if decl == None:
             name = self.type_to_name[object.__class__]
@@ -801,8 +635,7 @@ class Encoder(Codec):
             decl = decl.signature
         self.writer.mark_begin(decl, object)
         self.encode_type_number(decl)
-        with length_encoder(self) as e:
-            decl.encode(e, object)
+        decl.encode(self, object)
         self.writer.mark_end(decl, object)
 
     def encode_type_number(self, decl):
@@ -812,20 +645,8 @@ class Encoder(Codec):
             decl.encode_decl(self)
             
     def encode_packed32(self, v):
-        if self.version in [ None, "LabComm2014" ]:
-            v = v & 0xffffffff
-            tmp = [ v & 0x7f ]
-            v = v >> 7
-            while v:
-                tmp.append(v & 0x7f | 0x80)
-                v = v >> 7
-            for c in reversed(tmp):
-                self.encode_byte(c) 
-        elif self.version == "LabComm2006" :
-            v = v & 0xffffffff
-            self.encode_int(v)
-        else :
-            raise Exception("Unsupported labcomm version %s" % self.version)
+        v = v & 0xffffffff
+        self.encode_int(v)
 
     def encode_type(self, index):
         self.encode_packed32(index)
@@ -860,10 +681,9 @@ class Encoder(Codec):
 	self.pack("%ds" % len(s),s)
 
 class Decoder(Codec):
-    def __init__(self, reader, version=DEFAULT_VERSION):
+    def __init__(self, reader):
         super(Decoder, self).__init__()
         self.reader = reader
-        self.version = version
         
     def unpack(self, format):
         size = packer.calcsize(format)
@@ -882,46 +702,10 @@ class Decoder(Codec):
             raise Exception('Should not be used')
         return result
 
-    def skip(self, length):
-        for _ in xrange(length):
-            self.decode_byte()
-
-    # kludge, should really check if the index exists in self.version
-    def skip_or_raise(self, length, index):
-        if usePacketLength(self.version):
-            self.skip(length)
-        else:    
-            raise Exception("Invalid type index %d" % index)
-
     def decode(self):
-        while True:
-            index = self.decode_type_number()
-            if usePacketLength(self.version):
-                length = self.decode_packed32()
-            if index != i_VERSION:
-                break
-            else:
-                other_version = self.decode_string()  
-                if self.version != other_version:
-                    raise Exception("LabComm version mismatch %s != %s" %
-                                    (version, other_version))
+        index = self.decode_type_number()
         if index == i_SAMPLE_DEF:
             decl = self.index_to_decl[index].decode_decl(self)
-            value = None
-        elif index == i_SAMPLE_REF:
-            decl = self.index_to_decl[index].decode_decl(self)
-            value = None
-        elif index == i_TYPE_DEF:
-            self.skip_or_raise(length, index) 
-            decl = None
-            value = None
-        elif index == i_TYPE_BINDING:
-            self.skip_or_raise(length, index) 
-            decl = None
-            value = None
-        elif index == i_PRAGMA:
-            self.skip_or_raise(length, index) 
-            decl = None
             value = None
         elif index < i_USER:
             raise Exception("Invalid type index %d" % index)
@@ -945,18 +729,7 @@ class Decoder(Codec):
         return result
     
     def decode_packed32(self):
-        if self.version in [ "LabComm2013", "LabComm2014" ] :
-            result = 0
-            while True:
-                tmp = self.decode_byte()
-                result = (result << 7) | (tmp & 0x7f)
-                if (tmp & 0x80) == 0:
-                    break
-            return result
-        elif self.version == "LabComm2006" :
-            return self.decode_int()
-        else :
-            raise Exception("Unsupported labcomm version %s" % self.version)
+        return self.decode_int()
 
     def decode_type_number(self):
         return self.decode_packed32()

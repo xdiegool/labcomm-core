@@ -8,8 +8,6 @@ aspect Java_CodeGenEnv {
 
   public class Java_env {
 
-    public final int version;  //labcomm version to generate code for
-    public final String verStr;
     private int indent;
     private int depth;
     private Java_printer printer;
@@ -77,24 +75,22 @@ aspect Java_CodeGenEnv {
       }
     }
 
-    private Java_env(int version, int indent) {
-      this.version = version;
-      this.verStr = LabCommVersion.versionString(version);
+    private Java_env(int indent) {
       this.indent = indent;
     }
 
-    private Java_env(int version, Java_printer printer) {
-      this(version, 0);
+    private Java_env(Java_printer printer) {
+      this(0);
       this.printer = printer;
     }
 
-    public Java_env(int version, File f) {
-      this(version, 0);
+    public Java_env(File f) {
+      this(0);
       this.printer = new Java_printer(f);
     }
 
-    public Java_env(int version, PrintStream out) {
-      this(version, 0);
+    public Java_env(PrintStream out) {
+      this(0);
       this.printer = new Java_printer(out);
     }
 
@@ -204,9 +200,9 @@ aspect Java_Void {
 
 aspect Java_CodeGen {
 
-  public void Program.J_gen(PrintStream ps, String pack, int version) throws IOException {
+  public void Program.J_gen(PrintStream ps, String pack) throws IOException {
     Java_env env;
-    env = new Java_env(version, ps);
+    env = new Java_env(ps);
     for (int i = 0; i < getNumDecl(); i++) {
       Decl d = getDecl(i);
       try {
@@ -219,12 +215,12 @@ aspect Java_CodeGen {
     env.close();
   }
 
-  public void Program.J_gen(String dir, String pack, int version) throws IOException {
+  public void Program.J_gen(String dir, String pack) throws IOException {
     Java_env env;
     for (int i = 0; i < getNumDecl(); i++) {
       Decl d = getDecl(i);
       try {
-        env = new Java_env(version, new File(dir, d.getName() + ".java"));
+        env = new Java_env(new File(dir, d.getName() + ".java"));
         d.Java_emitClass(env, pack);
         env.close();
       } catch (Error e) {
@@ -236,14 +232,14 @@ aspect Java_CodeGen {
 
   /** Experimental method for generating code to a map <classname, source>
     */
-  public void Program.J_gen(Map<String,String> src, String pack, int version) throws IOException {
+  public void Program.J_gen(Map<String,String> src, String pack) throws IOException {
     Java_env env;
     for (int i = 0; i < getNumDecl(); i++) {
       Decl d = getDecl(i);
       try {
         ByteArrayOutputStream bs = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(bs);
-        env = new Java_env(version, out);
+        env = new Java_env(out);
         d.Java_emitClass(env, pack);
         env.close();
         src.put(d.getName(), bs.toString());
@@ -276,20 +272,6 @@ aspect Java_Class {
   }
 
   public void Decl.Java_emitUserTypeDeps(Java_env env, String via, boolean outputCode) {
-  // XXX TODO will generate unnecessary recursion for types. fix this per commented out code
-  // XXX      but ensure that types with references actually register themselves.. (i.e., add "nested" argument)
-  //public abstract void Decl.Java_emitUserTypeDeps(Java_env env, String via, boolean outputCode);
-
-  //public void TypeDecl.Java_emitUserTypeDeps(Java_env env, String via, boolean outputCode) {
-  //  // do nothing for type decls; sampledecl iterates over all dependencies and outputs
-  //  // all type decls
-  //}
-  //public void SampleDecl.Java_emitUserTypeDeps(Java_env env, String via, boolean outputCode) {
-//  if(env.versionHasMetaData() && hasDependencies() || isReferenced() ) {
-//      if(env.versionHasMetaData() && isSampleDecl() && outputCode) {
-//         env.println("if(sendMetaData){");
-//         env.indent();
-//      }
         Iterator<Decl> it = type_dependencies().iterator();
         while(it.hasNext()) {
             Decl t = it.next();
@@ -302,13 +284,9 @@ aspect Java_Class {
 	       env.println(" //Depends ("+refpath+") on "+t.getName() );
             }
         }
-//      if(env.versionHasMetaData() && isSampleDecl() && outputCode) {
-//         env.unindent();
-//         env.println("}");
-//      }
-//  }
   }
-  public void Decl.Java_emitUserTypeRefs(Java_env env, String via, boolean outputCode) {
+
+public void Decl.Java_emitUserTypeRefs(Java_env env, String via, boolean outputCode) {
     if( isReferenced() ) {
         Iterator<Decl> it = type_references().iterator();
         while(it.hasNext()) {
@@ -348,19 +326,15 @@ aspect Java_Class {
           env.println("package " + pack + ";");
       }
 
-      env.println("import se.lth.control.labcomm"+env.verStr+".Constant;");
-      env.println("import se.lth.control.labcomm"+env.verStr+".SampleType;");
+      env.println("import se.lth.control.labcomm2006.Constant;");
+      env.println("import se.lth.control.labcomm2006.SampleType;");
 
       if (getType().Java_needInstance() || hasDependencies() || isReferenced()) {
-          env.println("import se.lth.control.labcomm"+env.verStr+".Encoder;");
-          env.println("import se.lth.control.labcomm"+env.verStr+".SampleDispatcher;");
-          env.println("import se.lth.control.labcomm"+env.verStr+".SampleHandler;");
-//          env.println();
-//      }
-//
-//      if (getType().Java_needInstance()) {
+          env.println("import se.lth.control.labcomm2006.Encoder;");
+          env.println("import se.lth.control.labcomm2006.SampleDispatcher;");
+          env.println("import se.lth.control.labcomm2006.SampleHandler;");
           env.println("import java.io.IOException;");
-          env.println("import se.lth.control.labcomm"+env.verStr+".Decoder;");
+          env.println("import se.lth.control.labcomm2006.Decoder;");
       }
       // For types without type_dependencies and not needing an instance,
       // currently just an empty class is generated
@@ -397,21 +371,14 @@ aspect Java_Class {
     }
 
     env.println("import java.io.IOException;");
-    env.println("import se.lth.control.labcomm"+env.verStr+".Constant;");
-    env.println("import se.lth.control.labcomm"+env.verStr+".Decoder;");
-    env.println("import se.lth.control.labcomm"+env.verStr+".SampleDispatcher;");
-    env.println("import se.lth.control.labcomm"+env.verStr+".Encoder;");
-    env.println("import se.lth.control.labcomm"+env.verStr+".SampleHandler;");
-    env.println("import se.lth.control.labcomm"+env.verStr+".Sample;");
+    env.println("import se.lth.control.labcomm2006.Constant;");
+    env.println("import se.lth.control.labcomm2006.Decoder;");
+    env.println("import se.lth.control.labcomm2006.SampleDispatcher;");
+    env.println("import se.lth.control.labcomm2006.Encoder;");
+    env.println("import se.lth.control.labcomm2006.SampleHandler;");
+    env.println("import se.lth.control.labcomm2006.Sample;");
     env.println();
     env.print("public class " + getName());
-//  TODO: ?
-//  Code for making samples of user types extend their type
-//  currently commented out. Is this a good idea or not?
-//
-//    if(getType().isUserType()) {
-//        env.print(" extends "+getType().getTypeName());
-//    }
     env.println(" implements Sample {");
     env.println();
     env.indent();
@@ -464,13 +431,13 @@ aspect Java_Class {
   public void Decl.Java_emitFlatSignature(Java_env env){
     env.println("private static byte[] signature = new byte[] {");
       env.indent();
-      SignatureList signature = flatSignature(env.version);
+      SignatureList signature = flatSignature(2006);
       for (int i = 0 ; i < signature.size() ; i++) {
         String comment = signature.getComment(i);
         if (comment != null) {
           env.println(signature.getIndent(i) + "// " + comment);
         }
-        byte[] data = signature.getData(i, env.version);
+        byte[] data = signature.getData(i, 2006);
         if (data != null) {
           env.print(signature.getIndent(i));
           for (int j = 0 ; j < data.length ; j++) {
@@ -487,7 +454,7 @@ aspect Java_Class {
 
   //XXX TODO: refactor: split into a static class ("TypeDefSingleton"?)and a (smaller) dispatcher
   public void Decl.Java_emitDispatcher(Java_env env, boolean isSample) {
-    String genericStr = ""; //env.versionHasMetaData()?"<"+getName()+">":""; 
+    String genericStr = "";
     env.println("private static Dispatcher dispatcher = new Dispatcher();");
     env.println();
     env.println("public SampleDispatcher getDispatcher() {");
@@ -513,18 +480,10 @@ aspect Java_Class {
     env.println();
     env.println("public byte getTypeDeclTag() {");
     env.indent();
-    if(env.version == 2006) {
-      if(isSample) {
-        env.println("return Constant.SAMPLE;");
-      } else {
-        env.println("return Constant.TYPEDEF;");
-      }
+    if(isSample) {
+      env.println("return Constant.SAMPLE;");
     } else {
-      if(isSample) {
-        env.println("return Constant.SAMPLE_DEF;");
-      } else {
-        env.println("return Constant.TYPE_DEF;");
-      }
+      env.println("return Constant.TYPEDEF;");
     }
     env.unindent();
     env.println("}");
@@ -534,11 +493,6 @@ aspect Java_Class {
     env.println("return "+isSample+";");
     env.unindent();
     env.println("}");
-//    env.println("public boolean hasStaticSignature() {");
-//    env.indent();
-//    env.println("return "+!hasDependencies()+";");
-//    env.unindent();
-//    env.println("}");
     env.println();
     env.println("/** return the flat signature. */");
     env.println("public byte[] getSignature() {");
@@ -547,21 +501,6 @@ aspect Java_Class {
     env.unindent();
     env.println("}");
     env.println();
-//    env.println("public void encodeSignature(Encoder e) throws IOException{");
-//    env.indent();
-//    env.println("emitSignature(e);");
-//    env.unindent();
-//    env.println("}");
-//    env.println();
-//    env.println("public void encodeSignatureMetadata(Encoder e, int index) throws IOException{");
-//    env.indent();
-//    env.println("e.encodePacked32(Constant.TYPE_DEF);");
-//    env.println("e.encodePacked32(index);");
-//    env.println("e.encodeString(getName());");
-//    env.println("emitSignature(e);");
-//    env.unindent();
-//    env.println("}");
-//    env.println();
     env.println("public boolean canDecodeAndHandle() {");
     env.indent();
     env.println("return "+isSample+";");
@@ -677,7 +616,7 @@ aspect Java_Class {
   }
 
   public String VariableSize.Java_emitEncoder(Java_env env, String name) {
-    env.println("e.encodePacked32(" + name + ".length);");
+    env.println("e.encodeInt(" + name + ".length);");
     return name + ".length";
   }
 
@@ -770,7 +709,7 @@ aspect Java_Class {
   }
 
   public void VariableSize.Java_emitDecoder(Java_env env) {
-    env.print("d.decodePacked32()");
+    env.print("d.decodeInt()");
   }
 
   public void StructType.Java_emitDecoder(Java_env env, String name) {
@@ -966,8 +905,6 @@ aspect Java_Class {
 
 aspect Java_Signature {
     public void Signature.Java_emitSignature(Java_env env, boolean decl){
-      // XXX should sendOnlyFlatSignatures be kept somewhere?
-      //SignatureList sl = (parentDecl().sendOnlyFlatSignatures(env)) ? getFlatSignatureList() : getSignatureList();
       SignatureList sl = getSignatureList();
       sl.Java_emitSignature(env, decl);
     }
@@ -981,11 +918,11 @@ aspect Java_Signature {
 
     public void TypeRefSignatureLine.Java_emitSignature(Java_env env, boolean isDecl){
       env.print(getIndentString());
-      env.println("e.encodePacked32(e.getTypeId("+decl.getName()+".class));");
+      env.println("e.encodeInt(e.getTypeId("+decl.getName()+".class));");
     }
 
     public void DataSignatureLine.Java_emitSignature(Java_env env, boolean decl){
-        byte[] data = getData(env.version);
+        byte[] data = getData(2006);
           if (data != null) {
               env.print(getIndentString());
               for (int j = 0 ; j < data.length ; j++) {
@@ -1014,8 +951,8 @@ aspect Java_Signature {
 
 aspect Java_Info {
 
-  public void Program.Java_info(PrintStream out, int version) {
-    Java_env env = new Java_env(version, out);
+  public void Program.Java_info(PrintStream out) {
+    Java_env env = new Java_env(out);
     for (int i = 0; i < getNumDecl(); i++) {
       getDecl(i).Java_info(env);
     }

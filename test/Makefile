@@ -1,5 +1,5 @@
-TESTS=basic simple nested ref
-LABCOMM_JAR=../compiler/labcomm_compiler.jar
+TESTS=basic simple nested
+LABCOMM_JAR=../compiler/labcomm2006_compiler.jar
 LABCOMM=java -jar $(LABCOMM_JAR)
 
 include ../lib/c/os_compat.mk
@@ -25,8 +25,8 @@ test_%: gen/%/signatures.py \
 		--test tee gen/$*/testdata \
 		--test gen/$*/c_relay /dev/stdin /dev/stdout \
 		--test mono gen/$*/cs_relay.exe /dev/stdin /dev/stdout \
-		--test java \\-cp gen/$*:../lib/java/labcomm.jar java_relay \
-			    /dev/stdin /dev/stdout
+		--test java \\-cp gen/$*:../lib/java/labcomm2006.jar \
+			    java_relay /dev/stdin /dev/stdout
 
 # test cases for compiler error checking
 .PHONY: compiler_errors testErrorsOK testErrorsNOK
@@ -65,8 +65,8 @@ gen/%/c_relay.c: gen/%/typeinfo relay_gen_c.py Makefile
 
 .PRECIOUS: gen/%/c_relay
 gen/%/c_relay: gen/%/c_relay.c gen/%/c_code.c Makefile
-	$(CC) $(CFLAGS) -o $@ $< -I../lib/c/2014 -I. -L../lib/c \
-		gen/$*/c_code.c -llabcomm2014
+	$(CC) $(CFLAGS) -o $@ $< -I../lib/c/2006 -I. -L../lib/c \
+		gen/$*/c_code.c -llabcomm2006
 
 # C# relay test rules
 .PRECIOUS: gen/%/cs_code.cs
@@ -77,14 +77,14 @@ gen/%/cs_code.cs: %.lc Makefile | gen/%/.dir
 gen/%/cs_relay.cs:  gen/%/typeinfo relay_gen_cs.py Makefile
 	./relay_gen_cs.py $< > $@
 
-.PRECIOUS: gen/%/labcomm.dll
-gen/%/labcomm.dll:
-	ln -s ../../../lib/csharp/labcomm.dll $@
+.PRECIOUS: gen/%/labcomm2006.dll
+gen/%/labcomm2006.dll:
+	ln -s ../../../lib/csharp/labcomm2006.dll $@
 
 .PRECIOUS: gen/%/cs_relay.exe
 gen/%/cs_relay.exe: gen/%/cs_relay.cs gen/%/cs_code.cs \
-		    gen/%/labcomm.dll Makefile
-	mcs -out:$@ $(filter %.cs, $^) -lib:../lib/csharp/ -r:labcomm
+		    gen/%/labcomm2006.dll Makefile
+	mcs -out:$@ $(filter %.cs, $^) -lib:../lib/csharp/ -r:labcomm2006
 
 # Java relay test rules
 .PRECIOUS: gen/%/java_code
@@ -98,4 +98,4 @@ gen/%/java_relay.java: gen/%/typeinfo relay_gen_java.py Makefile
 
 .PRECIOUS: gen/%/java_relay.class
 gen/%/java_relay.class: gen/%/java_relay.java gen/%/java_code Makefile
-	javac -d gen/$*  -cp ../lib/java/labcomm.jar:gen/$*/java_code $<
+	javac -d gen/$*  -cp ../lib/java/labcomm2006.jar:gen/$*/java_code $<

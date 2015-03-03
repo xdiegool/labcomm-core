@@ -72,10 +72,7 @@ aspect Python_CodeGenEnv {
 
 aspect Python_CodeGen {
 
-  public void Program.Python_gen(PrintStream out, String baseName, int version) {
-    // Remove when Blomdell has verified that it is OK to ignore version
-    // when generating python code. 
-    System.err.println("*** Warning! Python_gen ignores version: "+version);
+  public void Program.Python_gen(PrintStream out, String baseName) {
     Python_env env = new Python_env(out);
     env.println("#!/usr/bin/python");
     env.println("# Auto generated " + baseName);
@@ -84,20 +81,13 @@ aspect Python_CodeGen {
     env.println("import StringIO");
     env.println();
     Python_genTypes(env);
-    //env.println("typedef = [");
-    //env.indent();
-    //for (int i = 0 ; i < getNumDecl() ; i++) {
-    //  getDecl(i).Python_genTypedefListEntry(env);
-    //}
-    //env.unindent();
-    //env.println("]");
-    env.println("sample = [");
+    env.println("sample = tuple([");
     env.indent();
     for (int i = 0 ; i < getNumDecl() ; i++) {
       getDecl(i).Python_genSampleListEntry(env);
     }
     env.unindent();
-    env.println("]");
+    env.println("])");
   }
 
 }
@@ -117,17 +107,6 @@ aspect PythonTypes {
   }
 
   public void TypeDecl.Python_genSignature(Python_env env) {
-/*
-    env.println("class " + getName() + "(object):");
-    env.indent();
-    env.println("signature = labcomm.typedef('" + getName() + "',");
-    env.indent();
-    getType().Python_genSignature(env);
-    env.unindent();
-    env.println(")");
-    env.unindent();
-    env.println();
-*/
   }
 
   public void SampleDecl.Python_genSignature(Python_env env) {
@@ -200,18 +179,11 @@ aspect PythonTypes {
     env.print(")");
   }
 
-  public void Decl.Python_genTypedefListEntry(Python_env env) {
-  }
-
-  public void TypeDecl.Python_genTypedefListEntry(Python_env env) {
-    env.println("('" + getName() + "', " + getName() + ".signature),");
-  }
-
   public void Decl.Python_genSampleListEntry(Python_env env) {
   }
 
   public void SampleDecl.Python_genSampleListEntry(Python_env env) {
-    env.println("('" + getName() + "', " + getName() + ".signature),");
+    env.println(getName() + ",");
   }
 
   public String Exp.Python_getValue() {

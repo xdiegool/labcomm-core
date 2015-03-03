@@ -27,26 +27,26 @@ if __name__ == '__main__':
       |#include <sys/types.h>
       |#include <sys/stat.h>
       |#include <fcntl.h>
-      |#include <labcomm2014.h>
-      |#include <labcomm2014_default_error_handler.h>
-      |#include <labcomm2014_default_memory.h>
-      |#include <labcomm2014_default_scheduler.h>
-      |#include <labcomm2014_fd_reader.h>
-      |#include <labcomm2014_fd_writer.h>
+      |#include <labcomm2006.h>
+      |#include <labcomm2006_default_error_handler.h>
+      |#include <labcomm2006_default_memory.h>
+      |#include <labcomm2006_default_scheduler.h>
+      |#include <labcomm2006_fd_reader.h>
+      |#include <labcomm2006_fd_writer.h>
       |#include "c_code.h"
     """))
     for func,arg,stype in sample:
         result.extend(split_match('^[^|]*\|(.*)$', """
           |void handle_%(func)s(%(arg)s *v, void *context)
           |{
-          |  struct labcomm2014_encoder *e = context;
-          |  labcomm2014_encode_%(func)s(e%(valargstr)s);
+          |  struct labcomm2006_encoder *e = context;
+          |  labcomm2006_encode_%(func)s(e%(valargstr)s);
           |}""" % { 'func': func, 'arg': arg, 'valargstr': '' if stype == "void" else', v' }))
         pass
     result.extend(split_match('^[^|]*\|(.*)$', """
       |int main(int argc, char *argv[]) {
-      |  struct labcomm2014_encoder *e;
-      |  struct labcomm2014_decoder *d;
+      |  struct labcomm2006_encoder *e;
+      |  struct labcomm2006_decoder *d;
       |  int in, out;
       |  
       |  if (argc < 3) { return 1; }
@@ -54,26 +54,24 @@ if __name__ == '__main__':
       |  if (in < 0) { return 1; }
       |  out = open(argv[2], O_WRONLY);
       |  if (out < 0) { return 1; }
-      |  e = labcomm2014_encoder_new(labcomm2014_fd_writer_new(
-      |                              labcomm2014_default_memory, out, 1), 
-      |                              labcomm2014_default_error_handler,
-      |                              labcomm2014_default_memory,
-      |                              labcomm2014_default_scheduler);
-      |  d = labcomm2014_decoder_new(labcomm2014_fd_reader_new(
-      |                              labcomm2014_default_memory, in, 1), 
-      |                              labcomm2014_default_error_handler,
-      |                              labcomm2014_default_memory,
-      |                              labcomm2014_default_scheduler);
+      |  e = labcomm2006_encoder_new(labcomm2006_fd_writer_new(
+      |                              labcomm2006_default_memory, out, 1), 
+      |                              labcomm2006_default_error_handler,
+      |                              labcomm2006_default_memory,
+      |                              labcomm2006_default_scheduler);
+      |  d = labcomm2006_decoder_new(labcomm2006_fd_reader_new(
+      |                              labcomm2006_default_memory, in, 1), 
+      |                              labcomm2006_default_error_handler,
+      |                              labcomm2006_default_memory,
+      |                              labcomm2006_default_scheduler);
     """))
     for func,arg,stype in sample:
         result.extend(split_match('^[^|]*\|(.*)$', """
-          |  labcomm2014_encoder_register_%(func)s(e);
-          |  labcomm2014_encoder_sample_ref_register(e, labcomm2014_signature_%(func)s);
-          |  labcomm2014_decoder_register_%(func)s(d, handle_%(func)s, e);
-          |  labcomm2014_decoder_sample_ref_register(d, labcomm2014_signature_%(func)s);
+          |  labcomm2006_encoder_register_%(func)s(e);
+          |  labcomm2006_decoder_register_%(func)s(d, handle_%(func)s, e);
        """ % { 'func': func, 'arg': arg }))
     result.extend(split_match('^[^|]*\|(.*)$', """
-      |  labcomm2014_decoder_run(d);
+      |  labcomm2006_decoder_run(d);
       |  return 0;
       |}
     """))

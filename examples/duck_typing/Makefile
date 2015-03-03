@@ -1,4 +1,4 @@
-LABCOMM_JAR=../../compiler/labcomm_compiler.jar
+LABCOMM_JAR=../../compiler/labcomm2006_compiler.jar
 LABCOMM=java -jar $(LABCOMM_JAR) 
 
 all: gen/animal.py

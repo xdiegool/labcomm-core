@@ -14,7 +14,6 @@ public class LabComm {
     println("");
     println(" --help                  Shows this help text");
     println(" -v                      Be verbose");
-    println(" --ver=VERSION           Generate code for labcomm VERSION (=2006 or 2013)");
     println("[ C options ]");
     println(" -C                      Generates C/H code in FILE.[ch]");
     println(" --cprefix=PREFIX        Prefixes C types with PREFIX");
@@ -38,25 +37,15 @@ public class LabComm {
     println(" --typeinfo=TIFILE       Generates typeinfo in TIFILE");
   }
     
-  /** To be cleaned up.
-   */
-  private static void checkVersion(int v) {
-     if(! (v == 2006 || v == 2013) ) {
-	System.err.println(" Unknown version: " + v);
-	System.err.println(" Supported versions: 2006, 2013 ");
-	System.exit(2);
-     }
-  }
-
   private static void genH(Program p, String hName, 
-			   Vector cIncludes, String coreName, String prefix, int ver) {
+			   Vector cIncludes, String coreName, String prefix) {
     try {
       FileOutputStream f;
       PrintStream out;
       
       f = new FileOutputStream(hName);
       out = new PrintStream(f);
-      p.C_genH(out, cIncludes, coreName, prefix, ver);
+      p.C_genH(out, cIncludes, coreName, prefix);
       out.close();
     } catch (IOException e) {
       System.err.println("IOException: " + hName + " " + e);
@@ -64,56 +53,56 @@ public class LabComm {
   }
 
   private static void genC(Program p, String cName, 
-			   Vector cIncludes, String coreName, String prefix, int ver) {
+			   Vector cIncludes, String coreName, String prefix) {
     try {
       FileOutputStream f;
       PrintStream out;
 
       f = new FileOutputStream(cName);
       out = new PrintStream(f);
-      p.C_genC(out, cIncludes, coreName, prefix, ver);
+      p.C_genC(out, cIncludes, coreName, prefix);
       out.close();
     } catch (IOException e) {
       System.err.println("IOException: " + cName + " " + e);
     }
   }
 
-  private static void genCS(Program p, String csName, String csNamespace, int ver) {
+  private static void genCS(Program p, String csName, String csNamespace) {
 //      throw new Error("C# generation currently disabled");
     try {
-      p.CS_gen(csName, csNamespace, ver);
+      p.CS_gen(csName, csNamespace);
     } catch (IOException e) {
       System.err.println("IOException: " + csName + " " + 
 			 csNamespace + " " + e);
     }
   }
 
-  private static void genJava(Program p,  String dirName, String packageName, int ver) {
+  private static void genJava(Program p,  String dirName, String packageName) {
     try {
-      p.J_gen(dirName, packageName, ver);
+      p.J_gen(dirName, packageName);
     } catch (IOException e) {
       System.err.println("IOException: " + dirName + " " + 
 			 packageName + " " + e);
     }
   }
 
-  private static void genPython(Program p, String filename, String prefix, int ver) {
+  private static void genPython(Program p, String filename, String prefix) {
     try {
       FileOutputStream f;
       PrintStream out;
 
       f = new FileOutputStream(filename);
       out = new PrintStream(f);
-      p.Python_gen(out, prefix, ver);
+      p.Python_gen(out, prefix);
       out.close();
     } catch (IOException e) {
       System.err.println("IOException: " + filename + " " + e);
     }
   }
 
-  private static void genRAPID(Program p, String filename, String prefix, int ver) {
+  private static void genRAPID(Program p, String filename, String prefix) {
     try {
-      p.RAPID_gen(filename, prefix, ver);
+      p.RAPID_gen(filename, prefix);
     } catch (IOException e) {
       System.err.println("IOException: " + filename + " " + e);
     }
@@ -127,7 +116,6 @@ public class LabComm {
     String coreName = null;
     String prefix = null;
     boolean verbose = false;
-    int ver = 2006; // Version 2006 fixed
     String cFile = null;
     String hFile = null;
     Vector cIncludes = new Vector();
@@ -191,9 +179,6 @@ public class LabComm {
   	System.exit(0);
         } else if (args[i].equals("-v")) {
   	verbose=true;
-        } else if (args[i].startsWith("--ver=")) {
-          /* ver = Integer.parseInt(args[i].substring(6));
-             checkVersion(ver); */
         } else if (args[i].equals("-C")) {
   	cFile = coreName + ".c";
   	hFile = coreName + ".h";
@@ -276,12 +261,12 @@ public class LabComm {
      }
      if (cFile != null) {
        printStatus("C: " , cFile);
-       genC(ast, cFile, cIncludes, coreName, cPrefix, ver);
+       genC(ast, cFile, cIncludes, coreName, cPrefix);
        wroteFile = true;
      }
      if (hFile != null) {
        printStatus("H: " , hFile);
-       genH(ast, hFile, hIncludes, coreName, cPrefix, ver);
+       genH(ast, hFile, hIncludes, coreName, cPrefix);
        wroteFile = true;
      }
      return wroteFile;
@@ -291,7 +276,7 @@ public class LabComm {
      boolean wroteFile = false; 
      if (csFile != null) {
        printStatus("C#: " , csFile); 
-       genCS(ast, csFile, csNamespace, ver);
+       genCS(ast, csFile, csNamespace);
        wroteFile = true;
      }
      return wroteFile;
@@ -301,7 +286,7 @@ public class LabComm {
      boolean wroteFile = false; 
      if (javaDir != null) {
        printStatus("Java: " , javaDir);
-       genJava(ast, javaDir, javaPackage, ver);
+       genJava(ast, javaDir, javaPackage);
        wroteFile = true;
      }
      return wroteFile;
@@ -311,7 +296,7 @@ public class LabComm {
      boolean wroteFile = false; 
      if (pythonFile != null) {
        printStatus("Python: " , pythonFile); 
-       genPython(ast, pythonFile, prefix, ver);
+       genPython(ast, pythonFile, prefix);
        wroteFile = true;
      }
      return wroteFile;
@@ -321,7 +306,7 @@ public class LabComm {
      boolean wroteFile = false; 
      if (rapidFile != null) {
        printStatus("RAPID: " , rapidFile);
-       genRAPID(ast, rapidFile, coreName, ver);
+       genRAPID(ast, rapidFile, coreName);
        wroteFile = true;
      }
      return wroteFile;
@@ -350,9 +335,9 @@ public class LabComm {
        try {
          FileOutputStream f = new FileOutputStream(typeinfoFile);
          PrintStream out = new PrintStream(f);
-         ast.C_info(out, cPrefix, ver);
-         ast.Java_info(out, ver);
-         ast.CS_info(out, csNamespace, ver);
+         ast.C_info(out, cPrefix);
+         ast.Java_info(out);
+         ast.CS_info(out, csNamespace);
          wroteFile = true;
        } catch (IOException e) {
          System.err.println("IOException: " + typeinfoFile + " " + e);

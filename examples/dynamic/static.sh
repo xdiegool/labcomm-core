@@ -2,7 +2,7 @@
 
 # run labcomm compilation
 
-java -jar ../../compiler/labcomm_compiler.jar --java=gen --javapackage=gen simple.lc
+java -jar ../../compiler/labcomm2006_compiler.jar --java=gen --javapackage=gen simple.lc
 
 # compile example programs
 javac -cp .:gen:../../lib/java/labcomm.jar test/StaticEncoder.java

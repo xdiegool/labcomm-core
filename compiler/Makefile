@@ -9,7 +9,7 @@ clean: ant-clean
 	rm -f *~
 
 .PHONY: distclean
-distclean: clean
+distclean: clean ant-distclean
 
 .PHONY: ant-%
 ant-%:

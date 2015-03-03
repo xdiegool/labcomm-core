@@ -6,8 +6,6 @@ aspect Signature {
   eq TypeDecl.isSampleDecl() = false;
   eq SampleDecl.isSampleDecl() = true;
 
-  syn boolean Decl.sendOnlyFlatSignatures(Java_env env) = (env.version==2006);
-
   eq Decl.getSignature().parentDecl() = this;
   eq Signature.getSignatureList().parentDecl() = parentDecl();
 

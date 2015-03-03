@@ -36,12 +36,12 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <labcomm2014.h>
-#include <labcomm2014_fd_reader.h>
-#include <labcomm2014_fd_writer.h>
-#include <labcomm2014_default_error_handler.h>
-#include <labcomm2014_default_memory.h>
-#include <labcomm2014_pthread_scheduler.h>
+#include <labcomm2006.h>
+#include <labcomm2006_fd_reader.h>
+#include <labcomm2006_fd_writer.h>
+#include <labcomm2006_default_error_handler.h>
+#include <labcomm2006_default_memory.h>
+#include <labcomm2006_pthread_scheduler.h>
 #include "decimating.h"
 #include "introspecting.h"
 #include "gen/types.h"
@@ -63,13 +63,13 @@ static void handle_Product(int32_t *value, void *context)
 
 static void *run_decoder(void *context)
 {
-  struct labcomm2014_decoder *decoder = context;
+  struct labcomm2006_decoder *decoder = context;
   int result;
 
-  labcomm2014_decoder_register_types_Sum(decoder, handle_Sum, NULL);
-  labcomm2014_decoder_register_types_Diff(decoder, handle_Diff, NULL);
+  labcomm2006_decoder_register_types_Sum(decoder, handle_Sum, NULL);
+  labcomm2006_decoder_register_types_Diff(decoder, handle_Diff, NULL);
   do {
-    result = labcomm2014_decoder_decode_one(decoder);
+    result = labcomm2006_decoder_decode_one(decoder);
   } while (result >= 0);
   return NULL;
 }
@@ -87,10 +87,10 @@ int main(int argc, char *argv[])
   struct introspecting *introspecting;
   char *hostname;
   int port;
-  struct labcomm2014_scheduler *scheduler;
-  struct labcomm2014_decoder *decoder;
-  struct labcomm2014_encoder *encoder;
-  struct labcomm2014_time *next;
+  struct labcomm2006_scheduler *scheduler;
+  struct labcomm2006_decoder *decoder;
+  struct labcomm2006_encoder *encoder;
+  struct labcomm2006_time *next;
   int32_t i, j;
 
   hostname = argv[1];
@@ -128,13 +128,13 @@ int main(int argc, char *argv[])
   
   nodelay = 1;
   setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay));
-  scheduler = labcomm2014_pthread_scheduler_new(labcomm2014_default_memory);
-  decimating = decimating_new(labcomm2014_fd_reader_new(labcomm2014_default_memory, 
+  scheduler = labcomm2006_pthread_scheduler_new(labcomm2006_default_memory);
+  decimating = decimating_new(labcomm2006_fd_reader_new(labcomm2006_default_memory, 
 						    fd, 1),
-			      labcomm2014_fd_writer_new(labcomm2014_default_memory, 
+			      labcomm2006_fd_writer_new(labcomm2006_default_memory, 
 						    fd, 0),
-			      labcomm2014_default_error_handler,
-			      labcomm2014_default_memory,
+			      labcomm2006_default_error_handler,
+			      labcomm2006_default_memory,
 			      scheduler);
   if (decimating == NULL) {
     /* Warning: might leak reader and writer at this point */
@@ -142,45 +142,45 @@ int main(int argc, char *argv[])
   }
   introspecting = introspecting_new(decimating->reader,
 				    decimating->writer,
-				    labcomm2014_default_error_handler,
-				    labcomm2014_default_memory,
+				    labcomm2006_default_error_handler,
+				    labcomm2006_default_memory,
 				    scheduler);
   if (introspecting == NULL) {
     /* Warning: might leak reader and writer at this point */
     goto out;
   }
-  decoder = labcomm2014_decoder_new(introspecting->reader, 
-				labcomm2014_default_error_handler,
-				labcomm2014_default_memory,
+  decoder = labcomm2006_decoder_new(introspecting->reader, 
+				labcomm2006_default_error_handler,
+				labcomm2006_default_memory,
 				scheduler);
-  encoder = labcomm2014_encoder_new(introspecting->writer, 
-				labcomm2014_default_error_handler,
-				labcomm2014_default_memory,
+  encoder = labcomm2006_encoder_new(introspecting->writer, 
+				labcomm2006_default_error_handler,
+				labcomm2006_default_memory,
 				scheduler);
   pthread_t rdt;
   pthread_create(&rdt, NULL, run_decoder, decoder);  
-  labcomm2014_encoder_register_types_A(encoder);
-  labcomm2014_encoder_register_types_B(encoder);
-  labcomm2014_encoder_register_types_Terminate(encoder);
+  labcomm2006_encoder_register_types_A(encoder);
+  labcomm2006_encoder_register_types_B(encoder);
+  labcomm2006_encoder_register_types_Terminate(encoder);
 
-  err = labcomm2014_decoder_ioctl_types_Sum(decoder, SET_DECIMATION, 2);
-  err = labcomm2014_decoder_ioctl_types_Diff(decoder, SET_DECIMATION, 4);
+  err = labcomm2006_decoder_ioctl_types_Sum(decoder, SET_DECIMATION, 2);
+  err = labcomm2006_decoder_ioctl_types_Diff(decoder, SET_DECIMATION, 4);
 
-  next = labcomm2014_scheduler_now(scheduler);
+  next = labcomm2006_scheduler_now(scheduler);
   for (i = 0 ; i < 4 ; i++) {
     if (i == 2) {
-      labcomm2014_decoder_register_types_Product(decoder, handle_Product, NULL);
+      labcomm2006_decoder_register_types_Product(decoder, handle_Product, NULL);
     }
     for (j = 0 ; j < 4 ; j++) {
       printf("\nA=%d B=%d: ", i, j);
-      labcomm2014_encode_types_A(encoder, &i);
-      labcomm2014_encode_types_B(encoder, &j);
-      labcomm2014_time_add_usec(next, 100000);
-      labcomm2014_scheduler_sleep(scheduler, next);
+      labcomm2006_encode_types_A(encoder, &i);
+      labcomm2006_encode_types_B(encoder, &j);
+      labcomm2006_time_add_usec(next, 100000);
+      labcomm2006_scheduler_sleep(scheduler, next);
     }
   }
   printf("\n");
-  labcomm2014_encode_types_Terminate(encoder);
+  labcomm2006_encode_types_Terminate(encoder);
 out:
   return 0;
   
