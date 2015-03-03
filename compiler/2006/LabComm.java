@@ -30,8 +30,6 @@ public class LabComm {
     println("[ Python options ]");
     println(" -P                      Generates Python code in FILE.py");
     println(" --python=PFILE          Generates Python code in PFILE");
-    println("[ RAPID options ]");
-    println(" --rapid                 Generates RAPID code in FILE.sys");
     println("[ Misc options ]");
     println(" --pretty=PFILE          Pretty prints to PFILE");
     println(" --typeinfo=TIFILE       Generates typeinfo in TIFILE");
@@ -68,7 +66,6 @@ public class LabComm {
   }
 
   private static void genCS(Program p, String csName, String csNamespace) {
-//      throw new Error("C# generation currently disabled");
     try {
       p.CS_gen(csName, csNamespace);
     } catch (IOException e) {
@@ -100,14 +97,6 @@ public class LabComm {
     }
   }
 
-  private static void genRAPID(Program p, String filename, String prefix) {
-    try {
-      p.RAPID_gen(filename, prefix);
-    } catch (IOException e) {
-      System.err.println("IOException: " + filename + " " + e);
-    }
-  }
-
   /** Helper class to contain command line options 
       and their associated behaviour
    **/
@@ -127,7 +116,6 @@ public class LabComm {
     String pythonFile = null;
     String prettyFile = null;
     String typeinfoFile = null;
-    String rapidFile = null;
     String fileName = null;
 
    Opts(String[] args) {
@@ -208,8 +196,6 @@ public class LabComm {
   	prettyFile = args[i].substring(9);
         } else if (args[i].startsWith("--typeinfo=")) {
   	typeinfoFile = args[i].substring(11);
-        } else if (args[i].equals("--rapid")) {
-  	rapidFile = coreName + ".sys";
         } else if (i == args.length - 1) {
   	fileName = args[i];
         } else {
@@ -302,15 +288,6 @@ public class LabComm {
      return wroteFile;
    }
   
-   boolean generateRAPID(Program ast) {
-     boolean wroteFile = false; 
-     if (rapidFile != null) {
-       printStatus("RAPID: " , rapidFile);
-       genRAPID(ast, rapidFile, coreName);
-       wroteFile = true;
-     }
-     return wroteFile;
-   }
    boolean generatePrettyPrint(Program ast) {
      boolean wroteFile = false; 
      if (prettyFile != null) {
@@ -371,7 +348,6 @@ public class LabComm {
         fileWritten |= opts.generateCS(ast);
         fileWritten |= opts.generateJava(ast);
         fileWritten |= opts.generatePython(ast);
-        fileWritten |= opts.generateRAPID(ast);
         fileWritten |= opts.generatePrettyPrint(ast);
         fileWritten |= opts.generateTypeinfo(ast);
 

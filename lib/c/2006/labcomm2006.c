@@ -262,6 +262,6 @@ int labcomm2006_internal_sizeof(const struct labcomm2006_signature *signature,
                             void *v)
 {
   int length = signature->encoded_size(v);
-  return (labcomm2006_size_packed32(signature->index) +
+  return (labcomm2006_size_int(signature->index) +
           length);
 }

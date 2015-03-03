@@ -118,7 +118,7 @@ class length_encoder:
 
     def __exit__(self, type, value, traceback):
         if usePacketLength(self.version):
-             self.encoder.encode_packed32(len(self.data))
+             self.encoder.encode_int(len(self.data))
         self.encoder.pack("%ds" % len(self.data), self.data)
 
 def indent(i, s):
@@ -350,9 +350,9 @@ class array(type_decl):
     
     def encode_decl(self, encoder):
         encoder.encode_type(i_ARRAY)
-        encoder.encode_packed32(len(self.indices))
+        encoder.encode_int(len(self.indices))
         for i in self.indices:
-            encoder.encode_packed32(i)
+            encoder.encode_int(i)
         encoder.encode_type_number(self.decl)
 
     def min_max_shape(self, l, depth, shape):
@@ -395,7 +395,7 @@ class array(type_decl):
                             (shape, self.indices))
         for i in range(len(self.indices)):
             if self.indices[i] == 0:
-                encoder.encode_packed32(shape[i])
+                encoder.encode_int(shape[i])
             elif self.indices[i] != shape[i]:
                 raise Exception("Actual dimension %d in %s differs from %s" %
                                 (i, shape, self.indices))
@@ -413,10 +413,10 @@ class array(type_decl):
         self.encode_value(encoder, value, depth)
 
     def decode_decl(self, decoder):
-        n_indices = decoder.decode_packed32()
+        n_indices = decoder.decode_int()
         indices = []
         for i in range(n_indices):
-            index = decoder.decode_packed32()
+            index = decoder.decode_int()
             indices.append(index)
         elem_decl = decoder.decode_decl()
         return array(indices, elem_decl)
@@ -434,7 +434,7 @@ class array(type_decl):
         indices = []
         for i in self.indices:
             if i == 0:
-                i = decoder.decode_packed32()
+                i = decoder.decode_int()
             indices.append(i)
         return self.decode_value(decoder, indices)
 
@@ -451,7 +451,7 @@ class array(type_decl):
         indices = []
         for i in self.indices:
             if i == 0:
-                i = decoder.decode_packed32()
+                i = decoder.decode_int()
             indices.append(i)
         return self.new_instance_value(indices)
     
@@ -475,7 +475,7 @@ class struct(type_decl):
 
     def encode_decl(self, encoder):
         encoder.encode_type(i_STRUCT)
-        encoder.encode_packed32(len(self.field))
+        encoder.encode_int(len(self.field))
         for (name, decl) in self.field:
             encoder.encode_string(name)
             encoder.encode_type_number(decl)
@@ -489,7 +489,7 @@ class struct(type_decl):
                 decl.encode(encoder, getattr(obj, name))
 
     def decode_decl(self, decoder):
-        n_field = decoder.decode_packed32()
+        n_field = decoder.decode_int()
         field = []
         for i in range(n_field):
             name = decoder.decode_string()
@@ -644,12 +644,12 @@ class Encoder(Codec):
         except KeyError:
             decl.encode_decl(self)
             
-    def encode_packed32(self, v):
+    def encode_int(self, v):
         v = v & 0xffffffff
         self.encode_int(v)
 
     def encode_type(self, index):
-        self.encode_packed32(index)
+        self.encode_int(index)
             
     def encode_boolean(self, v):
         if v:
@@ -677,7 +677,7 @@ class Encoder(Codec):
 
     def encode_string(self, v):
         s = v.encode("utf8")
-	self.encode_packed32(len(s));
+	self.encode_int(len(s));
 	self.pack("%ds" % len(s),s)
 
 class Decoder(Codec):
@@ -728,11 +728,11 @@ class Decoder(Codec):
 
         return result
     
-    def decode_packed32(self):
+    def decode_int(self):
         return self.decode_int()
 
     def decode_type_number(self):
-        return self.decode_packed32()
+        return self.decode_int()
         
     def decode_boolean(self):
         return self.unpack("!b") != 0
@@ -756,7 +756,7 @@ class Decoder(Codec):
         return self.unpack("!d")
     
     def decode_string(self):
-        length = self.decode_packed32()
+        length = self.decode_int()
         return self.unpack("!%ds" % length).decode("utf8")
 
     def decode_ref(self):

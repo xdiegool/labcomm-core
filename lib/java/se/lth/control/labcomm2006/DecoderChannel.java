@@ -18,10 +18,10 @@ public class DecoderChannel implements Decoder {
   public void runOne() throws Exception {
     boolean done = false;
     while (!done) {
-      int tag = decodePacked32();
+      int tag = decodeInt();
       switch (tag) {
 	case Constant.SAMPLE: {
-	  int index = decodePacked32();
+	  int index = decodeInt();
 	  String name = decodeString();
 	  ByteArrayOutputStream signature = new ByteArrayOutputStream();
 	  collectFlatSignature(new EncoderChannel(signature));
@@ -54,20 +54,20 @@ public class DecoderChannel implements Decoder {
   }
 
   private void collectFlatSignature(Encoder out) throws IOException {
-    int type = decodePacked32();
-    out.encodePacked32(type);
+    int type = decodeInt();
+    out.encodeInt(type);
     switch (type) {
       case Constant.ARRAY: {
-	int dimensions = decodePacked32();
-	out.encodePacked32(dimensions);
+	int dimensions = decodeInt();
+	out.encodeInt(dimensions);
 	for (int i = 0 ; i < dimensions ; i++) {
-	  out.encodePacked32(decodePacked32());
+	  out.encodeInt(decodeInt());
 	}
 	collectFlatSignature(out);
       } break;
       case Constant.STRUCT: {
-	int fields = decodePacked32();
-	out.encodePacked32(fields);
+	int fields = decodeInt();
+	out.encodeInt(fields);
 	for (int i = 0 ; i < fields ; i++) {
 	  out.encodeString(decodeString());
 	  collectFlatSignature(out);
@@ -125,7 +125,7 @@ public class DecoderChannel implements Decoder {
   public String decodeString() throws IOException {
     //in.readShort(); // HACK
     //return in.readUTF();
-    int len = decodePacked32() & 0xffffffff;
+    int len = decodeInt() & 0xffffffff;
     byte[] chars = new byte[len];
     for(int i=0; i<len; i++) {
       chars[i] = in.readByte();
@@ -133,12 +133,5 @@ public class DecoderChannel implements Decoder {
     return new String(chars);
   }
 
-  /**
-     method for API harmonization with labcomm2014.
-     Labcomm2006 encodes lengths etc as 32 bit ints.
-  */
-  public int decodePacked32() throws IOException {
-    return in.readInt();
-  }
 }
 

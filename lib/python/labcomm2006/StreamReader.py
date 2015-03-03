@@ -1,5 +1,3 @@
-import labcomm
-
 class StreamReader:
 
     def __init__(self, stream):

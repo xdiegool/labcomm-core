@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import labcomm
+import labcomm2006
 import animal
 import StringIO
 
@@ -10,7 +10,7 @@ class Animal:
 
 if __name__ == '__main__':
     buf = StringIO.StringIO()
-    encoder = labcomm.Encoder(labcomm.StreamWriter(buf))
+    encoder = labcomm2006.Encoder(labcomm2006.StreamWriter(buf))
     encoder.add_decl(animal.cow.signature)
     encoder.add_decl(animal.dog.signature)
     encoder.add_decl(animal.duck.signature)
@@ -22,7 +22,7 @@ if __name__ == '__main__':
     theAnimal.says = 'Quack'
     encoder.encode(theAnimal, animal.duck.signature)
     buf.seek(0)
-    decoder = labcomm.Decoder(labcomm.StreamReader(buf))
+    decoder = labcomm2006.Decoder(labcomm2006.StreamReader(buf))
     try:
         while True:
             value,decl = decoder.decode()

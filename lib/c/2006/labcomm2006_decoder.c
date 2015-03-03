@@ -87,23 +87,23 @@ static int collect_flat_signature(
 {
   int result, type;
 
-  type = labcomm2006_read_packed32(decoder->reader); 
+  type = labcomm2006_read_int(decoder->reader); 
   result = decoder->reader->error;
   if (result < 0) { goto out; }
   if (type >= LABCOMM_USER) {
     decoder->on_error(LABCOMM2006_ERROR_UNIMPLEMENTED_FUNC, 3,
 			"Implement %s ... (1) for type 0x%x\n", __FUNCTION__, type);
   } else {
-    labcomm2006_write_packed32(writer, type); 
+    labcomm2006_write_int(writer, type); 
     switch (type) {
       case LABCOMM_ARRAY: {
 	int dimensions, i;
 
-	dimensions = labcomm2006_read_packed32(decoder->reader);
-	labcomm2006_write_packed32(writer, dimensions);
+	dimensions = labcomm2006_read_int(decoder->reader);
+	labcomm2006_write_int(writer, dimensions);
 	for (i = 0 ; i < dimensions ; i++) {
-	  int n = labcomm2006_read_packed32(decoder->reader);
-	  labcomm2006_write_packed32(writer, n);
+	  int n = labcomm2006_read_int(decoder->reader);
+	  labcomm2006_write_int(writer, n);
 	}
 	result = collect_flat_signature(decoder, writer);
 	if (result < 0) { goto out; }
@@ -111,8 +111,8 @@ static int collect_flat_signature(
       case LABCOMM_STRUCT: {
 	int fields, i;
 
-	fields = labcomm2006_read_packed32(decoder->reader); 
-	labcomm2006_write_packed32(writer, fields); 
+	fields = labcomm2006_read_int(decoder->reader); 
+	labcomm2006_write_int(writer, fields); 
 	for (i = 0 ; i < fields ; i++) {
 	  char *name = labcomm2006_read_string(decoder->reader);
 	  labcomm2006_write_string(writer, name);
@@ -189,7 +189,7 @@ static int decode_typedef_or_sample(struct labcomm2006_decoder *d, int kind)
   local_index = 0;
   labcomm2006_writer_alloc(&writer, writer.action_context);
   labcomm2006_writer_start(&writer, writer.action_context, 0, NULL, NULL);
-  remote_index = labcomm2006_read_packed32(d->reader);
+  remote_index = labcomm2006_read_int(d->reader);
   signature.name = labcomm2006_read_string(d->reader);
   collect_flat_signature(d, &writer);
   labcomm2006_writer_end(&writer, writer.action_context);
@@ -296,7 +296,7 @@ int labcomm2006_decoder_decode_one(struct labcomm2006_decoder *d)
   int result, remote_index;
 
   reader_alloc(d);
-  remote_index = labcomm2006_read_packed32(d->reader);
+  remote_index = labcomm2006_read_int(d->reader);
   if (d->reader->error < 0) {
     result = d->reader->error;
     goto out;

@@ -25,8 +25,8 @@ public class EncoderChannel implements Encoder {
 
   public void register(SampleDispatcher dispatcher) throws IOException {
     int index = registry.add(dispatcher);
-    encodePacked32(Constant.SAMPLE);
-    encodePacked32(index);
+    encodeInt(Constant.SAMPLE);
+    encodeInt(index);
     encodeString(dispatcher.getName());
     byte[] signature = dispatcher.getSignature();
     for (int i = 0 ; i < signature.length ; i++) {
@@ -36,7 +36,7 @@ public class EncoderChannel implements Encoder {
   }
 
   public void begin(Class<? extends Sample> c) throws IOException {
-    encodePacked32(registry.getTag(c));
+    encodeInt(registry.getTag(c));
   }
 
   public void end(Class<? extends Sample> c) throws IOException {
@@ -84,7 +84,7 @@ public class EncoderChannel implements Encoder {
      method for API harmonization with labcomm2014.
      Labcomm2006 encodes lengths etc as 32 bit ints.
   */
-  public void encodePacked32(long value) throws IOException {
+  public void encodeInt(long value) throws IOException {
     if(value > Integer.MAX_VALUE) {
       throw new IllegalArgumentException("Value too large, must fit in 32 bits");
     }

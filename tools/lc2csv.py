@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
-import labcomm
+import labcomm2006
 import sys
 import time
 

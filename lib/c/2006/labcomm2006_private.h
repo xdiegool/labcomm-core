@@ -231,14 +231,14 @@ LABCOMM_DECODE(float, float)
 LABCOMM_DECODE(double, double)
 
 // compatibility with 2014 version
-#define labcomm2006_read_packed32 labcomm2006_read_int
+#define labcomm2006_read_int labcomm2006_read_int
 
 static inline char *labcomm2006_read_string(struct labcomm2006_reader *r)
 {
   char *result = NULL;
   int length, pos; 
   
-  length = labcomm2006_read_packed32(r);
+  length = labcomm2006_read_int(r);
   result = labcomm2006_memory_alloc(r->memory, 1, length + 1);
   if (!result) {
     labcomm2006_on_error_fprintf(LABCOMM2006_ERROR_MEMORY, 4, "%d byte at %s:%d",
@@ -392,10 +392,10 @@ LABCOMM_ENCODE(long, long long)
 LABCOMM_ENCODE(float, float)
 LABCOMM_ENCODE(double, double)
 
-#define labcomm2006_write_packed32 labcomm2006_write_int
+#define labcomm2006_write_int labcomm2006_write_int
 
 #if 0
-static inline int labcomm2006_write_packed32(struct labcomm2006_writer *w, 
+static inline int labcomm2006_write_int(struct labcomm2006_writer *w, 
 					 unsigned int data)
 {
   unsigned char tmp[5];
@@ -421,7 +421,7 @@ static inline int labcomm2006_write_string(struct labcomm2006_writer *w, char *s
   int length, i, err; 
 
   length = strlen((char*)s);
-  err = labcomm2006_write_packed32(w, length);
+  err = labcomm2006_write_int(w, length);
   if (err != 0) { return err; }
   for (i = 0 ; i < length ; i++) {
     if (w->pos >= w->count) {	
@@ -435,8 +435,8 @@ static inline int labcomm2006_write_string(struct labcomm2006_writer *w, char *s
   return 0;
 }
 
-/* Size of packed32 variable is 4 as we use int*/
-static inline int labcomm2006_size_packed32(unsigned int data)
+/* Size of int variable is 4 as we use int*/
+static inline int labcomm2006_size_int(unsigned int data)
 {
   return 4;
 }

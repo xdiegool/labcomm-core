@@ -46,8 +46,6 @@ static struct labcomm2006_reader reader =  {
   .pos = 0,
 };
 
-typedef uint32_t packed32;
-
 #define TEST_WRITE_READ(type, ltype, format, value, expect_count, expect_bytes) \
   {									\
     type decoded;							\
@@ -93,16 +91,6 @@ static void writer_assert(char *type,
 
 int main(void)
 {
-  TEST_WRITE_READ(packed32, packed32, "%d", 0x00000000, 4, "\x00\x00\x00\x00");
-  TEST_WRITE_READ(packed32, packed32, "%d", 0x0000007f, 4, "\x00\x00\x00\x7f");
-  TEST_WRITE_READ(packed32, packed32, "%d", 0x00000080, 4, "\x00\x00\x00\x80");
-  TEST_WRITE_READ(packed32, packed32, "%d", 0x00003fff, 4, "\x00\x00\x3f\xff");
-  TEST_WRITE_READ(packed32, packed32, "%d", 0x00004000, 4, "\x00\x00\x40\x00");
-  TEST_WRITE_READ(packed32, packed32, "%d", 0x001fffff, 4, "\x00\x1f\xff\xff");
-  TEST_WRITE_READ(packed32, packed32, "%d", 0x00200000, 4, "\x00\x20\x00\x00");
-  TEST_WRITE_READ(packed32, packed32, "%d", 0x0fffffff, 4, "\x0f\xff\xff\xff");
-  TEST_WRITE_READ(packed32, packed32, "%d", 0x10000000, 4, "\x10\x00\x00\x00");
-  TEST_WRITE_READ(packed32, packed32, "%d", 0xffffffff, 4, "\xff\xff\xff\xff");
   TEST_WRITE_READ(uint8_t, boolean, "%d", 0, 1, "\x00");
   TEST_WRITE_READ(uint8_t, boolean, "%d", 1, 1, "\x01");
   TEST_WRITE_READ(uint8_t, byte, "%d", 0, 1, "\x00");

@@ -85,8 +85,8 @@ int labcomm2006_internal_encoder_register(
 			     index, signature, NULL);
   if (err == -EALREADY) { result = 0; goto out; }
   if (err != 0) { result = err; goto out; }
-  labcomm2006_write_packed32(e->writer, LABCOMM_SAMPLE);
-  labcomm2006_write_packed32(e->writer, index);
+  labcomm2006_write_int(e->writer, LABCOMM_SAMPLE);
+  labcomm2006_write_int(e->writer, index);
   labcomm2006_write_string(e->writer, signature->name);
   for (i = 0 ; i < signature->size ; i++) {
     if (e->writer->pos >= e->writer->count) {
@@ -117,7 +117,7 @@ int labcomm2006_internal_encode(
 				index, signature, value);
   if (result == -EALREADY) { result = 0; goto no_end; }
   if (result != 0) { goto out; }
-  result = labcomm2006_write_packed32(e->writer, index);
+  result = labcomm2006_write_int(e->writer, index);
   if (result != 0) { goto out; }
   result = encode(e->writer, value);
 out:
