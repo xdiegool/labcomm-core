@@ -1,4 +1,4 @@
-package se.lth.control.labcomm;
+package se.lth.control.labcomm2014;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,10 +10,10 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.EOFException;
 
-import se.lth.control.labcomm.Decoder;
-import se.lth.control.labcomm.DecoderChannel;
-import se.lth.control.labcomm.TypeDef;
-import se.lth.control.labcomm.TypeBinding;
+import se.lth.control.labcomm2014.Decoder;
+import se.lth.control.labcomm2014.DecoderChannel;
+import se.lth.control.labcomm2014.TypeDef;
+import se.lth.control.labcomm2014.TypeBinding;
 
 public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
 

@@ -1,12 +1,12 @@
-package se.lth.control.labcomm;
+package se.lth.control.labcomm2014;
 
 import java.io.IOException;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
-import se.lth.control.labcomm.Decoder;
-import se.lth.control.labcomm.DecoderChannel;
-import se.lth.control.labcomm.SampleDispatcher;
-import se.lth.control.labcomm.SampleHandler;
+import se.lth.control.labcomm2014.Decoder;
+import se.lth.control.labcomm2014.DecoderChannel;
+import se.lth.control.labcomm2014.SampleDispatcher;
+import se.lth.control.labcomm2014.SampleHandler;
 
 public class TypeDef implements BuiltinType {
     private int index;

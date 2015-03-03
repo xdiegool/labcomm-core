@@ -2,7 +2,7 @@ package test;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import se.lth.control.labcomm.EncoderChannel;
+import se.lth.control.labcomm2014.EncoderChannel;
 
 import gen.foo;
 import gen.bar;

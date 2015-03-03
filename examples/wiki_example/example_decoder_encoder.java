@@ -4,8 +4,8 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import se.lth.control.labcomm.DecoderChannel;
-import se.lth.control.labcomm.EncoderChannel;
+import se.lth.control.labcomm2014.DecoderChannel;
+import se.lth.control.labcomm2014.EncoderChannel;
 
 public class example_decoder_encoder 
   implements data.Handler, log_message.Handler 

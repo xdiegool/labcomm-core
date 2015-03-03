@@ -6,7 +6,7 @@ import gen.bar;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import se.lth.control.labcomm.DecoderChannel;
+import se.lth.control.labcomm2014.DecoderChannel;
 
 
 public class StaticDecoder implements foo.Handler, bar.Handler

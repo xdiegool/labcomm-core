@@ -1,4 +1,4 @@
-package se.lth.control.labcomm;
+package se.lth.control.labcomm2014;
 
 import java.io.IOException;
 import java.util.HashMap;

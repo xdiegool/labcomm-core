@@ -18,10 +18,10 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
-import se.lth.control.labcomm.Decoder;
-import se.lth.control.labcomm.DecoderChannel;
-import se.lth.control.labcomm.Encoder;
-import se.lth.control.labcomm.EncoderChannel;
+import se.lth.control.labcomm2014.Decoder;
+import se.lth.control.labcomm2014.DecoderChannel;
+import se.lth.control.labcomm2014.Encoder;
+import se.lth.control.labcomm2014.EncoderChannel;
 import AST.Parser;
 import AST.Scanner;
 import AST.Program;

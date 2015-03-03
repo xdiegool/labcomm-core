@@ -24,12 +24,12 @@ all: labcomm.jar labcomm2014.jar labcomm2006.jar
 labcomm.jar: gen/JAVAC
 	echo $@
 	cd gen ; jar cf ../$@ \
-		se/lth/control/labcomm/*.class \
+		se/lth/control/labcomm2014/*.class \
 		se/lth/control/labcomm2006/*.class
 
 labcomm2014.jar: gen/JAVAC
 	echo $@
-	cd gen ; jar cf ../$@ se/lth/control/labcomm/*.class
+	cd gen ; jar cf ../$@ se/lth/control/labcomm2014/*.class
 
 labcomm2006.jar: gen/JAVAC
 	echo $@
@@ -38,10 +38,10 @@ labcomm2006.jar: gen/JAVAC
 gen:
 	mkdir gen
 
-gen/JAVAC: $(MODULES:%=se/lth/control/labcomm/%.java) \
-	   $(MODULES:%=se/lth/control/labcomm2006/%.java) \
+gen/JAVAC: $(MODULES:%=se/lth/control/labcomm2006/%.java) \
+	   $(MODULES:%=se/lth/control/labcomm2014/%.java) \
 	   Makefile | gen
-	javac -cp ../../compiler/labcomm_compiler.jar -d gen \
+	javac -cp ../../compiler/labcomm2014_compiler.jar -d gen \
             $(filter %.java, $^)
 	touch $@
 
