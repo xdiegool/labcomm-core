@@ -854,9 +854,9 @@ The built-in data types are encoded as follows:
                                      <type_binding> |
                                      <sample_data> )
 <version>         := <string>
-<sample_decl>     := <sample_id> <string> <type>
-<sample_ref>      := <sample_id> <string> <type>
-<type_decl>       := <type_id> <string> <type>
+<sample_decl>     := <sample_id> <string> <signature>
+<sample_ref>      := <sample_id> <string> <signature>
+<type_decl>       := <type_id> <string> <signature>
 <type_binding>    := <sample_id> <type_id>
 <user_id>         := 0x40..0xffffffff  
 <sample_id> : <user_id>
@@ -864,6 +864,7 @@ The built-in data types are encoded as follows:
 <string>          := <string_length> <char>*
 <string_length>   := 0x00..0xffffffff  
 <char>            := any UTF-8 char
+<signature>       := <length> <type>
 <type>            := <length> ( <basic_type>  | 
                                 <array_decl>  | 
                                 <struct_decl> | 
