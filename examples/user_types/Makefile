@@ -34,20 +34,20 @@ ${LCLJAR} :
 
 cleanbuild: clean build
 
-labcomm.dll:
-	ln -sf ../../lib/csharp/labcomm.dll $@
+labcomm2014.dll:
+	ln -sf ../../lib/csharp/labcomm2014.dll $@
 
-ExampleEncoder.exe: ExampleEncoder.cs gen/test.cs labcomm.dll Makefile
-	mcs -out:$@ $(filter %.cs, $^) -lib:../../lib/csharp/ -r:labcomm
+ExampleEncoder.exe: ExampleEncoder.cs gen/test.cs labcomm2014.dll Makefile
+	mcs -out:$@ $(filter %.cs, $^) -lib:../../lib/csharp/ -r:labcomm2014
 	chmod a+x $@
 
-ExampleDecoder.exe: ExampleDecoder.cs gen/test.cs labcomm.dll Makefile
-	mcs -out:$@ $(filter %.cs, $^) -lib:../../lib/csharp/ -r:labcomm
+ExampleDecoder.exe: ExampleDecoder.cs gen/test.cs labcomm2014.dll Makefile
+	mcs -out:$@ $(filter %.cs, $^) -lib:../../lib/csharp/ -r:labcomm2014
 	chmod a+x $@
 
 build : 
 	mkdir -p ${GENDIR}
-	java -jar ${LCDIR}/compiler/labcomm_compiler.jar --java=${GENDIR} --c=${GENDIR}/test.c --h=${GENDIR}/test.h  --python=${GENDIR}/test.py --cs=${GENDIR}/test.cs test.lc 
+	java -jar ${LCDIR}/compiler/labcomm2014_compiler.jar --java=${GENDIR} --c=${GENDIR}/test.c --h=${GENDIR}/test.h  --python=${GENDIR}/test.py --cs=${GENDIR}/test.cs test.lc 
 
 	javac -cp ${LCDIR}/lib/java/labcomm2014.jar:. ${GENDIR}/*.java Encoder.java Decoder.java
 	javac -cp ${LCDIR}/lib/java/labcomm2014.jar:${LCCJAR}:${GENDIR}:. TDDecoder.java

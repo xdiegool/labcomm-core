@@ -2,12 +2,12 @@
 
 # run labcomm compilation
 
-java -jar ../../compiler/labcomm_compiler.jar --java=gen --javapackage=gen simple.lc
+java -jar ../../compiler/labcomm2014_compiler.jar --java=gen --javapackage=gen simple.lc
 
 # compile example programs
-javac -cp .:gen:../../lib/java/labcomm.jar test/StaticEncoder.java
-javac -cp .:gen:../../lib/java/labcomm.jar test/StaticDecoder.java
+javac -cp .:gen:../../lib/java/labcomm2014.jar test/StaticEncoder.java
+javac -cp .:gen:../../lib/java/labcomm2014.jar test/StaticDecoder.java
 
 # run example programs
-java -cp .:gen:../../lib/java//labcomm.jar test.StaticEncoder encoded_data
-java -cp .:gen:../../lib/java//labcomm.jar test.StaticDecoder encoded_data
+java -cp .:gen:../../lib/java//labcomm2014.jar test.StaticEncoder encoded_data
+java -cp .:gen:../../lib/java//labcomm2014.jar test.StaticDecoder encoded_data

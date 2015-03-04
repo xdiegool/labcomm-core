@@ -1,5 +1,5 @@
 SUBDIRS=compiler lib test examples packaging
-export LABCOMM_JAR=$(shell pwd)/compiler/labcomm_compiler.jar
+export LABCOMM_JAR=$(shell pwd)/compiler/labcomm2014_compiler.jar
 export LABCOMM=java -jar $(LABCOMM_JAR) 
 
 .PHONY: all

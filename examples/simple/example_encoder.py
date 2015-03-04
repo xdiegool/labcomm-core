@@ -1,12 +1,12 @@
 #!/usr/bin/python
 
-import labcomm
+import labcomm2014
 import sys
 import simple
 
 if __name__ == '__main__':
     version = sys.argv[2] if len(sys.argv) == 3 else "LabComm2014"
-    encoder = labcomm.Encoder(labcomm.StreamWriter(open(sys.argv[1], 'w')), version)
+    encoder = labcomm2014.Encoder(labcomm2014.StreamWriter(open(sys.argv[1], 'w')), version)
     encoder.add_decl(simple.theTwoInts.signature)
     encoder.add_decl(simple.IntString.signature)
     foo = simple.theTwoInts()

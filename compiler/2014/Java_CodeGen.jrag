@@ -79,7 +79,7 @@ aspect Java_CodeGenEnv {
 
     private Java_env(int version, int indent) {
       this.version = version;
-      this.verStr = LabCommVersion.versionString(version);
+      this.verStr = "2014";
       this.indent = indent;
     }
 

@@ -1,7 +1,7 @@
 LCDIR=../..
-LABCOMM_JAR=../../compiler/labcomm_compiler.jar
+LABCOMM_JAR=../../compiler/labcomm2014_compiler.jar
 LABCOMM=java -jar $(LABCOMM_JAR)
-LCLJAR=${LCDIR}/lib/java/labcomm.jar  # the LabComm library
+LCLJAR=${LCDIR}/lib/java/labcomm2014.jar  # the LabComm library
 JAVA_PKG=labcommTCPtest
 
 .PHONY : clean run runserver runOSserver runclient
@@ -21,7 +21,7 @@ ${LABCOMM_JAR} :
 	cd ${LCDIR} && make make-compiler
 
 ${LCLJAR} :
-	cd ${LCDIR}/lib/java && make labcomm.jar
+	cd ${LCDIR}/lib/java && make labcomm2014.jar
 
 ${JAVA_PKG}/gen/FooSample.java: test.lc ${LCCJAR}
 	${LABCOMM} --javapackage=${JAVA_PKG}.gen --java=${JAVA_PKG}/gen $<

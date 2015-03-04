@@ -3,10 +3,10 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.IOException;
 
-import se.lth.control.labcomm.DecoderChannel;
-import se.lth.control.labcomm.TypeDef;
-import se.lth.control.labcomm.TypeDefParser;
-//import se.lth.control.labcomm.TypeBinding;
+import se.lth.control.labcomm2014.DecoderChannel;
+import se.lth.control.labcomm2014.TypeDef;
+import se.lth.control.labcomm2014.TypeDefParser;
+//import se.lth.control.labcomm2014.TypeBinding;
 
 public class Decoder
   implements twoLines.Handler,

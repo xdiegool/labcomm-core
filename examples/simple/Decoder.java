@@ -2,7 +2,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 
-import se.lth.control.labcomm.DecoderChannel;
+import se.lth.control.labcomm2014.DecoderChannel;
 
 public class Decoder
   implements theTwoInts.Handler, anotherTwoInts.Handler, IntString.Handler, TwoArrays.Handler, TwoFixedArrays.Handler, doavoid.Handler

@@ -31,9 +31,9 @@ if __name__ == '__main__':
       |import java.io.FileInputStream;
       |import java.io.FileOutputStream;
       |import java.io.IOException;
-      |import se.lth.control.labcomm.DecoderChannel;
-      |import se.lth.control.labcomm.EncoderChannel;
-      |import se.lth.control.labcomm.Sample;
+      |import se.lth.control.labcomm2014.DecoderChannel;
+      |import se.lth.control.labcomm2014.EncoderChannel;
+      |import se.lth.control.labcomm2014.Sample;
       |
       |public class java_relay implements
     """))

@@ -30,7 +30,7 @@ if __name__ == '__main__':
     result.extend(split_match('^[^|]*\|(.*)$', """
       |using System;
       |using System.IO;
-      |using se.lth.control.labcomm;
+      |using se.lth.control.labcomm2014;
       |
       |public class cs_relay :
     """))

@@ -1,7 +1,0 @@
-sample string S;
-sample int A[8];
-sample struct {
-  string s1;
-  string s2;
-} NS;
-sample string AS[_];

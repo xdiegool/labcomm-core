@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
-import labcomm
+import labcomm2014
 import sys
 import time
 
@@ -41,67 +41,67 @@ class FollowingReader(Reader):
 
 
 def flatten(sample, _type):
-    if isinstance(_type, labcomm.sample):
+    if isinstance(_type, labcomm2014.sample):
         flatten(sample, _type.decl)
-    elif isinstance(_type, labcomm.array):
+    elif isinstance(_type, labcomm2014.array):
         for e in sample:
             flatten(e, _type.decl)
-    elif isinstance(_type, labcomm.struct):
+    elif isinstance(_type, labcomm2014.struct):
         for name, decl in _type.field:
             flatten(sample[name], decl)
-    elif isinstance(_type, labcomm.BOOLEAN):
+    elif isinstance(_type, labcomm2014.BOOLEAN):
         print "%d," % sample,
-    elif isinstance(_type, labcomm.STRING):
+    elif isinstance(_type, labcomm2014.STRING):
         print "\"%s\"," % sample,
-    elif isinstance(_type, labcomm.primitive):
+    elif isinstance(_type, labcomm2014.primitive):
         print "%s," % sample,
     else:
         raise Exception("Unhandled type. " + str(type(type_)) + " " + str(type_))
 
 
 def flatten_labels(_type, prefix=""):
-    if isinstance(_type, labcomm.sample):
+    if isinstance(_type, labcomm2014.sample):
         flatten_labels(_type.decl, _type.name)
-    elif isinstance(_type, labcomm.array):
+    elif isinstance(_type, labcomm2014.array):
         if len(_type.indices) != 1:
             raise Exception("Fix multidimensional arrays")
         if len(_type.indices) == 0:
             raise Exception("We dont't handle dynamical sizes yet %s" % _type)
         for i in range(0, _type.indices[0]):
             flatten_labels(_type.decl, prefix + "[%d]" % i)
-    elif isinstance(_type, labcomm.struct):
+    elif isinstance(_type, labcomm2014.struct):
         for name, decl in _type.field:
             flatten_labels(decl,
                            prefix + "." + name)
-    elif isinstance(_type, labcomm.primitive):
+    elif isinstance(_type, labcomm2014.primitive):
         print '"%s",' % prefix,
     else:
         raise Exception("Unhandled type. " + str(type(type_)) + " " + str(type_))
 
 
 def default(type_):
-    if isinstance(type_, labcomm.sample):
+    if isinstance(type_, labcomm2014.sample):
         return default(type_.decl)
-    elif isinstance(type_, labcomm.array):
+    elif isinstance(type_, labcomm2014.array):
         if len(type_.indices) != 1:
             raise Exception("Fix multidimensional arrays")
         if len(type_.indices) == 0:
             raise Exception("We dont't handle dynamical sizes yet %s" % type_)
         for i in range(0, type_.indices[0]):
             return [default(type_.decl) for _ in range(type_.indices[0])]
-    elif isinstance(type_, labcomm.struct):
+    elif isinstance(type_, labcomm2014.struct):
         return {name: default(decl) for name, decl in type_.field}
-    elif isinstance(type_, labcomm.STRING):
+    elif isinstance(type_, labcomm2014.STRING):
         return ''
-    elif isinstance(type_, labcomm.BOOLEAN):
+    elif isinstance(type_, labcomm2014.BOOLEAN):
         return False
-    elif (isinstance(type_, labcomm.FLOAT) or
-          isinstance(type_, labcomm.DOUBLE)):
+    elif (isinstance(type_, labcomm2014.FLOAT) or
+          isinstance(type_, labcomm2014.DOUBLE)):
         return float('NaN')
-    elif (isinstance(type_, labcomm.BYTE) or
-          isinstance(type_, labcomm.SHORT) or
-          isinstance(type_, labcomm.INTEGER) or
-          isinstance(type_, labcomm.LONG)):
+    elif (isinstance(type_, labcomm2014.BYTE) or
+          isinstance(type_, labcomm2014.SHORT) or
+          isinstance(type_, labcomm2014.INTEGER) or
+          isinstance(type_, labcomm2014.LONG)):
         return 0
     else:
         raise Exception("Unhandled type. " + str(type(type_)) + " " + str(type_))
@@ -156,7 +156,7 @@ def main(main_args):
         reader = FollowingReader(file_, args.interval, args.timeout)
     else:
         reader = Reader(file_)
-    d = labcomm.Decoder(reader)
+    d = labcomm2014.Decoder(reader)
     while True:
         try:
             o, t = d.decode()
