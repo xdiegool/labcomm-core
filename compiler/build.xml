@@ -126,7 +126,6 @@
   <uptodate property="compile.u">
     <srcfiles dir='.'>
       <include name="*.java"/>
-      <include name="2006/*.java"/>
       <include name="2014/*.java"/>
       <include name="${outdir}/**/*.java"/>
     </srcfiles>
@@ -138,7 +137,7 @@
 <target name="compile" depends="compile.cu" unless="compile.u">
   <echo message = "compiling"/>
   <javac debug="true" srcdir="." destdir="${outdir}"
-         includes="*.java 2006/*.java 2014/*.java gen/**/*.java" 
+         includes="*.java 2014/*.java gen/**/*.java" 
          classpath="${outdir}:${tools}/beaver-rt.jar:${tools}/junit.jar"
          includeantruntime="false"
          fork="true" memoryMaximumSize="128M">
@@ -170,29 +169,6 @@
   </jar>
 </target>
 
-<target name="jar.all.cu">
-  <uptodate property="jar.all.u">
-    <srcfiles dir=".">
-      <include name="${outdir}/**/*.class"/>
-    </srcfiles>
-    <mapper type="merge" 
-            to="labcomm_compiler.jar"/>
-  </uptodate>
-</target>
-
-<target name="jar.all" depends="jar.all.cu" unless="jar.all.u">
-  <echo message = "Generating labcomm_compiler.jar"/>
-  <jar destfile="labcomm_compiler.jar">
-    <fileset dir="${outdir}" 
-             includes="**/*.class"/>
-    <zipfileset src="tools/beaver-rt.jar" includes="beaver/*.class"/>
-    <manifest>
-      <attribute name="Main-Class" 
-                 value="LabComm"/>
-    </manifest>
-  </jar>
-</target>
-
 <target name="do.version">
   <!-- Wrapper that sets up package and package_path based on ${version} -->
   <local name="package"/>
@@ -220,11 +196,6 @@
 <target name="all">
   <antcall target="do.version">
     <param name="do" value="all.version"/>
-    <param name="version" value="2006"/>
-    <param name="outdir" value="gen"/>
-  </antcall>
-  <antcall target="do.version">
-    <param name="do" value="all.version"/>
     <param name="version" value="2014"/>
     <param name="outdir" value="gen"/>
   </antcall>
@@ -233,15 +204,7 @@
   </antcall>
   <antcall target="do.version">
     <param name="do" value="jar.version"/>
-    <param name="version" value="2006"/>
-    <param name="outdir" value="gen"/>
-  </antcall>
-  <antcall target="do.version">
-    <param name="do" value="jar.version"/>
     <param name="version" value="2014"/>
-    <param name="outdir" value="gen"/>
-  </antcall>
-  <antcall target="jar.all">
     <param name="outdir" value="gen"/>
   </antcall>
 </target>

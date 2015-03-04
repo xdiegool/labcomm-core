@@ -25,7 +25,7 @@ test_%: gen/%/signatures.py \
 		--test tee gen/$*/testdata \
 		--test gen/$*/c_relay /dev/stdin /dev/stdout \
 		--test mono gen/$*/cs_relay.exe /dev/stdin /dev/stdout \
-		--test java \\-cp gen/$*:../lib/java/labcomm.jar java_relay \
+		--test java \\-cp gen/$*:../lib/java/labcomm2014.jar java_relay \
 			    /dev/stdin /dev/stdout
 
 # test cases for compiler error checking
@@ -98,4 +98,4 @@ gen/%/java_relay.java: gen/%/typeinfo relay_gen_java.py Makefile
 
 .PRECIOUS: gen/%/java_relay.class
 gen/%/java_relay.class: gen/%/java_relay.java gen/%/java_code Makefile
-	javac -d gen/$*  -cp ../lib/java/labcomm.jar:gen/$*/java_code $<
+	javac -d gen/$*  -cp ../lib/java/labcomm2014.jar:gen/$*/java_code $<

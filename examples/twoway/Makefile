@@ -1,7 +1,7 @@
 UNAME_S=$(shell uname -s)
 
 TARGETS=client server
-LABCOMM_JAR=../../compiler/labcomm_compiler.jar
+LABCOMM_JAR=../../compiler/labcomm2014_compiler.jar
 LABCOMM=java -jar $(LABCOMM_JAR) 
 
 CFLAGS=-O3 -g -Wall -Werror -I../../lib/c/2014 -I. -Wno-unused-function

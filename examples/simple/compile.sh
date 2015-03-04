@@ -8,7 +8,7 @@ set -e
 (cd ../..; make all)
 
 mkdir -p gen
-java -jar ../../compiler/labcomm_compiler.jar --java=gen --c=gen/simple.c --h=gen/simple.h  --python=gen/simple.py simple.lc 
+java -jar ../../compiler/labcomm2014_compiler.jar --java=gen --c=gen/simple.c --h=gen/simple.h  --python=gen/simple.py simple.lc 
 
 javac -cp ../../lib/java/labcomm2014.jar:. gen/*.java Encoder.java Decoder.java
 
@@ -19,23 +19,4 @@ gcc -Wall -Werror -Wno-unused-function \
 gcc -Wall -Werror -I . -I ../../lib/c/2014 -L../../lib/c \
     -o example_decoder example_decoder.c gen/simple.c \
     -llabcomm2014 
-
-# For version 2006
-
-mkdir -p gen06
-java -jar ../../compiler/labcomm_compiler.jar --ver=2006 --java=gen06 --c=gen06/simple.c --h=gen06/simple.h  --python=gen06/simple.py simple.lc 
-
-javac -cp ../../lib/java/labcomm2006.jar:. gen06/*.java Encoder06.java Decoder06.java
-
-gcc -Wall -Werror -I.  -I../../lib/c/2006 -L../../lib/c \
-    -o example_encoder06 example_encoder06.c gen06/simple.c \
-    -llabcomm2006
-gcc -Wall -Werror -I . -I ../../lib/c/2006 -L../../lib/c \
-    -o example_decoder06 example_decoder06.c gen06/simple.c \
-    -llabcomm2006 
-
-#gcc -o example_encoder -I . -I ../../lib/c example_encoder.c gen/simple.c ../../lib/c/labcomm.c ../../lib/c/labcomm_fd_reader_writer.c
-
-#gcc -o example_decoder -I . -I ../../lib/c example_decoder.c gen/simple.c ../../lib/c/labcomm.c ../../lib/c/labcomm_fd_reader_writer.c
-
 

@@ -1,2 +1,0 @@
-#!/bin/sh
-java -jar /lib/labcomm2006_compiler.jar "$@"

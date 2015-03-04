@@ -47,7 +47,7 @@ ExampleDecoder.exe: ExampleDecoder.cs gen/test.cs labcomm2014.dll Makefile
 
 build : 
 	mkdir -p ${GENDIR}
-	java -jar ${LCDIR}/compiler/labcomm_compiler.jar --java=${GENDIR} --c=${GENDIR}/test.c --h=${GENDIR}/test.h  --python=${GENDIR}/test.py --cs=${GENDIR}/test.cs test.lc 
+	java -jar ${LCDIR}/compiler/labcomm2014_compiler.jar --java=${GENDIR} --c=${GENDIR}/test.c --h=${GENDIR}/test.h  --python=${GENDIR}/test.py --cs=${GENDIR}/test.cs test.lc 
 
 	javac -cp ${LCDIR}/lib/java/labcomm2014.jar:. ${GENDIR}/*.java Encoder.java Decoder.java
 	javac -cp ${LCDIR}/lib/java/labcomm2014.jar:${LCCJAR}:${GENDIR}:. TDDecoder.java

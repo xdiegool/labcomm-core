@@ -1,7 +1,7 @@
 LCDIR=../..
-LABCOMM_JAR=../../compiler/labcomm_compiler.jar
+LABCOMM_JAR=../../compiler/labcomm2014_compiler.jar
 LABCOMM=java -jar $(LABCOMM_JAR) 
-CLASSPATH=.:${LCDIR}/lib/java/labcomm.jar
+CLASSPATH=.:${LCDIR}/lib/java/labcomm2014.jar
 JAVA_PKG=labcommTCPtest
 SAMPLENAME=foo
 LCLIBDIR=${LCDIR}/lib/c
