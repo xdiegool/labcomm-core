@@ -105,29 +105,29 @@ aspect PythonTypes {
   
   public void Program.Python_genTypes(Python_env env) {
     for (int i = 0 ; i < getNumDecl() ; i++) {
-      getDecl(i).Python_genSignature(env);
+      getDecl(i).Python_genSignatureAndTypedef(env);
     }
   }
 
-  public void Decl.Python_genSignature(Python_env env) {
+  public void Decl.Python_genSignatureAndTypedef(Python_env env) {
     throw new Error(this.getClass().getName() + 
-                    ".Python_genSignature(Python_env env)" + 
+                    ".Python_genSignatureAndTypedef(Python_env env)" + 
                     " not declared");
   }
 
-  public void TypeDecl.Python_genSignature(Python_env env) {
+  public void TypeDecl.Python_genSignatureAndTypedef(Python_env env) {
     env.println("class " + getName() + "(object):");
     env.indent();
-    env.println("signature = labcomm2014.typedef('" + getName() + "',");
+    env.println("typedef = labcomm2014.typedef('" + getName() + "',");
     env.indent();
-    getType().Python_genSignature(env);
+    getType().Python_genTypedef(env);
     env.unindent();
     env.println(")");
     env.unindent();
     env.println();
   }
 
-  public void SampleDecl.Python_genSignature(Python_env env) {
+  public void SampleDecl.Python_genSignatureAndTypedef(Python_env env) {
     env.println("class " + getName() + "(object):");
     env.indent();
     env.println("signature = labcomm2014.sample('" + getName() + "', ");
@@ -135,13 +135,17 @@ aspect PythonTypes {
     getType().Python_genSignature(env);
     env.unindent();
     env.println(")");
+    env.println("typedef = labcomm2014.sample('" + getName() + "', ");
+    env.indent();
+    getType().Python_genTypedef(env);
+    env.unindent();
+    env.println(")");
     env.unindent();
     env.println();
   }
 
   public void UserType.Python_genSignature(Python_env env) {
-    env.println(getName() + ".signature");
-    // lookupType(getName()).getType().Python_genSignature(env);
+    lookupType(getName()).getType().Python_genSignature(env);
   }
 
   public void Type.Python_genSignature(Python_env env) {
@@ -195,6 +199,64 @@ aspect PythonTypes {
   public void Field.Python_genSignature(Python_env env) {
     env.print("('" + getName() + "', ");
     getType().Python_genSignature(env);
+    env.print(")");
+  }
+
+  public void UserType.Python_genTypedef(Python_env env) {
+    env.println(getName() + ".typedef");
+  }
+
+  public void Type.Python_genTypedef(Python_env env) {
+    throw new Error(this.getClass().getName() + 
+                    ".Python_genTypedef(Python_env env)" + 
+                    " not declared");
+  }
+
+  public void PrimType.Python_genTypedef(Python_env env) {
+    switch (getToken()) {
+      case LABCOMM_BOOLEAN: { env.print("labcomm2014.BOOLEAN()"); } break;
+      case LABCOMM_BYTE: { env.print("labcomm2014.BYTE()"); } break;
+      case LABCOMM_SHORT: { env.print("labcomm2014.SHORT()"); } break;
+      case LABCOMM_INT: { env.print("labcomm2014.INTEGER()"); } break;
+      case LABCOMM_LONG: { env.print("labcomm2014.LONG()"); } break;
+      case LABCOMM_FLOAT: { env.print("labcomm2014.FLOAT()"); } break;
+      case LABCOMM_DOUBLE: { env.print("labcomm2014.DOUBLE()"); } break;
+      case LABCOMM_STRING: { env.print("labcomm2014.STRING()"); } break;
+      case LABCOMM_SAMPLE: { env.print("labcomm2014.SAMPLE()"); } break;
+    }
+  }
+
+  public void ArrayType.Python_genTypedef(Python_env env) {
+    env.print("labcomm2014.array([");
+    for (int i = 0 ; i < getNumExp() ; i++) {
+      if (i > 0) { env.print(", "); }
+      env.print(getExp(i).Python_getValue());
+    }
+    env.println("],");
+    env.indent();
+    getType().Python_genTypedef(env);
+    env.print(")");
+    env.unindent();
+  }
+
+  public void StructType.Python_genTypedef(Python_env env) {
+    env.println("labcomm2014.struct([");
+    env.indent();
+    for (int i = 0 ; i < getNumField() ; i++) {
+      if (i > 0) { env.println(","); }
+      getField(i).Python_genTypedef(env);
+    }
+    env.print("])");
+    env.unindent();
+  }
+
+  public void VoidType.Python_genTypedef(Python_env env) {
+    env.println("labcomm2014.struct([])");
+  }
+
+  public void Field.Python_genTypedef(Python_env env) {
+    env.print("('" + getName() + "', ");
+    getType().Python_genTypedef(env);
     env.print(")");
   }
 
