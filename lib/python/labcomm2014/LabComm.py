@@ -375,6 +375,9 @@ class SAMPLE(primitive):
         return encoder.encode_type(i_SAMPLE)
 
     def encode(self, encoder, value):
+        if not isinstance(value, type_decl):
+            # Probably trying to encode a sample class, grab signature
+            value = value.signature
         return encoder.encode_int(encoder.ref_to_index.get(value, 0))
     
     def decode(self, decoder, obj=None):
@@ -729,6 +732,9 @@ class Codec(object):
         return True
         
     def add_ref(self, ref, index=0):
+        if not isinstance(ref, type_decl):
+            # Probably trying to register a sample class, grab signature
+            ref = ref.signature
         if index == 0:
             if ref.sample in self.ref_to_index:
                 return False
@@ -783,15 +789,16 @@ class Encoder(Codec):
                 decl.encode_decl(self)
             self.writer.mark_end(decl, None)
  
-    def add_ref(self, decl, index=0):
-        if not isinstance(decl, type_decl):
-            decl = decl.signature
-        ref = sample_ref(name=decl.name, decl=decl.decl, sample=decl)
+    def add_ref(self, ref, index=0):
+        if not isinstance(ref, type_decl):
+            # Trying to register a sample class
+            ref = ref.signature
+        decl = sample_ref(name=ref.name, decl=ref.decl, sample=ref)
         if index == 0:
-            self.writer.mark_begin(decl, None)
-            if super(Encoder, self).add_ref(ref, index):
-                ref.encode_decl(self)
-            self.writer.mark_end(decl, None)
+            self.writer.mark_begin(ref, None)
+            if super(Encoder, self).add_ref(decl, index):
+                decl.encode_decl(self)
+            self.writer.mark_end(ref, None)
  
     def encode(self, object, decl=None):
         if decl == None:
