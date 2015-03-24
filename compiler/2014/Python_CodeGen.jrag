@@ -73,9 +73,6 @@ aspect Python_CodeGenEnv {
 aspect Python_CodeGen {
 
   public void Program.Python_gen(PrintStream out, String baseName, int version) {
-    // Remove when Blomdell has verified that it is OK to ignore version
-    // when generating python code. 
-    System.err.println("*** Warning! Python_gen ignores version: "+version);
     Python_env env = new Python_env(out);
     env.println("#!/usr/bin/python");
     env.println("# Auto generated " + baseName);
