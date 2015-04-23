@@ -112,5 +112,5 @@ COMMIT=$(git rev-parse HEAD)
     git archive --format tar HEAD
 ) > rpmbuild/SOURCES/labcomm.${DESCRIBE}.tar.gz
 rpmbuild --define "_topdir $(pwd)/rpmbuild" \
-         -bs rpmbuild/SPECS/labcomm.spec
+         -bs rpmbuild/SPECS/labcomm.spec 2>&1 | sed -e 's|rpmbuild/SRPMS/||g'
 mv rpmbuild/SRPMS/* .
