@@ -54,7 +54,20 @@ List var_decl_list =
   | var_decl_list.l var_decl.v      {: return l.add(v); :}
   ;
 
-List intentions = {: return new List(); :}
+List intentions = 
+    /* empty list */  {: return new List(); :}
+  |  intention_list.l {: return l; :}
+  ;
+
+List intention_list =
+    intention.i                      {: return new List().add(i); :}
+  | intention_list.l intention.i     {: return l.add(i); :}
+  ;
+
+String key = IDENTIFIER;
+String stringliteral = IDENTIFIER;
+
+Intention intention = LPAREN key.k COLON stringliteral.v RPAREN {: return new Intention(k,v); :};
 
 TypeInstance type_instance =
     intentions.i type.t IDENTIFIER {: return new TypeInstance(t, IDENTIFIER, i); :}

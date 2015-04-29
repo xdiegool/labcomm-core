@@ -11,4 +11,9 @@ aspect Refactoring {
         this(t, n, new  List<Annotation>());
         System.out.println("WARNING! TypeInstance(DataType, String) ignoring intention list");
     }
+
+    public ConcreteType.ConcreteType(Type t, String n) {
+        this(t, n, new  List<Intention>());
+        System.out.println("WARNING! ConcreteType(Type, String) ignoring intention list");
+    }
 }

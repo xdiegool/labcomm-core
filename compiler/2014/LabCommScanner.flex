@@ -76,7 +76,10 @@ NonZeroDigit = [1-9]
   "}"                            { return sym(Terminals.RBRACE); }
   "["                            { return sym(Terminals.LBRACK); }
   "]"                            { return sym(Terminals.RBRACK); }
+  "("                            { return sym(Terminals.LPAREN); }
+  ")"                            { return sym(Terminals.RPAREN); }
   ";"                            { return sym(Terminals.SEMICOLON); }
+  ":"                            { return sym(Terminals.COLON); }
   ","                            { return sym(Terminals.COMMA); }
   
   {Identifier}                   { return sym(Terminals.IDENTIFIER); }
