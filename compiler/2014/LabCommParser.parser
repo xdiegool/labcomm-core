@@ -61,9 +61,7 @@ TypeInstance type_instance =
   ;
 
 Field var_decl =
-    type.t IDENTIFIER SEMICOLON     {: return new Field(t, IDENTIFIER); :}
-  | type.t IDENTIFIER dim_list.d SEMICOLON
-    {: return new Field(new ParseArrayType(t, d), IDENTIFIER); :}
+    concrete_type.t SEMICOLON     {: return new Field(t); :}
   ;
 
 TypeDecl type_decl =

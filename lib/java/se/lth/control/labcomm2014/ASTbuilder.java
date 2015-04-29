@@ -52,10 +52,10 @@ public class ASTbuilder implements TypeDefParser.ParsedSymbolVisitor {
 
         private void assertStacksEmpty() throws RuntimeException {
             if(!typeStack.isEmpty()) {
-               throw new RuntimeException("Error: type stack not empty"); 
+               throw new RuntimeException("Error: type stack not empty");
             }
             if(!fieldStack.isEmpty()) {
-               throw new RuntimeException("Error: field stack not empty"); 
+               throw new RuntimeException("Error: field stack not empty");
             }
         }
 
@@ -144,7 +144,7 @@ public class ASTbuilder implements TypeDefParser.ParsedSymbolVisitor {
                 throw new RuntimeException("Internal error: parsed labcomm declaration has errors: "+sb.toString());
             }
        }
-       
+
        public Specification makeSpecification(TypeDefParser.ParsedTypeDef d) {
            assertStacksEmpty();
            List<Decl> ds = new List<Decl>();
