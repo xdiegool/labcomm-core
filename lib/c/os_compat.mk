@@ -15,7 +15,7 @@ else ifeq ($(UNAME_S),Darwin)
   CC=$(CROSS_COMPILE)gcc
   LD=$(CROSS_COMPILE)gcc
   CFLAGS=-g -Wall -Werror -O3  -I. -Itest \
-	 -DLABCOMM_COMPAT=\"labcomm_compat_osx.h\" \
+	 -DLABCOMM_COMPAT=\"labcomm$(LIBVERSION)_compat_osx.h\" \
 	 -DLABCOMM_OS_DARWIN=1
 #	 -Wno-tautological-compare -Wno-unused-function
   CFLAGS+=-std=c99 
