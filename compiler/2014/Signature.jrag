@@ -1,5 +1,15 @@
 import java.util.*;
 
+aspect Intentions {
+
+    inh Decl ConcreteType.parentDecl();
+
+    coll Set Decl.allIntentions() [new HashSet()] with add;
+    ConcreteType contributes getIntentionString()
+        to Decl.allIntentions()
+        for parentDecl();
+}
+
 aspect Signature {
 
   syn boolean Decl.isSampleDecl();
@@ -14,7 +24,35 @@ aspect Signature {
   inh Decl Signature.parentDecl();
   inh Decl SignatureList.parentDecl();
 
+  /// TESTING
+  syn String Decl.getIntentionString()  {
+      StringBuilder sb = new StringBuilder();
+      Iterator<String> iti = allIntentions().iterator();
+      while(iti.hasNext()) {
+          //Intention i = iti.next();
+          //sb.append("("+i.getKey()+" : "+i.getValue()+") ");
+          String i = iti.next();
+          sb.append(i);
+      }
+      return sb.toString();
+  }
+
+  syn String ConcreteType.getIntentionString() {
+      StringBuilder sb = new StringBuilder();
+      List<Intention> ints = getIntentionList();
+      for(Intention i : ints) {
+          sb.append("("+i.getKey()+" : "+i.getValue()+") ");
+      }
+      return sb.toString();
+  }
+
+  public void Decl.debugIntentions() {
+      System.out.println("Decl.intentions: " + getIntentionString());
+  }
+  //  TESTING END
+
   syn nta Signature Decl.getSignature() {
+    debugIntentions();
     SignatureList sl = new SignatureList();
     genSigLineForDecl(sl, true);
     SignatureList fsl = new SignatureList();
