@@ -1,10 +1,12 @@
 ## Macros
 UNAME_S=$(shell uname -s)
+VERSION=2014
+LIBVERSION=2014
 
 ifeq ($(UNAME_S),Linux)
   CC=$(CROSS_COMPILE)gcc
   LD=$(CROSS_COMPILE)gcc
-  CFLAGS=-std=c99 -g -Wall -Werror -O3  -I. 
+  CFLAGS=-std=c99 -g -Wall -Werror -O3  -I.
   CFLAGS_TEST=$(CFLAGS) -Itest
   LDFLAGS=-L..
   LDLIBS=-llabcomm$(LIBVERSION) -lrt
@@ -15,17 +17,18 @@ else ifeq ($(UNAME_S),Darwin)
   CC=$(CROSS_COMPILE)gcc
   LD=$(CROSS_COMPILE)gcc
   CFLAGS=-g -Wall -Werror -O3  -I. -Itest \
-	 -DLABCOMM_COMPAT=\"labcomm$(LIBVERSION)_compat_osx.h\" \
-	 -DLABCOMM_OS_DARWIN=1
-#	 -Wno-tautological-compare -Wno-unused-function
-  CFLAGS+=-std=c99 
-  LDFLAGS=-L.. 
+	 -DLABCOMM_COMPAT=\"labcomm$(VERSION)_compat_osx.h\" \
+	 -DLABCOMM_OS_DARWIN=1 \
+	 -Wno-unused-function
+#	 -Wno-tautological-compare
+  CFLAGS+=-std=c99
+  LDFLAGS=-L..
   LDLIBS=-llabcomm$(LIBVERSION)
-  MAKESHARED=clang -o $1 -shared -Wl,-install_name,$2 $3 -lc 
+  MAKESHARED=clang -o $1 -shared -Wl,-install_name,$2 $3 -lc
 else ifneq ($(findstring CYGWIN,$(UNAME_S)),)
   CC=$(CROSS_COMPILE)gcc
   LD=$(CROSS_COMPILE)ld
-  CFLAGS=-std=c99 -g -Wall -Werror -O3  -I. 
+  CFLAGS=-std=c99 -g -Wall -Werror -O3  -I.
   LDFLAGS=-L..
   LDLIBS=-llabcomm$(LIBVERSION) -lrt
   ALL_DEPS:=$(filter-out %.so.1, $(ALL_DEPS)) # No -fPIC supported in windows?
