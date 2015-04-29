@@ -54,14 +54,16 @@ List var_decl_list =
   | var_decl_list.l var_decl.v      {: return l.add(v); :}
   ;
 
+List intentions = {: return new List(); :}
+
 TypeInstance type_instance =
-    type.t IDENTIFIER {: return new TypeInstance(t, IDENTIFIER); :}
-  | type.t IDENTIFIER dim_list.d
-    {: return new TypeInstance(new ParseArrayType(t, d), IDENTIFIER); :}
+    intentions.i type.t IDENTIFIER {: return new TypeInstance(t, IDENTIFIER, i); :}
+  | intentions.i type.t IDENTIFIER dim_list.d
+    {: return new TypeInstance(new ParseArrayType(t, d), IDENTIFIER, i); :}
   ;
 
 Field var_decl =
-    concrete_type.t SEMICOLON     {: return new Field(t); :}
+    type_instance.t SEMICOLON     {: return new Field(t); :}
   ;
 
 TypeDecl type_decl =

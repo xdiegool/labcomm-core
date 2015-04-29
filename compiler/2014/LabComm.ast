@@ -2,7 +2,7 @@ Specification ::= Decl*;
 
 abstract Decl ::= TypeInstance /Signature/;
 
-TypeInstance ::= DataType <Name:String>;
+TypeInstance ::= DataType <Name:String> Intention*;
 
 TypeDecl   : Decl;
 SampleDecl : Decl;
@@ -29,6 +29,9 @@ UserType           : DataType ::= <Name:String>;
 StructType         : DataType ::= Field*;
 ParseArrayType     : DataType ::= DataType Dim*;
 abstract ArrayType : DataType ::= DataType Exp*;
+
+Intention ::= <Key:String> <Value:String>;
+
 VariableArrayType  : ArrayType;
 FixedArrayType     : ArrayType;
 
