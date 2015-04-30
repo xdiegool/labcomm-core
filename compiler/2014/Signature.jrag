@@ -2,10 +2,10 @@ import java.util.*;
 
 aspect Intentions {
 
-    inh Decl ConcreteType.parentDecl();
+    inh Decl TypeInstance.parentDecl();
 
     coll Set Decl.allIntentions() [new HashSet()] with add;
-    ConcreteType contributes getIntentionString()
+    TypeInstance contributes getIntentionString()
         to Decl.allIntentions()
         for parentDecl();
 }
@@ -37,7 +37,7 @@ aspect Signature {
       return sb.toString();
   }
 
-  syn String ConcreteType.getIntentionString() {
+  syn String TypeInstance.getIntentionString() {
       StringBuilder sb = new StringBuilder();
       List<Intention> ints = getIntentionList();
       for(Intention i : ints) {

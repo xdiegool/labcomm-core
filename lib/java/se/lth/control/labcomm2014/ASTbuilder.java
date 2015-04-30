@@ -96,6 +96,7 @@ public class ASTbuilder implements TypeDefParser.ParsedSymbolVisitor {
         public void visit(TypeDefParser.ParsedField t){
             t.getType().accept(this);
             fieldStack.push(new Field(new TypeInstance(typeStack.pop(),t.getName())));
+
         }
         public void visit(TypeDefParser.ArrayType t){
             boolean isFixed = true;
