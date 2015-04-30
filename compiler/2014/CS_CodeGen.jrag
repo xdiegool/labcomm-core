@@ -4,7 +4,7 @@ import java.util.*;
 aspect CS_CodeGenEnv {
 
   // Environment wrapper for CS-code generation
-  // handles indentation, file writing, 
+  // handles indentation, file writing,
 
   public class CS_env {
 
@@ -16,12 +16,12 @@ aspect CS_CodeGenEnv {
     private HashMap unique = new HashMap();
 
     final private static class CS_printer {
-      
+
       private boolean newline = true;
       private File file;
       private PrintStream out;
       private IOException exception;
-      
+
 
       public CS_printer(File f) {
   	file = f;
@@ -201,7 +201,7 @@ aspect CS_Void {
 
 aspect CS_CodeGen {
 
-  public void Specification.CS_gen(String file, 
+  public void Specification.CS_gen(String file,
 			     String namespace, int version) throws IOException {
     // Registration class
     CS_env env = new CS_env(new File(file), version);
@@ -234,8 +234,8 @@ aspect CS_Register {
   }
 
   public void Decl.CS_emitTypeRegister(CS_env env) {
-    throw new Error(this.getClass().getName() + 
-		    ".CS_emitTypeRegister(CS_env env)" + 
+    throw new Error(this.getClass().getName() +
+		    ".CS_emitTypeRegister(CS_env env)" +
 		    " not declared");
   }
 
@@ -252,21 +252,21 @@ aspect CS_Register {
 aspect CS_Class {
 
   public void Decl.CS_emitClass(CS_env env) {
-    throw new Error(this.getClass().getName() + 
-		    ".CS_emitClass(CS_env env)" + 
+    throw new Error(this.getClass().getName() +
+		    ".CS_emitClass(CS_env env)" +
 		    " not declared");
   }
 
   public void Decl.CS_emitDeclPP(CS_env env){
 	env.println("/* ");
 	pp(env.getPrintStream());
-	
+
 	CS_emitUserTypeDeps(env,null,false);
 	CS_emitUserTypeRefs(env,null,false);
 	env.println("*/");
-  
+
   }
-  
+
   public void Decl.CS_emitUserTypeDeps(CS_env env, String via, boolean outputCode){
 	Iterator<Decl> it = type_dependencies().iterator();
 	while(it.hasNext()) {
@@ -281,7 +281,7 @@ aspect CS_Class {
 	    }
 	}
   }
-  
+
   public void Decl.CS_emitUserTypeRefs(CS_env env, String via, boolean outputCode){
      if( isReferenced() ) {
         Iterator<Decl> it = type_references().iterator();
@@ -298,7 +298,7 @@ aspect CS_Class {
         }
     }
   }
-  
+
   public void Decl.CS_emitRegisterEncoder(CS_env env) {
     env.println("public static void register(Encoder e){");
     env.indent();
@@ -312,7 +312,7 @@ aspect CS_Class {
     env.println("}");
     env.println();
   }
-  
+
   public void Decl.CS_emitRegisterDecoder(CS_env env) {
     env.println("public static void register(Decoder d, Handler h) {");
     env.indent();
@@ -327,7 +327,7 @@ aspect CS_Class {
     env.println("}");
     env.println();
   }
-    
+
   public void TypeDecl.CS_emitClass(CS_env env) {
     if (getDataType().CS_needInstance()) {
       // Hackish prettyprint preamble
@@ -413,7 +413,7 @@ aspect CS_Class {
 
   //XXX TODO: refactor: split into a static class ("TypeDefSingleton"?)and a (smaller) dispatcher
   public void Decl.CS_emitDispatcher(CS_env env, boolean isSample) {
-    String genericStr = ""; //env.versionHasMetaData()?"<"+getName()+">":""; 
+    String genericStr = ""; //env.versionHasMetaData()?"<"+getName()+">":"";
     env.println("private static Dispatcher dispatcher = new Dispatcher();");
     env.println();
     env.println("public SampleDispatcher getDispatcher() {");
@@ -501,7 +501,7 @@ aspect CS_Class {
     env.println("");
 
  } //TODO, fix above method
-  
+
   public void TypeDecl.CS_emitEncoder(CS_env env) {
     env.print("public static void encode(Encoder e");
     if (!isVoid()) {
@@ -535,8 +535,8 @@ aspect CS_Class {
   }
 
   public void DataType.CS_emitEncoder(CS_env env, String name) {
-    throw new Error(this.getClass().getName() + 
-		    ".CS_emitEncoder(CS_env env, String name)" + 
+    throw new Error(this.getClass().getName() +
+		    ".CS_emitEncoder(CS_env env, String name)" +
 		    " not declared");
   }
 
@@ -562,7 +562,7 @@ aspect CS_Class {
     env.print_block_begin();
     int baseDepth = env.getDepth();
     for (int i = 0 ; i < getNumExp() ; i++) {
-      String limit = getExp(i).CS_emitEncoder(env, 
+      String limit = getExp(i).CS_emitEncoder(env,
 					      name + ".GetLength(" + i + ")");
       env.println("int i_" + (baseDepth + i) + "_max = " + limit + ";");
     }
@@ -581,10 +581,10 @@ aspect CS_Class {
     }
     env.print_block_end();
   }
-  
+
   public String Exp.CS_emitEncoder(CS_env env, String name) {
-    throw new Error(this.getClass().getName() + 
-		    ".CS_emitEncoder(CS_env env, String name)" + 
+    throw new Error(this.getClass().getName() +
+		    ".CS_emitEncoder(CS_env env, String name)" +
 		    " not declared");
   }
 
@@ -629,8 +629,8 @@ aspect CS_Class {
   }
 
   public void DataType.CS_emitDecoder(CS_env env, String name) {
-    throw new Error(this.getClass().getName() + 
-		    ".CS_emitDecoder(CS_env env, String name)" + 
+    throw new Error(this.getClass().getName() +
+		    ".CS_emitDecoder(CS_env env, String name)" +
 		    " not declared");
   }
 
@@ -650,7 +650,7 @@ aspect CS_Class {
       case LABCOMM_STRING: { env.println("d.decodeString();"); } break;
       case LABCOMM_SAMPLE: { env.println("d.decodeSampleRef();"); } break;
       default: {
-        throw new Error("PrimType.CS_emitDecoder(CS_env env, String name)" + 
+        throw new Error("PrimType.CS_emitDecoder(CS_env env, String name)" +
                         " unknown token type");
       }
     }
@@ -665,7 +665,7 @@ aspect CS_Class {
       getExp(i).CS_emitDecoder(env);
       env.println(";");
     }
-    env.print(name + " = new "); 
+    env.print(name + " = new ");
     getDataType().CS_emitTypePrefix(env);
     env.print("[");
     for (int i = 0 ; i < getNumExp() ; i++) {
@@ -677,7 +677,7 @@ aspect CS_Class {
     env.print("]");
     getDataType().CS_emitTypeSuffix(env);
     env.println(";");
-    
+
     String index = null;
     for (int i = 0 ; i < getNumExp() ; i++) {
       String limit = "i_" + (baseDepth + i) + "_max";
@@ -696,8 +696,8 @@ aspect CS_Class {
   }
 
   public void Exp.CS_emitDecoder(CS_env env) {
-    throw new Error(this.getClass().getName() + 
-		    ".CS_emitDecoder(CS_env env)" + 
+    throw new Error(this.getClass().getName() +
+		    ".CS_emitDecoder(CS_env env)" +
 		    " not declared");
   }
 
@@ -728,8 +728,8 @@ aspect CS_Class {
   }
 
   public void DataType.CS_emitTypePrefix(CS_env env) {
-    throw new Error(this.getClass().getName() + 
-		    ".CS_emitTypePrefix(CS_env env)" + 
+    throw new Error(this.getClass().getName() +
+		    ".CS_emitTypePrefix(CS_env env)" +
 		    " not declared");
   }
 
@@ -746,7 +746,7 @@ aspect CS_Class {
       env.print(getName());
     } else {
       decl().getDataType().CS_emitTypePrefix(env);
-    } 
+    }
   }
 
   public void ArrayType.CS_emitTypePrefix(CS_env env){
@@ -763,7 +763,7 @@ aspect CS_Class {
   public void UserType.CS_emitTypeSuffix(CS_env env) {
     if (! CS_needInstance()) {
       decl().getDataType().CS_emitTypeSuffix(env);
-    } 
+    }
   }
 
   public void ArrayType.CS_emitTypeSuffix(CS_env env){
@@ -776,8 +776,8 @@ aspect CS_Class {
   }
 
   public boolean DataType.CS_needInstance() {
-    throw new Error(this.getClass().getName() + 
-		    ".CS_needInstance()" + 
+    throw new Error(this.getClass().getName() +
+		    ".CS_needInstance()" +
 		    " not declared");
   }
 
@@ -810,8 +810,8 @@ aspect CS_Class {
   }
 
   public void DataType.CS_emitInstance(CS_env env) {
-    throw new Error(this.getClass().getName() + 
-		    ".CS_emitInstance(CS_env env)" + 
+    throw new Error(this.getClass().getName() +
+		    ".CS_emitInstance(CS_env env)" +
 		    " not declared");
   }
 
@@ -849,12 +849,12 @@ aspect CS_Class {
   public void Field.CS_emitField(CS_env env) {
     env.print("public ");
     getDataType().CS_emitType(env);
-    env.println(" " + getName() + ";");    
+    env.println(" " + getName() + ";");
   }
 
   public void DataType.CS_emitType(CS_env env) {
-    throw new Error(this.getClass().getName() + 
-		    ".CS_emitType(CS_env env)" + 
+    throw new Error(this.getClass().getName() +
+		    ".CS_emitType(CS_env env)" +
 		    " not declared");
   }
 
@@ -893,7 +893,7 @@ aspect CS_Class {
 
 aspect CS_Signature {
     public void Signature.CS_emitSignature(CS_env env, boolean decl){
- 
+
       SignatureList sl = getSignatureList();
       sl.CS_emitSignature(env, decl);
     }
@@ -938,9 +938,9 @@ aspect CS_Info {
   public void Specification.CS_info(PrintStream out, String namespace, int version) {
     CS_env env = new CS_env(out, version);
     if (namespace == null) {
-      namespace = ""; 
+      namespace = "";
     } else {
-      namespace = namespace + "."; 
+      namespace = namespace + ".";
     }
     for (int i = 0; i < getNumDecl(); i++) {
       getDecl(i).CS_info(env, namespace);
@@ -948,8 +948,8 @@ aspect CS_Info {
   }
 
   public void Decl.CS_info(CS_env env, String namespace) {
-    throw new Error(this.getClass().getName() + 
-		    ".CS_info(CS_env env)" + 
+    throw new Error(this.getClass().getName() +
+		    ".CS_info(CS_env env)" +
 		    " not declared");
   }
 
