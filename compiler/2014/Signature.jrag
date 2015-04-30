@@ -8,6 +8,18 @@ aspect Annotations {
     TypeInstance contributes getAnnotationString()
         to Decl.allAnnotations()
         for parentDecl();
+
+    public DocString.DocString(String s) {
+        super("DOCSTRING", s);
+    }
+
+    public String Intention.toString() {
+          return("("+getKey()+" : "+getValue()+") ");
+    }
+
+    public String  DocString.toString() {
+        return "\""+getValue()+"\"";
+    }
 }
 
 aspect Signature {
@@ -41,7 +53,7 @@ aspect Signature {
       StringBuilder sb = new StringBuilder();
       List<Annotation> ints = getAnnotationList();
       for(Annotation i : ints) {
-          sb.append("("+i.getKey()+" : "+i.getValue()+") ");
+          sb.append(i.toString());
       }
       return sb.toString();
   }

@@ -2,8 +2,6 @@ Specification ::= Decl*;
 
 abstract Decl ::= TypeInstance /Signature/;
 
-TypeInstance ::= DataType <Name:String> Intention*;
-
 TypeDecl   : Decl;
 SampleDecl : Decl;
 

@@ -52,6 +52,8 @@ Digits = {Digit}+
 Digit = 0 | {NonZeroDigit}
 NonZeroDigit = [1-9]
 
+QuotedString = "\"" {InputCharacter}* "\""
+
 %%
 
 <YYINITIAL> {
@@ -84,6 +86,7 @@ NonZeroDigit = [1-9]
   ","                            { return sym(Terminals.COMMA); }
   
   {Identifier}                   { return sym(Terminals.IDENTIFIER); }
+  {QuotedString}                 { return sym(Terminals.QUOTEDSTRING); }
 }
 
 // fall through errors

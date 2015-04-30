@@ -7,7 +7,7 @@ typedef int anInt;
 typedef void avoid;
 sample (function:trigger)(foo:bar) avoid doavoid;
 
-sample (a:b) struct {
+sample (a:b) "a struct with an int and a ref" struct {
   (c:d)(e:f) int x;
   sample reference;
 } intAndRef;
