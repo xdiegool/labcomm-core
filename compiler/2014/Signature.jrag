@@ -23,21 +23,6 @@ aspect SigAnnotations {
 
     syn boolean ASTNode.isTypeInstance() = false;
     eq TypeInstance.isTypeInstance() = true;
-}
-
-aspect Signature {
-
-  syn boolean Decl.isSampleDecl();
-  eq TypeDecl.isSampleDecl() = false;
-  eq SampleDecl.isSampleDecl() = true;
-
-  syn boolean Decl.sendOnlyFlatSignatures(Java_env env) = (env.version==2006);
-
-  eq Decl.getSignature().parentDecl() = this;
-  eq Signature.getSignatureList().parentDecl() = parentDecl();
-
-  inh Decl Signature.parentDecl();
-  inh Decl SignatureList.parentDecl();
 
   /// TESTING
   syn String Decl.getAnnotationString()  {
@@ -50,6 +35,18 @@ aspect Signature {
           sb.append(i);
       }
       return sb.toString();
+  }
+
+
+  syn int TypeInstance.fooHash() {
+      List<Annotation> ints = getAnnotationList();
+      int result=0;
+      for(Annotation i : ints) {
+          if(i.isIntention()) {
+            result += i.toString().hashCode();
+          }
+      }
+      return result;
   }
 
   syn String TypeInstance.getAnnotationString() {
@@ -67,12 +64,28 @@ aspect Signature {
 
   public void TypeInstance.debugAnnotations(String context) {
       if(hasAnnotations()){
-        System.out.println(context+".annotations: " + getAnnotationString());
+        System.out.println(context+".annotations: " + fooHash() + " : " + getAnnotationString());
       } else {
-        System.out.println(context+": NO ANNOTATIONS ");
+        System.out.println(context + " : " + fooHash() + " : " + ": NO ANNOTATIONS ");
       }
   }
   //  TESTING END
+
+}
+
+aspect Signature {
+
+  syn boolean Decl.isSampleDecl();
+  eq TypeDecl.isSampleDecl() = false;
+  eq SampleDecl.isSampleDecl() = true;
+
+  syn boolean Decl.sendOnlyFlatSignatures(Java_env env) = (env.version==2006);
+
+  eq Decl.getSignature().parentDecl() = this;
+  eq Signature.getSignatureList().parentDecl() = parentDecl();
+
+  inh Decl Signature.parentDecl();
+  inh Decl SignatureList.parentDecl();
 
   syn nta Signature Decl.getSignature() {
     SignatureList sl = new SignatureList();
@@ -217,7 +230,7 @@ aspect Signature {
   }
 
   public void TypeInstance.genSigLineForDecl(SignatureList list, boolean decl, ASTNode inst) {
-        debugAnnotations(this.getName()); 
+        debugAnnotations(this.getName());
         getDataType().genSigLineForDecl(list, decl, this);
   }
 
