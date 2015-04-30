@@ -495,12 +495,19 @@ aspect Java_Class {
     env.println();
   }
 
+  public void TypeInstance.Java_emitAnnotationComment(Java_env env) {
+      if(hasAnnotations()) {
+          env.println("// "+getAnnotationString());
+      }
+  }
+
   //XXX TODO: refactor: split into a static class ("TypeDefSingleton"?)and a (smaller) dispatcher
   public void Decl.Java_emitDispatcher(Java_env env, boolean isSample) {
     // String genericStr = ""; //env.versionHasMetaData()?"<"+getName()+">":""; 
     String genericStr = "<"+getName()+">"; 
     env.println("private static Dispatcher dispatcher = new Dispatcher();");
     env.println();
+    getTypeInstance().Java_emitAnnotationComment(env);
     env.println("public SampleDispatcher getDispatcher() {");
     env.indent();
     env.println("return dispatcher;");
