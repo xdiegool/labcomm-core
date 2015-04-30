@@ -1,12 +1,12 @@
 import java.util.*;
 
-aspect Intentions {
+aspect Annotations {
 
     inh Decl TypeInstance.parentDecl();
 
-    coll Set Decl.allIntentions() [new HashSet()] with add;
-    TypeInstance contributes getIntentionString()
-        to Decl.allIntentions()
+    coll Set Decl.allAnnotations() [new HashSet()] with add;
+    TypeInstance contributes getAnnotationString()
+        to Decl.allAnnotations()
         for parentDecl();
 }
 
@@ -25,11 +25,11 @@ aspect Signature {
   inh Decl SignatureList.parentDecl();
 
   /// TESTING
-  syn String Decl.getIntentionString()  {
+  syn String Decl.getAnnotationString()  {
       StringBuilder sb = new StringBuilder();
-      Iterator<String> iti = allIntentions().iterator();
+      Iterator<String> iti = allAnnotations().iterator();
       while(iti.hasNext()) {
-          //Intention i = iti.next();
+          //Annotation i = iti.next();
           //sb.append("("+i.getKey()+" : "+i.getValue()+") ");
           String i = iti.next();
           sb.append(i);
@@ -37,22 +37,22 @@ aspect Signature {
       return sb.toString();
   }
 
-  syn String TypeInstance.getIntentionString() {
+  syn String TypeInstance.getAnnotationString() {
       StringBuilder sb = new StringBuilder();
-      List<Intention> ints = getIntentionList();
-      for(Intention i : ints) {
+      List<Annotation> ints = getAnnotationList();
+      for(Annotation i : ints) {
           sb.append("("+i.getKey()+" : "+i.getValue()+") ");
       }
       return sb.toString();
   }
 
-  public void Decl.debugIntentions() {
-      System.out.println("Decl.intentions: " + getIntentionString());
+  public void Decl.debugAnnotations() {
+      System.out.println("Decl.annotations: " + getAnnotationString());
   }
   //  TESTING END
 
   syn nta Signature Decl.getSignature() {
-    debugIntentions();
+    debugAnnotations();
     SignatureList sl = new SignatureList();
     genSigLineForDecl(sl, true);
     SignatureList fsl = new SignatureList();

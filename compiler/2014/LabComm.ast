@@ -4,8 +4,6 @@ abstract Decl ::= TypeInstance /Signature/;
 
 TypeInstance ::= DataType <Name:String> Intention*;
 
-Intention ::= <Key:String> <Value:String>;
-
 TypeDecl   : Decl;
 SampleDecl : Decl;
 
@@ -20,6 +18,13 @@ ByteArraySignatureLine     : DataSignatureLine ::= <Data:byte[]>;
 IntSignatureLine           : DataSignatureLine ::= <Data:int>;
 StringSignatureLine        : DataSignatureLine ::= <Data:String>;
 TypeRefSignatureLine       : SignatureLine     ::= Decl;
+
+Annotation ::= <Key:String> <Value:String>;
+
+Intention : Annotation;
+DocString : Annotation;
+
+TypeInstance ::= DataType <Name:String> Annotation*;
 
 Field : TypeInstance;
 

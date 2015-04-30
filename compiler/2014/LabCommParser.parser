@@ -67,7 +67,7 @@ List intention_list =
 String key = IDENTIFIER;
 String stringliteral = IDENTIFIER;
 
-Intention intention = LPAREN key.k COLON stringliteral.v RPAREN {: return new Intention(k,v); :};
+Annotation intention = LPAREN key.k COLON stringliteral.v RPAREN {: return new Annotation(k,v); :};
 
 TypeInstance type_instance =
     intentions.i type.t IDENTIFIER {: return new TypeInstance(t, IDENTIFIER, i); :}
