@@ -14,16 +14,22 @@ aspect FlatSignature {
   }
 
   public void TypeDecl.flatSignature(SignatureList list) {
-    getDataType().flatSignature(list);
+    getTypeInstance().flatSignature(list);
   }
 
   public void SampleDecl.flatSignature(SignatureList list) {
-    getDataType().flatSignature(list);
+    getTypeInstance().flatSignature(list);
   }
 
 //  public void SampleRefType.flatSignature(SignatureList list) {
 //    list.addInt(LABCOMM_SAMPLE_REF, "sample");
 //  }
+
+  public void TypeInstance.flatSignature(SignatureList list) {
+        debugAnnotations(this.getName());
+        list.addString(getIntentionString(), "intentions: "+getIntentionString());
+        getDataType().flatSignature(list);
+  }
 
   public void VoidType.flatSignature(SignatureList list) {
     list.addInt(LABCOMM_STRUCT, "void");
@@ -62,6 +68,7 @@ aspect FlatSignature {
   }
 
   public void Field.flatSignature(SignatureList list) {
+    list.addString(getIntentionString(), "intentions: "+getIntentionString());
     list.addString(getName(), signatureComment());
     getDataType().flatSignature(list);
   }

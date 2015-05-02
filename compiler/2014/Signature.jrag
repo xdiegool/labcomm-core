@@ -229,8 +229,20 @@ aspect Signature {
                     " not declared");
   }
 
+  syn String ASTNode.getIntentionString() = "";
+  eq TypeInstance.getIntentionString() {
+    StringBuilder sb = new StringBuilder();
+    Iterator<Intention> it = intentions().iterator();
+    while(it.hasNext()) {
+        Intention i = it.next();
+        sb.append(i.toString());
+    }
+    return sb.toString();
+  }
+
   public void TypeInstance.genSigLineForDecl(SignatureList list, boolean decl, ASTNode inst) {
-        debugAnnotations(this.getName());
+//        debugAnnotations(this.getName());
+//        list.addString(inst.getIntentionString(), "intention string");
         getDataType().genSigLineForDecl(list, decl, this);
   }
 

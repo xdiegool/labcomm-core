@@ -1,0 +1,18 @@
+aspect Annotations {
+    syn boolean TypeInstance.hasAnnotations() = getNumAnnotation()>0;
+    syn boolean TypeInstance.hasIntentions() = ! intentions().isEmpty();
+
+    syn boolean Annotation.isIntention() = false;
+    eq Intention.isIntention() = true;
+
+    inh TypeInstance Annotation.parentInstance();
+    eq TypeInstance.getAnnotation(int i).parentInstance() = this;
+
+
+    coll Set<Intention> TypeInstance.intentions() [new HashSet<Intention>()] with add;
+    Intention contributes this
+        to TypeInstance.intentions()
+        for parentInstance();
+
+}
+
