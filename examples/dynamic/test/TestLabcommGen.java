@@ -22,9 +22,9 @@ import se.lth.control.labcomm2014.Decoder;
 import se.lth.control.labcomm2014.DecoderChannel;
 import se.lth.control.labcomm2014.Encoder;
 import se.lth.control.labcomm2014.EncoderChannel;
-import AST.Parser;
-import AST.Scanner;
-import AST.Program;
+import se.lth.control.labcomm2014.compiler.LabCommParser;
+import se.lth.control.labcomm2014.compiler.LabCommScanner;
+import se.lth.control.labcomm2014.compiler.Program;
 import beaver.Parser.Exception;
 
 public class TestLabcommGen {
@@ -163,8 +163,8 @@ public class TestLabcommGen {
 	public static InRAMCompiler generateCode(String lcDecl, HashMap<String, String> handlers) {
 		Program ast = null;
 		InputStream in = new ByteArrayInputStream(lcDecl.getBytes());
-		Scanner scanner = new Scanner(in);
-		Parser parser = new Parser();
+		LabCommScanner scanner = new LabCommScanner(in);
+		LabCommParser parser = new LabCommParser();
 		Collection errors = new LinkedList();
 
 		InRAMCompiler irc = null;
@@ -203,7 +203,7 @@ public class TestLabcommGen {
 	private static InRAMCompiler handleAst(Program lcAST, HashMap<String, String> handlers) {
 		Map<String, String> genCode = new HashMap<String, String>();
 		try {
-			lcAST.J_gen(genCode, "labcomm.generated", 2013);
+			lcAST.J_gen(genCode, "labcomm.generated", 2014);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
