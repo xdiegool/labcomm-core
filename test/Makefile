@@ -1,8 +1,8 @@
 TESTS=basic simple nested ref
 LABCOMM_JAR=../compiler/labcomm2014_compiler.jar
 LABCOMM=java -jar $(LABCOMM_JAR)
-MONO_PATH=$(shell realpath ../lib/csharp)
-PYTHONPATH=$(shell realpath ../lib/python)
+MONO_PATH=$(shell pwd)/../lib/csharp
+PYTHONPATH=$(shell pwd)/../lib/python
 
 include ../lib/c/os_compat.mk
 
