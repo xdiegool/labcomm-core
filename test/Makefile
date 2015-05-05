@@ -1,6 +1,8 @@
 TESTS=basic simple nested ref
 LABCOMM_JAR=../compiler/labcomm2014_compiler.jar
 LABCOMM=java -jar $(LABCOMM_JAR)
+MONO_PATH=$(shell realpath ../lib/csharp)
+PYTHONPATH=$(shell realpath ../lib/python)
 
 include ../lib/c/os_compat.mk
 
@@ -18,10 +20,10 @@ clean distclean:
 test_%: gen/%/signatures.py \
 	gen/%/c_relay \
 	gen/%/cs_relay.exe \
-	gen/%/labcomm2014.dll \
 	gen/%/java_relay.class \
 	gen/%/java_code
-	PYTHONPATH=../lib/python ./test_encoder_decoder.py \
+	PYTHONPATH=$(PYTHONPATH) MONO_PATH=$(MONO_PATH) \
+		./test_encoder_decoder.py \
 		--signatures=gen/$*/signatures.py \
 		--test tee gen/$*/testdata \
 		--test gen/$*/c_relay /dev/stdin /dev/stdout \
@@ -78,13 +80,8 @@ gen/%/cs_code.cs: %.lc Makefile | gen/%/.dir
 gen/%/cs_relay.cs:  gen/%/typeinfo relay_gen_cs.py Makefile
 	./relay_gen_cs.py $< > $@
 
-.PRECIOUS: gen/%/labcomm2014.dll
-gen/%/labcomm2014.dll:
-	ln -s ../../../lib/csharp/labcomm2014.dll $@
-
 .PRECIOUS: gen/%/cs_relay.exe
-gen/%/cs_relay.exe: gen/%/cs_relay.cs gen/%/cs_code.cs \
-		    gen/%/labcomm2014.dll Makefile
+gen/%/cs_relay.exe: gen/%/cs_relay.cs gen/%/cs_code.cs Makefile
 	mcs -out:$@ $(filter %.cs, $^) -lib:../lib/csharp/ -r:labcomm2014
 
 # Java relay test rules
