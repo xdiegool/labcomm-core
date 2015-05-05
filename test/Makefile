@@ -18,6 +18,7 @@ clean distclean:
 test_%: gen/%/signatures.py \
 	gen/%/c_relay \
 	gen/%/cs_relay.exe \
+	gen/%/labcomm2014.dll \
 	gen/%/java_relay.class \
 	gen/%/java_code
 	PYTHONPATH=../lib/python ./test_encoder_decoder.py \
