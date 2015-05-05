@@ -77,7 +77,7 @@ gen/%/cs_code.cs: %.lc Makefile | gen/%/.dir
 gen/%/cs_relay.cs:  gen/%/typeinfo relay_gen_cs.py Makefile
 	./relay_gen_cs.py $< > $@
 
-.PRECIOUS: gen/%/labcomm.dll
+.PRECIOUS: gen/%/labcomm2014.dll
 gen/%/labcomm2014.dll:
 	ln -s ../../../lib/csharp/labcomm2014.dll $@
 
