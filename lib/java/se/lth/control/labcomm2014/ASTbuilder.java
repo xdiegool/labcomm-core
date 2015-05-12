@@ -17,10 +17,11 @@ import se.lth.control.labcomm2014.compiler.LabComm;
 import se.lth.control.labcomm2014.compiler.LabCommParser;
 
 import se.lth.control.labcomm2014.compiler.List;
-import se.lth.control.labcomm2014.compiler.Program;
+import se.lth.control.labcomm2014.compiler.Specification;
 import se.lth.control.labcomm2014.compiler.Decl;
 import se.lth.control.labcomm2014.compiler.TypeDecl;
 import se.lth.control.labcomm2014.compiler.SampleDecl;
+import se.lth.control.labcomm2014.compiler.TypeInstance;
 import se.lth.control.labcomm2014.compiler.DataType;
 import se.lth.control.labcomm2014.compiler.VoidType;
 import se.lth.control.labcomm2014.compiler.PrimType;
@@ -94,8 +95,7 @@ public class ASTbuilder implements TypeDefParser.ParsedSymbolVisitor {
         }
         public void visit(TypeDefParser.ParsedField t){
             t.getType().accept(this);
-            fieldStack.push(new Field(typeStack.pop(),t.getName()));
-
+            fieldStack.push(new Field(new TypeInstance(typeStack.pop(),t.getName())));
         }
         public void visit(TypeDefParser.ArrayType t){
             boolean isFixed = true;
@@ -123,12 +123,12 @@ public class ASTbuilder implements TypeDefParser.ParsedSymbolVisitor {
 
        public Decl makeDecl(TypeDefParser.ParsedTypeDef d) {
            d.getType().accept(this);
-           Decl result = new TypeDecl(typeStack.pop(), d.getName());
+           Decl result = new TypeDecl(new TypeInstance(typeStack.pop(), d.getName()));
            return result;
        }
 
-       private Program createAndCheckProgram(List<Decl> ds) {
-            Program p = new Program(ds);
+       private Specification createAndCheckSpecification(List<Decl> ds) {
+            Specification p = new Specification(ds);
             LinkedList errors = new LinkedList();
             p.errorCheck(errors);
             if(errors.isEmpty()) {
@@ -145,21 +145,21 @@ public class ASTbuilder implements TypeDefParser.ParsedSymbolVisitor {
             }
        }
        
-       public Program makeProgram(TypeDefParser.ParsedTypeDef d) {
+       public Specification makeSpecification(TypeDefParser.ParsedTypeDef d) {
            assertStacksEmpty();
            List<Decl> ds = new List<Decl>();
 
            ds.add(makeDecl(d));
            assertStacksEmpty();
-           return createAndCheckProgram(ds);
+           return createAndCheckSpecification(ds);
        }
 
        public Decl makeDecl(TypeDefParser.ParsedSampleDef d) {
            d.getType().accept(this);
-           Decl result = new SampleDecl(typeStack.pop(), d.getName());
+           Decl result = new SampleDecl(new TypeInstance(typeStack.pop(), d.getName()));
            return result;
        }
-       public Program makeProgram(TypeDefParser.ParsedSampleDef d) {
+       public Specification makeSpecification(TypeDefParser.ParsedSampleDef d) {
            assertStacksEmpty();
            List<Decl> ds = new List<Decl>();
 
@@ -171,7 +171,7 @@ public class ASTbuilder implements TypeDefParser.ParsedSymbolVisitor {
            ds.add(makeDecl(d));
 
            assertStacksEmpty();
-           return createAndCheckProgram(ds);
+           return createAndCheckSpecification(ds);
        }
     }
 

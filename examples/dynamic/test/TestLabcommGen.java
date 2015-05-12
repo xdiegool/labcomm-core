@@ -161,7 +161,7 @@ public class TestLabcommGen {
 	}
 
 	public static InRAMCompiler generateCode(String lcDecl, HashMap<String, String> handlers) {
-		Program ast = null;
+		Specification ast = null;
 		InputStream in = new ByteArrayInputStream(lcDecl.getBytes());
 		LabCommScanner scanner = new LabCommScanner(in);
 		LabCommParser parser = new LabCommParser();
@@ -169,7 +169,7 @@ public class TestLabcommGen {
 
 		InRAMCompiler irc = null;
 		try {
-			Program p = (Program)parser.parse(scanner);
+			Specification p = (Specification)parser.parse(scanner);
 			p.errorCheck(errors);
 			if (errors.isEmpty()) {
 				ast = p;
@@ -200,7 +200,7 @@ public class TestLabcommGen {
 	 * @param handlers - a map <name, source> of handlers for the types in ast
 	 * @return an InRAMCompiler object containing the generated clases
 	 */
-	private static InRAMCompiler handleAst(Program lcAST, HashMap<String, String> handlers) {
+	private static InRAMCompiler handleAst(Specification lcAST, HashMap<String, String> handlers) {
 		Map<String, String> genCode = new HashMap<String, String>();
 		try {
 			lcAST.J_gen(genCode, "labcomm.generated", 2014);
@@ -284,7 +284,7 @@ public class TestLabcommGen {
 	 * @param handlers - a map <name, source> of handlers for the types in ast
 	 * @return an InRAMCompiler object containing the generated clases
 	 */
-	private static InRAMCompiler handleAstSeparate(Program lcAST, HashMap<String, String> handlers) {
+	private static InRAMCompiler handleAstSeparate(Specification lcAST, HashMap<String, String> handlers) {
 		Map<String, String> genCode = new HashMap<String, String>();
 		try {
 			lcAST.J_gen(genCode, "labcomm.generated", 2013);

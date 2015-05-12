@@ -48,7 +48,7 @@ public class LabComm {
      }
   }
 
-  private static void genH(Program p, String hName, 
+  private static void genH(Specification p, String hName, 
 			   Vector cIncludes, String coreName, String prefix, int ver) {
     try {
       FileOutputStream f;
@@ -63,7 +63,7 @@ public class LabComm {
     }
   }
 
-  private static void genC(Program p, String cName, 
+  private static void genC(Specification p, String cName, 
 			   Vector cIncludes, String coreName, String prefix, int ver) {
     try {
       FileOutputStream f;
@@ -78,7 +78,7 @@ public class LabComm {
     }
   }
 
-  private static void genCS(Program p, String csName, String csNamespace, int ver) {
+  private static void genCS(Specification p, String csName, String csNamespace, int ver) {
 //      throw new Error("C# generation currently disabled");
     try {
       p.CS_gen(csName, csNamespace, ver);
@@ -88,7 +88,7 @@ public class LabComm {
     }
   }
 
-  private static void genJava(Program p,  String dirName, String packageName, int ver) {
+  private static void genJava(Specification p,  String dirName, String packageName, int ver) {
     try {
       p.J_gen(dirName, packageName, ver);
     } catch (IOException e) {
@@ -97,7 +97,7 @@ public class LabComm {
     }
   }
 
-  private static void genPython(Program p, String filename, String prefix, int ver) {
+  private static void genPython(Specification p, String filename, String prefix, int ver) {
     try {
       FileOutputStream f;
       PrintStream out;
@@ -111,7 +111,7 @@ public class LabComm {
     }
   }
 
-  private static void genRAPID(Program p, String filename, String prefix, int ver) {
+  private static void genRAPID(Specification p, String filename, String prefix, int ver) {
     try {
       p.RAPID_gen(filename, prefix, ver);
     } catch (IOException e) {
@@ -239,14 +239,14 @@ public class LabComm {
      }
    }
 
-   Program parseFile(){
-     Program ast = null;
+   Specification parseFile(){
+     Specification ast = null;
      try {
        // Check for errors
        LabCommScanner scanner = new LabCommScanner(
                                   new FileReader(fileName));
        LabCommParser parser = new LabCommParser();
-       Program p = (Program)parser.parse(scanner);
+       Specification p = (Specification)parser.parse(scanner);
        Collection errors = new LinkedList();
        p.errorCheck(errors);
          
@@ -268,7 +268,7 @@ public class LabComm {
      return ast;
    }
 
-   boolean generateC(Program ast) {
+   boolean generateC(Specification ast) {
      boolean wroteFile = false; 
      Vector hIncludes = new Vector(cIncludes);
      if (hFile != null) {
@@ -287,7 +287,7 @@ public class LabComm {
      return wroteFile;
    }
   
-   boolean generateCS(Program ast) {
+   boolean generateCS(Specification ast) {
      boolean wroteFile = false; 
      if (csFile != null) {
        printStatus("C#: " , csFile); 
@@ -297,7 +297,7 @@ public class LabComm {
      return wroteFile;
    }
   
-   boolean generateJava(Program ast) {
+   boolean generateJava(Specification ast) {
      boolean wroteFile = false; 
      if (javaDir != null) {
        printStatus("Java: " , javaDir);
@@ -307,7 +307,7 @@ public class LabComm {
      return wroteFile;
    }
   
-   boolean generatePython(Program ast) {
+   boolean generatePython(Specification ast) {
      boolean wroteFile = false; 
      if (pythonFile != null) {
        printStatus("Python: " , pythonFile); 
@@ -317,7 +317,7 @@ public class LabComm {
      return wroteFile;
    }
   
-   boolean generateRAPID(Program ast) {
+   boolean generateRAPID(Specification ast) {
      boolean wroteFile = false; 
      if (rapidFile != null) {
        printStatus("RAPID: " , rapidFile);
@@ -326,7 +326,7 @@ public class LabComm {
      }
      return wroteFile;
    }
-   boolean generatePrettyPrint(Program ast) {
+   boolean generatePrettyPrint(Specification ast) {
      boolean wroteFile = false; 
      if (prettyFile != null) {
        printStatus("Pretty: " , prettyFile); 
@@ -343,7 +343,7 @@ public class LabComm {
      return wroteFile;
    }
   
-   boolean generateTypeinfo(Program ast) {
+   boolean generateTypeinfo(Specification ast) {
      boolean wroteFile = false; 
      if (typeinfoFile != null) {
        printStatus("TypeInfo: " , typeinfoFile); 
@@ -376,7 +376,7 @@ public class LabComm {
       System.exit(1);
     } else {
       opts.processArgs();
-      Program ast =  opts.parseFile();
+      Specification ast =  opts.parseFile();
 
       if (ast != null) {
 	

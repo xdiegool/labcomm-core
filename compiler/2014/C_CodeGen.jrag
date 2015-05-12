@@ -177,7 +177,7 @@ aspect C_IsDynamic {
 
 aspect C_CodeGen {
 
-  public void Program.C_genH(PrintStream out, Vector includes, 
+  public void Specification.C_genH(PrintStream out, Vector includes, 
 			     String lcName, String prefix, int version) {
     C_env env = new C_env("", lcName, prefix, out, version);
 
@@ -203,7 +203,7 @@ aspect C_CodeGen {
     env.println("#endif");
   }
 
-  public void Program.C_genC(PrintStream out, Vector includes, 
+  public void Specification.C_genC(PrintStream out, Vector includes, 
 			     String lcName, String prefix, int version) {
     C_env env = new C_env("", lcName, prefix, out, version);
 
@@ -219,7 +219,7 @@ aspect C_CodeGen {
     C_emitC(env);
   }
 
-  public void Program.C_emitH(C_env env) {
+  public void Specification.C_emitH(C_env env) {
     for (int i = 0; i < getNumDecl(); i++) {
       getDecl(i).C_emitType(env);
       getDecl(i).C_emitDecoderDeclaration(env);
@@ -233,7 +233,7 @@ aspect C_CodeGen {
     C_emitForAll(env);
   }
 
-  public void Program.C_emitC(C_env env) {
+  public void Specification.C_emitC(C_env env) {
     for (int i = 0; i < getNumDecl(); i++) {
       getDecl(i).C_emitSignature(env);
       getDecl(i).C_emitDecoder(env);
@@ -1462,7 +1462,7 @@ aspect C_Constructor {
 		    " not declared");
   }
 
-  public void Program.C_emitConstructor(C_env env) {
+  public void Specification.C_emitConstructor(C_env env) {
     env.println("LABCOMM_CONSTRUCTOR void init_" +
 		env.prefix + "_signatures(void)");
     env.println("{");
@@ -1499,7 +1499,7 @@ aspect C_Constructor {
 		    " not declared");
   }
 
-  public void Program.C_emitConstructorDeclaration(C_env env) {
+  public void Specification.C_emitConstructorDeclaration(C_env env) {
     env.println("void init_" + env.prefix + "_signatures(void);");
   }
 
@@ -1688,7 +1688,7 @@ aspect C_Sizeof {
 
 aspect C_forAll {
 
-  public void Program.C_emitForAll(C_env env) {
+  public void Specification.C_emitForAll(C_env env) {
     env.print("#define LABCOMM_FORALL_SAMPLES_" + env.lcName + 
 		"(func, sep)");
     env.indent();
@@ -1718,7 +1718,7 @@ aspect C_forAll {
 
 aspect C_Info {
 
-  public void Program.C_info(PrintStream out, String prefix, int version) {
+  public void Specification.C_info(PrintStream out, String prefix, int version) {
     C_env env = new C_env("", "", prefix, out, version);
     for (int i = 0; i < getNumDecl(); i++) {
       getDecl(i).C_info(env);

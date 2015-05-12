@@ -179,11 +179,11 @@ aspect Java_StructName {
 
   inh int Decl.Java_Depth();
   inh int DataType.Java_Depth();
-  eq Program.getDecl(int i).Java_Depth() = 0;
+  eq Specification.getDecl(int i).Java_Depth() = 0;
   eq StructType.getField(int i).Java_Depth() = Java_Depth() + 1;
 
   inh String DataType.Java_structName();
-  eq Program.getDecl(int i).Java_structName() = getDecl(i).getName();
+  eq Specification.getDecl(int i).Java_structName() = getDecl(i).getName();
   eq StructType.getField(int i).Java_structName() {
     if (Java_Depth() == 0) {
       return "struct_" + getField(i).getName();
@@ -204,7 +204,7 @@ aspect Java_Void {
 
 aspect Java_CodeGen {
 
-  public void Program.J_gen(PrintStream ps, String pack, int version) throws IOException {
+  public void Specification.J_gen(PrintStream ps, String pack, int version) throws IOException {
     Java_env env;
     env = new Java_env(version, ps);
     for (int i = 0; i < getNumDecl(); i++) {
@@ -219,7 +219,7 @@ aspect Java_CodeGen {
     env.close();
   }
 
-  public void Program.J_gen(String dir, String pack, int version) throws IOException {
+  public void Specification.J_gen(String dir, String pack, int version) throws IOException {
     Java_env env;
     for (int i = 0; i < getNumDecl(); i++) {
       Decl d = getDecl(i);
@@ -236,7 +236,7 @@ aspect Java_CodeGen {
 
   /** Experimental method for generating code to a map <classname, source>
     */
-  public void Program.J_gen(Map<String,String> src, String pack, int version) throws IOException {
+  public void Specification.J_gen(Map<String,String> src, String pack, int version) throws IOException {
     Java_env env;
     for (int i = 0; i < getNumDecl(); i++) {
       Decl d = getDecl(i);
@@ -1032,7 +1032,7 @@ aspect Java_Signature {
 
 aspect Java_Info {
 
-  public void Program.Java_info(PrintStream out, int version) {
+  public void Specification.Java_info(PrintStream out, int version) {
     Java_env env = new Java_env(version, out);
     for (int i = 0; i < getNumDecl(); i++) {
       getDecl(i).Java_info(env);

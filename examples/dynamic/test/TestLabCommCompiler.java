@@ -22,7 +22,7 @@ import se.lth.control.labcomm2014.Encoder;
 import se.lth.control.labcomm2014.EncoderChannel;
 import AST.Parser;
 import AST.Scanner;
-import AST.Program;
+import AST.Specification;
 import beaver.Parser.Exception;
 
 
@@ -121,7 +121,7 @@ public class TestCompiler {
 
 	}
 	public static InRAMCompiler generateCode(String lcDecl, HashMap<String, String> handlers) {
-		Program ast = null;
+		Specification ast = null;
 		InputStream in = new ByteArrayInputStream(lcDecl.getBytes());
 		Scanner scanner = new Scanner(in);
 		Parser parser = new Parser();
@@ -129,7 +129,7 @@ public class TestCompiler {
 
 		InRAMCompiler irc = null;
 		try {
-			Program p = (Program)parser.parse(scanner);
+			Specification p = (Specification)parser.parse(scanner);
 			p.errorCheck(errors);
 			if (errors.isEmpty()) {
 				ast = p;
@@ -207,7 +207,7 @@ public class TestCompiler {
 	 * @param handlers - a map <name, source> of handlers for the types in ast
 	 * @return an InRAMCompiler object containing the generated clases
 	 */
-	private static InRAMCompiler handleAst(Program lcAST, HashMap<String, String> handlers) {
+	private static InRAMCompiler handleAst(Specification lcAST, HashMap<String, String> handlers) {
 		Map<String, String> genCode = new HashMap<String, String>();
 		try {
 			lcAST.J_gen(genCode, "labcomm.generated", 2013);

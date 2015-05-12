@@ -1,0 +1,9 @@
+/* Temporary aspect with forwarding methods */
+aspect Refactoring {
+    syn String Decl.getName() = getTypeInstance().getName();
+    syn DataType Decl.getDataType() = getTypeInstance().getDataType();
+
+    public Field.Field(TypeInstance t) {
+        this(t.getDataType(), t.getName());
+    }
+}

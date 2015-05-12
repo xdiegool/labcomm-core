@@ -9,7 +9,7 @@ import se.lth.control.labcomm2014.TypeDefParser;
 import se.lth.control.labcomm2014.ASTbuilder;
 //import se.lth.control.labcomm2014.TypeBinding;
 
-import se.lth.control.labcomm2014.compiler.Program;
+import se.lth.control.labcomm2014.compiler.Specification;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 
@@ -79,7 +79,7 @@ public class TDDecoder
     if(d.isSampleDef()){
         System.out.println("onTypeDef (sample): ");
         ASTbuilder v = new ASTbuilder();
-        Program p = v.makeProgram((TypeDefParser.ParsedSampleDef) d);
+        Specification p = v.makeSpecification((TypeDefParser.ParsedSampleDef) d);
         try {
                 //FileOutputStream f = new FileOutputStream("/tmp/foopp"+d.getName()+".txt");
                 //PrintStream out = new PrintStream(f);

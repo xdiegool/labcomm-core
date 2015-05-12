@@ -34,9 +34,9 @@
         }
 :};
 
-Program goal =
-     /* Empty program */               {: return new Program(); :}
-  |  decl_list.l                       {: return new Program(l); :}
+Specification goal =
+     /* Empty program */               {: return new Specification(); :}
+  |  decl_list.l                       {: return new Specification(l); :}
   ;
 
 List decl_list =
@@ -54,6 +54,12 @@ List var_decl_list =
   | var_decl_list.l var_decl.v      {: return l.add(v); :}
   ;
 
+TypeInstance type_instance =
+    type.t IDENTIFIER {: return new TypeInstance(t, IDENTIFIER); :}
+  | type.t IDENTIFIER dim_list.d
+    {: return new TypeInstance(new ParseArrayType(t, d), IDENTIFIER); :}
+  ;
+
 Field var_decl =
     type.t IDENTIFIER SEMICOLON     {: return new Field(t, IDENTIFIER); :}
   | type.t IDENTIFIER dim_list.d SEMICOLON
@@ -61,17 +67,10 @@ Field var_decl =
   ;
 
 TypeDecl type_decl =
-    TYPEDEF type.t IDENTIFIER SEMICOLON {: return new TypeDecl(t, IDENTIFIER); :}
-  | TYPEDEF type.t IDENTIFIER dim_list.d SEMICOLON
-    {: return new TypeDecl(new ParseArrayType(t, d), IDENTIFIER); :}
-  ;
+    TYPEDEF type_instance.t  SEMICOLON {: return new TypeDecl(t); :} ;
 
 SampleDecl sample_decl =
-    SAMPLE type.t IDENTIFIER SEMICOLON
-      {: return new SampleDecl(t, IDENTIFIER); :}
-  | SAMPLE type.t IDENTIFIER dim_list.d SEMICOLON
-      {: return new SampleDecl(new ParseArrayType(t, d), IDENTIFIER); :}
-  ;
+    SAMPLE type_instance.t SEMICOLON {: return new SampleDecl(t); :} ;
 
 DataType type =
     prim_type.p                     {: return p; :}
@@ -109,8 +108,8 @@ StructType struct_type =
     STRUCT LBRACE var_decl_list.l RBRACE {: return new StructType(l); :}
   ;
 
-VoidType void_type = 
-    VOID {: return new VoidType(); :} 
+VoidType void_type =
+    VOID {: return new VoidType(); :}
 ;
 
 List dim_list =

@@ -72,7 +72,7 @@ aspect Python_CodeGenEnv {
 
 aspect Python_CodeGen {
 
-  public void Program.Python_gen(PrintStream out, String baseName, int version) {
+  public void Specification.Python_gen(PrintStream out, String baseName, int version) {
     Python_env env = new Python_env(out);
     env.println("#!/usr/bin/python");
     env.println("# Auto generated " + baseName);
@@ -100,7 +100,7 @@ aspect Python_CodeGen {
 
 aspect PythonTypes {
   
-  public void Program.Python_genTypes(Python_env env) {
+  public void Specification.Python_genTypes(Python_env env) {
     for (int i = 0 ; i < getNumDecl() ; i++) {
       getDecl(i).Python_genSignatureAndTypedef(env);
     }

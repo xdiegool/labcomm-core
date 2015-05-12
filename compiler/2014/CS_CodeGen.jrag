@@ -176,11 +176,11 @@ aspect CS_StructName {
 
   inh int Decl.CS_Depth();
   inh int DataType.CS_Depth();
-  eq Program.getDecl(int i).CS_Depth() = 0;
+  eq Specification.getDecl(int i).CS_Depth() = 0;
   eq StructType.getField(int i).CS_Depth() = CS_Depth() + 1;
 
   inh String DataType.CS_structName();
-  eq Program.getDecl(int i).CS_structName() = getDecl(i).getName();
+  eq Specification.getDecl(int i).CS_structName() = getDecl(i).getName();
   eq StructType.getField(int i).CS_structName() {
     if (CS_Depth() == 0) {
       return "struct_" + getField(i).getName();
@@ -201,7 +201,7 @@ aspect CS_Void {
 
 aspect CS_CodeGen {
 
-  public void Program.CS_gen(String file, 
+  public void Specification.CS_gen(String file, 
 			     String namespace, int version) throws IOException {
     // Registration class
     CS_env env = new CS_env(new File(file), version);
@@ -230,7 +230,7 @@ aspect CS_CodeGen {
 
 aspect CS_Register {
 
-  public void Program.CS_emitTypeRegister(CS_env env) {
+  public void Specification.CS_emitTypeRegister(CS_env env) {
   }
 
   public void Decl.CS_emitTypeRegister(CS_env env) {
@@ -935,7 +935,7 @@ aspect CS_Signature {
 
 aspect CS_Info {
 
-  public void Program.CS_info(PrintStream out, String namespace, int version) {
+  public void Specification.CS_info(PrintStream out, String namespace, int version) {
     CS_env env = new CS_env(out, version);
     if (namespace == null) {
       namespace = ""; 

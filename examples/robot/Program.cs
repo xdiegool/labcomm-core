@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace RobotCtrl
 {
-    class Program
+    class Specification
     {
 
         public static string IP_ADDRESS = "127.0.0.1";
@@ -20,7 +20,7 @@ namespace RobotCtrl
         {
             jointtarget val = new jointtarget { robax = new jointtarget.struct_robax(), extax = new jointtarget.struct_extax() };
             TcpClient client = new TcpClient();
-            IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse(Program.IP_ADDRESS), Program.PORT);
+            IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse(Specification.IP_ADDRESS), Specification.PORT);
             try
             {
                 client.Connect(serverEndPoint);

@@ -1,6 +1,6 @@
 aspect DeclNames {
 	inh String DataType.declName();
-	eq Decl.DataType().declName() = getName();
+	eq Decl.getTypeInstance().declName() = getName();
 
 	inh String Field.declName();
 	eq StructType.getField(int i).declName() = declName();
@@ -9,6 +9,6 @@ aspect DeclNames {
 
         inh Decl DataType.parentDecl();
         inh Decl Field.parentDecl();
-        eq Decl.getDataType().parentDecl() = this;
+        eq Decl.getTypeInstance().parentDecl() = this;
         eq StructType.getField(int i).parentDecl() = parentDecl();
 }

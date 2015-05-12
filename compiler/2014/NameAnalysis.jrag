@@ -2,7 +2,7 @@
 aspect NameAnalysis {
 
   inh String Decl.lookupName(String name);
-  eq Program.getDecl(int index).lookupName(String name) {
+  eq Specification.getDecl(int index).lookupName(String name) {
     for (int i = 0; i < index; i++) {
       String s = getDecl(i).getName();
       if (s.equals(name)) {
@@ -24,7 +24,7 @@ aspect NameAnalysis {
 
   inh TypeDecl Decl.lookupType(String name);
   inh TypeDecl UserType.lookupType(String name);
-  eq Program.getDecl(int index).lookupType(String name) {
+  eq Specification.getDecl(int index).lookupType(String name) {
     for(int i = 0; i < index; i++) {
       Decl d = getDecl(i);  
       if(d instanceof TypeDecl && d.getName().equals(name)) {

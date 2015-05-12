@@ -1,6 +1,6 @@
 import java.util.*;
 
-aspect Signature {  
+aspect Signature {
 
   syn boolean Decl.isSampleDecl();
   eq TypeDecl.isSampleDecl() = false;
@@ -14,8 +14,7 @@ aspect Signature {
   inh Decl Signature.parentDecl();
   inh Decl SignatureList.parentDecl();
 
-
-  syn nta Signature Decl.getSignature() { 
+  syn nta Signature Decl.getSignature() {
     SignatureList sl = new SignatureList();
     genSigLineForDecl(sl, true);
     SignatureList fsl = new SignatureList();
@@ -90,7 +89,7 @@ aspect Signature {
 	    //add(packed, comment);
             data = packed;
         break;
-        default: 
+        default:
             throw new RuntimeException("Unsupported version = "+version+". This should never happen.");
       }
       return data;
@@ -152,8 +151,8 @@ aspect Signature {
 
 
   public void ASTNode.genSigLineForDecl(SignatureList list, boolean decl) {
-    throw new Error(this.getClass().getName() + 
-                    ".genSigLineForDecl(SignatureList list)" + 
+    throw new Error(this.getClass().getName() +
+                    ".genSigLineForDecl(SignatureList list)" +
                     " not declared");
   }
 
@@ -185,7 +184,7 @@ aspect Signature {
    * will always be a TypeRef
    */
   public void UserType.genSigLineForDecl(SignatureList list, boolean decl) {
-      
+
       TypeDecl thet = lookupType(getName());
       list.addTypeRef(thet, null);
   }

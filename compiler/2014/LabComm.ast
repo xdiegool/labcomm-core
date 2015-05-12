@@ -1,6 +1,8 @@
-Program ::= Decl*;
+Specification ::= Decl*;
 
-abstract Decl ::= DataType <Name:String> /Signature/;
+abstract Decl ::= TypeInstance /Signature/;
+
+TypeInstance ::= DataType <Name:String>;
 
 TypeDecl   : Decl;
 SampleDecl : Decl;
@@ -17,7 +19,7 @@ IntSignatureLine           : DataSignatureLine ::= <Data:int>;
 StringSignatureLine        : DataSignatureLine ::= <Data:String>;
 TypeRefSignatureLine       : SignatureLine     ::= Decl;
 
-Field ::= DataType <Name:String>;
+Field : TypeInstance;
 
 abstract DataType;
 VoidType           : DataType;
