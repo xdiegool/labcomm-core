@@ -158,20 +158,20 @@ aspect C_CodeGenEnv {
 aspect C_IsDynamic {
   
   // Determine if a type has dynamically allocated data
-  syn boolean Decl.C_isDynamic() = getType().C_isDynamic();
-  syn boolean Type.C_isDynamic() = false;
+  syn boolean Decl.C_isDynamic() = getDataType().C_isDynamic();
+  syn boolean DataType.C_isDynamic() = false;
   syn boolean PrimType.C_isDynamic() = getToken() == LABCOMM_STRING;
   syn boolean UserType.C_isDynamic() = 
-    lookupType(getName()).getType().C_isDynamic();
+    lookupType(getName()).getDataType().C_isDynamic();
   syn boolean StructType.C_isDynamic() {
     for (int i = 0 ; i < getNumField() ; i++) {
-      if (getField(i).getType().C_isDynamic()) {
+      if (getField(i).getDataType().C_isDynamic()) {
 	return true;
       }
     }
     return false;
   }
-  syn boolean FixedArrayType.C_isDynamic() = getType().C_isDynamic();
+  syn boolean FixedArrayType.C_isDynamic() = getDataType().C_isDynamic();
   syn boolean VariableArrayType.C_isDynamic() = true;
 }
 
@@ -272,7 +272,7 @@ aspect C_Type {
   public void TypeDecl.C_emitType(C_env env) {
     env.println("#ifndef LABCOMM_DEFINED_" + env.prefix + getName());
     env.print("typedef ");
-    getType().C_emitType(env, env.prefix + getName());
+    getDataType().C_emitType(env, env.prefix + getName());
     env.println(";");
     env.println("#define LABCOMM_DEFINED_" + env.prefix + getName());
     env.println("#endif");
@@ -281,7 +281,7 @@ aspect C_Type {
   public void SampleDecl.C_emitType(C_env env) {
     env.println("#ifndef LABCOMM_DEFINED_" + env.prefix + getName());
     env.print("typedef ");
-    getType().C_emitType(env, env.prefix + getName());
+    getDataType().C_emitType(env, env.prefix + getName());
     env.println(";");
     env.println("#define LABCOMM_DEFINED_" + env.prefix + getName());
     env.println("#endif");
@@ -290,7 +290,7 @@ aspect C_Type {
                 ";");
   }
 
-  public void Type.C_emitType(C_env env, String name) {
+  public void DataType.C_emitType(C_env env, String name) {
     throw new Error(this.getClass().getName() + 
 		    ".C_emitType(C_env env, String name)" + 
 		    " not declared");
@@ -333,7 +333,7 @@ aspect C_Type {
   }
 
   public void Field.C_emitType(C_env env) {
-    getType().C_emitType(env, getName());
+    getDataType().C_emitType(env, getName());
   }
 
   public void FixedArrayType.C_emitType(C_env env, String name) {
@@ -343,7 +343,7 @@ aspect C_Type {
     for (int i = 0 ; i < getNumExp() ; i++) {
       index.append("[" + getExp(i).C_getValue() + "]");
     }
-    getType().C_emitType(env, index.toString());
+    getDataType().C_emitType(env, index.toString());
     env.println(";");
     env.unindent();
     env.print("} " + name);
@@ -359,7 +359,7 @@ aspect C_Type {
 	env.println("// n_" + i + "=" + getExp(i).C_getValue());
       }
     }
-    getType().C_emitType(env, "*a");
+    getDataType().C_emitType(env, "*a");
     env.println(";");
     env.unindent();
     env.print("} " + name);
@@ -502,12 +502,12 @@ aspect C_Decoder {
     env.println("{");
     env.indent();
     env.println(env.prefix + getName() + " v;");
-    getType().C_emitDecoder(env);
+    getDataType().C_emitDecoder(env);
     env.println("handle(&v, context);");
     if (C_isDynamic()) {
       env.println("{");
       env.indent();
-      getType().C_emitDecoderDeallocation(env);
+      getDataType().C_emitDecoderDeallocation(env);
       env.unindent();
       env.println("}");
     }
@@ -515,7 +515,7 @@ aspect C_Decoder {
     env.println("}");
   }
 
-  public void Type.C_emitDecoder(C_env env) {
+  public void DataType.C_emitDecoder(C_env env) {
     throw new Error(this.getClass().getName() + 
 		    ".C_emitDecoder(C_env env)" + 
 		    " not declared");
@@ -538,7 +538,7 @@ aspect C_Decoder {
   }
 
   public void UserType.C_emitDecoder(C_env env) {
-    lookupType(getName()).getType().C_emitDecoder(env);
+    lookupType(getName()).getDataType().C_emitDecoder(env);
   }
 
   public void StructType.C_emitDecoder(C_env env) {
@@ -563,7 +563,7 @@ aspect C_Decoder {
       env.indent();
     }
     C_emitCalcIndex(env);
-    getType().C_emitDecoder(C_Nest(env));
+    getDataType().C_emitDecoder(C_Nest(env));
     for (int i = getNumExp() - 1 ; i >= 0 ; i--) {
       env.unindent();
       env.println("}");
@@ -573,7 +573,7 @@ aspect C_Decoder {
   }
 
   public void Field.C_emitDecoder(C_env env) {
-    getType().C_emitDecoder(env.nestStruct("." + getName()));
+    getDataType().C_emitDecoder(env.nestStruct("." + getName()));
   }
 
   public void Exp.C_emitDecoderDecodeLimit(C_env env, int i) {
@@ -604,7 +604,7 @@ aspect C_Decoder {
 
   // Code for deallocation of dynamically allocated data 
 
-  public void Type.C_emitDecoderDeallocation(C_env env) {
+  public void DataType.C_emitDecoderDeallocation(C_env env) {
     throw new Error(this.getClass().getName() + 
 		    ".C_emitDecoderDeallocation(C_env env)" + 
 		    " not declared");
@@ -619,7 +619,7 @@ aspect C_Decoder {
 
   public void UserType.C_emitDecoderDeallocation(C_env env) {
     if (C_isDynamic()) {
-      lookupType(getName()).getType().C_emitDecoderDeallocation(env);
+      lookupType(getName()).getDataType().C_emitDecoderDeallocation(env);
     }
   }
 
@@ -632,7 +632,7 @@ aspect C_Decoder {
   }
 
   public void ArrayType.C_emitDecoderDeallocation(C_env env) {
-    if (getType().C_isDynamic()) {
+    if (getDataType().C_isDynamic()) {
       env.println("{");
       env.indent();
       C_emitLoopVariables(env);
@@ -646,7 +646,7 @@ aspect C_Decoder {
 	env.indent();
       }
       C_emitCalcIndex(env);
-      getType().C_emitDecoderDeallocation(C_Nest(env));
+      getDataType().C_emitDecoderDeallocation(C_Nest(env));
       for (int i = 0 ; i < getNumExp() ; i++) {
 	env.unindent();
 	env.println("}");
@@ -663,7 +663,7 @@ aspect C_Decoder {
   }
 
   public void Field.C_emitDecoderDeallocation(C_env env) {
-    getType().C_emitDecoderDeallocation(env.nestStruct("." + getName()));
+    getDataType().C_emitDecoderDeallocation(env.nestStruct("." + getName()));
   }
 
   public void Decl.C_emitDecoderRegisterHandler(C_env env) {
@@ -748,12 +748,12 @@ aspect C_copy {
     env_src.println("");
     env_src.println("{");
     env_src.indent();
-    getType().C_emitCopy(env_src, env_dst);
+    getDataType().C_emitCopy(env_src, env_dst);
     env_src.unindent();
     env_src.println("}");
   }
 
-  public void Type.C_emitCopy(C_env env_src, C_env env_dst) {
+  public void DataType.C_emitCopy(C_env env_src, C_env env_dst) {
     throw new Error(this.getClass().getName() + 
 		    ".C_emitCopy(C_env env)" + 
 		    " not declared");
@@ -780,7 +780,7 @@ aspect C_copy {
   }
 
   public void UserType.C_emitCopy(C_env env_src, C_env env_dst) {
-    lookupType(getName()).getType().C_emitCopy(env_src, env_dst);
+    lookupType(getName()).getDataType().C_emitCopy(env_src, env_dst);
   }
 
   public void StructType.C_emitCopy(C_env env_src, C_env env_dst) {
@@ -805,7 +805,7 @@ aspect C_copy {
       env_src.indent();
     }
     C_emitCalcIndex(env_src);
-    getType().C_emitCopy(C_Nest(env_src), C_Nest(env_dst));
+    getDataType().C_emitCopy(C_Nest(env_src), C_Nest(env_dst));
     for (int i = getNumExp() - 1 ; i >= 0 ; i--) {
       env_src.unindent();
       env_src.println("}");
@@ -816,7 +816,7 @@ aspect C_copy {
 
   public void Field.C_emitCopy(C_env env_src, C_env env_dst) {
     String fnam = env_src.memberAccessor() + getName();
-    getType().C_emitCopy(env_src.nestStruct(fnam), env_dst.nestStruct(fnam));
+    getDataType().C_emitCopy(env_src.nestStruct(fnam), env_dst.nestStruct(fnam));
   }
 
   public void Exp.C_emitCopyDecodeLimit(C_env env_src, C_env env_dst, int i) {
@@ -889,12 +889,12 @@ aspect C_copy {
     env.println("");
     env.println("{");
     env.indent();
-    getType().C_emitCopyDeallocation(env);
+    getDataType().C_emitCopyDeallocation(env);
     env.unindent();
     env.println("}");
   }
 
-  public void Type.C_emitCopyDeallocation(C_env env) {
+  public void DataType.C_emitCopyDeallocation(C_env env) {
     throw new Error(this.getClass().getName() +
   		    ".C_emitCopyDeallocation(C_env env)" +
   		    " not declared");
@@ -912,7 +912,7 @@ aspect C_copy {
 
   public void UserType.C_emitCopyDeallocation(C_env env) {
     if (C_isDynamic()) {
-      lookupType(getName()).getType().C_emitCopyDeallocation(env);
+      lookupType(getName()).getDataType().C_emitCopyDeallocation(env);
     }
   }
 
@@ -925,7 +925,7 @@ aspect C_copy {
   }
 
   public void ArrayType.C_emitCopyDeallocation(C_env env) {
-    if (getType().C_isDynamic()) {
+    if (getDataType().C_isDynamic()) {
       env.println("{");
       env.indent();
       C_emitLoopVariables(env);
@@ -939,7 +939,7 @@ aspect C_copy {
   	env.indent();
       }
       C_emitCalcIndex(env);
-      getType().C_emitCopyDeallocation(C_Nest(env));
+      getDataType().C_emitCopyDeallocation(C_Nest(env));
       for (int i = 0 ; i < getNumExp() ; i++) {
   	env.unindent();
   	env.println("}");
@@ -956,7 +956,7 @@ aspect C_copy {
   }
 
   public void Field.C_emitCopyDeallocation(C_env env) {
-    getType().C_emitCopyDeallocation(env.nestStruct(env.memberAccessor()
+    getDataType().C_emitCopyDeallocation(env.nestStruct(env.memberAccessor()
 						    + getName()));
   }
 }
@@ -1023,7 +1023,7 @@ aspect C_Encoder {
     env.println("{");
     env.indent();
     env.println("int result = 0;");
-    getType().C_emitEncoder(env);
+    getDataType().C_emitEncoder(env);
     env.println("return result;");
     env.unindent();
     env.println("}");
@@ -1047,7 +1047,7 @@ aspect C_Encoder {
     env.println("}");
   }
 
-  public void Type.C_emitEncoder(C_env env) {
+  public void DataType.C_emitEncoder(C_env env) {
     throw new Error(this.getClass().getName() + 
 		    ".C_emitEncoder(C_env env)" + 
 		    " not declared");
@@ -1074,7 +1074,7 @@ aspect C_Encoder {
   }
 
   public void UserType.C_emitEncoder(C_env env) {
-    decl().getType().C_emitEncoder(env);
+    decl().getDataType().C_emitEncoder(env);
   }
 
   public void StructType.C_emitEncoder(C_env env) {
@@ -1098,7 +1098,7 @@ aspect C_Encoder {
       env.indent();
     }
     C_emitCalcIndex(env);
-    getType().C_emitEncoder(C_Nest(env));
+    getDataType().C_emitEncoder(C_Nest(env));
     for (int i = getNumExp() - 1 ; i >= 0 ; i--) {
       env.unindent();
       env.println("}");
@@ -1108,7 +1108,7 @@ aspect C_Encoder {
   }
 
   public void Field.C_emitEncoder(C_env env) {
-    getType().C_emitEncoder(env.nestStruct("." + getName()));
+    getDataType().C_emitEncoder(env.nestStruct("." + getName()));
   }
 
   public void Exp.C_emitEncoderEncodeLimit(C_env env, int i) {
@@ -1516,7 +1516,7 @@ aspect C_Sizeof {
   }
 
   public int Decl.C_fixedSizeof() {
-    return getType().C_fixedSizeof();
+    return getDataType().C_fixedSizeof();
   }
 
   public void Decl.C_emitSizeof(C_env env) {
@@ -1535,7 +1535,7 @@ aspect C_Sizeof {
     env.println("}");
   }
 
-  public int Type.C_fixedSizeof() {
+  public int DataType.C_fixedSizeof() {
     throw new Error(this.getClass().getName() + 
             ".C_fixedSizeof()" + 
             " not declared");
@@ -1564,13 +1564,13 @@ aspect C_Sizeof {
   }
 
   public int UserType.C_fixedSizeof() {
-    return lookupType(getName()).getType().C_fixedSizeof();
+    return lookupType(getName()).getDataType().C_fixedSizeof();
   }
 
   public int StructType.C_fixedSizeof() {
     int result = 0;
     for (int i = 0 ; i < getNumField() ; i++) {
-      result += getField(i).getType().C_fixedSizeof();
+      result += getField(i).getDataType().C_fixedSizeof();
     }
     return result;
   }
@@ -1581,7 +1581,7 @@ aspect C_Sizeof {
       int n = Integer.parseInt(((IntegerLiteral)getExp(i)).getValue());
       elements = elements * n;
     }
-    return getType().C_fixedSizeof() * elements;
+    return getDataType().C_fixedSizeof() * elements;
   }
 
   public void Decl.C_emitSizeofValue(C_env env) {
@@ -1595,7 +1595,7 @@ aspect C_Sizeof {
     env.println("int result = 0;");
     if (C_isDynamic()) {
       env.println(env.prefix + getName() + " *v = vv;");
-      getType().C_emitSizeof(env);
+      getDataType().C_emitSizeof(env);
     } else {
       env.println("result += " + C_fixedSizeof() + ";");
     }    
@@ -1604,7 +1604,7 @@ aspect C_Sizeof {
     env.println("}");
   }
 
-  public void Type.C_emitSizeof(C_env env) {
+  public void DataType.C_emitSizeof(C_env env) {
     throw new Error(this.getClass().getName() + 
             ".C_emitSizeof(C_env env)" + 
             " not declared");
@@ -1625,17 +1625,17 @@ aspect C_Sizeof {
   }
 
   public void UserType.C_emitSizeof(C_env env) {
-    lookupType(getName()).getType().C_emitSizeof(env);
+    lookupType(getName()).getDataType().C_emitSizeof(env);
   }
 
   public void StructType.C_emitSizeof(C_env env) {
     int fixed = 0;
     for (int i = 0 ; i < getNumField() ; i++) {
-      if (getField(i).getType().C_isDynamic()) {
-        getField(i).getType().C_emitSizeof(
+      if (getField(i).getDataType().C_isDynamic()) {
+        getField(i).getDataType().C_emitSizeof(
         env.nestStruct("." + getField(i).getName()));
       } else {
-        fixed += getField(i).getType().C_fixedSizeof();
+        fixed += getField(i).getDataType().C_fixedSizeof();
       }
     }
     if (fixed > 0) {
@@ -1655,7 +1655,7 @@ aspect C_Sizeof {
     for (int i = 0 ; i < getNumExp() ; i++) {
       getExp(i).C_emitSizeof(env, i);
     }
-    if (getType().C_isDynamic()) {
+    if (getDataType().C_isDynamic()) {
       env.println("{");
       env.indent();
       C_emitLoopVariables(env);
@@ -1669,7 +1669,7 @@ aspect C_Sizeof {
         env.indent();
       }
       C_emitCalcIndex(env);
-      getType().C_emitSizeof(C_Nest(env));
+      getDataType().C_emitSizeof(C_Nest(env));
       for (int i = 0 ; i < getNumExp() ; i++) {
         env.unindent();
         env.println("}");
@@ -1677,7 +1677,7 @@ aspect C_Sizeof {
       env.unindent();
       env.println("}");
     } else {
-      env.print("result += " + getType().C_fixedSizeof());
+      env.print("result += " + getDataType().C_fixedSizeof());
       for (int i = 0 ; i < getNumExp() ; i++) {
         env.print(" * " + getExp(i).C_getLimit(env, i));
       }

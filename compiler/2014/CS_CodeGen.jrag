@@ -175,11 +175,11 @@ aspect CS_CodeGenEnv {
 aspect CS_StructName {
 
   inh int Decl.CS_Depth();
-  inh int Type.CS_Depth();
+  inh int DataType.CS_Depth();
   eq Program.getDecl(int i).CS_Depth() = 0;
   eq StructType.getField(int i).CS_Depth() = CS_Depth() + 1;
 
-  inh String Type.CS_structName();
+  inh String DataType.CS_structName();
   eq Program.getDecl(int i).CS_structName() = getDecl(i).getName();
   eq StructType.getField(int i).CS_structName() {
     if (CS_Depth() == 0) {
@@ -192,9 +192,9 @@ aspect CS_StructName {
 
 aspect CS_Void {
 
-  syn boolean Decl.CS_isVoid() = getType().CS_isVoid();
+  syn boolean Decl.CS_isVoid() = getDataType().CS_isVoid();
   syn boolean UserType.CS_isVoid() = decl().CS_isVoid();
-  syn boolean Type.CS_isVoid() = false;
+  syn boolean DataType.CS_isVoid() = false;
   syn boolean VoidType.CS_isVoid() = true;
 
 }
@@ -273,7 +273,7 @@ aspect CS_Class {
 	    Decl t = it.next();
 
 	    t.CS_emitUserTypeDeps(env, t.getName(), outputCode);
-	    if( outputCode && t.getType().isUserType() ) {
+	    if( outputCode && t.getDataType().isUserType() ) {
 	       env.println(t.getName()+".register(e);");
 	    } else {  // Just output a comment
 		String refpath = (via == null) ? "directly" : "indirectly via "+via;
@@ -329,7 +329,7 @@ aspect CS_Class {
   }
     
   public void TypeDecl.CS_emitClass(CS_env env) {
-    if (getType().CS_needInstance()) {
+    if (getDataType().CS_needInstance()) {
       // Hackish prettyprint preamble
       env.println("/* ");
       pp(env.getPrintStream());
@@ -338,7 +338,7 @@ aspect CS_Class {
       env.println("public class " + getName() + " : SampleType {");
       env.println();
       env.indent();
-      getType().CS_emitInstance(env);
+      getDataType().CS_emitInstance(env);
       if( isReferenced()) {
         CS_emitRegisterEncoder(env);
 	CS_emitDispatcher(env,false);
@@ -359,11 +359,11 @@ aspect CS_Class {
     env.println("public class " + getName() + " : Sample {");
     env.println();
     env.indent();
-    getType().CS_emitInstance(env);
+    getDataType().CS_emitInstance(env);
     env.println("public interface Handler : SampleHandler {");
     env.print("  void handle(");
     if (!isVoid()) {
-      getType().CS_emitType(env);
+      getDataType().CS_emitType(env);
       env.print(" value");
     }
     env.println(");");
@@ -506,12 +506,12 @@ aspect CS_Class {
     env.print("public static void encode(Encoder e");
     if (!isVoid()) {
       env.print(", ");
-      getType().CS_emitType(env);
+      getDataType().CS_emitType(env);
       env.print(" value");
     }
     env.println(") {");
     env.indent();
-    getType().CS_emitEncoder(env, "value");
+    getDataType().CS_emitEncoder(env, "value");
     env.unindent();
     env.println("}");
     env.println();
@@ -521,20 +521,20 @@ aspect CS_Class {
     env.print("public static void encode(Encoder e");
     if (!isVoid()) {
       env.print(", ");
-      getType().CS_emitType(env);
+      getDataType().CS_emitType(env);
       env.print(" value");
     }
     env.println(") {");
     env.indent();
     env.println("e.begin(typeof(" + getName() + "));");
-    getType().CS_emitEncoder(env, "value");
+    getDataType().CS_emitEncoder(env, "value");
     env.println("e.end(typeof(" + getName() + "));");
     env.unindent();
     env.println("}");
     env.println();
   }
 
-  public void Type.CS_emitEncoder(CS_env env, String name) {
+  public void DataType.CS_emitEncoder(CS_env env, String name) {
     throw new Error(this.getClass().getName() + 
 		    ".CS_emitEncoder(CS_env env, String name)" + 
 		    " not declared");
@@ -575,7 +575,7 @@ aspect CS_Class {
         index = index + ", " + env.print_for_begin(limit);
       }
     }
-    getType().CS_emitEncoder(env, name + "[" + index + "]");
+    getDataType().CS_emitEncoder(env, name + "[" + index + "]");
     for (int i = 0 ; i < getNumExp() ; i++) {
       env.print_for_end();
     }
@@ -600,7 +600,7 @@ aspect CS_Class {
   public void StructType.CS_emitEncoder(CS_env env, String name) {
     for (int i = 0 ; i < getNumField() ; i++) {
       Field f = getField(i);
-      f.getType().CS_emitEncoder(env, name + "." + f.getName());
+      f.getDataType().CS_emitEncoder(env, name + "." + f.getName());
     }
   }
 
@@ -608,19 +608,19 @@ aspect CS_Class {
     if (CS_needInstance()) {
       env.println(getName() + ".encode(e, " + name + ");");
     } else {
-      decl().getType().CS_emitEncoder(env, name);
+      decl().getDataType().CS_emitEncoder(env, name);
     }
   }
 
   public void Decl.CS_emitDecoder(CS_env env) {
     env.print("public static ");
-    getType().CS_emitType(env);
+    getDataType().CS_emitType(env);
     env.println(" decode(Decoder d) {");
     env.indent();
     if (!isVoid()) {
-      getType().CS_emitType(env);
+      getDataType().CS_emitType(env);
       env.println(" result;");
-      getType().CS_emitDecoder(env, "result");
+      getDataType().CS_emitDecoder(env, "result");
       env.println("return result;");
     }
     env.unindent();
@@ -628,7 +628,7 @@ aspect CS_Class {
     env.println();
   }
 
-  public void Type.CS_emitDecoder(CS_env env, String name) {
+  public void DataType.CS_emitDecoder(CS_env env, String name) {
     throw new Error(this.getClass().getName() + 
 		    ".CS_emitDecoder(CS_env env, String name)" + 
 		    " not declared");
@@ -666,7 +666,7 @@ aspect CS_Class {
       env.println(";");
     }
     env.print(name + " = new "); 
-    getType().CS_emitTypePrefix(env);
+    getDataType().CS_emitTypePrefix(env);
     env.print("[");
     for (int i = 0 ; i < getNumExp() ; i++) {
       if (i > 0) {
@@ -675,7 +675,7 @@ aspect CS_Class {
       env.print("i_" + (baseDepth + i) + "_max");
     }
     env.print("]");
-    getType().CS_emitTypeSuffix(env);
+    getDataType().CS_emitTypeSuffix(env);
     env.println(";");
     
     String index = null;
@@ -687,7 +687,7 @@ aspect CS_Class {
         index = index + ", " + env.print_for_begin(limit);
       }
     }
-    getType().CS_emitDecoder(env, name + "[" + index + "]");
+    getDataType().CS_emitDecoder(env, name + "[" + index + "]");
     for (int i = 0 ; i < getNumExp() ; i++) {
       env.print_for_end();
     }
@@ -715,7 +715,7 @@ aspect CS_Class {
     env.println("();");
     for (int i = 0 ; i < getNumField() ; i++) {
       Field f = getField(i);
-      f.getType().CS_emitDecoder(env, name + "." + f.getName());
+      f.getDataType().CS_emitDecoder(env, name + "." + f.getName());
     }
   }
 
@@ -723,11 +723,11 @@ aspect CS_Class {
     if (CS_needInstance()) {
       env.println(name + " = " + getName() + ".decode(d);");
     } else {
-      decl().getType().CS_emitDecoder(env, name);
+      decl().getDataType().CS_emitDecoder(env, name);
     }
   }
 
-  public void Type.CS_emitTypePrefix(CS_env env) {
+  public void DataType.CS_emitTypePrefix(CS_env env) {
     throw new Error(this.getClass().getName() + 
 		    ".CS_emitTypePrefix(CS_env env)" + 
 		    " not declared");
@@ -745,24 +745,24 @@ aspect CS_Class {
     if (CS_needInstance()) {
       env.print(getName());
     } else {
-      decl().getType().CS_emitTypePrefix(env);
+      decl().getDataType().CS_emitTypePrefix(env);
     } 
   }
 
   public void ArrayType.CS_emitTypePrefix(CS_env env){
-    getType().CS_emitTypePrefix(env);
+    getDataType().CS_emitTypePrefix(env);
   }
 
   public void StructType.CS_emitTypePrefix(CS_env env){
     env.print(CS_structName());
   }
 
-  public void Type.CS_emitTypeSuffix(CS_env env) {
+  public void DataType.CS_emitTypeSuffix(CS_env env) {
   }
 
   public void UserType.CS_emitTypeSuffix(CS_env env) {
     if (! CS_needInstance()) {
-      decl().getType().CS_emitTypeSuffix(env);
+      decl().getDataType().CS_emitTypeSuffix(env);
     } 
   }
 
@@ -772,10 +772,10 @@ aspect CS_Class {
       env.print(",");
     }
     env.print("]");
-    getType().CS_emitTypeSuffix(env);
+    getDataType().CS_emitTypeSuffix(env);
   }
 
-  public boolean Type.CS_needInstance() {
+  public boolean DataType.CS_needInstance() {
     throw new Error(this.getClass().getName() + 
 		    ".CS_needInstance()" + 
 		    " not declared");
@@ -790,7 +790,7 @@ aspect CS_Class {
   }
 
   public boolean UserType.CS_needInstance() {
-    return decl().getType().CS_needInstance();
+    return decl().getDataType().CS_needInstance();
   }
 
   public boolean StructType.CS_needInstance() {
@@ -798,10 +798,10 @@ aspect CS_Class {
   }
 
   public boolean ArrayType.CS_needInstance() {
-    return getType().CS_needInstance();
+    return getDataType().CS_needInstance();
   }
 
-  public boolean Type.CS_isPrimitive() {
+  public boolean DataType.CS_isPrimitive() {
     return false;
   }
 
@@ -809,7 +809,7 @@ aspect CS_Class {
     return true;
   }
 
-  public void Type.CS_emitInstance(CS_env env) {
+  public void DataType.CS_emitInstance(CS_env env) {
     throw new Error(this.getClass().getName() + 
 		    ".CS_emitInstance(CS_env env)" + 
 		    " not declared");
@@ -822,7 +822,7 @@ aspect CS_Class {
   }
 
   public void ArrayType.CS_emitInstance(CS_env env) {
-    getType().CS_emitInstance(env);
+    getDataType().CS_emitInstance(env);
   }
 
   public void StructType.CS_emitInstance(CS_env env) {
@@ -831,7 +831,7 @@ aspect CS_Class {
       env.indent();
     }
     for (int i = 0 ; i < getNumField() ; i++) {
-      getField(i).getType().CS_emitInstance(env);
+      getField(i).getDataType().CS_emitInstance(env);
     }
     for (int i = 0 ; i < getNumField() ; i++) {
       getField(i).CS_emitField(env);
@@ -848,11 +848,11 @@ aspect CS_Class {
 
   public void Field.CS_emitField(CS_env env) {
     env.print("public ");
-    getType().CS_emitType(env);
+    getDataType().CS_emitType(env);
     env.println(" " + getName() + ";");    
   }
 
-  public void Type.CS_emitType(CS_env env) {
+  public void DataType.CS_emitType(CS_env env) {
     throw new Error(this.getClass().getName() + 
 		    ".CS_emitType(CS_env env)" + 
 		    " not declared");
@@ -872,17 +872,17 @@ aspect CS_Class {
   }
 
   public void UserType.CS_emitType(CS_env env) {
-    decl().getType().CS_emitType(env);
+    decl().getDataType().CS_emitType(env);
   }
 
   public void ArrayType.CS_emitType(CS_env env){
-    getType().CS_emitTypePrefix(env);
+    getDataType().CS_emitTypePrefix(env);
     env.print("[");
     for (int i = 1 ; i < getNumExp() ; i++) {
       env.print(",");
     }
     env.print("]");
-    getType().CS_emitTypeSuffix(env);
+    getDataType().CS_emitTypeSuffix(env);
   }
 
   public void StructType.CS_emitType(CS_env env){
@@ -902,7 +902,7 @@ aspect CS_Signature {
 
     public void TypeRefSignatureLine.CS_emitSignature(CS_env env, boolean isDecl){
       env.print(getIndentString());
-      env.println("e.encodePacked32(e.getTypeId( typeof("+decl.getName()+")));");
+      env.println("e.encodePacked32(e.getDataTypeId( typeof("+decl.getName()+")));");
     }
 
     public void DataSignatureLine.CS_emitSignature(CS_env env, boolean decl){
@@ -955,14 +955,14 @@ aspect CS_Info {
 
   public void TypeDecl.CS_info(CS_env env, String namespace) {
     env.print(";C#;typedef;" + namespace + getName() + ";");
-    getType().CS_emitType(env) ;
+    getDataType().CS_emitType(env) ;
     env.print(";not_applicable_for_C#");
     env.println();
   }
 
   public void SampleDecl.CS_info(CS_env env, String namespace) {
     env.print(";C#;sample;" + namespace + getName() + ";");
-    getType().CS_emitType(env);
+    getDataType().CS_emitType(env);
     env.print(";not_applicable_for_C#");
     env.println();
   }

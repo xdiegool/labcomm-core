@@ -21,7 +21,7 @@ import se.lth.control.labcomm2014.compiler.Program;
 import se.lth.control.labcomm2014.compiler.Decl;
 import se.lth.control.labcomm2014.compiler.TypeDecl;
 import se.lth.control.labcomm2014.compiler.SampleDecl;
-import se.lth.control.labcomm2014.compiler.Type;
+import se.lth.control.labcomm2014.compiler.DataType;
 import se.lth.control.labcomm2014.compiler.VoidType;
 import se.lth.control.labcomm2014.compiler.PrimType;
 import se.lth.control.labcomm2014.compiler.UserType;
@@ -41,11 +41,11 @@ import se.lth.control.labcomm2014.compiler.VariableSize;
  */
 public class ASTbuilder implements TypeDefParser.ParsedSymbolVisitor {
 
-        private LinkedList<Type> typeStack;
+        private LinkedList<DataType> typeStack;
         private LinkedList<Field> fieldStack;
 
         public ASTbuilder() {
-            this.typeStack = new LinkedList<Type>();
+            this.typeStack = new LinkedList<DataType>();
             this.fieldStack = new LinkedList<Field>();
         }
 

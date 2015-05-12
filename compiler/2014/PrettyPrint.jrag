@@ -27,24 +27,24 @@ aspect PrettyPrint {
    // Pretty print declarations
   public void TypeDecl.pp(PrintStream out) {
     out.print("typedef ");
-    getType().ppIdentifier(out, getName());
+    getDataType().ppIdentifier(out, getName());
     out.println(";");
   }
 
   public void SampleDecl.pp(PrintStream out) {
     out.print("sample ");
-    getType().ppIdentifier(out, getName());
+    getDataType().ppIdentifier(out, getName());
     out.println(";");
   }
 
   public void Field.pp(PrintStream out) {
     out.print(pp_indent());
-    getType().ppIdentifier(out, getName());
+    getDataType().ppIdentifier(out, getName());
     out.println(";");
   }
 
   // Pretty print variable of a given type 
-  public void Type.ppIdentifier(PrintStream out, String id) { 
+  public void DataType.ppIdentifier(PrintStream out, String id) { 
     ppPrefix(out);
     out.print(" ");
     out.print(id);
@@ -58,7 +58,7 @@ aspect PrettyPrint {
   }
 
   // PrettyPrint prefix type info
-  public void Type.ppPrefix(PrintStream out) {
+  public void DataType.ppPrefix(PrintStream out) {
     throw new Error(this.getClass().getName() + 
 		    ".ppPrefix(PrintStream out)" + 
 		    " not declared");
@@ -81,7 +81,7 @@ aspect PrettyPrint {
   }
 
   public void ArrayType.ppPrefix(PrintStream out) {
-    getType().ppPrefix(out);
+    getDataType().ppPrefix(out);
   }
 
   public void StructType.ppPrefix(PrintStream out) {
@@ -94,7 +94,7 @@ aspect PrettyPrint {
   }
 
   // PrettyPrint suffix type info (array dimensions)
-  public void Type.ppSuffix(PrintStream out) { }
+  public void DataType.ppSuffix(PrintStream out) { }
 
   public void ArrayType.ppSuffix(PrintStream out) { 
     out.print("[");
@@ -103,7 +103,7 @@ aspect PrettyPrint {
       getExp(i).pp(out);
     }
     out.print("]");
-    getType().ppSuffix(out);
+    getDataType().ppSuffix(out);
   }
 
   public void IntegerLiteral.pp(PrintStream out) {

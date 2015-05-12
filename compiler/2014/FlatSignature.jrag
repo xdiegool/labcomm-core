@@ -14,11 +14,11 @@ aspect FlatSignature {
   }
 
   public void TypeDecl.flatSignature(SignatureList list) {
-    getType().flatSignature(list);
+    getDataType().flatSignature(list);
   }
 
   public void SampleDecl.flatSignature(SignatureList list) {
-    getType().flatSignature(list);
+    getDataType().flatSignature(list);
   }
 
 //  public void SampleRefType.flatSignature(SignatureList list) {
@@ -45,7 +45,7 @@ aspect FlatSignature {
     for (int i = 0 ; i < getNumExp() ; i++) {
       getExp(i).flatSignature(list);
     }
-    getType().flatSignature(list);
+    getDataType().flatSignature(list);
     list.unindent();
     list.add(null, "}");
   }
@@ -63,7 +63,7 @@ aspect FlatSignature {
 
   public void Field.flatSignature(SignatureList list) {
     list.addString(getName(), signatureComment());
-    getType().flatSignature(list);
+    getDataType().flatSignature(list);
   }
 
   public void IntegerLiteral.flatSignature(SignatureList list) {
@@ -93,7 +93,7 @@ aspect FlatSignature {
   }
 
   public String Field.signatureComment() {
-    return getType().signatureComment() + " '" + getName() +"'";
+    return getDataType().signatureComment() + " '" + getName() +"'";
   }
 
 //  public String SampleRefType.signatureComment() {

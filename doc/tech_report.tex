@@ -780,20 +780,20 @@ Avro has multiple codecs (for compression of the data):
 \begin{verbatim}
 Program ::= Decl*;
 
-abstract Decl ::= Type <Name:String>;
+abstract Decl ::= DataType <Name:String>;
 TypeDecl : Decl;
 SampleDecl : Decl;
 
-Field ::= Type <Name:String>;
+Field ::= DataType <Name:String>;
 
-abstract Type;
-VoidType          : Type;
-SampleRefType     : Type;
-PrimType          : Type ::= <Name:String> <Token:int>;
-UserType          : Type ::= <Name:String>;
-StructType        : Type ::= Field*;
-ParseArrayType    : Type ::= Type Dim*;
-abstract ArrayType : Type ::= Type Exp*;
+abstract DataType;
+VoidType          : DataType;
+SampleRefType     : DataType;
+PrimType          : DataType ::= <Name:String> <Token:int>;
+UserType          : DataType ::= <Name:String>;
+StructType        : DataType ::= Field*;
+ParseArrayType    : DataType ::= DataType Dim*;
+abstract ArrayType : DataType ::= DataType Exp*;
 VariableArrayType : ArrayType;
 FixedArrayType    : ArrayType;
 

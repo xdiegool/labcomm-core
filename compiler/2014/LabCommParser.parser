@@ -73,7 +73,7 @@ SampleDecl sample_decl =
       {: return new SampleDecl(new ParseArrayType(t, d), IDENTIFIER); :}
   ;
 
-Type type =
+DataType type =
     prim_type.p                     {: return p; :}
   | user_type.u                     {: return u; :}
   | struct_type.s                   {: return s; :}

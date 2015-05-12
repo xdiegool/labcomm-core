@@ -178,11 +178,11 @@ aspect Java_CodeGenEnv {
 aspect Java_StructName {
 
   inh int Decl.Java_Depth();
-  inh int Type.Java_Depth();
+  inh int DataType.Java_Depth();
   eq Program.getDecl(int i).Java_Depth() = 0;
   eq StructType.getField(int i).Java_Depth() = Java_Depth() + 1;
 
-  inh String Type.Java_structName();
+  inh String DataType.Java_structName();
   eq Program.getDecl(int i).Java_structName() = getDecl(i).getName();
   eq StructType.getField(int i).Java_structName() {
     if (Java_Depth() == 0) {
@@ -195,9 +195,9 @@ aspect Java_StructName {
 
 aspect Java_Void {
 
-  syn boolean Decl.isVoid() = getType().isVoid();
+  syn boolean Decl.isVoid() = getDataType().isVoid();
   syn boolean UserType.isVoid() = decl().isVoid();
-  syn boolean Type.isVoid() = false;
+  syn boolean DataType.isVoid() = false;
   syn boolean VoidType.isVoid() = true;
 
 }
@@ -295,7 +295,7 @@ aspect Java_Class {
             Decl t = it.next();
 
             t.Java_emitUserTypeDeps(env, t.getName(), outputCode);
-            if( outputCode){// && t.getType().isUserType() ) {
+            if( outputCode){// && t.getDataType().isUserType() ) {
                env.println(t.getName()+".register(e);");
             } else {  // Just output a comment
 	        String refpath = (via == null) ? "directly" : "indirectly via "+via;
@@ -356,14 +356,14 @@ aspect Java_Class {
       env.println("import se.lth.control.labcomm"+env.verStr+".Constant;");
       env.println("import se.lth.control.labcomm"+env.verStr+".SampleType;");
 
-      if (getType().Java_needInstance() || hasDependencies() || isReferenced()) {
+      if (getDataType().Java_needInstance() || hasDependencies() || isReferenced()) {
           env.println("import se.lth.control.labcomm"+env.verStr+".Encoder;");
           env.println("import se.lth.control.labcomm"+env.verStr+".SampleDispatcher;");
           env.println("import se.lth.control.labcomm"+env.verStr+".SampleHandler;");
 //          env.println();
 //      }
 //
-//      if (getType().Java_needInstance()) {
+//      if (getDataType().Java_needInstance()) {
           env.println("import java.io.IOException;");
           env.println("import se.lth.control.labcomm"+env.verStr+".Decoder;");
       }
@@ -374,14 +374,14 @@ aspect Java_Class {
       env.println();
 
       env.indent();
-      if (getType().Java_needInstance()) {
-        getType().Java_emitInstance(env);
+      if (getDataType().Java_needInstance()) {
+        getDataType().Java_emitInstance(env);
         Java_emitEncoder(env);
         Java_emitDecoder(env);
       }
 
       //if(hasDependencies() || isReferenced()) {
-      //if( getType().isUserType() && isReferenced()) {
+      //if( getDataType().isUserType() && isReferenced()) {
       if( isReferenced()) {
         Java_emitRegisterEncoder(env);
         Java_emitDispatcher(env, false);
@@ -414,17 +414,17 @@ aspect Java_Class {
 //  Code for making samples of user types extend their type
 //  currently commented out. Is this a good idea or not?
 //
-//    if(getType().isUserType()) {
-//        env.print(" extends "+getType().getTypeName());
+//    if(getDataType().isUserType()) {
+//        env.print(" extends "+getDataType().getTypeName());
 //    }
     env.println(" implements Sample {");
     env.println();
     env.indent();
-    getType().Java_emitInstance(env);
+    getDataType().Java_emitInstance(env);
     env.println("public interface Handler extends SampleHandler {");
     env.print("  public void handle_" + getName() + "(");
     if (!isVoid()) {
-      getType().Java_emitType(env);
+      getDataType().Java_emitType(env);
       env.print(" value");
     }
     env.println(") throws Exception;");
@@ -611,12 +611,12 @@ aspect Java_Class {
     env.print("public static void encode(Encoder e");
     if (!isVoid()) {
       env.print(", ");
-      getType().Java_emitType(env);
+      getDataType().Java_emitType(env);
       env.print(" value");
     }
     env.println(") throws IOException {");
     env.indent();
-    getType().Java_emitEncoder(env, "value");
+    getDataType().Java_emitEncoder(env, "value");
     env.unindent();
     env.println("}");
     env.println();
@@ -626,20 +626,20 @@ aspect Java_Class {
     env.print("public static void encode(Encoder e");
     if (!isVoid()) {
       env.print(", ");
-      getType().Java_emitType(env);
+      getDataType().Java_emitType(env);
       env.print(" value");
     }
     env.println(") throws IOException {");
     env.indent();
     env.println("e.begin(" + getName() + ".class);");
-    getType().Java_emitEncoder(env, "value");
+    getDataType().Java_emitEncoder(env, "value");
     env.println("e.end(" + getName() + ".class);");
     env.unindent();
     env.println("}");
     env.println();
   }
 
-  public void Type.Java_emitEncoder(Java_env env, String name) {
+  public void DataType.Java_emitEncoder(Java_env env, String name) {
     throw new Error(this.getClass().getName() +
 		    ".Java_emitEncoder(Java_env env, String name)" +
 		    " not declared");
@@ -676,7 +676,7 @@ aspect Java_Class {
       String limit = "i_" + (baseDepth + i) + "_max";
       name = name + env.print_for_begin(limit);
     }
-    getType().Java_emitEncoder(env, name);
+    getDataType().Java_emitEncoder(env, name);
     for (int i = 0 ; i < getNumExp() ; i++) {
       env.print_for_end();
       env.print_block_end();
@@ -701,7 +701,7 @@ aspect Java_Class {
   public void StructType.Java_emitEncoder(Java_env env, String name) {
     for (int i = 0 ; i < getNumField() ; i++) {
       Field f = getField(i);
-      f.getType().Java_emitEncoder(env, name + "." + f.getName());
+      f.getDataType().Java_emitEncoder(env, name + "." + f.getName());
     }
   }
 
@@ -709,19 +709,19 @@ aspect Java_Class {
     if (Java_needInstance()) {
       env.println(getName() + ".encode(e, " + name + ");");
     } else {
-      decl().getType().Java_emitEncoder(env, name);
+      decl().getDataType().Java_emitEncoder(env, name);
     }
   }
 
   public void Decl.Java_emitDecoder(Java_env env) {
     env.print("public static ");
-    getType().Java_emitType(env);
+    getDataType().Java_emitType(env);
     env.println(" decode(Decoder d) throws IOException {");
     env.indent();
     if (!isVoid()) {
-      getType().Java_emitType(env);
+      getDataType().Java_emitType(env);
       env.println(" result;");
-      getType().Java_emitDecoder(env, "result");
+      getDataType().Java_emitDecoder(env, "result");
       env.println("return result;");
     }
     env.unindent();
@@ -729,7 +729,7 @@ aspect Java_Class {
     env.println();
   }
 
-  public void Type.Java_emitDecoder(Java_env env, String name) {
+  public void DataType.Java_emitDecoder(Java_env env, String name) {
     throw new Error(this.getClass().getName() +
 		    ".Java_emitDecoder(Java_env env, String name)" +
 		    " not declared");
@@ -769,7 +769,7 @@ aspect Java_Class {
       env.println(";");
       name = name + env.print_for_begin(limit);
     }
-    getType().Java_emitDecoder(env, name);
+    getDataType().Java_emitDecoder(env, name);
     for (int i = 0 ; i < getNumExp() ; i++) {
       env.print_for_end();
     }
@@ -797,7 +797,7 @@ aspect Java_Class {
     env.println("();");
     for (int i = 0 ; i < getNumField() ; i++) {
       Field f = getField(i);
-      f.getType().Java_emitDecoder(env, name + "." + f.getName());
+      f.getDataType().Java_emitDecoder(env, name + "." + f.getName());
     }
   }
 
@@ -805,11 +805,11 @@ aspect Java_Class {
     if (Java_needInstance()) {
       env.println(name + " = " + getName() + ".decode(d);");
     } else {
-      decl().getType().Java_emitDecoder(env, name);
+      decl().getDataType().Java_emitDecoder(env, name);
     }
   }
 
-  public void Type.Java_emitNew(Java_env env, String size) {
+  public void DataType.Java_emitNew(Java_env env, String size) {
     throw new Error(this.getClass().getName() +
 		    ".Java_emitNew(Java_env env, String size)" +
 		    " not declared");
@@ -817,15 +817,15 @@ aspect Java_Class {
 
   public void ArrayType.Java_emitNew(Java_env env, String size, int depth) {
     env.print("new ");
-    getType().Java_emitTypePrefix(env);
+    getDataType().Java_emitTypePrefix(env);
     env.print("[" + size + "]");
-    getType().Java_emitTypeSuffix(env);
+    getDataType().Java_emitTypeSuffix(env);
     for (int i = 1 ; i < depth ; i++) {
       env.print("[]");
     }
   }
 
-  public void Type.Java_emitTypePrefix(Java_env env) {
+  public void DataType.Java_emitTypePrefix(Java_env env) {
     throw new Error(this.getClass().getName() +
 		    ".Java_emitTypePrefix(Java_env env)" +
 		    " not declared");
@@ -843,35 +843,35 @@ aspect Java_Class {
     if (Java_needInstance()) {
       env.print(getName());
     } else {
-      decl().getType().Java_emitTypePrefix(env);
+      decl().getDataType().Java_emitTypePrefix(env);
     }
   }
 
   public void ArrayType.Java_emitTypePrefix(Java_env env){
-    getType().Java_emitTypePrefix(env);
+    getDataType().Java_emitTypePrefix(env);
   }
 
   public void StructType.Java_emitTypePrefix(Java_env env){
     env.print(Java_structName());
   }
 
-  public void Type.Java_emitTypeSuffix(Java_env env) {
+  public void DataType.Java_emitTypeSuffix(Java_env env) {
   }
 
   public void UserType.Java_emitTypeSuffix(Java_env env) {
     if (! Java_needInstance()) {
-      decl().getType().Java_emitTypeSuffix(env);
+      decl().getDataType().Java_emitTypeSuffix(env);
     }
   }
 
   public void ArrayType.Java_emitTypeSuffix(Java_env env){
-    getType().Java_emitTypeSuffix(env);
+    getDataType().Java_emitTypeSuffix(env);
     for (int i = 0 ; i < getNumExp() ; i++) {
       env.print("[]");
     }
   }
 
-  public boolean Type.Java_needInstance() {
+  public boolean DataType.Java_needInstance() {
     throw new Error(this.getClass().getName() +
 		    ".Java_needInstance()" +
 		    " not declared");
@@ -886,7 +886,7 @@ aspect Java_Class {
   }
 
   public boolean UserType.Java_needInstance() {
-    return decl().getType().Java_needInstance();
+    return decl().getDataType().Java_needInstance();
   }
 
   public boolean StructType.Java_needInstance() {
@@ -894,10 +894,10 @@ aspect Java_Class {
   }
 
   public boolean ArrayType.Java_needInstance() {
-    return getType().Java_needInstance();
+    return getDataType().Java_needInstance();
   }
 
-  public boolean Type.Java_isPrimitive() {
+  public boolean DataType.Java_isPrimitive() {
     return false;
   }
 
@@ -905,7 +905,7 @@ aspect Java_Class {
     return true;
   }
 
-  public void Type.Java_emitInstance(Java_env env) {
+  public void DataType.Java_emitInstance(Java_env env) {
     throw new Error(this.getClass().getName() +
 		    ".Java_emitInstance(Java_env env)" +
 		    " not declared");
@@ -918,7 +918,7 @@ aspect Java_Class {
   }
 
   public void ArrayType.Java_emitInstance(Java_env env) {
-    getType().Java_emitInstance(env);
+    getDataType().Java_emitInstance(env);
   }
 
   public void StructType.Java_emitInstance(Java_env env) {
@@ -927,7 +927,7 @@ aspect Java_Class {
       env.indent();
     }
     for (int i = 0 ; i < getNumField() ; i++) {
-      getField(i).getType().Java_emitInstance(env);
+      getField(i).getDataType().Java_emitInstance(env);
     }
     for (int i = 0 ; i < getNumField() ; i++) {
       getField(i).Java_emitField(env);
@@ -944,11 +944,11 @@ aspect Java_Class {
 
   public void Field.Java_emitField(Java_env env) {
     env.print("public ");
-    getType().Java_emitType(env);
+    getDataType().Java_emitType(env);
     env.println(" " + getName() + ";");
   }
 
-  public void Type.Java_emitType(Java_env env) {
+  public void DataType.Java_emitType(Java_env env) {
     throw new Error(this.getClass().getName() +
 		    ".Java_emitType(Java_env env)" +
 		    " not declared");
@@ -967,11 +967,11 @@ aspect Java_Class {
   }
 
   public void UserType.Java_emitType(Java_env env) {
-    decl().getType().Java_emitType(env);
+    decl().getDataType().Java_emitType(env);
   }
 
   public void ArrayType.Java_emitType(Java_env env){
-    getType().Java_emitType(env);
+    getDataType().Java_emitType(env);
     for (int i = 0 ; i < getNumExp() ; i++) {
       env.print("[]");
     }
@@ -1047,14 +1047,14 @@ aspect Java_Info {
 
   public void TypeDecl.Java_info(Java_env env) {
     env.print(",Java,typedef," + getName() + ",");
-    getType().Java_emitType(env);
+    getDataType().Java_emitType(env);
     env.print(",not_applicable_for_Java");
     env.println();
   }
 
   public void SampleDecl.Java_info(Java_env env) {
     env.print(",Java,sample," + getName() + ",");
-    getType().Java_emitType(env);
+    getDataType().Java_emitType(env);
     env.print(",not_applicable_for_Java");
     env.println();
   }

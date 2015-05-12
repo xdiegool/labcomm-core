@@ -34,8 +34,8 @@ aspect NameAnalysis {
     return null;
   }
 
-  syn TypeDecl Type.decl(); 
-  eq Type.decl() = null;
+  syn TypeDecl DataType.decl(); 
+  eq DataType.decl() = null;
   eq UserType.decl() = lookupType(getName());
   eq PrimType.decl() = null; //HERE BE DRAGONS XXX
   

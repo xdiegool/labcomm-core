@@ -126,7 +126,7 @@ aspect RAPID_CodeGen {
 
 	public void SampleDecl.RAPID_gen(RAPID_env env) {
 		// Add type declarations
-		String fullName = getType().RAPID_AddType(env, getName());
+		String fullName = getDataType().RAPID_AddType(env, getName());
 		// Add signature constants
 		String sig_len_name = "signature_len_" + getName();
 		String sig_name = "signature_" + getName();
@@ -167,7 +167,7 @@ aspect RAPID_CodeGen {
 		params.add("VAR LabComm_Stream st");
 		params.add("VAR LabComm_Decoder_Sample s");
 		stmts.add("VAR " + fullName + " tmp;");
-		getType().RAPID_AddDecodeInstr(env, stmts, "tmp", "st");
+		getDataType().RAPID_AddDecodeInstr(env, stmts, "tmp", "st");
 		stmts.add("% s.handler % tmp;");
 		env.addProc("Decode_And_Handle_" + getName(), params, stmts);
 
@@ -201,11 +201,11 @@ aspect RAPID_CodeGen {
 		params.add("VAR LabComm_Encoder_Sample s");
 		params.add("VAR " + fullName + " val");
 		stmts.add("Encode_Packed st, s.user_id;");
-		getType().RAPID_AddEncodeInstr(env, stmts, "val", "st");
+		getDataType().RAPID_AddEncodeInstr(env, stmts, "val", "st");
 		env.addProc("Encode_" + getName(), params, stmts);
 	}
 
-	public String Type.RAPID_AddType(RAPID_env env, String name) {
+	public String DataType.RAPID_AddType(RAPID_env env, String name) {
 		throw new UnsupportedOperationException("RAPID code generation does (currently) not support "+getClass().getSimpleName());
 	}
 
@@ -214,7 +214,7 @@ aspect RAPID_CodeGen {
 		for (int i = 0; i < getNumField(); i++) {
 			Field f = getField(i);
 			components.add(
-					f.getType().RAPID_AddType(env, name + "_" + f.getName()) +
+					f.getDataType().RAPID_AddType(env, name + "_" + f.getName()) +
 					" " + f.getName() + ";");
 		}
 		String typeName = env.addRecord(name, components);
@@ -222,7 +222,7 @@ aspect RAPID_CodeGen {
 	}
 
 	public String FixedArrayType.RAPID_AddType(RAPID_env env, String name) {
-		String typeName = getType().RAPID_AddType(env, name + "_e");
+		String typeName = getDataType().RAPID_AddType(env, name + "_e");
 		if (getNumExp() > 1) {
 			throw new UnsupportedOperationException("RAPID generation only (currently) supports one-dimensional arrays");
 		}
@@ -251,7 +251,7 @@ aspect RAPID_CodeGen {
 		throw new UnsupportedOperationException("RAPID code generation does not (currently) support "+getName());
 	}
 
-	public void Type.RAPID_AddDecodeInstr(RAPID_env env,
+	public void DataType.RAPID_AddDecodeInstr(RAPID_env env,
 			java.util.List<String> instrs,
 			String var_name, String stream_name) {
 		throw new UnsupportedOperationException("RAPID code generation does not (currently) support "+getClass().getSimpleName());
@@ -261,7 +261,7 @@ aspect RAPID_CodeGen {
 			java.util.List<String> instrs,
 			String var_name, String stream_name) {
 		for (int i = 0; i < getNumField(); i++) {
-			getField(i).getType().RAPID_AddDecodeInstr(env, instrs,
+			getField(i).getDataType().RAPID_AddDecodeInstr(env, instrs,
 					var_name + "." + getField(i).getName(), stream_name);
 		}
 	}
@@ -270,7 +270,7 @@ aspect RAPID_CodeGen {
 			java.util.List<String> instrs,
 			String var_name, String stream_name) {
 		for (int i = 1; i <= getExp(0).RAPID_getValue(); i++) {
-			getType().RAPID_AddDecodeInstr(env, instrs,
+			getDataType().RAPID_AddDecodeInstr(env, instrs,
 					var_name + ".e" + i, stream_name);
 		}
 	}
@@ -305,7 +305,7 @@ aspect RAPID_CodeGen {
 		}
 	}
 
-	public void Type.RAPID_AddEncodeInstr(RAPID_env env,
+	public void DataType.RAPID_AddEncodeInstr(RAPID_env env,
 			java.util.List<String> instrs,
 			String var_name, String stream_name) {
 		throw new UnsupportedOperationException("RAPID code generation does not (currently) support "+getClass().getSimpleName());
@@ -315,7 +315,7 @@ aspect RAPID_CodeGen {
 			java.util.List<String> instrs,
 			String var_name, String stream_name) {
 		for (int i = 0; i < getNumField(); i++) {
-			getField(i).getType().RAPID_AddEncodeInstr(env, instrs,
+			getField(i).getDataType().RAPID_AddEncodeInstr(env, instrs,
 					var_name + "." + getField(i).getName(), stream_name);
 		}
 	}
@@ -324,7 +324,7 @@ aspect RAPID_CodeGen {
 			java.util.List<String> instrs,
 			String var_name, String stream_name) {
 		for (int i = 1; i <= getExp(0).RAPID_getValue(); i++) {
-			getType().RAPID_AddEncodeInstr(env, instrs,
+			getDataType().RAPID_AddEncodeInstr(env, instrs,
 					var_name + ".e" + i, stream_name);
 		}
 	}
