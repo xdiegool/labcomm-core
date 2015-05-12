@@ -44,7 +44,7 @@ Comment = {TraditionalComment}
 TraditionalComment = "/*" [^*] ~"*/" | "/*" "*"+ "/" | "/*" "*"+ [^/*] ~"*/"
 EndOfLineComment = "//" {InputCharacter}* {LineTerminator}?
 
-Identifier = [:jletter:][:jletterdigit:]*
+Identifier = [[:letter:]_]([[:letter:]_[:digit:]])*
 
 DecimalNumeral = 0 | {NonZeroDigit} {Digits}? 
 Digits = {Digit}+
