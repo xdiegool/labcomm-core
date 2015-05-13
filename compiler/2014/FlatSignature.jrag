@@ -1,15 +1,22 @@
 import java.util.*;
 
-aspect FlatSignature {  
+aspect NoIntentionForTypedefs {
+    inh boolean TypeInstance.addIntentions();
+    eq Decl.getTypeInstance().addIntentions() = false;
+    eq SampleDecl.getTypeInstance().addIntentions() = true;
+    eq StructType.getField(int i).addIntentions() = true;
+}
+
+aspect FlatSignature {
 
   public SignatureList Decl.flatSignature(int version) {
     SignatureList result = getSignature().getFlatSignatureList();
     return result;
   }
-  
+
   public void ASTNode.flatSignature(SignatureList list) {
-    throw new Error(this.getClass().getName() + 
-                    ".flatSignature(SignatureList list)" + 
+    throw new Error(this.getClass().getName() +
+                    ".flatSignature(SignatureList list)" +
                     " not declared");
   }
 
@@ -26,9 +33,11 @@ aspect FlatSignature {
 //  }
 
   public void TypeInstance.flatSignature(SignatureList list) {
-        debugAnnotations(this.getName());
-        list.addString(getIntentionString(), "intentions: "+getIntentionString());
-        getDataType().flatSignature(list);
+    if(addIntentions()) {
+      debugAnnotations(this.getName()+".TypeInstance.flatSignature");
+      list.addString(getIntentionString(), "intentions: "+getIntentionString());
+    }
+    getDataType().flatSignature(list);
   }
 
   public void VoidType.flatSignature(SignatureList list) {
@@ -68,6 +77,7 @@ aspect FlatSignature {
   }
 
   public void Field.flatSignature(SignatureList list) {
+    debugAnnotations(this.getName()+".Field.flatSignature");
     list.addString(getIntentionString(), "intentions: "+getIntentionString());
     list.addString(getName(), signatureComment());
     getDataType().flatSignature(list);
@@ -85,7 +95,7 @@ aspect FlatSignature {
     StringBuffer result = new StringBuffer("array [");
     for (int i = 0 ; i < getNumExp() ; i++) {
       if (i > 0) {
-	result.append(", ");
+  result.append(", ");
       }
       result.append(getExp(i).signatureComment());
     }
@@ -94,8 +104,8 @@ aspect FlatSignature {
   }
 
   public String ASTNode.signatureComment() {
-    throw new Error(this.getClass().getName() + 
-                    ".signatureComment()" + 
+    throw new Error(this.getClass().getName() +
+                    ".signatureComment()" +
                     " not declared");
   }
 
