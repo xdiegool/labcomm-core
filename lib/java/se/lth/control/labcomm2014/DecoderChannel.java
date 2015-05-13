@@ -23,7 +23,7 @@ public class DecoderChannel implements Decoder {
     byte[] signature = new byte[signature_length];
     ReadBytes(signature, signature_length);
     def_registry.add(index, name, signature);
-  }	   
+  }
 
   private void processSampleRef() throws IOException {
     int index = decodePacked32();
@@ -32,17 +32,17 @@ public class DecoderChannel implements Decoder {
     byte[] signature = new byte[signature_length];
     ReadBytes(signature, signature_length);
     ref_registry.add(index, name, signature);
-  }	   
+  }
 
   private void processTypeDef(int len) throws IOException {
        try {
            processSample(Constant.TYPE_DEF);
       } catch(Exception ex) {
        int idx = decodePacked32();
-       String name = decodeString(); 
+       String name = decodeString();
        int siglen = decodePacked32();
        for(int i=0; i<siglen; i++) {
-           byte b = decodeByte();		  
+           byte b = decodeByte();
        }
       }
   }
@@ -52,14 +52,14 @@ public class DecoderChannel implements Decoder {
            processSample(Constant.TYPE_BINDING);
       } catch(Exception ex) {
           for(int i=0; i<len; i++) {
-              decodeByte();		  
+              decodeByte();
           }
-      } 
+      }
   }
 
   private void processPragma(int len) throws IOException {
        for(int i=0; i<len; i++) {
-           decodeByte();		  
+           decodeByte();
        }
   }
 
@@ -84,7 +84,7 @@ public class DecoderChannel implements Decoder {
       } catch (Exception ex) {
           ex.printStackTrace();
       }
-  }	  
+  }
 
   public void runOne() throws Exception {
     boolean done = false;
@@ -129,7 +129,7 @@ public class DecoderChannel implements Decoder {
     }
   }
 
-  public void register(SampleDispatcher dispatcher, 
+  public void register(SampleDispatcher dispatcher,
                        SampleHandler handler) throws IOException {
     def_registry.add(dispatcher, handler);
   }
@@ -158,7 +158,7 @@ public class DecoderChannel implements Decoder {
   public byte decodeByte() throws IOException {
     return in.readByte();
   }
-  
+
   public short decodeShort() throws IOException {
     return in.readShort();
   }
@@ -215,17 +215,17 @@ public class DecoderChannel implements Decoder {
     }
 
   }
-    
+
   /* Package visible methods for use from TypeDefParser */
 
   String getSampleName(int idx) {
-    DecoderRegistry.Entry e = def_registry.get(idx); 
-    return e.getName();  
+    DecoderRegistry.Entry e = def_registry.get(idx);
+    return e.getName();
   }
 
   byte[] getSampleSignature(int idx) {
-    DecoderRegistry.Entry e = def_registry.get(idx); 
-    return e.getSignature();  
+    DecoderRegistry.Entry e = def_registry.get(idx);
+    return e.getSignature();
   }
 }
 

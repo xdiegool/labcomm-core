@@ -34,12 +34,12 @@ public class Decoder
     theSecondInt.register(decoder, this);
     intAndRef.register(decoder, this);
     doavoid.registerSampleRef(decoder);
-    this.tdp = TypeDefParser.registerTypeDefParser(decoder); 
+//    this.tdp = TypeDefParser.registerTypeDefParser(decoder); 
  //   TypeDef.register(decoder, this);
  //   TypeBinding.register(decoder, this);
 
         
-    tdp.addListener(this);
+//    tdp.addListener(this);
     
     try {
       System.out.println("Running decoder.");

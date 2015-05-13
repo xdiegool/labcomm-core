@@ -1,14 +1,14 @@
 typedef struct {
-  (foo:bar) int val;
+   int val;
 } coord;
 
 typedef int anInt;
 
 typedef void avoid;
-sample (function:trigger)(foo:bar) avoid doavoid;
+sample  avoid doavoid;
 
-sample (a:b) "a struct with an int and a ref" struct {
-  (c:d)(e:f) int x;
+sample  struct {
+   int x;
   sample reference;
 } intAndRef;
 

@@ -88,7 +88,7 @@
 #   | user data
 #   | ...
 #   +----+--
-#   
+#
 #
 # LabComm2006 packets has the following layout
 #
@@ -122,7 +122,7 @@
 #   | user data
 #   | ...
 #   +----+--
-#   
+#
 
 #??  | field1 name
 #??  | (length + UTF8)...
@@ -160,12 +160,12 @@
 #??  | fieldN data       |
 #??  | ...               |
 #??  +----+----+----+----+
-#  
-#   
-# type numbers and lengths do not have a fixed lenght, but are packed into 
-# sequences of 7 bit chunks, represented in bytes with the high bit meaning 
+#
+#
+# type numbers and lengths do not have a fixed lenght, but are packed into
+# sequences of 7 bit chunks, represented in bytes with the high bit meaning
 # that more data is to come.
- 
+
 import types
 import struct as packer
 
@@ -175,8 +175,8 @@ DEFAULT_VERSION = "LabComm2014"
 i_VERSION     = 0x01
 i_SAMPLE_DEF  = 0x02
 i_SAMPLE_REF  = 0x03
-i_TYPE_DEF    = 0x04  
-i_TYPE_BINDING= 0x05 
+i_TYPE_DEF    = 0x04
+i_TYPE_BINDING= 0x05
 i_PRAGMA      = 0x3f
 i_USER        = 0x40 # ..0xffffffff
 
@@ -184,7 +184,7 @@ i_USER        = 0x40 # ..0xffffffff
 i_ARRAY   = 0x10
 i_STRUCT  = 0x11
 
-i_BOOLEAN = 0x20 
+i_BOOLEAN = 0x20
 i_BYTE    = 0x21
 i_SHORT   = 0x22
 i_INTEGER = 0x23
@@ -237,7 +237,7 @@ class primitive(type_decl):
 
     def __ne__(self, other):
         return not self.__eq__(other)
-    
+
     def __hash__(self):
         return hash(self.__class__)
 
@@ -247,7 +247,7 @@ class BOOLEAN(primitive):
 
     def encode(self, encoder, value):
         return encoder.encode_boolean(value)
-    
+
     def decode(self, decoder, obj=None):
         return decoder.decode_boolean()
 
@@ -263,10 +263,10 @@ class BYTE(primitive):
 
     def encode(self, encoder, value):
         return encoder.encode_byte(value)
-    
+
     def decode(self, decoder, obj=None):
         return decoder.decode_byte()
-    
+
     def new_instance(self):
         return 0
 
@@ -279,10 +279,10 @@ class SHORT(primitive):
 
     def encode(self, encoder, value):
         return encoder.encode_short(value)
-    
+
     def decode(self, decoder, obj=None):
         return decoder.decode_short()
-    
+
     def new_instance(self):
         return 0
 
@@ -295,10 +295,10 @@ class INTEGER(primitive):
 
     def encode(self, encoder, value):
         return encoder.encode_int(value)
-    
+
     def decode(self, decoder, obj=None):
         return decoder.decode_int()
-    
+
     def new_instance(self):
         return 0
 
@@ -311,10 +311,10 @@ class LONG(primitive):
 
     def encode(self, encoder, value):
         return encoder.encode_long(value)
-    
+
     def decode(self, decoder, obj=None):
         return decoder.decode_long()
-    
+
     def new_instance(self):
         return long(0)
 
@@ -327,10 +327,10 @@ class FLOAT(primitive):
 
     def encode(self, encoder, value):
         return encoder.encode_float(value)
-    
+
     def decode(self, decoder, obj=None):
         return decoder.decode_float()
-    
+
     def new_instance(self):
         return 0.0
 
@@ -343,10 +343,10 @@ class DOUBLE(primitive):
 
     def encode(self, encoder, value):
         return encoder.encode_double(value)
-    
+
     def decode(self, decoder, obj=None):
         return decoder.decode_double()
-    
+
     def new_instance(self):
         return 0.0
 
@@ -359,10 +359,10 @@ class STRING(primitive):
 
     def encode(self, encoder, value):
         return encoder.encode_string(value)
-    
+
     def decode(self, decoder, obj=None):
         return decoder.decode_string()
-    
+
     def new_instance(self):
         return ""
 
@@ -379,7 +379,7 @@ class SAMPLE(primitive):
             # Probably trying to encode a sample class, grab signature
             value = value.signature
         return encoder.encode_int(encoder.ref_to_index.get(value, 0))
-    
+
     def decode(self, decoder, obj=None):
         return decoder.decode_ref()
 
@@ -403,6 +403,7 @@ class sampledef_or_sampleref_or_typedef(type_decl):
             e1.encode_type(self.get_index(encoder))
             e1.encode_string(self.name)
             with length_encoder(e1) as e2:
+                self.encode_empty_intentions(e2)
                 self.decl.encode_decl(e2)
 
     def encode(self, encoder, value):
@@ -413,6 +414,7 @@ class sampledef_or_sampleref_or_typedef(type_decl):
         name = decoder.decode_string()
         if usePacketLength(decoder.version):
             length = decoder.decode_packed32()
+        self.decode_intentions(decoder)
         decl = decoder.decode_decl()
         result = self.__class__.__new__(self.__class__)
         result.__init__(name=name, decl=decl)
@@ -428,16 +430,16 @@ class sampledef_or_sampleref_or_typedef(type_decl):
         return self.decl.new_instance()
 
     def __eq__(self, other):
-        return (self.__class__ == other.__class__ and 
+        return (self.__class__ == other.__class__ and
                 self.name == other.name and
                 self.decl == other.decl)
-        
+
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __hash__(self):
         return hash(self.__class__) ^ hash(self.name) ^ hash(self.decl)
-    
+
     def __repr__(self):
         return "%s('%s', %s)" % (self.type_name, self.name, self.decl)
 
@@ -453,12 +455,17 @@ class sample_def(sampledef_or_sampleref_or_typedef):
 
     def rename(self, name):
         return sample_def(name=name, decl=self.decl)
-        
-    
+
+    def decode_intentions(self, d):
+        return d.decode_string()
+
+    def encode_empty_intentions(self, e):
+        e.encode_empty_intentions()
+
 class sample_ref(sampledef_or_sampleref_or_typedef):
     type_index = i_SAMPLE_REF
     type_name = 'sample_ref'
-    
+
     def __init__(self, name=None, decl=None, sample=None):
         self.name = name
         self.decl = decl
@@ -466,6 +473,12 @@ class sample_ref(sampledef_or_sampleref_or_typedef):
             self.sample = sample_def(name, decl)
         else:
             self.sample = sample
+
+    def decode_intentions(self, d):
+        return d.decode_string()
+
+    def encode_empty_intentions(self, e):
+        e.encode_empty_intentions()
 
     def get_index(self, encoder):
         return encoder.ref_to_index[self.sample]
@@ -477,6 +490,12 @@ class typedef(sampledef_or_sampleref_or_typedef):
     type_index = i_TYPE_DEF
     type_name = 'typedef'
 
+    def decode_intentions(self, d):
+        pass
+
+    def encode_empty_intentions(self, e):
+        pass
+
     def encode_decl(self, encoder):
         self.decl.encode_decl(encoder)
 
@@ -487,18 +506,18 @@ class array(type_decl):
     def __init__(self, indices, decl):
         self.indices = tuple(indices)
         self.decl = decl
-        
+
     def __eq__(self, other):
-        return (self.__class__ == other.__class__ and 
+        return (self.__class__ == other.__class__ and
                 self.indices == other.indices and
                 self.decl == other.decl)
-        
+
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __hash__(self):
         return hash(self.__class__) ^ hash(self.indices) ^ hash(self.decl)
-    
+
     def encode_decl(self, encoder):
         encoder.encode_type(i_ARRAY)
         encoder.encode_packed32(len(self.indices))
@@ -526,7 +545,7 @@ class array(type_decl):
             pass
         except TypeError:
             pass
-        return shape    
+        return shape
 
     def shape(self, l):
         shape = self.min_max_shape(l, 0, [])
@@ -537,7 +556,7 @@ class array(type_decl):
             result.append(low)
         return result
 
-    
+
     def encode_indices(self, encoder, value):
         depth = len(self.indices)
         shape = self.shape(value)
@@ -558,7 +577,7 @@ class array(type_decl):
                 self.encode_value(encoder, e, depth - 1)
         else:
             self.decl.encode(encoder, value)
-    
+
     def encode(self, encoder, value):
         depth = self.encode_indices(encoder, value)
         self.encode_value(encoder, value, depth)
@@ -597,7 +616,7 @@ class array(type_decl):
             for i in range(indices[0]):
                 result.append(self.new_instance_value(indices[1:]))
         return result
-    
+
     def new_instance(self):
         indices = []
         for i in self.indices:
@@ -605,19 +624,19 @@ class array(type_decl):
                 i = decoder.decode_packed32()
             indices.append(i)
         return self.new_instance_value(indices)
-    
+
     def __repr__(self):
         return "labcomm.array(%s,\n    %s)" % (
             self.indices, indent(4, self.decl.__repr__()))
-    
+
 class struct(type_decl):
     def __init__(self, field):
         self.field = tuple(field)
 
     def __eq__(self, other):
-        return (self.__class__ == other.__class__ and 
+        return (self.__class__ == other.__class__ and
                 self.field == other.field)
-        
+
     def __ne__(self, other):
         return not self.__eq__(other)
 
@@ -628,6 +647,7 @@ class struct(type_decl):
         encoder.encode_type(i_STRUCT)
         encoder.encode_packed32(len(self.field))
         for (name, decl) in self.field:
+            encoder.encode_empty_intentions()
             encoder.encode_string(name)
             encoder.encode_type_number(decl)
 
@@ -643,6 +663,7 @@ class struct(type_decl):
         n_field = decoder.decode_packed32()
         field = []
         for i in range(n_field):
+            intentions = decoder.decode_intentions()
             name = decoder.decode_string()
             decl = decoder.decode_decl()
             field.append((name, decl))
@@ -660,7 +681,7 @@ class struct(type_decl):
         for (name, decl) in self.field:
             result.__setattr__(name, decl.new_instance())
         return result
-    
+
     def __repr__(self):
         delim = ""
         result = "labcomm.struct(["
@@ -720,7 +741,7 @@ class Codec(object):
         self.add_decl(DOUBLE(), i_DOUBLE)
         self.add_decl(STRING(), i_STRING)
         self.add_decl(SAMPLE(), i_SAMPLE)
-        
+
     def add_decl(self, decl, index=0):
         if index == 0:
             if decl in self.decl_to_index:
@@ -734,7 +755,7 @@ class Codec(object):
         except:
             pass
         return True
-        
+
     def add_ref(self, ref, index=0):
         if not isinstance(ref, type_decl):
             # Probably trying to register a sample class, grab signature
@@ -751,7 +772,7 @@ class Codec(object):
         except:
             pass
         return True
-    
+
     def add_binding(self, name, decl):
         self.type_to_name[decl] = name
         self.name_to_type[name] = decl
@@ -765,7 +786,7 @@ class Codec(object):
             if i >= i_USER and isinstance(e, sample):
                 result.append(e)
         return result
-        
+
 
 class Encoder(Codec):
     def __init__(self, writer, version=DEFAULT_VERSION, codec=None):
@@ -779,7 +800,7 @@ class Encoder(Codec):
         elif self.version in [ None,  "LabComm2006" ]:
             pass
         else:
-            raise Exception("Unsupported labcomm version %s" % self.version)    
+            raise Exception("Unsupported labcomm version %s" % self.version)
 
     def pack(self, format, *args):
         self.writer.write(packer.pack(format, *args))
@@ -792,7 +813,7 @@ class Encoder(Codec):
             if super(Encoder, self).add_decl(decl, index):
                 decl.encode_decl(self)
             self.writer.mark_end(decl, None)
- 
+
     def add_ref(self, ref, index=0):
         if not isinstance(ref, type_decl):
             # Trying to register a sample class
@@ -803,7 +824,7 @@ class Encoder(Codec):
             if super(Encoder, self).add_ref(decl, index):
                 decl.encode_decl(self)
             self.writer.mark_end(ref, None)
- 
+
     def encode(self, object, decl=None):
         if decl == None:
             name = self.type_to_name[object.__class__]
@@ -821,7 +842,7 @@ class Encoder(Codec):
             self.encode_type(self.decl_to_index[decl])
         except KeyError:
             decl.encode_decl(self)
-            
+
     def encode_packed32(self, v):
         if self.version in [ None, "LabComm2014" ]:
             v = v & 0xffffffff
@@ -831,7 +852,7 @@ class Encoder(Codec):
                 tmp.append(v & 0x7f | 0x80)
                 v = v >> 7
             for c in reversed(tmp):
-                self.encode_byte(c) 
+                self.encode_byte(c)
         elif self.version == "LabComm2006" :
             v = v & 0xffffffff
             self.encode_int(v)
@@ -840,7 +861,7 @@ class Encoder(Codec):
 
     def encode_type(self, index):
         self.encode_packed32(index)
-            
+
     def encode_boolean(self, v):
         if v:
             self.pack("!b", 1)
@@ -870,12 +891,16 @@ class Encoder(Codec):
 	self.encode_packed32(len(s));
 	self.pack("%ds" % len(s),s)
 
+    def encode_empty_intentions(self):
+#        pass
+        self.encode_string("")
+
 class Decoder(Codec):
     def __init__(self, reader, version=DEFAULT_VERSION):
         super(Decoder, self).__init__()
         self.reader = reader
         self.version = version
-        
+
     def unpack(self, format):
         size = packer.calcsize(format)
         data = ""
@@ -901,7 +926,7 @@ class Decoder(Codec):
     def skip_or_raise(self, length, index):
         if usePacketLength(self.version):
             self.skip(length)
-        else:    
+        else:
             raise Exception("Invalid type index %d" % index)
 
     def decode(self):
@@ -912,7 +937,7 @@ class Decoder(Codec):
             if index != i_VERSION:
                 break
             else:
-                other_version = self.decode_string()  
+                other_version = self.decode_string()
                 if self.version != other_version:
                     raise Exception("LabComm version mismatch %s != %s" %
                                     (version, other_version))
@@ -923,15 +948,15 @@ class Decoder(Codec):
             decl = self.index_to_decl[index].decode_decl(self)
             value = None
         elif index == i_TYPE_DEF:
-            self.skip_or_raise(length, index) 
+            self.skip_or_raise(length, index)
             decl = None
             value = None
         elif index == i_TYPE_BINDING:
-            self.skip_or_raise(length, index) 
+            self.skip_or_raise(length, index)
             decl = None
             value = None
         elif index == i_PRAGMA:
-            self.skip_or_raise(length, index) 
+            self.skip_or_raise(length, index)
             decl = None
             value = None
         elif index < i_USER:
@@ -954,7 +979,7 @@ class Decoder(Codec):
                 result = anonymous_object()
 
         return result
-    
+
     def decode_packed32(self):
         if self.version in [ "LabComm2013", "LabComm2014" ] :
             result = 0
@@ -971,28 +996,28 @@ class Decoder(Codec):
 
     def decode_type_number(self):
         return self.decode_packed32()
-        
+
     def decode_boolean(self):
         return self.unpack("!b") != 0
-    
+
     def decode_byte(self):
         return self.unpack("!B")
-    
+
     def decode_short(self):
         return self.unpack("!h")
-    
+
     def decode_int(self):
         return self.unpack("!i")
-    
+
     def decode_long(self):
         return self.unpack("!q")
-    
+
     def decode_float(self):
         return self.unpack("!f")
-    
+
     def decode_double(self):
         return self.unpack("!d")
-    
+
     def decode_string(self):
         length = self.decode_packed32()
         return self.unpack("!%ds" % length).decode("utf8")
@@ -1000,6 +1025,9 @@ class Decoder(Codec):
     def decode_ref(self):
         index = self.decode_int()
         return self.index_to_ref.get(index, None)
+
+    def decode_intentions(self):
+        return self.decode_string()
 
 class signature_reader:
     def __init__(self, signature):
@@ -1009,7 +1037,7 @@ class signature_reader:
         result = self.signature[0:count]
         self.signature = self.signature[count:]
         return result
-        
+
 def decl_from_signature(signature):
     decoder = Decoder(signature_reader(signature))
     t = decoder.decode_decl()
