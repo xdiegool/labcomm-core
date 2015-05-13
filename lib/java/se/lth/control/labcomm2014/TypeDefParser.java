@@ -76,6 +76,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     }
 
     public void handle_TypeDef(TypeDef d) throws java.io.IOException {
+        System.out.println("handle_TypeDef: "+d.getIndex());
         typeDefs.put(d.getIndex(), d);
     }
 
@@ -87,6 +88,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
             typeBindings.put(d.getSampleIndex(), d.getTypeIndex());
             td = getTypeDefForIndex(d.getSampleIndex());
         }
+        System.out.println("handle_TypeBinding: "+d.getSampleIndex());
         ParsedSampleDef result = parseSignature(td);
 
         sampleDefs.add(result);
@@ -619,8 +621,14 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     }
 
     private ParsedField parseParsedField(ParserState in) throws IOException {
+        String intentions = in.decodeString();
+        if(intentions.length()>0) {
+            System.out.println("parseParsedField intentions ("+intentions);
+        } else {
+            System.out.println("no intentions");
+        }
         String name = in.decodeString();
-        return new ParsedField(name, parseType(in));
+        return new ParsedField(name, parseType(in, false));
     }
 
     private ParsedType lookupType(int tag, ParserState in) {
@@ -639,20 +647,28 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     }
 
     private ParsedSampleDef parseSampleTypeDef(ParserState in) throws IOException {
-        ParsedTypeDef td = parseTypeDef(in);
+        ParsedTypeDef td = parseTypeDef(in, true);
         return new ParsedSampleDef(td);
     }
     private ParsedTypeDef parseTypeDef(ParserState in) throws IOException {
+        return parseTypeDef(in, false);
+    }
+    private ParsedTypeDef parseTypeDef(ParserState in, boolean parseIntentions) throws IOException {
         ParsedTypeDef result = in.newTypeDef();
-        result.setType(parseType(in));
+        result.setType(parseType(in, parseIntentions));
         return result;
     }
-    private ParsedType parseType(ParserState in) throws IOException {
-        String intentions = in.decodeString();
-        if(intentions.length()>0) {
-            System.out.println("parseType intentions ("+intentions);
+
+    private ParsedType parseType(ParserState in, boolean parseIntentions) throws IOException {
+        if(parseIntentions) {
+            String intentions = in.decodeString();
+            if(intentions.length()>0) {
+                System.out.println("parseType intentions ("+intentions);
+            } else {
+                System.out.println("no intentions");
+            }
         } else {
-            System.out.println("no intentions");
+            System.out.println("not parsing intentions");
         }
 
         int tag = in.decodePacked32();

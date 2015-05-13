@@ -76,7 +76,7 @@ public class TDDecoder
 //  }
 
   public void onTypeDef(TypeDefParser.ParsedTypeDef d) {
-    if(d.isSampleDef()){
+    if(d != null && d.isSampleDef()){
         System.out.println("onTypeDef (sample): ");
         ASTbuilder v = new ASTbuilder();
         Specification p = v.makeSpecification((TypeDefParser.ParsedSampleDef) d);

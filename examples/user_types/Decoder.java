@@ -34,12 +34,12 @@ public class Decoder
     theSecondInt.register(decoder, this);
     intAndRef.register(decoder, this);
     doavoid.registerSampleRef(decoder);
-//    this.tdp = TypeDefParser.registerTypeDefParser(decoder); 
+    this.tdp = TypeDefParser.registerTypeDefParser(decoder); 
  //   TypeDef.register(decoder, this);
  //   TypeBinding.register(decoder, this);
 
         
-//    tdp.addListener(this);
+    tdp.addListener(this);
     
     try {
       System.out.println("Running decoder.");
@@ -67,8 +67,12 @@ public class Decoder
 
   public void onTypeDef(TypeDefParser.ParsedTypeDef d) {
     System.out.println("ontype_def: ");
-    System.out.print((d.isSampleDef()?"sample ":"typedef ")+d);
-    System.out.println(" "+d.getName()+";");
+    if(d != null) {
+        System.out.print((d.isSampleDef()?"sample ":"typedef ")+d);
+        System.out.println(" "+d.getName()+";");
+    } else {
+        System.out.println(" null???");
+    }
     //for(byte b: d.getSignature()) {
     //   System.out.print(Integer.toHexString(b)+" ");
     //}
