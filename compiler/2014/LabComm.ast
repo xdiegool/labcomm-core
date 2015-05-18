@@ -22,6 +22,7 @@ abstract DataSignatureLine : SignatureLine;
 ByteArraySignatureLine     : DataSignatureLine ::= <Data:byte[]>;
 IntSignatureLine           : DataSignatureLine ::= <Data:int>;
 StringSignatureLine        : DataSignatureLine ::= <Data:String>;
+IntentionSignatureLine     : DataSignatureLine ::= <Data:java.util.Map> ;
 TypeRefSignatureLine       : SignatureLine     ::= Decl;
 
 Field : TypeInstance;

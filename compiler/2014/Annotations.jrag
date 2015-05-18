@@ -1,6 +1,6 @@
 aspect Annotations {
     syn boolean TypeInstance.hasAnnotations() = getNumAnnotation()>0;
-    syn boolean TypeInstance.hasIntentions() = ! intentions().isEmpty();
+    syn boolean TypeInstance.hasIntentions() = ! intentionSet().isEmpty();
 
     syn boolean Annotation.isIntention() = false;
     eq Intention.isIntention() = true;
@@ -9,9 +9,9 @@ aspect Annotations {
     eq TypeInstance.getAnnotation(int i).parentInstance() = this;
 
 
-    coll Set<Intention> TypeInstance.intentions() [new HashSet<Intention>()] with add;
+    coll Set<Intention> TypeInstance.intentionSet() [new HashSet<Intention>()] with add;
     Intention contributes this
-        to TypeInstance.intentions()
+        to TypeInstance.intentionSet()
         for parentInstance();
 
 }

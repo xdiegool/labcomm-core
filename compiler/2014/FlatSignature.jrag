@@ -35,7 +35,7 @@ aspect FlatSignature {
   public void TypeInstance.flatSignature(SignatureList list) {
     if(addIntentions()) {
       debugAnnotations(this.getName()+".TypeInstance.flatSignature");
-      list.addString(getIntentionString(), "intentions: "+getIntentionString());
+      list.addIntentions(intentions(), "intentions: "+getIntentionString());
     }
     getDataType().flatSignature(list);
   }
@@ -78,7 +78,7 @@ aspect FlatSignature {
 
   public void Field.flatSignature(SignatureList list) {
     debugAnnotations(this.getName()+".Field.flatSignature");
-    list.addString(getIntentionString(), "intentions: "+getIntentionString());
+    list.addIntentions(intentions(), "Field: "+getIntentionString());
     list.addString(getName(), signatureComment());
     getDataType().flatSignature(list);
   }

@@ -172,6 +172,10 @@ aspect Signature {
       return getIntBytes(getData(), version);
     }
 
+    public void SignatureList.addIntentions(Set<Intention> data, String comment) {
+        addString(TypeInstance.getIntentionString(data), comment);
+    }
+
     public void SignatureList.addString(String data, String comment) {
       addSignatureLine(new StringSignatureLine(indent, comment, data));
     }
@@ -229,16 +233,32 @@ aspect Signature {
                     " not declared");
   }
 
-  syn String ASTNode.getIntentionString() = "";
-  eq TypeInstance.getIntentionString() {
+  public String TypeInstance.getIntentionString() {
+      return getIntentionString(intentions());
+  }
+
+  public static String TypeInstance.getIntentionString(Set<Intention> intentions) {
+    if(intentions==null) return "";
+
     StringBuilder sb = new StringBuilder();
-    Iterator<Intention> it = intentions().iterator();
+    Iterator<Intention> it = intentions.iterator();
     while(it.hasNext()) {
         Intention i = it.next();
         sb.append(i.toString());
     }
     return sb.toString();
   }
+
+
+  syn Set<Intention> Specification.emptyIntentions() = new HashSet<Intention>();
+
+  inh Set<Intention> ASTNode.noIntentions();
+  eq Specification.getChild(int i).noIntentions() = emptyIntentions();
+
+  syn Set<Intention> ASTNode.intentions();
+
+  eq ASTNode.intentions() = noIntentions();
+  eq TypeInstance.intentions() = intentionSet();
 
   public void TypeInstance.genSigLineForDecl(SignatureList list, boolean decl, ASTNode inst) {
 //        debugAnnotations(this.getName());
