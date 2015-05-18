@@ -65,7 +65,7 @@ List annotation_list =
   ;
 
 String key = IDENTIFIER;
-String stringliteral = IDENTIFIER;
+String stringliteral = IDENTIFIER | QUOTEDSTRING;
 
 Annotation annotation = intention.i | docstring.d;
 Annotation intention = LPAREN key.k COLON stringliteral.v RPAREN {: return new Intention(k,v); :};
