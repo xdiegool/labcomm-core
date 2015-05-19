@@ -8,7 +8,7 @@ typedef void avoid;
 sample (function:"a trigger")(foo:bar) avoid doavoid;
 
 sample (a:b) "A struct: an int and a ref." struct {
-  (c:d)(e:f) int x;
+  (e:f)(c:d) int x;
   sample reference;
 } intAndRef;
 
@@ -29,9 +29,9 @@ typedef struct {
 } foo;
 
 sample struct {
-  line l1;
-  line l2;
-  foo  f;
+  (name:l1)line l1;
+  (name:l2)line l2;
+  (b:"kalle anka")(c:hejdu)(a:"kalle anka")foo  f;
 } twoLines;
 
 sample struct {

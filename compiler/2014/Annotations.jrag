@@ -16,3 +16,79 @@ aspect Annotations {
 
 }
 
+aspect SigAnnotations {
+
+   inh Decl TypeInstance.parentDecl();
+
+   coll Set Decl.allAnnotations() [new HashSet()] with add;
+   TypeInstance contributes getAnnotationString()
+           to Decl.allAnnotations()
+           for parentDecl();
+
+   public DocString.DocString(byte[] bs) {
+           super("DOCSTRING", bs);
+   }
+
+   public DocString.DocString(String s) {
+           super("DOCSTRING", s.getBytes());
+   }
+
+   public String Intention.toString() {
+       return "("+getKey() + ":"+new String(getValue())+")";
+   }
+   public String  DocString.toString() {
+           return "\""+new String(getValue())+"\"";
+   }
+
+   syn boolean ASTNode.isTypeInstance() = false;
+   eq TypeInstance.isTypeInstance() = true;
+
+    /// TESTING
+    syn String Decl.getAnnotationString()  {
+            StringBuilder sb = new StringBuilder();
+            Iterator<String> iti = allAnnotations().iterator();
+            while(iti.hasNext()) {
+                    //Annotation i = iti.next();
+                    //sb.append("("+i.getKey()+" : "+i.getValue()+") ");
+                    String i = iti.next();
+                    sb.append(i);
+            }
+            return sb.toString();
+    }
+
+
+    syn int TypeInstance.fooHash() {
+            List<Annotation> ints = getAnnotationList();
+            int result=0;
+            for(Annotation i : ints) {
+                    if(i.isIntention()) {
+                        result += i.toString().hashCode();
+                    }
+            }
+            return result;
+    }
+
+    syn String TypeInstance.getAnnotationString() {
+            StringBuilder sb = new StringBuilder();
+            List<Annotation> ints = getAnnotationList();
+            for(Annotation i : ints) {
+                    sb.append(i.toString());
+            }
+            return sb.toString();
+    }
+
+    public void Decl.debugAnnotations() {
+            getTypeInstance().debugAnnotations(getName());
+    }
+
+    public void TypeInstance.debugAnnotations(String context) {
+            if(hasAnnotations()){
+                System.out.println(context+".annotations: " + fooHash() + " : " + getAnnotationString());
+            } else {
+                //System.out.println(context + " : " + fooHash() + " : " + ": NO ANNOTATIONS ");
+            }
+    }
+    //  TESTING END
+
+}
+

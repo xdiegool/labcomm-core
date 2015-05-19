@@ -4,7 +4,7 @@ abstract Decl ::= TypeInstance /Signature/;
 
 TypeInstance ::= DataType <Name:String> Annotation*;
 
-Annotation ::= <Key:String> <Value:String>;
+Annotation ::= <Key:String> <Value:byte[]>;
 
 Intention : Annotation;
 DocString : Annotation;
@@ -22,7 +22,7 @@ abstract DataSignatureLine : SignatureLine;
 ByteArraySignatureLine     : DataSignatureLine ::= <Data:byte[]>;
 IntSignatureLine           : DataSignatureLine ::= <Data:int>;
 StringSignatureLine        : DataSignatureLine ::= <Data:String>;
-IntentionSignatureLine     : DataSignatureLine ::= <Data:java.util.Map> ;
+IntentionSignatureLine     : DataSignatureLine ::= Intention* ;
 TypeRefSignatureLine       : SignatureLine     ::= Decl;
 
 Field : TypeInstance;

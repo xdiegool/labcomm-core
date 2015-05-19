@@ -1,0 +1,39 @@
+aspect Encoding {
+
+    public class Utilities {
+        /* Size of packed32 variable */
+        public static int size_packed32(long data)
+            {
+            long d = data & 0xffffffff;
+            int result = 0;
+            int i;
+
+            for (i = 0 ; i == 0 || d != 0; i++, d = (d >>> 7)) {
+                result++;
+            }
+            return result;
+        }
+
+        public static int encodePacked32(long value, byte[] buf, int start, int len) {
+            int pos = start;
+            byte[] tmp = new byte[5];
+            long v = value & 0xffffffff;
+            int i;
+
+            for (i = 0 ; i == 0 || v != 0 ; i++, v = (v >> 7)) {
+            tmp[i] = (byte)(v & 0x7f);
+            }
+
+            if(i != len) {
+                throw new Error("wrong length, was: "+i+", expected "+len);
+            }
+
+            for (i = i - 1 ; i >= 0 ; i--) {
+                buf[pos++] = (byte)(tmp[i] | (i!=0?0x80:0x00));
+            }
+
+            return pos;
+        }
+    }
+}
+

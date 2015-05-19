@@ -547,6 +547,33 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         String getCurrentName() {
             return current.getName();
         }
+        
+        String decodeIntentions() throws IOException {
+            int n = decodePacked32() & 0xffffffff;
+            if(n==0) return "";
+
+            StringBuilder sb = new StringBuilder();
+            for(int i=0; i<n;i++) {
+                sb.append("(");
+                int klen = decodePacked32() & 0xffffffff;
+                byte[] kchars = new byte[klen];
+                for(int k=0; k<klen; k++) {
+                    kchars[k] = in.readByte();
+                }
+                sb.append(new String(kchars));
+
+                sb.append(":");
+
+                int vlen = decodePacked32() & 0xffffffff;
+                byte[] vchars = new byte[vlen];
+                for(int j=0; j<vlen; j++) {
+                    vchars[j] = in.readByte();
+                }
+                sb.append(new String(vchars));
+                sb.append(")");
+            }
+            return sb.toString();
+        }
 
         String decodeString() throws IOException {
             int len = decodePacked32() & 0xffffffff;
@@ -661,7 +688,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
 
     private ParsedType parseType(ParserState in, boolean parseIntentions) throws IOException {
         if(parseIntentions) {
-            String intentions = in.decodeString();
+            String intentions = in.decodeIntentions();
             if(intentions.length()>0) {
                 System.out.println("parseType intentions ("+intentions);
             } else {

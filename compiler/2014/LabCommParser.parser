@@ -68,8 +68,8 @@ String key = IDENTIFIER;
 String stringliteral = IDENTIFIER | QUOTEDSTRING;
 
 Annotation annotation = intention.i | docstring.d;
-Annotation intention = LPAREN key.k COLON stringliteral.v RPAREN {: return new Intention(k,v); :};
-Annotation docstring = QUOTEDSTRING.s {: return new DocString(s.substring(1,s.length()-1)); :};
+Annotation intention = LPAREN key.k COLON stringliteral.v RPAREN {: return new Intention(k,v.getBytes()); :};
+Annotation docstring = QUOTEDSTRING.s {: return new DocString(s.substring(1,s.length()-1).getBytes()); :};
 
 TypeInstance type_instance =
     annotations.a type.t IDENTIFIER {: return new TypeInstance(t, IDENTIFIER, a); :}

@@ -1,342 +1,375 @@
 import java.util.*;
 
-aspect SigAnnotations {
-
-    inh Decl TypeInstance.parentDecl();
-
-    coll Set Decl.allAnnotations() [new HashSet()] with add;
-    TypeInstance contributes getAnnotationString()
-        to Decl.allAnnotations()
-        for parentDecl();
-
-    public DocString.DocString(String s) {
-        super("DOCSTRING", s);
-    }
-
-    public String Intention.toString() {
-          return("("+getKey()+" : "+getValue()+") ");
-    }
-
-    public String  DocString.toString() {
-        return "\""+getValue()+"\"";
-    }
-
-    syn boolean ASTNode.isTypeInstance() = false;
-    eq TypeInstance.isTypeInstance() = true;
-
-  /// TESTING
-  syn String Decl.getAnnotationString()  {
-      StringBuilder sb = new StringBuilder();
-      Iterator<String> iti = allAnnotations().iterator();
-      while(iti.hasNext()) {
-          //Annotation i = iti.next();
-          //sb.append("("+i.getKey()+" : "+i.getValue()+") ");
-          String i = iti.next();
-          sb.append(i);
-      }
-      return sb.toString();
-  }
-
-
-  syn int TypeInstance.fooHash() {
-      List<Annotation> ints = getAnnotationList();
-      int result=0;
-      for(Annotation i : ints) {
-          if(i.isIntention()) {
-            result += i.toString().hashCode();
-          }
-      }
-      return result;
-  }
-
-  syn String TypeInstance.getAnnotationString() {
-      StringBuilder sb = new StringBuilder();
-      List<Annotation> ints = getAnnotationList();
-      for(Annotation i : ints) {
-          sb.append(i.toString());
-      }
-      return sb.toString();
-  }
-
-  public void Decl.debugAnnotations() {
-      getTypeInstance().debugAnnotations(getName());
-  }
-
-  public void TypeInstance.debugAnnotations(String context) {
-      if(hasAnnotations()){
-        System.out.println(context+".annotations: " + fooHash() + " : " + getAnnotationString());
-      } else {
-        System.out.println(context + " : " + fooHash() + " : " + ": NO ANNOTATIONS ");
-      }
-  }
-  //  TESTING END
-
-}
-
 aspect Signature {
 
-  syn boolean Decl.isSampleDecl();
-  eq TypeDecl.isSampleDecl() = false;
-  eq SampleDecl.isSampleDecl() = true;
+    syn boolean Decl.isSampleDecl();
+    eq TypeDecl.isSampleDecl() = false;
+    eq SampleDecl.isSampleDecl() = true;
 
-  syn boolean Decl.sendOnlyFlatSignatures(Java_env env) = (env.version==2006);
+    syn boolean Decl.sendOnlyFlatSignatures(Java_env env) = (env.version==2006);
 
-  eq Decl.getSignature().parentDecl() = this;
-  eq Signature.getSignatureList().parentDecl() = parentDecl();
+    eq Decl.getSignature().parentDecl() = this;
+    eq Signature.getSignatureList().parentDecl() = parentDecl();
 
-  inh Decl Signature.parentDecl();
-  inh Decl SignatureList.parentDecl();
+    inh Decl Signature.parentDecl();
+    inh Decl SignatureList.parentDecl();
 
-  syn nta Signature Decl.getSignature() {
-    SignatureList sl = new SignatureList();
-    genSigLineForDecl(sl, true, this);
-    SignatureList fsl = new SignatureList();
-    flatSignature(fsl);
-    Signature sig = new Signature();
-    sig.setSignatureList(sl);
-    sig.setFlatSignatureList(fsl);
-    setSignature(sig);
-    return sig;
-  }
-
-  public String SignatureLine.getIndentString() {
-    StringBuffer result = new StringBuffer();
-    int indent = getIndent();
-    for (int i = 0 ; i < indent ; i++) {
-      result.append("  ");
-    }
-    return result.toString();
-  }
-
-    syn byte[] SignatureLine.getData(int version) = null;
-    //  return new byte[0];
-
-    private Decl TypeRefSignatureLine.decl;
-    public TypeRefSignatureLine.TypeRefSignatureLine(int indent, Decl decl, String comment) {
-      super(indent, comment);
-      this.decl = decl;
-    }
-    public void SignatureList.addTypeRef(Decl type, String comment) {
-        addSignatureLine(new TypeRefSignatureLine(indent, type, comment));
+    syn nta Signature Decl.getSignature() {
+        SignatureList sl = new SignatureList();
+        genSigLineForDecl(sl, true, this);
+        SignatureList fsl = new SignatureList();
+        flatSignature(fsl);
+        Signature sig = new Signature();
+        sig.setSignatureList(sl);
+        sig.setFlatSignatureList(fsl);
+        setSignature(sig);
+        return sig;
     }
 
-    public ByteArraySignatureLine.ByteArraySignatureLine(int indent, byte[] data, String comment) {
-      super(indent, comment);
-      setData(data);
+    public String SignatureLine.getIndentString() {
+        StringBuffer result = new StringBuffer();
+        int indent = getIndent();
+        for (int i = 0 ; i < indent ; i++) {
+            result.append("  ");
+        }
+        return result.toString();
     }
 
-    public IntSignatureLine.IntSignatureLine(int indent, int data, String comment) {
-      super(indent, comment);
-      setData(data);
-    }
+        syn byte[] SignatureLine.getData(int version) = null;
+        //  return new byte[0];
 
-    public void SignatureList.add(byte[] data, String comment) {
-      addSignatureLine(new ByteArraySignatureLine(indent, data, comment));
-    }
+        private Decl TypeRefSignatureLine.decl;
+        public TypeRefSignatureLine.TypeRefSignatureLine(int indent, Decl decl, String comment) {
+            super(indent, comment);
+            this.decl = decl;
+        }
+        public void SignatureList.addTypeRef(Decl type, String comment) {
+                addSignatureLine(new TypeRefSignatureLine(indent, type, comment));
+        }
 
-    public void SignatureList.addInt(int data, String comment) {
-      addSignatureLine(new IntSignatureLine(indent, data, comment));
-    }
+        public ByteArraySignatureLine.ByteArraySignatureLine(int indent, byte[] data, String comment) {
+            super(indent, comment);
+            setData(data);
+        }
 
-    protected byte[] DataSignatureLine.getIntBytes(int value, int version) {
-      byte data[];
-      switch(version) {
-        case 2006:             // Use old encoding with 32 bit integers
-	    data = new byte[4];
-	    for (int i = 0 ; i < 4 ; i++) {
-	        data[3 - i] = (byte)((value >> (8 * i)) & 0xff);
-	    }
-	    //add(data, comment);
-        break;
-        case 2014:             // Use new encoding with varints
-	    byte[] tmp = new byte[5];
- 	    long v = value & 0xffffffff;
-            int i, j;
-            for (i = 0 ; i == 0 || v != 0 ; i++, v = (v >> 7)) {
-		tmp[i] = (byte)(v & 0x7f);
+        public IntSignatureLine.IntSignatureLine(int indent, int data, String comment) {
+            super(indent, comment);
+            setData(data);
+        }
+
+        public void SignatureList.add(byte[] data, String comment) {
+            addSignatureLine(new ByteArraySignatureLine(indent, data, comment));
+        }
+
+        public void SignatureList.addInt(int data, String comment) {
+            addSignatureLine(new IntSignatureLine(indent, data, comment));
+        }
+
+        protected byte[] DataSignatureLine.getIntBytes(int value, int version) {
+            byte data[];
+            switch(version) {
+                case 2006:                       // Use old encoding with 32 bit integers
+            data = new byte[4];
+            for (int i = 0 ; i < 4 ; i++) {
+                    data[3 - i] = (byte)((value >> (8 * i)) & 0xff);
             }
-	    byte[] packed = new byte[i];
-            for (i = i - 1, j = 0 ; i >= 0 ; i--, j++) {
-		packed[j] = (byte)(tmp[i] | (i!=0?0x80:0x00));
+            //add(data, comment);
+                break;
+                case 2014:                       // Use new encoding with varints
+            byte[] tmp = new byte[5];
+            long v = value & 0xffffffff;
+                        int i, j;
+                        for (i = 0 ; i == 0 || v != 0 ; i++, v = (v >> 7)) {
+        tmp[i] = (byte)(v & 0x7f);
+                        }
+            byte[] packed = new byte[i];
+                        for (i = i - 1, j = 0 ; i >= 0 ; i--, j++) {
+        packed[j] = (byte)(tmp[i] | (i!=0?0x80:0x00));
+                        }
+            //add(packed, comment);
+                        data = packed;
+                break;
+                default:
+                        throw new RuntimeException("Unsupported version = "+version+". This should never happen.");
             }
-	    //add(packed, comment);
-            data = packed;
-        break;
-        default:
-            throw new RuntimeException("Unsupported version = "+version+". This should never happen.");
-      }
-      return data;
+            return data;
+        }
+
+        eq IntSignatureLine.getData(int version) {
+            return getIntBytes(getData(), version);
+        }
+
+        private static Comparator SignatureList.intentionComp =
+                new Comparator<Intention>() {
+                        public int compare(Intention i1, Intention i2) {
+                                return i1.getKey().compareTo(i2.getKey());
+                        }
+                };
+
+        public void SignatureList.addIntentions(Set<Intention> data, String comment) {
+                //addString(TypeInstance.getIntentionString(data), comment);
+                //create IntenionSignatureLine
+                IntentionSignatureLine line = new IntentionSignatureLine(indent, comment, new List());
+                //TODO: create sorted list of intentions
+
+                java.util.ArrayList<Intention> sorted = new ArrayList(data);
+                java.util.Collections.sort(sorted, intentionComp);
+                for(Intention i : sorted) {
+                        line.addIntention(i);
+                }
+
+                addSignatureLine(line);
+        }
+
+        eq IntentionSignatureLine.getData(int version) {
+            //String tmpString = TypeInstance.getIntentionString(getIntentions());
+
+            byte[] bs = TypeInstance.getIntentionBytes(getIntentions());
+            return bs;
+        }
+
+
+        public void SignatureList.addString(String data, String comment) {
+            addSignatureLine(new StringSignatureLine(indent, comment, data));
+        }
+        eq StringSignatureLine.getData(int version) {
+            byte[] lenBytes = getIntBytes(getData().length(), version);
+            byte[] data = new byte[lenBytes.length+getData().length()];
+
+            // first add the encoded length
+            for (int i = 0 ; i < lenBytes.length ; i++) {
+                data[i] = lenBytes[i];
+            }
+            // and then the actual chars
+            for (int i = 0 ; i < getData().length() ; i++) {
+                int idx = lenBytes.length + i;
+                data[idx] = (byte)(getData().charAt(i) & 0xff);
+            }
+            return data;
+        }
+
+        public int SignatureList.size() {
+            return getNumSignatureLine();
+        }
+
+        public String SignatureList.getIndent(int i) {
+            StringBuffer result = new StringBuffer();
+            int indent = getSignatureLine(i).getIndent();
+            for (i = 0 ; i < indent ; i++) {
+                result.append("  ");
+            }
+            return result.toString();
+        }
+
+        public byte[] SignatureList.getData(int i, int version) {
+            return getSignatureLine(i).getData(version);
+        }
+
+        public String SignatureList.getComment(int i) {
+            return getSignatureLine(i).getComment();
+        }
+
+        private int SignatureList.indent;
+
+        public void SignatureList.indent() {
+            indent++;
+        }
+
+        public void SignatureList.unindent() {
+            indent--;
+        }
+
+
+    public void ASTNode.genSigLineForDecl(SignatureList list, boolean decl, ASTNode inst) {
+        throw new Error(this.getClass().getName() +
+                                        ".genSigLineForDecl(SignatureList list)" +
+                                        " not declared");
     }
 
-    eq IntSignatureLine.getData(int version) {
-      return getIntBytes(getData(), version);
+    public String TypeInstance.getIntentionString() {
+            return getIntentionString(intentions());
     }
 
-    public void SignatureList.addIntentions(Set<Intention> data, String comment) {
-        addString(TypeInstance.getIntentionString(data), comment);
+    public static String TypeInstance.getIntentionString(List<Intention> intentions) {
+        if(intentions==null) return "";
+        Iterator<Intention> it = intentions.iterator();
+        return getIntentionString(it);
+
+    }
+    public static String TypeInstance.getIntentionString(Set<Intention> intentions) {
+        if(intentions==null) return "";
+        Iterator<Intention> it = intentions.iterator();
+        return getIntentionString(it);
     }
 
-    public void SignatureList.addString(String data, String comment) {
-      addSignatureLine(new StringSignatureLine(indent, comment, data));
-    }
-    eq StringSignatureLine.getData(int version) {
-      byte[] lenBytes = getIntBytes(getData().length(), version);
-      byte[] data = new byte[lenBytes.length+getData().length()];
-
-      // first add the encoded length
-      for (int i = 0 ; i < lenBytes.length ; i++) {
-        data[i] = lenBytes[i];
-      }
-      // and then the actual chars
-      for (int i = 0 ; i < getData().length() ; i++) {
-        int idx = lenBytes.length + i;
-        data[idx] = (byte)(getData().charAt(i) & 0xff);
-      }
-      return data;
+    public static String TypeInstance.getIntentionString(Iterator<Intention> it) {
+        StringBuilder sb = new StringBuilder();
+        while(it.hasNext()) {
+                Intention i = it.next();
+                sb.append(i.toString());
+        }
+        return sb.toString();
     }
 
-    public int SignatureList.size() {
-      return getNumSignatureLine();
-    }
+    syn byte[] Intention.keyBytes() = getKey().getBytes();
+    syn byte[] Intention.valBytes() = getValue();
 
-    public String SignatureList.getIndent(int i) {
-      StringBuffer result = new StringBuffer();
-      int indent = getSignatureLine(i).getIndent();
-      for (i = 0 ; i < indent ; i++) {
-        result.append("  ");
-      }
-      return result.toString();
-    }
+    syn byte[] Intention.toByteArray() {
+            byte[] k = keyBytes();
+            byte[] v = valBytes();
+            int klen = Utilities.size_packed32(k.length);
+            int vlen = Utilities.size_packed32(v.length);
+            int tlen = k.length + v.length + Utilities.size_packed32(klen) + Utilities.size_packed32(vlen);
+            //int size = Utilities.size_packed32(tlen)+tlen;
 
-    public byte[] SignatureList.getData(int i, int version) {
-      return getSignatureLine(i).getData(version);
-    }
+            byte result[] = new byte[tlen];
 
-    public String SignatureList.getComment(int i) {
-      return getSignatureLine(i).getComment();
-    }
+            int pos=0;
 
-    private int SignatureList.indent;
-
-    public void SignatureList.indent() {
-      indent++;
-    }
-
-    public void SignatureList.unindent() {
-      indent--;
+//           pos = Utilities.encodePacked32(tlen, result, pos, Utilities.size_packed32(tlen));
+           pos = Utilities.encodePacked32(k.length, result, pos, klen);
+           for(byte kb : k) {
+                result[pos++] = kb;
+           }
+           pos = Utilities.encodePacked32(v.length, result, pos, vlen);
+           for(byte vb : v) {
+                result[pos++] = vb;
+           }
+           return result;
     }
 
 
-  public void ASTNode.genSigLineForDecl(SignatureList list, boolean decl, ASTNode inst) {
-    throw new Error(this.getClass().getName() +
-                    ".genSigLineForDecl(SignatureList list)" +
-                    " not declared");
-  }
-
-  public String TypeInstance.getIntentionString() {
-      return getIntentionString(intentions());
-  }
-
-  public static String TypeInstance.getIntentionString(Set<Intention> intentions) {
-    if(intentions==null) return "";
-
-    StringBuilder sb = new StringBuilder();
-    Iterator<Intention> it = intentions.iterator();
-    while(it.hasNext()) {
-        Intention i = it.next();
-        sb.append(i.toString());
+    public byte[] TypeInstance.getIntentionBytes() {
+            return getIntentionBytes(intentions());
     }
-    return sb.toString();
-  }
 
+    public static byte[] TypeInstance.getIntentionBytes(List<Intention> intentions) {
+        if(intentions==null) return new byte[0];
 
-  syn Set<Intention> Specification.emptyIntentions() = new HashSet<Intention>();
-
-  inh Set<Intention> ASTNode.noIntentions();
-  eq Specification.getChild(int i).noIntentions() = emptyIntentions();
-
-  syn Set<Intention> ASTNode.intentions();
-
-  eq ASTNode.intentions() = noIntentions();
-  eq TypeInstance.intentions() = intentionSet();
-
-  public void TypeInstance.genSigLineForDecl(SignatureList list, boolean decl, ASTNode inst) {
-//        debugAnnotations(this.getName());
-//        list.addString(inst.getIntentionString(), "intention string");
-        getDataType().genSigLineForDecl(list, decl, this);
-  }
-
-
-  public void TypeDecl.genSigLineForDecl(SignatureList list, boolean decl, ASTNode inst) {
-        //TODO intent
-    if(decl){
-      getTypeInstance().genSigLineForDecl(list, decl, this);
-    }else{
-      list.addTypeRef(this, "//TODO (from list.addTypeRef)");
+        Iterator<Intention> it = intentions.iterator();
+        return getIntentionBytes(it);
     }
-  }
 
-  public void SampleDecl.genSigLineForDecl(SignatureList list, boolean decl, ASTNode inst) {
-        //TODO intent
-    getTypeInstance().genSigLineForDecl(list, decl, this);
-  }
+    public static byte[] TypeInstance.getIntentionBytes(Set<Intention> intentions) {
+        if(intentions==null) return new byte[0];
 
-  public void VoidType.genSigLineForDecl(SignatureList list, boolean decl,  ASTNode inst) {
-    list.addInt(LABCOMM_STRUCT, "void");
-    list.addInt(0, null);
-  }
+        Iterator<Intention> it = intentions.iterator();
+        return getIntentionBytes(it);
+    }
+
+    public static byte[] TypeInstance.getIntentionBytes(Iterator<Intention> it) {
+        java.util.ArrayList<byte[]> tmp = new java.util.ArrayList<byte[]>();
+        int tmpLen=0;
+        int numIntentions=0;
+
+        while(it.hasNext()) {
+                Intention i = it.next();
+                byte[] bs = i.toByteArray();
+                tmp.add(bs);
+                tmpLen+=bs.length;
+                numIntentions++;
+        }
+
+        byte result[] = new byte[tmpLen + Utilities.size_packed32(numIntentions)];
+
+        int pos = 0;
+        pos = Utilities.encodePacked32(numIntentions, result, 0, Utilities.size_packed32(numIntentions));
+        for(byte[] bs : tmp) {
+           for(byte b : bs) {
+               result[pos++] = b;
+           }
+        }
+        return result;
+    }
+
+
+    syn Set<Intention> Specification.emptyIntentions() = new HashSet<Intention>();
+
+    inh Set<Intention> ASTNode.noIntentions();
+    eq Specification.getChild(int i).noIntentions() = emptyIntentions();
+
+    syn Set<Intention> ASTNode.intentions();
+
+    eq ASTNode.intentions() = noIntentions();
+    eq TypeInstance.intentions() = intentionSet();
+
+    public void TypeInstance.genSigLineForDecl(SignatureList list, boolean decl, ASTNode inst) {
+//              debugAnnotations(this.getName());
+//              list.addString(inst.getIntentionString(), "intention string");
+                getDataType().genSigLineForDecl(list, decl, this);
+    }
+
+
+    public void TypeDecl.genSigLineForDecl(SignatureList list, boolean decl, ASTNode inst) {
+                //TODO intent
+        if(decl){
+            getTypeInstance().genSigLineForDecl(list, decl, this);
+        }else{
+            list.addTypeRef(this, "//TODO (from list.addTypeRef)");
+        }
+    }
+
+    public void SampleDecl.genSigLineForDecl(SignatureList list, boolean decl, ASTNode inst) {
+                //TODO intent
+        getTypeInstance().genSigLineForDecl(list, decl, this);
+    }
+
+    public void VoidType.genSigLineForDecl(SignatureList list, boolean decl,    ASTNode inst) {
+        list.addInt(LABCOMM_STRUCT, "void");
+        list.addInt(0, null);
+    }
 
 //  public void SampleRefType.genSigLineForDecl(SignatureList list, boolean decl, ASTNode inst) {
-//    list.addInt(LABCOMM_SAMPLE_REF, "sample");
+//      list.addInt(LABCOMM_SAMPLE_REF, "sample");
 //  }
-  public void PrimType.genSigLineForDecl(SignatureList list, boolean decl,  ASTNode inst) {
-    list.addInt(getToken(), null);
-  }
-
-  /* For UserType, the decl parameter is ignored, as a UserType
-   * will always be a TypeRef
-   */
-  public void UserType.genSigLineForDecl(SignatureList list, boolean decl,  ASTNode inst) {
-
-      TypeDecl thet = lookupType(getName());
-      list.addTypeRef(thet, null);
-  }
-
-  public void ArrayType.genSigLineForDecl(SignatureList list, boolean decl,  ASTNode inst) {
-    list.addInt(LABCOMM_ARRAY, signatureComment());
-    list.indent();
-    list.addInt(getNumExp(), null);
-    for (int i = 0 ; i < getNumExp() ; i++) {
-      getExp(i).genSigLineForDecl(list, false, null);
+    public void PrimType.genSigLineForDecl(SignatureList list, boolean decl,    ASTNode inst) {
+        list.addInt(getToken(), null);
     }
-    getDataType().genSigLineForDecl(list, false, null);
-    list.unindent();
-    list.add(null, "}");
-  }
 
-  public void StructType.genSigLineForDecl(SignatureList list, boolean decl,  ASTNode inst) {
-    list.addInt(LABCOMM_STRUCT, "struct { " + getNumField() + " fields");
-    list.indent();
-    list.addInt(getNumField(), null);
-    for (int i = 0 ; i < getNumField() ; i++) {
-      getField(i).genSigLineForDecl(list, false, inst);
+    /* For UserType, the decl parameter is ignored, as a UserType
+     * will always be a TypeRef
+     */
+    public void UserType.genSigLineForDecl(SignatureList list, boolean decl,    ASTNode inst) {
+
+            TypeDecl thet = lookupType(getName());
+            list.addTypeRef(thet, null);
     }
-    list.unindent();
-    list.add(null, "}");
-  }
 
-  public void Field.genSigLineForDecl(SignatureList list, boolean decl,  ASTNode inst) {
-    list.addString(getName(), signatureComment());
-    super.genSigLineForDecl(list, decl, inst);
-    //TODOintent
-    //getDataType().genSigLineForDecl(list, decl, inst);
-  }
+    public void ArrayType.genSigLineForDecl(SignatureList list, boolean decl,  ASTNode inst) {
+        list.addInt(LABCOMM_ARRAY, signatureComment());
+        list.indent();
+        list.addInt(getNumExp(), null);
+        for (int i = 0 ; i < getNumExp() ; i++) {
+            getExp(i).genSigLineForDecl(list, false, null);
+        }
+        getDataType().genSigLineForDecl(list, false, null);
+        list.unindent();
+        list.add(null, "}");
+    }
 
-  public void IntegerLiteral.genSigLineForDecl(SignatureList list, boolean decl, ASTNode inst) {
-    list.addInt(Integer.parseInt(getValue()), null);
-  }
+    public void StructType.genSigLineForDecl(SignatureList list, boolean decl,  ASTNode inst) {
+        list.addInt(LABCOMM_STRUCT, "struct { " + getNumField() + " fields");
+        list.indent();
+        list.addInt(getNumField(), null);
+        for (int i = 0 ; i < getNumField() ; i++) {
+            getField(i).genSigLineForDecl(list, false, inst);
+        }
+        list.unindent();
+        list.add(null, "}");
+    }
 
-  public void VariableSize.genSigLineForDecl(SignatureList list, boolean decl, ASTNode inst) {
-    list.addInt(0, null);
-  }
+    public void Field.genSigLineForDecl(SignatureList list, boolean decl,  ASTNode inst) {
+        list.addString(getName(), signatureComment());
+        super.genSigLineForDecl(list, decl, inst);
+        //TODOintent
+        //getDataType().genSigLineForDecl(list, decl, inst);
+    }
+
+    public void IntegerLiteral.genSigLineForDecl(SignatureList list, boolean decl, ASTNode inst) {
+        list.addInt(Integer.parseInt(getValue()), null);
+    }
+
+    public void VariableSize.genSigLineForDecl(SignatureList list, boolean decl, ASTNode inst) {
+        list.addInt(0, null);
+    }
 }
