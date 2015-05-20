@@ -114,6 +114,13 @@ int labcomm2014_encoder_sample_ref_register(
   struct labcomm2014_encoder *e,
   const struct labcomm2014_signature *signature)
 {
+  return e->ref_register(e, signature);
+}
+
+static int do_ref_register(
+  struct labcomm2014_encoder *e,
+  const struct labcomm2014_signature *signature)
+{
   int result = -EINVAL;
   struct encoder *ie = e->context;
   int index, *done, err, i, length;
@@ -153,8 +160,8 @@ out:
 }
 
 int labcomm2014_encoder_ioctl(struct labcomm2014_encoder *encoder,
-			  uint32_t action,
-			  ...)
+                              uint32_t action,
+                              ...)
 {
   int result;
   va_list va;
@@ -165,9 +172,7 @@ int labcomm2014_encoder_ioctl(struct labcomm2014_encoder *encoder,
   }
 
   va_start(va, action);
-  result = labcomm2014_writer_ioctl(encoder->writer,
-			       encoder->writer->action_context,
-			       0, NULL, action, va);
+  result = encoder->ioctl(encoder, NULL, action, va);
   va_end(va);
 
 out:
@@ -340,6 +345,23 @@ out:
 #endif
 }
 
+void labcomm2014_encoder_free(struct labcomm2014_encoder* e)
+{
+  e->free(e);
+}
+
+static void do_free(struct labcomm2014_encoder* e)
+{
+  struct encoder *ie = e->context;
+  struct labcomm2014_memory *memory = e->memory;
+
+  labcomm2014_writer_free(e->writer, e->writer->action_context);
+  LABCOMM_SIGNATURE_ARRAY_FREE(e->memory, ie->registered, int);
+  LABCOMM_SIGNATURE_ARRAY_FREE(e->memory, ie->sample_ref, int);
+  LABCOMM_SIGNATURE_ARRAY_FREE(e->memory, ie->typedefs, int);
+  labcomm2014_memory_free(memory, 0, ie);
+}
+
 static struct labcomm2014_encoder *internal_encoder_new(
   struct labcomm2014_writer *writer,
   struct labcomm2014_error_handler *error,
@@ -364,9 +386,11 @@ static struct labcomm2014_encoder *internal_encoder_new(
     result->encoder.error = error;
     result->encoder.memory = memory;
     result->encoder.scheduler = scheduler;
+    result->encoder.free = do_free;
     result->encoder.type_register = do_type_register;
     result->encoder.type_bind = do_type_bind;
     result->encoder.sample_register = do_sample_register;
+    result->encoder.ref_register = do_ref_register;
     result->encoder.encode = do_encode;
     result->encoder.ioctl = do_ioctl;
     result->encoder.signature_to_index = do_signature_to_index;
@@ -399,15 +423,4 @@ struct labcomm2014_encoder *labcomm2014_encoder_new(
     return internal_encoder_new(writer,error,memory,scheduler,LABCOMM2014_TRUE);
 }
 
-void labcomm2014_encoder_free(struct labcomm2014_encoder* e)
-{
-  struct encoder *ie = e->context;
-  struct labcomm2014_memory *memory = e->memory;
-
-  labcomm2014_writer_free(e->writer, e->writer->action_context);
-  LABCOMM_SIGNATURE_ARRAY_FREE(e->memory, ie->registered, int);
-  LABCOMM_SIGNATURE_ARRAY_FREE(e->memory, ie->sample_ref, int);
-  LABCOMM_SIGNATURE_ARRAY_FREE(e->memory, ie->typedefs, int);
-  labcomm2014_memory_free(memory, 0, ie);
-}
 

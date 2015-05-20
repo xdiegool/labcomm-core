@@ -691,7 +691,7 @@ aspect C_Decoder {
     env.println(")");
     env.println("{");
     env.indent();
-    env.println("return d->register_sample(");
+    env.println("return d->sample_register(");
     env.indent();
     env.println("d,");
     env.println("&signature_" + env.prefix + getName() + ",");

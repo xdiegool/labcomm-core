@@ -250,11 +250,18 @@ void labcomm2014_set_local_index(struct labcomm2014_signature *signature)
 
 int labcomm2014_get_local_index(const struct labcomm2014_signature *signature)
 {
-  if (signature->index == 0) {
-    labcomm2014_error_fatal_global(LABCOMM2014_ERROR_SIGNATURE_NOT_SET,
-			       "Signature not set: %s\n", signature->name);
+  int result;
+  if (! signature) {
+    result = 0;
+  } else {
+    if (signature->index == 0) {
+      labcomm2014_error_fatal_global(LABCOMM2014_ERROR_SIGNATURE_NOT_SET,
+                                     "Signature not set: %s\n",
+                                     signature->name);
+    }
+    result = signature->index;
   }
-  return signature->index;
+  return result;
 }
 
 int labcomm2014_get_local_type_index(const struct labcomm2014_signature *signature)

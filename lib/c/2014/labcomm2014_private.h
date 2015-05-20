@@ -195,11 +195,15 @@ struct labcomm2014_decoder {
   int version_ok;
   labcomm2014_error_handler_callback on_error;
   labcomm2014_handle_new_datatype_callback on_new_datatype;
+  void (*free)(struct labcomm2014_decoder *d);
+  int (*decode_one)(struct labcomm2014_decoder *d);
+  int (*ref_register)(struct labcomm2014_decoder *d, 
+                      const struct labcomm2014_signature *s);
   /*
    * Non typesafe registration function to be called from
    * generated labcomm2014_decoder_register_* functions.
    */
-  int (*register_sample)(struct labcomm2014_decoder *d, 
+  int (*sample_register)(struct labcomm2014_decoder *d, 
                          const struct labcomm2014_signature *s, 
                          labcomm2014_decoder_function decoder,
                          labcomm2014_handler_function handler,
@@ -369,22 +373,25 @@ struct labcomm2014_encoder {
   struct labcomm2014_error_handler *error;
   struct labcomm2014_memory *memory;
   struct labcomm2014_scheduler *scheduler;
+  void (*free)(struct labcomm2014_encoder *e);
   int (*type_register)(struct labcomm2014_encoder *e,
                        const struct labcomm2014_signature *signature);
   int (*type_bind)(struct labcomm2014_encoder *e,
                    const struct labcomm2014_signature *signature,
                    char has_deps);
-  int (*sample_register)(struct labcomm2014_encoder *encoder, 
+  int (*sample_register)(struct labcomm2014_encoder *e, 
                          const struct labcomm2014_signature *signature, 
                          labcomm2014_encoder_function encode);
-  int (*encode)(struct labcomm2014_encoder *encoder, 
+  int (*ref_register)(struct labcomm2014_encoder *e, 
+                      const struct labcomm2014_signature *signature);
+  int (*encode)(struct labcomm2014_encoder *e, 
                 const struct labcomm2014_signature *signature, 
                 labcomm2014_encoder_function encode,
                 void *value);
-  int (*ioctl)(struct labcomm2014_encoder *encoder, 
+  int (*ioctl)(struct labcomm2014_encoder *e, 
              const struct labcomm2014_signature *signature,
              uint32_t ioctl_action, va_list args);
-  int (*signature_to_index)(struct labcomm2014_encoder *encoder,
+  int (*signature_to_index)(struct labcomm2014_encoder *e,
                             const struct labcomm2014_signature *signature);
 };
 
