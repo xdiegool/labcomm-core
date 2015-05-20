@@ -46,82 +46,31 @@ struct sample_entry {
   void *context;
 };
 
-struct labcomm2014_decoder {
-  struct labcomm2014_reader *reader;
-  int reader_allocated;
-  int version_ok;
-  struct labcomm2014_error_handler *error;
-  struct labcomm2014_memory *memory;
-  struct labcomm2014_scheduler *scheduler;
-  labcomm2014_error_handler_callback on_error;
-  labcomm2014_handle_new_datatype_callback on_new_datatype;
+struct decoder {
+  struct labcomm2014_decoder decoder;
   LABCOMM_SIGNATURE_ARRAY_DEF(local, struct sample_entry);
   LABCOMM_SIGNATURE_ARRAY_DEF(remote_to_local, int);
   LABCOMM_SIGNATURE_ARRAY_DEF(local_ref, const struct labcomm2014_signature *);
   LABCOMM_SIGNATURE_ARRAY_DEF(remote_to_local_ref, int);
 };
 
-struct labcomm2014_decoder *labcomm2014_decoder_new(
-  struct labcomm2014_reader *reader,
-  struct labcomm2014_error_handler *error,
-  struct labcomm2014_memory *memory,
-  struct labcomm2014_scheduler *scheduler)
-{
-  struct labcomm2014_decoder *result;
-
-  result = labcomm2014_memory_alloc(memory, 0, sizeof(*result));
-  if (result) {
-    result->reader = reader;
-    result->reader->decoder = result;
-    result->reader->data = 0;
-    result->reader->data_size = 0;
-    result->reader->count = 0;
-    result->reader->pos = 0;
-    result->reader->error = 0;
-    result->reader_allocated = 0;
-    result->version_ok = 0;
-    result->error = error;
-    result->memory = memory;
-    result->scheduler = scheduler;
-    result->on_error = labcomm20142014_on_error_fprintf;
-    LABCOMM_SIGNATURE_ARRAY_INIT(result->local, struct sample_entry);
-    LABCOMM_SIGNATURE_ARRAY_INIT(result->remote_to_local, int);
-    LABCOMM_SIGNATURE_ARRAY_INIT(result->local_ref, 
-                                 const struct labcomm2014_signature*);
-    LABCOMM_SIGNATURE_ARRAY_INIT(result->remote_to_local_ref, int);
-  }
-  return result;
-}
-
-void labcomm2014_decoder_free(struct labcomm2014_decoder* d)
-{
-  struct labcomm2014_memory *memory = d->memory;
-
-  labcomm2014_reader_free(d->reader, d->reader->action_context);
-  LABCOMM_SIGNATURE_ARRAY_FREE(memory, d->local, struct sample_entry);
-  LABCOMM_SIGNATURE_ARRAY_FREE(memory, d->remote_to_local, int);
-  LABCOMM_SIGNATURE_ARRAY_FREE(memory, d->local_ref, 
-                               const struct labcomm2014_signature*);
-  LABCOMM_SIGNATURE_ARRAY_FREE(memory, d->remote_to_local_ref, int);
-  labcomm2014_memory_free(memory, 0, d);
-}
-
 static int handle_sample_def(struct labcomm2014_decoder *d, int remote_index,
                              const struct labcomm2014_signature *signature)
 {
+  struct decoder *id = d->context;
   int result;
   int i;
   const struct labcomm2014_signature *local_signature = NULL;
   int local_index = 0;
 
   labcomm2014_scheduler_data_lock(d->scheduler);
-  LABCOMM_SIGNATURE_ARRAY_FOREACH(d->local, struct sample_entry, i) {
+  LABCOMM_SIGNATURE_ARRAY_FOREACH(id->local, struct sample_entry, i) {
     struct sample_entry *s;
     int *remote_to_local;
 
     result = -ENOENT;
     s = LABCOMM_SIGNATURE_ARRAY_REF(d->memory, 
-                                    d->local, struct sample_entry, i);
+                                    id->local, struct sample_entry, i);
     if (s->signature &&
         s->signature->size == signature->size &&
         strcmp(s->signature->name, signature->name) == 0 &&
@@ -131,7 +80,7 @@ static int handle_sample_def(struct labcomm2014_decoder *d, int remote_index,
       local_signature = s->signature;
       local_index = i;
       remote_to_local = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
-                                                    d->remote_to_local, int,
+                                                    id->remote_to_local, int,
                                                     remote_index);
       *remote_to_local = i;
       result = remote_index;
@@ -151,23 +100,26 @@ static int handle_sample_def(struct labcomm2014_decoder *d, int remote_index,
 static int handle_sample_ref(struct labcomm2014_decoder *d, int remote_index,
                              const struct labcomm2014_signature *signature)
 {
+  struct decoder *id = d->context;
   int result;
   int i;
 
   labcomm2014_scheduler_data_lock(d->scheduler);
-  LABCOMM_SIGNATURE_ARRAY_FOREACH(d->local_ref, const struct labcomm2014_signature *, i) {
+  LABCOMM_SIGNATURE_ARRAY_FOREACH(id->local_ref,
+                                  const struct labcomm2014_signature *, i) {
     const struct labcomm2014_signature *s;
     int *remote_to_local_ref;
 
     result = -ENOENT;
-    s = LABCOMM_SIGNATURE_ARRAY_GET(d->local_ref, const struct labcomm2014_signature *, i, 0);
+    s = LABCOMM_SIGNATURE_ARRAY_GET(id->local_ref, const struct labcomm2014_signature *, i, 0);
     if (s &&
         s->signature &&
         s->size == signature->size &&
         strcmp(s->name, signature->name) == 0 &&
         memcmp((void*)s->signature, (void*)signature->signature, signature->size) == 0) {
       remote_to_local_ref = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
-                                                        d->remote_to_local_ref, int,
+                                                        id->remote_to_local_ref,
+                                                        int,
                                                         remote_index);
       *remote_to_local_ref = i;
       result = remote_index;
@@ -309,17 +261,18 @@ static labcomm2014_decoder_function lookup_h(struct labcomm2014_decoder *d,
 		                         int remote_index,
 					 int **local_index)
 {
+  struct decoder *id = d->context;
   labcomm2014_decoder_function do_decode = NULL;
   labcomm2014_scheduler_data_lock(d->scheduler);
   *local_index = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
-      				      d->remote_to_local, int,
-      				      remote_index);
+                                             id->remote_to_local, int,
+                                             remote_index);
   if (**local_index != 0) {
     struct sample_entry *entry;
 
     entry = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
-      				  d->local, struct sample_entry,
-      				  **local_index);
+                                        id->local, struct sample_entry,
+                                        **local_index);
     wrap->local_index = **local_index;
     wrap->signature = entry->signature;
     wrap->handler = entry->handler;
@@ -425,16 +378,16 @@ void labcomm2014_decoder_run(struct labcomm2014_decoder *d)
 }
 
 int labcomm2014_decoder_ioctl(struct labcomm2014_decoder *d, 
-			  uint32_t action,
-			  ...)
+                              uint32_t action,
+                              ...)
 {
   int result;  
   va_list va;
     
   va_start(va, action);
   result = labcomm2014_reader_ioctl(d->reader, 
-				d->reader->action_context,
-				0, 0, NULL, action, va);
+                                    d->reader->action_context,
+                                    0, 0, NULL, action, va);
   va_end(va);
   return result;
 }
@@ -443,6 +396,7 @@ int labcomm2014_decoder_sample_ref_register(
   struct labcomm2014_decoder *d,
   const struct labcomm2014_signature *signature)
 {
+  struct decoder *id = d->context;
   int local_index, *remote_to_local_ref;
   const struct labcomm2014_signature **s;
 
@@ -450,13 +404,13 @@ int labcomm2014_decoder_sample_ref_register(
   if (local_index <= 0) { goto out; }
   labcomm2014_scheduler_data_lock(d->scheduler);
   s = LABCOMM_SIGNATURE_ARRAY_REF(d->memory, 
-                                  d->local_ref, 
+                                  id->local_ref, 
                                   const struct labcomm2014_signature*, local_index);
   if (s == NULL) { local_index = -ENOMEM; goto unlock; };
   if (*s) { goto unlock; }
   *s = signature;	
   remote_to_local_ref = LABCOMM_SIGNATURE_ARRAY_REF(d->memory, 
-                                                    d->remote_to_local_ref, 
+                                                    id->remote_to_local_ref, 
                                                     int, local_index);
   *remote_to_local_ref = 0;
 unlock:
@@ -465,17 +419,18 @@ out:
   return local_index;
 }
 
-int labcomm2014_internal_decoder_ioctl(struct labcomm2014_decoder *d, 
-				   const struct labcomm2014_signature *signature,
-				   uint32_t action, va_list va)
+static int do_ioctl(struct labcomm2014_decoder *d, 
+                    const struct labcomm2014_signature *signature,
+                    uint32_t action, va_list va)
 {
+  struct decoder *id = d->context;
   int result;
   int local_index, remote_index;
 
   local_index = labcomm2014_get_local_index(signature);
   labcomm2014_scheduler_data_lock(d->scheduler);
   remote_index = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
-					     d->local,
+					     id->local,
 					     struct sample_entry,
 					     local_index)->remote_index;
   labcomm2014_scheduler_data_unlock(d->scheduler);
@@ -530,13 +485,14 @@ int labcomm2014_decoder_register_labcomm2014_type_def(
   void *context
 )
 {
+  struct decoder *id = d->context;
   int tag = LABCOMM_TYPE_DEF;
   struct sample_entry *entry;
   int *remote_to_local;
  
   labcomm2014_scheduler_data_lock(d->scheduler);
   entry = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
-				      d->local, struct sample_entry,
+				      id->local, struct sample_entry,
 				      tag);
   if (entry == NULL) { tag = -ENOMEM; goto unlock; }
   entry->remote_index = tag;
@@ -546,8 +502,8 @@ int labcomm2014_decoder_register_labcomm2014_type_def(
   entry->context = context;
 
   remote_to_local = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
-                                                    d->remote_to_local, int,
-                                                    tag);
+                                                id->remote_to_local, int,
+                                                tag);
   *remote_to_local = tag;
 unlock:
   labcomm2014_scheduler_data_unlock(d->scheduler);
@@ -584,13 +540,14 @@ int labcomm2014_decoder_register_labcomm2014_type_binding(
   void *context
 )
 {
+  struct decoder *id = d->context;
   int tag = LABCOMM_TYPE_BINDING;
   struct sample_entry *entry;
   int *remote_to_local;
  
   labcomm2014_scheduler_data_lock(d->scheduler);
   entry = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
-				      d->local, struct sample_entry,
+				      id->local, struct sample_entry,
 				      tag);
   if (entry == NULL) { tag = -ENOMEM; goto unlock; }
   entry->remote_index = tag;
@@ -600,8 +557,8 @@ int labcomm2014_decoder_register_labcomm2014_type_binding(
   entry->context = context;
 
   remote_to_local = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
-                                                    d->remote_to_local, int,
-                                                    tag);
+                                                id->remote_to_local, int,
+                                                tag);
   *remote_to_local = tag;
 unlock:
   labcomm2014_scheduler_data_unlock(d->scheduler);
@@ -612,13 +569,14 @@ unlock:
 //// End type_def handling
 #endif
 
-int labcomm2014_internal_decoder_register(
+static int do_register_sample(
   struct labcomm2014_decoder *d,
   const struct labcomm2014_signature *signature,
   labcomm2014_decoder_function decode, 
   labcomm2014_handler_function handler,
   void *context)
 {
+  struct decoder *id = d->context;
   int local_index;
   struct sample_entry *entry;
  
@@ -632,7 +590,7 @@ int labcomm2014_internal_decoder_register(
 
   labcomm2014_scheduler_data_lock(d->scheduler);
   entry = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
-				      d->local, struct sample_entry,
+				      id->local, struct sample_entry,
 				      local_index);
   if (entry == NULL) { local_index = -ENOMEM; goto unlock; }
   entry->remote_index = 0;
@@ -646,20 +604,72 @@ out:
   return local_index;
 }
 
-const struct labcomm2014_signature *labcomm2014_internal_decoder_index_to_signature(
+static const struct labcomm2014_signature *do_index_to_signature(
   struct labcomm2014_decoder *d, int index)
 {
   const struct labcomm2014_signature *result = 0;
+  struct decoder *id = d->context;
   int local_index;
 
   labcomm2014_scheduler_data_lock(d->scheduler);
-  local_index = LABCOMM_SIGNATURE_ARRAY_GET(d->remote_to_local_ref, 
+  local_index = LABCOMM_SIGNATURE_ARRAY_GET(id->remote_to_local_ref, 
                                             int, index, 0);
   if (local_index) {
-    result = LABCOMM_SIGNATURE_ARRAY_GET(d->local_ref, 
+    result = LABCOMM_SIGNATURE_ARRAY_GET(id->local_ref, 
                                          const struct labcomm2014_signature*, 
                                          local_index, 0);
   }
   labcomm2014_scheduler_data_unlock(d->scheduler);
   return result;
 }
+
+struct labcomm2014_decoder *labcomm2014_decoder_new(
+  struct labcomm2014_reader *reader,
+  struct labcomm2014_error_handler *error,
+  struct labcomm2014_memory *memory,
+  struct labcomm2014_scheduler *scheduler)
+{
+  struct decoder *result;
+
+  result = labcomm2014_memory_alloc(memory, 0, sizeof(*result));
+  if (result) {
+    result->decoder.context = result;
+    result->decoder.reader = reader;
+    result->decoder.reader->decoder = &result->decoder;
+    result->decoder.reader->data = 0;
+    result->decoder.reader->data_size = 0;
+    result->decoder.reader->count = 0;
+    result->decoder.reader->pos = 0;
+    result->decoder.reader->error = 0;
+    result->decoder.reader_allocated = 0;
+    result->decoder.version_ok = 0;
+    result->decoder.error = error;
+    result->decoder.memory = memory;
+    result->decoder.scheduler = scheduler;
+    result->decoder.on_error = labcomm20142014_on_error_fprintf;
+    result->decoder.register_sample = do_register_sample;
+    result->decoder.ioctl = do_ioctl;
+    result->decoder.index_to_signature = do_index_to_signature;
+    LABCOMM_SIGNATURE_ARRAY_INIT(result->local, struct sample_entry);
+    LABCOMM_SIGNATURE_ARRAY_INIT(result->remote_to_local, int);
+    LABCOMM_SIGNATURE_ARRAY_INIT(result->local_ref, 
+                                 const struct labcomm2014_signature*);
+    LABCOMM_SIGNATURE_ARRAY_INIT(result->remote_to_local_ref, int);
+  }
+  return &(result->decoder);
+}
+
+void labcomm2014_decoder_free(struct labcomm2014_decoder* d)
+{
+  struct decoder *id = d->context;
+  struct labcomm2014_memory *memory = d->memory;
+
+  labcomm2014_reader_free(d->reader, d->reader->action_context);
+  LABCOMM_SIGNATURE_ARRAY_FREE(memory, id->local, struct sample_entry);
+  LABCOMM_SIGNATURE_ARRAY_FREE(memory, id->remote_to_local, int);
+  LABCOMM_SIGNATURE_ARRAY_FREE(memory, id->local_ref, 
+                               const struct labcomm2014_signature*);
+  LABCOMM_SIGNATURE_ARRAY_FREE(memory, id->remote_to_local_ref, int);
+  labcomm2014_memory_free(memory, 0, id);
+}
+

@@ -528,7 +528,7 @@ aspect C_Decoder {
     env.print(env.qualid + " = ");
     switch (getToken()) {
       case LABCOMM_SAMPLE: { 
-        env.println("labcomm2014_internal_decoder_index_to_signature(" +
+        env.println("r->decoder->index_to_signature(" +
                     "r->decoder, labcomm2014_read_int(r));");
       } break;
       default: {
@@ -691,7 +691,7 @@ aspect C_Decoder {
     env.println(")");
     env.println("{");
     env.indent();
-    env.println("return labcomm2014_internal_decoder_register(");
+    env.println("return d->register_sample(");
     env.indent();
     env.println("d,");
     env.println("&signature_" + env.prefix + getName() + ",");
@@ -985,7 +985,7 @@ aspect C_DecoderIoctl {
     env.println("int result;");
     env.println("va_list va;");
     env.println("va_start(va, ioctl_action);");
-    env.println("result = labcomm2014_internal_decoder_ioctl(");
+    env.println("result = d->ioctl(");
     env.indent();
     env.println("d, &signature_" + env.prefix + getName() + ", ");
     env.println("ioctl_action, va);");
@@ -1038,7 +1038,7 @@ aspect C_Encoder {
     env.println(")");
     env.println("{");
     env.indent();
-    env.println("return labcomm2014_internal_encode(e, &signature_" + 
+    env.println("return e->encode(e, &signature_" + 
 		env.prefix + getName() + 
 		", (labcomm2014_encoder_function)encode_" + 
                 env.prefix + getName() +
@@ -1062,7 +1062,7 @@ aspect C_Encoder {
     switch (getToken()) {
       case LABCOMM_SAMPLE: { 
         env.println("labcomm2014_write_int(w, " + 
-                    "labcomm2014_internal_encoder_signature_to_index(w->encoder, " +
+                    "w->encoder->signature_to_index(w->encoder, " +
                     env.qualid + "));");
       } break;
       default: {
@@ -1144,7 +1144,7 @@ aspect C_Encoder {
     C_emitUserTypeDeps(env, null, true); 
 
     if(!isSampleDecl() || hasDependencies()) {
-      env.println("return labcomm2014_internal_encoder_type_register(");
+      env.println("return e->type_register(");
       env.indent();
       env.println("e,");
       env.println("&signature_" + env.prefix + getName() + "");
@@ -1174,7 +1174,7 @@ aspect C_Encoder {
     C_emitUserTypeDeps(env, null, false); //XXX HERE BE DRAGONS
                                           //currently set to false to turn off
                                           //outputting of code
-    env.println("int result = labcomm2014_internal_encoder_register(");
+    env.println("int result = e->sample_register(");
     env.indent();
     env.println("e,");
     env.println("&signature_" + env.prefix + getName() + ",");
@@ -1184,7 +1184,7 @@ aspect C_Encoder {
     env.println("if(result >= 0) {\n");
     env.indent();
     env.println("labcomm2014_encoder_type_register_" + env.prefix + getName()+"(e);");
-    env.println("labcomm2014_internal_encoder_type_bind(");
+    env.println("e->type_bind(");
     env.indent();
     env.println("e,");
     env.println("&signature_" + env.prefix + getName() + ",");
@@ -1222,7 +1222,7 @@ aspect C_EncoderIoctl {
     env.println("int result;");
     env.println("va_list va;");
     env.println("va_start(va, ioctl_action);");
-    env.println("result = labcomm2014_internal_encoder_ioctl(");
+    env.println("result = e->ioctl(");
     env.indent();
     env.println("e, &signature_" + env.prefix + getName() + ", ");
     env.println("ioctl_action, va);");

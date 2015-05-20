@@ -450,6 +450,10 @@ class sample_def(sampledef_or_sampleref_or_typedef):
 
     def add_index(self, decoder, index, decl):
         decoder.add_decl(decl, index)
+
+    def rename(self, name):
+        return sample_def(name=name, decl=self.decl)
+        
     
 class sample_ref(sampledef_or_sampleref_or_typedef):
     type_index = i_SAMPLE_REF

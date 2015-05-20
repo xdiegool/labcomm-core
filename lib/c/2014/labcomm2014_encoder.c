@@ -29,89 +29,26 @@
 //define the following to disable encoding of typedefs
 #undef LABCOMM_WITHOUT_TYPE_DEFS
 
-struct labcomm2014_encoder {
-  struct labcomm2014_writer *writer;
-  struct labcomm2014_error_handler *error;
-  struct labcomm2014_memory *memory;
-  struct labcomm2014_scheduler *scheduler;
+struct encoder {
+  struct labcomm2014_encoder encoder;
   LABCOMM_SIGNATURE_ARRAY_DEF(registered, int);
   LABCOMM_SIGNATURE_ARRAY_DEF(sample_ref, int);
   LABCOMM_SIGNATURE_ARRAY_DEF(typedefs, int);
 };
 
-static struct labcomm2014_encoder *internal_encoder_new(
-  struct labcomm2014_writer *writer,
-  struct labcomm2014_error_handler *error,
-  struct labcomm2014_memory *memory,
-  struct labcomm2014_scheduler *scheduler,
-  labcomm2014_bool outputVer)
-{
-  struct labcomm2014_encoder *result;
-
-  result = labcomm2014_memory_alloc(memory, 0, sizeof(*result));
-  if (result) {
-    int length;
-
-    result->writer = writer;
-    result->writer->encoder = result;
-    result->writer->data = NULL;
-    result->writer->data_size = 0;
-    result->writer->count = 0;
-    result->writer->pos = 0;
-    result->writer->error = 0;
-    result->error = error;
-    result->memory = memory;
-    result->scheduler = scheduler;
-    LABCOMM_SIGNATURE_ARRAY_INIT(result->registered, int);
-    LABCOMM_SIGNATURE_ARRAY_INIT(result->sample_ref, int);
-    LABCOMM_SIGNATURE_ARRAY_INIT(result->typedefs, int);
-    labcomm2014_writer_alloc(result->writer,
-			 result->writer->action_context);
-    if(outputVer) {
-        labcomm2014_writer_start(result->writer,
-                            result->writer->action_context,
-                            LABCOMM_VERSION, NULL, CURRENT_VERSION);
-        labcomm2014_write_packed32(result->writer, LABCOMM_VERSION);
-        length = labcomm2014_size_string(CURRENT_VERSION);
-        labcomm2014_write_packed32(result->writer, length);
-        labcomm2014_write_string(result->writer, CURRENT_VERSION);
-        labcomm2014_writer_end(result->writer, result->writer->action_context);
-    }
-  }
-  return result;
-}
-
-struct labcomm2014_encoder *labcomm2014_encoder_new(
-  struct labcomm2014_writer *writer,
-  struct labcomm2014_error_handler *error,
-  struct labcomm2014_memory *memory,
-  struct labcomm2014_scheduler *scheduler)
-{
-    return internal_encoder_new(writer,error,memory,scheduler,LABCOMM2014_TRUE);
-}
-void labcomm2014_encoder_free(struct labcomm2014_encoder* e)
-{
-  struct labcomm2014_memory *memory = e->memory;
-
-  labcomm2014_writer_free(e->writer, e->writer->action_context);
-  LABCOMM_SIGNATURE_ARRAY_FREE(e->memory, e->registered, int);
-  LABCOMM_SIGNATURE_ARRAY_FREE(e->memory, e->sample_ref, int);
-  LABCOMM_SIGNATURE_ARRAY_FREE(e->memory, e->typedefs, int);
-  labcomm2014_memory_free(memory, 0, e);
-}
-
-int labcomm2014_internal_encoder_register(
+static int do_sample_register(
   struct labcomm2014_encoder *e,
   const struct labcomm2014_signature *signature,
   labcomm2014_encoder_function encode)
 {
   int result = -EINVAL;
+  struct encoder *ie = e->context;
   int index, *done, err, i, length;
 
   index = labcomm2014_get_local_index(signature);
   labcomm2014_scheduler_writer_lock(e->scheduler);
   if (index <= 0) { goto out; }
-  done = LABCOMM_SIGNATURE_ARRAY_REF(e->memory, e->registered, int, index);
+  done = LABCOMM_SIGNATURE_ARRAY_REF(e->memory, ie->registered, int, index);
   if (*done) {
       goto out; }
   *done = 1;
@@ -142,23 +79,24 @@ out:
   return result;
 }
 
-int labcomm2014_internal_encode(
+static int do_encode(
   struct labcomm2014_encoder *e,
   const struct labcomm2014_signature *signature,
   labcomm2014_encoder_function encode,
   void *value)
 {
   int result, index, length;
-
+  struct encoder *ie = e->context;
+  
   index = labcomm2014_get_local_index(signature);
   length = (signature->encoded_size(value));
   labcomm2014_scheduler_writer_lock(e->scheduler);
-  if (! LABCOMM_SIGNATURE_ARRAY_GET(e->registered, int, index, 0)) {
+  if (! LABCOMM_SIGNATURE_ARRAY_GET(ie->registered, int, index, 0)) {
     result = -EINVAL;
     goto no_end;
   }
   result = labcomm2014_writer_start(e->writer, e->writer->action_context,
-				index, signature, value);
+                                    index, signature, value);
   if (result == -EALREADY) { result = 0; goto no_end; }
   if (result != 0) { goto out; }
   result = labcomm2014_write_packed32(e->writer, index);
@@ -177,13 +115,14 @@ int labcomm2014_encoder_sample_ref_register(
   const struct labcomm2014_signature *signature)
 {
   int result = -EINVAL;
+  struct encoder *ie = e->context;
   int index, *done, err, i, length;
 
   index = labcomm2014_get_local_index(signature);
   labcomm2014_scheduler_writer_lock(e->scheduler);
   if (index <= 0) { goto out; }
 
-  done = LABCOMM_SIGNATURE_ARRAY_REF(e->memory, e->sample_ref, int, index);
+  done = LABCOMM_SIGNATURE_ARRAY_REF(e->memory, ie->sample_ref, int, index);
   if (*done) { goto out; }
   *done = 1;
   err = labcomm2014_writer_start(e->writer, e->writer->action_context,
@@ -235,9 +174,10 @@ out:
   return result;
 }
 
-int labcomm2014_internal_encoder_ioctl(struct labcomm2014_encoder *encoder,
-				   const struct labcomm2014_signature *signature,
-				   uint32_t action, va_list va)
+static int do_ioctl(
+  struct labcomm2014_encoder *encoder,
+  const struct labcomm2014_signature *signature,
+  uint32_t action, va_list va)
 {
   int result = -ENOTSUP;
   int index;
@@ -249,14 +189,15 @@ int labcomm2014_internal_encoder_ioctl(struct labcomm2014_encoder *encoder,
   return result;
 }
 
-int labcomm2014_internal_encoder_signature_to_index(
+static int do_signature_to_index(
   struct labcomm2014_encoder *e, const struct labcomm2014_signature *signature)
 {
   /* writer_lock should be held at this point */
+  struct encoder *ie = e->context;
   int index = 0;
   if (signature != NULL) {
     index = labcomm2014_get_local_index(signature);
-    if (! LABCOMM_SIGNATURE_ARRAY_GET(e->sample_ref, int, index, 0)) {
+    if (! LABCOMM_SIGNATURE_ARRAY_GET(ie->sample_ref, int, index, 0)) {
       index = 0;
     }
   }
@@ -321,15 +262,16 @@ static int internal_reg_type(
 {
   int result = -EINVAL;
   int index, *done, err;
-
+  struct encoder *ie = e->context;
+  
   index = labcomm2014_get_local_index(signature);
   labcomm2014_scheduler_writer_lock(e->scheduler);
   if (index <= 0) { goto out; }
-  done = LABCOMM_SIGNATURE_ARRAY_REF(e->memory, e->typedefs, int, index);
+  done = LABCOMM_SIGNATURE_ARRAY_REF(e->memory, ie->typedefs, int, index);
   if (*done) { goto out; }
   *done = 1;
   err = labcomm2014_writer_start(e->writer, e->writer->action_context,
-                 index, signature, NULL);
+                                 index, signature, NULL);
   if (err == -EALREADY) { result = 0; goto out; }
   if (err != 0) { result = err; goto out; }
 
@@ -354,7 +296,7 @@ out:
 }
 #endif
 
-int labcomm2014_internal_encoder_type_register(
+static int do_type_register(
   struct labcomm2014_encoder *e,
   const struct labcomm2014_signature *signature)
 {
@@ -364,7 +306,8 @@ int labcomm2014_internal_encoder_type_register(
   return 0;
 #endif
 }
-int labcomm2014_internal_encoder_type_bind(
+
+static int do_type_bind(
   struct labcomm2014_encoder *e,
   const struct labcomm2014_signature *signature,
   char has_deps)
@@ -396,3 +339,75 @@ out:
   return 0;
 #endif
 }
+
+static struct labcomm2014_encoder *internal_encoder_new(
+  struct labcomm2014_writer *writer,
+  struct labcomm2014_error_handler *error,
+  struct labcomm2014_memory *memory,
+  struct labcomm2014_scheduler *scheduler,
+  labcomm2014_bool outputVer)
+{
+  struct encoder *result;
+
+  result = labcomm2014_memory_alloc(memory, 0, sizeof(*result));
+  if (result) {
+    int length;
+
+    result->encoder.context = result;
+    result->encoder.writer = writer;
+    result->encoder.writer->encoder = &result->encoder;
+    result->encoder.writer->data = NULL;
+    result->encoder.writer->data_size = 0;
+    result->encoder.writer->count = 0;
+    result->encoder.writer->pos = 0;
+    result->encoder.writer->error = 0;
+    result->encoder.error = error;
+    result->encoder.memory = memory;
+    result->encoder.scheduler = scheduler;
+    result->encoder.type_register = do_type_register;
+    result->encoder.type_bind = do_type_bind;
+    result->encoder.sample_register = do_sample_register;
+    result->encoder.encode = do_encode;
+    result->encoder.ioctl = do_ioctl;
+    result->encoder.signature_to_index = do_signature_to_index;
+    LABCOMM_SIGNATURE_ARRAY_INIT(result->registered, int);
+    LABCOMM_SIGNATURE_ARRAY_INIT(result->sample_ref, int);
+    LABCOMM_SIGNATURE_ARRAY_INIT(result->typedefs, int);
+    labcomm2014_writer_alloc(result->encoder.writer,
+                             result->encoder.writer->action_context);
+    if(outputVer) {
+        labcomm2014_writer_start(result->encoder.writer,
+                                 result->encoder.writer->action_context,
+                                 LABCOMM_VERSION, NULL, CURRENT_VERSION);
+        labcomm2014_write_packed32(result->encoder.writer, LABCOMM_VERSION);
+        length = labcomm2014_size_string(CURRENT_VERSION);
+        labcomm2014_write_packed32(result->encoder.writer, length);
+        labcomm2014_write_string(result->encoder.writer, CURRENT_VERSION);
+        labcomm2014_writer_end(result->encoder.writer,
+                               result->encoder.writer->action_context);
+    }
+  }
+  return &(result->encoder);
+}
+
+struct labcomm2014_encoder *labcomm2014_encoder_new(
+  struct labcomm2014_writer *writer,
+  struct labcomm2014_error_handler *error,
+  struct labcomm2014_memory *memory,
+  struct labcomm2014_scheduler *scheduler)
+{
+    return internal_encoder_new(writer,error,memory,scheduler,LABCOMM2014_TRUE);
+}
+
+void labcomm2014_encoder_free(struct labcomm2014_encoder* e)
+{
+  struct encoder *ie = e->context;
+  struct labcomm2014_memory *memory = e->memory;
+
+  labcomm2014_writer_free(e->writer, e->writer->action_context);
+  LABCOMM_SIGNATURE_ARRAY_FREE(e->memory, ie->registered, int);
+  LABCOMM_SIGNATURE_ARRAY_FREE(e->memory, ie->sample_ref, int);
+  LABCOMM_SIGNATURE_ARRAY_FREE(e->memory, ie->typedefs, int);
+  labcomm2014_memory_free(memory, 0, ie);
+}
+
