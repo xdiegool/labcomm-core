@@ -28,7 +28,7 @@ typedef struct {
   boolean c;
 } foo;
 
-sample struct {
+(nisse:hej) sample struct {
   (name:l1)line l1;
   (name:l2)line l2;
   (b:"kalle anka")(c:hejdu)(a:"kalle anka")foo  f;

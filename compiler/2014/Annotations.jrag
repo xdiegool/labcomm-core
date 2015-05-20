@@ -2,21 +2,27 @@ aspect Annotations {
     syn boolean TypeInstance.hasAnnotations() = getAnnotations().getNumAnnotation()>0;
     syn boolean TypeInstance.hasIntentions() = ! intentionSet().isEmpty();
 
-//    syn String Annotations.getName() = new String(lookup(""));
-//
-//    syn byte[] Annotation.lookup(String key) = (getKey().equals(key) ? getValue() : null);
+    syn String Annotations.getName() = new String(lookup(""));
+
+    syn byte[] Annotations.lookup(String key) {
+        for(Annotation a: getAnnotations()) {
+            byte[] res = a.lookup(key);
+            if(res != null) return res;
+        }
+        return null;
+    }
+
+    syn byte[] Annotation.lookup(String key) = (getKey().equals(key) ? getValue() : null);
 
     syn boolean Annotation.isIntention() = false;
     eq Intention.isIntention() = true;
 
-    inh ASTNode Annotation.parentInstance();
-    eq TypeInstance.getAnnotations().parentInstance() = this;
-    eq Decl.getAnnotations().parentInstance() = this;
+    inh AnnotatedNode Annotation.parentInstance();
+    eq AnnotatedNode.getAnnotations().parentInstance() = this;
 
-
-    coll Set<Intention> TypeInstance.intentionSet() [new HashSet<Intention>()] with add;
+    coll Set<Intention> AnnotatedNode.intentionSet() [new HashSet<Intention>()] with add;
     Intention contributes this
-        to TypeInstance.intentionSet()
+        to AnnotatedNode.intentionSet()
         for parentInstance();
 
 }

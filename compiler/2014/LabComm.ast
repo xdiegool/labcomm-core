@@ -1,8 +1,9 @@
 Specification ::= Decl*;
 
-abstract Decl ::= TypeInstance Annotations /Signature/;
+abstract AnnotatedNode ::= Annotations;
+abstract Decl : AnnotatedNode ::= TypeInstance /Signature/;
 
-TypeInstance ::= DataType <Name:String> Annotations;
+TypeInstance :AnnotatedNode ::= DataType;
 
 Annotations ::= Annotation*;
 Annotation ::= <Key:String> <Value:byte[]>;
@@ -16,9 +17,9 @@ SampleDecl : Decl;
 //Signatures are in the abstract grammar, so that
 //they can be extended and refined by aspects.
 
-Signature                 ::= SignatureList FlatSignatureList:SignatureList; 
+Signature                 ::= SignatureList FlatSignatureList:SignatureList;
 SignatureList             ::= SignatureLine*;
-abstract SignatureLine 	  ::= <Indent:int> <Comment:String>; 
+abstract SignatureLine 	  ::= <Indent:int> <Comment:String>;
 abstract DataSignatureLine : SignatureLine;
 ByteArraySignatureLine     : DataSignatureLine ::= <Data:byte[]>;
 IntSignatureLine           : DataSignatureLine ::= <Data:int>;

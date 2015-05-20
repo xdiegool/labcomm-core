@@ -3,12 +3,40 @@ aspect Refactoring {
     syn String Decl.getName() = getTypeInstance().getName();
     syn DataType Decl.getDataType() = getTypeInstance().getDataType();
 
+    syn String TypeInstance.getName() = getAnnotations().getName();
+
+    public TypeDecl.TypeDecl(TypeInstance t, Annotations a) {
+        this(a, t);
+    }
+
+    public SampleDecl.SampleDecl(TypeInstance t, Annotations a) {
+        this(a, t);
+    }
+
+    public TypeInstance.TypeInstance(DataType t, Annotations a) {
+        this(a, t);
+    }
+
+    public Field.Field(DataType t, Annotations a) {
+        this(a, t);
+    }
+
+    public Annotations Annotations.addName(String n) {
+        //XXX TODO: check if name already exists
+        addAnnotation(new Annotation("",n.getBytes()));
+        return this;
+    }
+
     public Field.Field(TypeInstance t) {
-        this(t.getDataType(), t.getName(), t.getAnnotations());
+        this(t.getDataType(), t.getAnnotations().addName(t.getName()));
+    }
+
+    public TypeInstance.TypeInstance(DataType t, String n, Annotations a) {
+        this(t, a.addName(n));
     }
 
     public TypeInstance.TypeInstance(DataType t, String n) {
-        this(t, n, new  Annotations());
+        this(t, new  Annotations().addName(n));
         System.out.println("WARNING! TypeInstance(DataType, String) ignoring intention list");
     }
     public TypeDecl.TypeDecl(TypeInstance t) {
