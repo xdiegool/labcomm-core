@@ -1,13 +1,17 @@
 aspect Annotations {
-    syn boolean TypeInstance.hasAnnotations() = getNumAnnotation()>0;
+    syn boolean TypeInstance.hasAnnotations() = getAnnotations().getNumAnnotation()>0;
     syn boolean TypeInstance.hasIntentions() = ! intentionSet().isEmpty();
+
+//    syn String Annotations.getName() = new String(lookup(""));
+//
+//    syn byte[] Annotation.lookup(String key) = (getKey().equals(key) ? getValue() : null);
 
     syn boolean Annotation.isIntention() = false;
     eq Intention.isIntention() = true;
 
     inh ASTNode Annotation.parentInstance();
-    eq TypeInstance.getAnnotation(int i).parentInstance() = this;
-    eq Decl.getAnnotation(int i).parentInstance() = this;
+    eq TypeInstance.getAnnotations().parentInstance() = this;
+    eq Decl.getAnnotations().parentInstance() = this;
 
 
     coll Set<Intention> TypeInstance.intentionSet() [new HashSet<Intention>()] with add;
@@ -59,7 +63,7 @@ aspect SigAnnotations {
 
 
     syn int TypeInstance.fooHash() {
-            List<Annotation> ints = getAnnotationList();
+            List<Annotation> ints = getAnnotations().getAnnotationList();
             int result=0;
             for(Annotation i : ints) {
                     if(i.isIntention()) {
@@ -71,7 +75,7 @@ aspect SigAnnotations {
 
     syn String TypeInstance.getAnnotationString() {
             StringBuilder sb = new StringBuilder();
-            List<Annotation> ints = getAnnotationList();
+            List<Annotation> ints = getAnnotations().getAnnotationList();
             for(Annotation i : ints) {
                     sb.append(i.toString());
             }

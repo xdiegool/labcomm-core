@@ -54,9 +54,9 @@ List var_decl_list =
   | var_decl_list.l var_decl.v      {: return l.add(v); :}
   ;
 
-List annotations = 
-    /* empty list */  {: return new List(); :}
-  |  annotation_list.l {: return l; :}
+Annotations annotations = 
+    /* empty list */  {: return new Annotations(); :}
+  |  annotation_list.l {: return new Annotations(l); :}
   ;
 
 List annotation_list =

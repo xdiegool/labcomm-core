@@ -4,19 +4,22 @@ aspect Refactoring {
     syn DataType Decl.getDataType() = getTypeInstance().getDataType();
 
     public Field.Field(TypeInstance t) {
-        this(t.getDataType(), t.getName(), t.getAnnotationList());
+        this(t.getDataType(), t.getName(), t.getAnnotations());
     }
 
     public TypeInstance.TypeInstance(DataType t, String n) {
-        this(t, n, new  List<Annotation>());
+        this(t, n, new  Annotations());
         System.out.println("WARNING! TypeInstance(DataType, String) ignoring intention list");
     }
     public TypeDecl.TypeDecl(TypeInstance t) {
-        this(t, new  List<Annotation>());
+        this(t, new  Annotations());
         System.out.println("WARNING! TypeDecl(TypeInstance) ignoring intention list");
     }
     public SampleDecl.SampleDecl(TypeInstance t) {
-        this(t, new  List<Annotation>());
+        this(t, new  Annotations());
         System.out.println("WARNING! SampleDecl(TypeInstance) ignoring intention list");
     }
+
+    syn Annotation Decl.getAnnotation(int i) = getAnnotations().getAnnotation(i);
+    syn Annotation TypeInstance.getAnnotation(int i) = getAnnotations().getAnnotation(i);
 }

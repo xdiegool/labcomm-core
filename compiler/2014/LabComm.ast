@@ -1,9 +1,10 @@
 Specification ::= Decl*;
 
-abstract Decl ::= TypeInstance Annotation* /Signature/;
+abstract Decl ::= TypeInstance Annotations /Signature/;
 
-TypeInstance ::= DataType <Name:String> Annotation*;
+TypeInstance ::= DataType <Name:String> Annotations;
 
+Annotations ::= Annotation*;
 Annotation ::= <Key:String> <Value:byte[]>;
 
 Intention : Annotation;
