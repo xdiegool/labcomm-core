@@ -1,6 +1,6 @@
 Specification ::= Decl*;
 
-abstract Decl ::= TypeInstance /Signature/;
+abstract Decl ::= TypeInstance Annotation* /Signature/;
 
 TypeInstance ::= DataType <Name:String> Annotation*;
 

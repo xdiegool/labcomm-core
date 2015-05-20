@@ -5,8 +5,9 @@ aspect Annotations {
     syn boolean Annotation.isIntention() = false;
     eq Intention.isIntention() = true;
 
-    inh TypeInstance Annotation.parentInstance();
+    inh ASTNode Annotation.parentInstance();
     eq TypeInstance.getAnnotation(int i).parentInstance() = this;
+    eq Decl.getAnnotation(int i).parentInstance() = this;
 
 
     coll Set<Intention> TypeInstance.intentionSet() [new HashSet<Intention>()] with add;

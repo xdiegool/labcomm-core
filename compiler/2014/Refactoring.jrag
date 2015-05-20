@@ -11,4 +11,12 @@ aspect Refactoring {
         this(t, n, new  List<Annotation>());
         System.out.println("WARNING! TypeInstance(DataType, String) ignoring intention list");
     }
+    public TypeDecl.TypeDecl(TypeInstance t) {
+        this(t, new  List<Annotation>());
+        System.out.println("WARNING! TypeDecl(TypeInstance) ignoring intention list");
+    }
+    public SampleDecl.SampleDecl(TypeInstance t) {
+        this(t, new  List<Annotation>());
+        System.out.println("WARNING! SampleDecl(TypeInstance) ignoring intention list");
+    }
 }
