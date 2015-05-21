@@ -51,9 +51,6 @@ aspect SigAnnotations {
            return "\""+new String(getValue())+"\"";
    }
 
-   syn boolean ASTNode.isTypeInstance() = false;
-   eq TypeInstance.isTypeInstance() = true;
-
     /// TESTING
     syn String Decl.getAnnotationString()  {
             StringBuilder sb = new StringBuilder();
