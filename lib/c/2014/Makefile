@@ -24,7 +24,8 @@ OBJS=labcomm$(VERSION).o \
      labcomm$(VERSION)_fd_writer.o \
      labcomm$(VERSION)_pthread_scheduler.o \
      labcomm$(VERSION)_renaming.o \
-     labcomm$(VERSION)_renaming_encoder.o
+     labcomm$(VERSION)_renaming_encoder.o \
+     labcomm$(VERSION)_renaming_decoder.o
 
 # Enable experimental objects by `make LABCOMM_EXPERIMENTAL=true`
 ifeq ($(LABCOMM_EXPERIMENTAL),true)
@@ -49,7 +50,7 @@ TESTS=test_labcomm_basic_type_encoding \
       test_labcomm \
       test_labcomm_pthread_scheduler \
       test_labcomm_copy \
-      test_labcomm_renaming
+      test_labcomm_renaming_encoder
 #FIXME: test_labcomm_errors
 
 TEST_DIR=test
