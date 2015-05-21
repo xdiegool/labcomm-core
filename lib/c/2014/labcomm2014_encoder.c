@@ -36,6 +36,25 @@ struct encoder {
   LABCOMM_SIGNATURE_ARRAY_DEF(typedefs, int);
 };
 
+/* XXX: TEMPORARY PLACEHOLDERS FOR INTENTIONS */
+
+static int TODO_sizeof_intentions(const struct labcomm2014_signature *signature) {
+    return labcomm2014_size_string(signature->name) + 2;
+}
+
+static int TODO_encode_intentions(
+  struct labcomm2014_encoder *e,
+  const struct labcomm2014_signature *signature)
+{
+  int result = -EINVAL;
+
+  labcomm2014_write_packed32(e->writer, 1); // one intention: the name
+  labcomm2014_write_packed32(e->writer, 0); // key: the empty string
+  labcomm2014_write_string(e->writer, signature->name);
+
+  result = e->writer->error;
+  return result;
+}
 static int do_sample_register(
   struct labcomm2014_encoder *e,
   const struct labcomm2014_signature *signature,
@@ -58,12 +77,12 @@ static int do_sample_register(
   if (err != 0) { result = err; goto out; }
   labcomm2014_write_packed32(e->writer, LABCOMM_SAMPLE_DEF);
   length = (labcomm2014_size_packed32(index) +
-            labcomm2014_size_string(signature->name) +
+            TODO_sizeof_intentions(signature) +
             labcomm2014_size_packed32(signature->size) +
             signature->size);
   labcomm2014_write_packed32(e->writer, length);
   labcomm2014_write_packed32(e->writer, index);
-  labcomm2014_write_string(e->writer, signature->name);
+  TODO_encode_intentions(e, signature);
   labcomm2014_write_packed32(e->writer, signature->size);
   for (i = 0 ; i < signature->size ; i++) {
     if (e->writer->pos >= e->writer->count) {
@@ -138,12 +157,12 @@ static int do_ref_register(
   if (err != 0) { result = err; goto out; }
   labcomm2014_write_packed32(e->writer, LABCOMM_SAMPLE_REF);
   length = (labcomm2014_size_packed32(index) +
-            labcomm2014_size_string(signature->name) +
+            TODO_sizeof_intentions(signature) +
             labcomm2014_size_packed32(signature->size) +
             signature->size);
   labcomm2014_write_packed32(e->writer, length);
   labcomm2014_write_packed32(e->writer, index);
-  labcomm2014_write_string(e->writer, signature->name);
+  TODO_encode_intentions(e, signature);
   labcomm2014_write_packed32(e->writer, signature->size);
   for (i = 0 ; i < signature->size ; i++) {
     if (e->writer->pos >= e->writer->count) {

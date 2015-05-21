@@ -157,6 +157,17 @@ static int decode_sample_def_or_ref(struct labcomm2014_decoder *d, int kind)
     result = d->reader->error;
     goto out;
   }
+
+   int numInts = labcomm2014_read_byte(d->reader);
+
+   if(numInts != 1) {
+       printf("WARNING! #intentions != 1, this will probably crash\n");
+   }
+  //XXX temporary kludge for intentions
+  //assume only one intention: the name
+  
+   labcomm2014_read_packed32(d->reader); // assume the empty key (i.e., name)
+
   signature.name = labcomm2014_read_string(d->reader);
   if (d->reader->error < 0) {
     result = d->reader->error;
