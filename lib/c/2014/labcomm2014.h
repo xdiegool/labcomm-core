@@ -20,8 +20,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __LABCOMM_H__
-#define __LABCOMM_H__
+#ifndef __LABCOMM2014_H__
+#define __LABCOMM2014_H__
 
 #include <stdarg.h>
 
@@ -132,7 +132,5 @@ int labcomm2014_encoder_sample_ref_register(
 int labcomm2014_encoder_ioctl(struct labcomm2014_encoder *encoder, 
 			  uint32_t ioctl_action,
 			  ...);
-
-#define LABCOMM_VOID ((void*)1)
 
 #endif
