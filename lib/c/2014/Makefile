@@ -174,5 +174,5 @@ $(TEST_DIR)/gen/test_labcomm_copy: \
 	$(TEST_DIR)/gen/test_sample.o \
 	$(TEST_DIR)/gen/more_types.o
 
-$(TEST_DIR)/gen/test_labcomm_renaming: \
+$(TEST_DIR)/gen/test_labcomm_renaming_encoder: \
 	$(TEST_DIR)/gen/generated_encoding.o
