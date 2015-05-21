@@ -1,9 +1,8 @@
 Specification ::= Decl*;
 
-abstract AnnotatedNode ::= Annotations;
-abstract Decl : AnnotatedNode ::= TypeInstance /Signature/;
+abstract Decl ::= TypeInstance /Signature/;
 
-TypeInstance :AnnotatedNode ::= DataType;
+TypeInstance ::= DataType Annotations;
 
 Annotations ::= Annotation*;
 Annotation ::= <Key:String> <Value:byte[]>;

@@ -17,12 +17,12 @@ aspect Annotations {
     syn boolean Annotation.isIntention() = false;
     eq Intention.isIntention() = true;
 
-    inh AnnotatedNode Annotation.parentInstance();
-    eq AnnotatedNode.getAnnotations().parentInstance() = this;
+    inh TypeInstance Annotation.parentInstance();
+    eq TypeInstance.getAnnotations().parentInstance() = this;
 
-    coll Set<Intention> AnnotatedNode.intentionSet() [new HashSet<Intention>()] with add;
+    coll Set<Intention> TypeInstance.intentionSet() [new HashSet<Intention>()] with add;
     Intention contributes this
-        to AnnotatedNode.intentionSet()
+        to TypeInstance.intentionSet()
         for parentInstance();
 
 }

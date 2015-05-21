@@ -82,10 +82,10 @@ Field var_decl =
   ;
 
 TypeDecl type_decl =
-    annotations.a TYPEDEF type_instance.t  SEMICOLON {: return new TypeDecl(t, a); :} ;
+    TYPEDEF type_instance.t  SEMICOLON {: return new TypeDecl(t); :} ;
 
 SampleDecl sample_decl =
-    annotations.a SAMPLE type_instance.t SEMICOLON {: return new SampleDecl(t, a); :} ;
+    SAMPLE type_instance.t SEMICOLON {: return new SampleDecl(t); :} ;
 
 DataType type =
     prim_type.p                     {: return p; :}
