@@ -20,9 +20,11 @@ OBJS=labcomm$(VERSION).o \
      labcomm$(VERSION)_decoder.o \
      labcomm$(VERSION)_dynamic_buffer_writer.o \
      labcomm$(VERSION)_fd_reader.o \
-	 labcomm$(VERSION)_type_signature.o \
+     labcomm$(VERSION)_type_signature.o \
      labcomm$(VERSION)_fd_writer.o \
-     labcomm$(VERSION)_pthread_scheduler.o 
+     labcomm$(VERSION)_pthread_scheduler.o \
+     labcomm$(VERSION)_renaming.o \
+     labcomm$(VERSION)_renaming_encoder.o
 
 # Enable experimental objects by `make LABCOMM_EXPERIMENTAL=true`
 ifeq ($(LABCOMM_EXPERIMENTAL),true)
@@ -46,7 +48,8 @@ TESTS=test_labcomm_basic_type_encoding \
       test_signature_numbers \
       test_labcomm \
       test_labcomm_pthread_scheduler \
-      test_labcomm_copy
+      test_labcomm_copy \
+      test_labcomm_renaming
 #FIXME: test_labcomm_errors
 
 TEST_DIR=test
@@ -169,3 +172,6 @@ $(TEST_DIR)/gen/test_labcomm_copy: \
 	$(TEST_DIR)/gen/generated_encoding.o \
 	$(TEST_DIR)/gen/test_sample.o \
 	$(TEST_DIR)/gen/more_types.o
+
+$(TEST_DIR)/gen/test_labcomm_renaming: \
+	$(TEST_DIR)/gen/generated_encoding.o
