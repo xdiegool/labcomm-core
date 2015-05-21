@@ -78,7 +78,7 @@ aspect FlatSignature {
   public void Field.flatSignature(SignatureList list) {
     debugAnnotations(this.getName()+".Field.flatSignature");
     list.addIntentions(intentions(), "Field: "+getIntentionString());
-    list.addString(getName(), signatureComment());
+//    list.addString(getName(), signatureComment());
     getDataType().flatSignature(list);
   }
 

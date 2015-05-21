@@ -547,7 +547,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         String getCurrentName() {
             return current.getName();
         }
-        
+
         String decodeIntentions() throws IOException {
             int n = decodePacked32() & 0xffffffff;
             if(n==0) return "";

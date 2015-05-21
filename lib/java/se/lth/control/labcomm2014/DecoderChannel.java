@@ -18,6 +18,14 @@ public class DecoderChannel implements Decoder {
 
   private void processSampleDef() throws IOException {
     int index = decodePacked32();
+    int numIntentions = decodePacked32();
+    if(numIntentions != 1) {
+        System.out.println("WARNING: #intentions == "+numIntentions);
+    }
+    int keylen = decodePacked32();
+    if(keylen != 0) {
+        System.out.println("WARNING: keylen == "+keylen);
+    }
     String name = decodeString();
     int signature_length = decodePacked32();
     byte[] signature = new byte[signature_length];
@@ -27,6 +35,14 @@ public class DecoderChannel implements Decoder {
 
   private void processSampleRef() throws IOException {
     int index = decodePacked32();
+    int numIntentions = decodePacked32();
+    if(numIntentions != 1) {
+        System.out.println("WARNING: #intentions == "+numIntentions);
+    }
+    int keylen = decodePacked32();
+    if(keylen != 0) {
+        System.out.println("WARNING: keylen == "+keylen);
+    }
     String name = decodeString();
     int signature_length = decodePacked32();
     byte[] signature = new byte[signature_length];
@@ -39,6 +55,14 @@ public class DecoderChannel implements Decoder {
            processSample(Constant.TYPE_DEF);
       } catch(Exception ex) {
        int idx = decodePacked32();
+    int numIntentions = decodePacked32();
+    if(numIntentions != 1) {
+        System.out.println("WARNING: #intentions == "+numIntentions);
+    }
+    int keylen = decodePacked32();
+    if(keylen != 0) {
+        System.out.println("WARNING: keylen == "+keylen);
+    }
        String name = decodeString();
        int siglen = decodePacked32();
        for(int i=0; i<siglen; i++) {

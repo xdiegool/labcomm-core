@@ -161,7 +161,7 @@ static int decode_sample_def_or_ref(struct labcomm2014_decoder *d, int kind)
    int numInts = labcomm2014_read_byte(d->reader);
 
    if(numInts != 1) {
-       printf("WARNING! #intentions != 1, this will probably crash\n");
+       printf("WARNING! #intentions %d != 1, this will probably crash\n", numInts);
    }
   //XXX temporary kludge for intentions
   //assume only one intention: the name
@@ -482,6 +482,16 @@ static void decode_raw_type_def(
   struct labcomm2014_raw_type_def v;
   v.index = labcomm2014_read_packed32(r);
   if (r->error < 0) { goto out; }
+  {
+  int numInts = labcomm2014_read_byte(r);
+
+  if(numInts != 1) {
+    printf("WARNING! #intentions %d != 1, this will probably crash\n", numInts);
+  }
+  //XXX temporary kludge for intentions
+  //assume only one intention: the name
+  labcomm2014_read_packed32(r); // assume the empty key (i.e., name)
+  }
   v.name  = labcomm2014_read_string(r);
   if (r->error < 0) { goto free_name; }
   v.length = labcomm2014_read_packed32(r);

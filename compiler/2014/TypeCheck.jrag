@@ -44,8 +44,11 @@ aspect AnnotationCheck {
   public void ASTNode.annotationCheck() {}
 
   public void TypeDecl.annotationCheck() {
-    if(getTypeInstance().hasIntentions()) {
-      error("TypeDecl " + getName() + " has intentions. (Not allowed for typedefs)");
+    Iterator<Intention> it = getTypeInstance().intentions().iterator();;
+    while(it.hasNext()) {
+     if(!it.next().getKey().equals("")) {
+       error("TypeDecl " + getName() + " has intentions. (Not allowed for typedefs)");
+     }
     }
   }
 }

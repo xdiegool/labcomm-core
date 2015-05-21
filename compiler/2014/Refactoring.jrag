@@ -7,12 +7,12 @@ aspect Refactoring {
 
     public Annotations Annotations.addName(String n) {
         //XXX TODO: check if name already exists
-        addAnnotation(new Annotation("",n.getBytes()));
+        addAnnotation(new Intention("",n.getBytes()));
         return this;
     }
 
     public Field.Field(TypeInstance t) {
-        this(t.getDataType(), t.getAnnotations().addName(t.getName()));
+        this(t.getDataType(), t.getAnnotations());
     }
 
     public TypeInstance.TypeInstance(DataType t, String n, Annotations a) {

@@ -401,9 +401,9 @@ class sampledef_or_sampleref_or_typedef(type_decl):
         encoder.encode_type(self.type_index)
         with length_encoder(encoder) as e1:
             e1.encode_type(self.get_index(encoder))
-            e1.encode_string(self.name)
+            # XXX: temporary hack for intentions
+            e1.encode_empty_intentions(self.name)
             with length_encoder(e1) as e2:
-                self.encode_empty_intentions(e2)
                 self.decl.encode_decl(e2)
 
     def encode(self, encoder, value):
@@ -411,10 +411,11 @@ class sampledef_or_sampleref_or_typedef(type_decl):
 
     def decode_decl(self, decoder):
         index = decoder.decode_type_number()
-        name = decoder.decode_string()
+         # XXX: temporary hack for intentions
+         #      assume the name is the only intention
+        name = decoder.decode_intentions()
         if usePacketLength(decoder.version):
             length = decoder.decode_packed32()
-        self.decode_intentions(decoder)
         decl = decoder.decode_decl()
         result = self.__class__.__new__(self.__class__)
         result.__init__(name=name, decl=decl)
@@ -456,12 +457,6 @@ class sample_def(sampledef_or_sampleref_or_typedef):
     def rename(self, name):
         return sample_def(name=name, decl=self.decl)
 
-    def decode_intentions(self, d):
-        return d.decode_string()
-
-    def encode_empty_intentions(self, e):
-        e.encode_empty_intentions()
-
 class sample_ref(sampledef_or_sampleref_or_typedef):
     type_index = i_SAMPLE_REF
     type_name = 'sample_ref'
@@ -474,12 +469,6 @@ class sample_ref(sampledef_or_sampleref_or_typedef):
         else:
             self.sample = sample
 
-    def decode_intentions(self, d):
-        return d.decode_string()
-
-    def encode_empty_intentions(self, e):
-        e.encode_empty_intentions()
-
     def get_index(self, encoder):
         return encoder.ref_to_index[self.sample]
 
@@ -489,12 +478,6 @@ class sample_ref(sampledef_or_sampleref_or_typedef):
 class typedef(sampledef_or_sampleref_or_typedef):
     type_index = i_TYPE_DEF
     type_name = 'typedef'
-
-    def decode_intentions(self, d):
-        pass
-
-    def encode_empty_intentions(self, e):
-        pass
 
     def encode_decl(self, encoder):
         self.decl.encode_decl(encoder)
@@ -647,8 +630,7 @@ class struct(type_decl):
         encoder.encode_type(i_STRUCT)
         encoder.encode_packed32(len(self.field))
         for (name, decl) in self.field:
-            encoder.encode_empty_intentions()
-            encoder.encode_string(name)
+            encoder.encode_empty_intentions(name)
             encoder.encode_type_number(decl)
 
     def encode(self, encoder, obj):
@@ -663,8 +645,7 @@ class struct(type_decl):
         n_field = decoder.decode_packed32()
         field = []
         for i in range(n_field):
-            intentions = decoder.decode_intentions()
-            name = decoder.decode_string()
+            name = decoder.decode_intentions()
             decl = decoder.decode_decl()
             field.append((name, decl))
         return struct(field)
@@ -891,9 +872,11 @@ class Encoder(Codec):
 	self.encode_packed32(len(s));
 	self.pack("%ds" % len(s),s)
 
-    def encode_empty_intentions(self):
+    def encode_empty_intentions(self, name):
 #        pass
+        self.encode_packed32(1)
         self.encode_string("")
+        self.encode_string(name)
 
 class Decoder(Codec):
     def __init__(self, reader, version=DEFAULT_VERSION):
@@ -1027,7 +1010,14 @@ class Decoder(Codec):
         return self.index_to_ref.get(index, None)
 
     def decode_intentions(self):
-        return self.decode_string()
+        numIntentions = self.decode_packed32()
+        name = ""
+        for i in range(numIntentions):
+            key = self.decode_string()
+            val = self.decode_string()
+            if key=="":
+                name = val
+        return name
 
 class signature_reader:
     def __init__(self, signature):

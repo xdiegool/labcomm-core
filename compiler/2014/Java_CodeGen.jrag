@@ -473,6 +473,7 @@ aspect Java_Class {
   }
 
   public void Decl.Java_emitIntentions(Java_env env){
+    env.println("private static int numIntentions = " +getNumIntentions() +";");
     env.println("private static byte[] intentions = new byte[] {");
     env.indent();
     byte[] data = getIntentionBytes();
@@ -579,6 +580,28 @@ aspect Java_Class {
         env.println("return signature;");
     } else {
         env.println("throw new Error(\"a TYPE_DEF has no flat signature\");");
+    }
+    env.unindent();
+    env.println("}");
+    env.println();
+    env.println("/** return the outermost intentions. */");
+    env.println("public byte[] getIntentionBytes() {");
+    env.indent();
+    if(isSample) {
+        env.println("return intentions;");
+    } else {
+        env.println("return new byte[0];");
+    }
+    env.unindent();
+    env.println("}");
+    env.println();
+    env.println("/** return the number of intentions. */");
+    env.println("public int getNumIntentions() {");
+    env.indent();
+    if(isSample) {
+        env.println("return numIntentions;");
+    } else {
+        env.println("return 0;");
     }
     env.unindent();
     env.println("}");

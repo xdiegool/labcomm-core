@@ -302,15 +302,15 @@ static int internal_reg_type(
   if (err != 0) { result = err; goto out; }
 
   int sig_size = calc_sig_encoded_size(e, signature);
-  int len =  labcomm2014_size_packed32(index) +
-             labcomm2014_size_string(signature->name) +
-             labcomm2014_size_packed32(sig_size) +
-              sig_size;
+  int len = (labcomm2014_size_packed32(index) +
+            TODO_sizeof_intentions(signature) +
+            labcomm2014_size_packed32(signature->size) +
+            sig_size);
 
   labcomm2014_write_packed32(e->writer, LABCOMM_TYPE_DEF);
   labcomm2014_write_packed32(e->writer, len);
   labcomm2014_write_packed32(e->writer, index);
-  labcomm2014_write_string(e->writer, signature->name);
+  TODO_encode_intentions(e, signature);
   labcomm2014_write_packed32(e->writer, sig_size);
   do_write_signature(e, signature, LABCOMM2014_FALSE);
 

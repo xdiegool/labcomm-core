@@ -46,7 +46,15 @@ public class EncoderChannel implements Encoder {
         int index = sample_def_registry.add(dispatcher);
         begin(dispatcher.getTypeDeclTag());
         encodePacked32(index);
+        //HERE BE DRAGONS! numintentions does not include name
+//        encodePacked32(dispatcher.getNumIntentions()+1);
+        encodePacked32(1);
+        encodePacked32(0); // the empty key == name
         encodeString(dispatcher.getName());
+//        byte[] intentions = dispatcher.getIntentionBytes();
+//        for (int k = 0 ; k < intentions.length ; k++) {
+//            encodeByte(intentions[k]);
+//        }
         byte[] signature = dispatcher.getSignature();
         encodePacked32(signature.length);
         for (int i = 0 ; i < signature.length ; i++) {
@@ -92,6 +100,10 @@ public class EncoderChannel implements Encoder {
 
             begin(Constant.TYPE_DEF);
             encodePacked32(index);
+            //HERE BE DRAGONS! numintentions does not include name
+//          encodePacked32(dispatcher.getNumIntentions()+1);
+            encodePacked32(1);
+            encodePacked32(0); // the empty key == name
             encodeString(dispatcher.getName());
             encodePacked32(b.length);
             for(int i = 0; i<b.length; i++) {
@@ -123,6 +135,10 @@ public class EncoderChannel implements Encoder {
     int index = sample_ref_registry.add(dispatcher);
     begin(Constant.SAMPLE_REF);
     encodePacked32(index);
+     //HERE BE DRAGONS! numintentions does not include name
+//        encodePacked32(dispatcher.getNumIntentions()+1);
+    encodePacked32(1);
+    encodePacked32(0); // the empty key == name
     encodeString(dispatcher.getName());
     byte[] signature = dispatcher.getSignature();
     encodePacked32(signature.length);

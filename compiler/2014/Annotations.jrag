@@ -48,6 +48,8 @@ aspect SigAnnotations {
             }
     };
 
+    syn int Decl.getNumIntentions() = getTypeInstance().sortedIntentions().getNumChild();
+
    syn List<Intention> TypeInstance.sortedIntentions() {
        List<Intention> res = new List<Intention>();
 

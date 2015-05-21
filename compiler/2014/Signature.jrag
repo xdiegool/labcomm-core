@@ -289,6 +289,7 @@ aspect Signature {
     public void TypeInstance.genSigLineForDecl(SignatureList list, boolean decl, ASTNode inst) {
 //              debugAnnotations(this.getName());
 //              list.addString(inst.getIntentionString(), "intention string");
+                list.addIntentions(intentionSet(), "intentions");
                 getDataType().genSigLineForDecl(list, decl, this);
     }
 
@@ -351,12 +352,13 @@ aspect Signature {
         list.add(null, "}");
     }
 
-    public void Field.genSigLineForDecl(SignatureList list, boolean decl,  ASTNode inst) {
-        list.addString(getName(), signatureComment());
-        super.genSigLineForDecl(list, decl, inst);
-        //TODOintent
-        //getDataType().genSigLineForDecl(list, decl, inst);
-    }
+//    public void Field.genSigLineForDecl(SignatureList list, boolean decl,  ASTNode inst) {
+//        //XXX make intention
+//        list.addString(getName(), signatureComment());
+//        super.genSigLineForDecl(list, decl, inst);
+//        //TODOintent
+//       //getDataType().genSigLineForDecl(list, decl, inst);
+//    }
 
     public void IntegerLiteral.genSigLineForDecl(SignatureList list, boolean decl, ASTNode inst) {
         list.addInt(Integer.parseInt(getValue()), null);

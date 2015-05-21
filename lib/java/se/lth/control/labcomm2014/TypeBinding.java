@@ -77,6 +77,14 @@ public class TypeBinding implements BuiltinType {
       return null; // not used for matching
     }
 
+  public int getNumIntentions() {
+      return 0;
+  }
+
+  public byte[] getIntentionBytes() {
+     return null; // not used for matching
+  }
+
     public void encodeTypeDef(Encoder e, int index) throws IOException{
       throw new Error("Should not be called");
     }
