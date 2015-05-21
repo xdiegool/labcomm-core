@@ -464,11 +464,26 @@ aspect Java_Class {
     //for matching at the decoder side (which cannot know
     //the type_ids of dependent types. Therefore, flat sigs
     //are used for matching
+    Java_emitIntentions(env);
     Java_emitFlatSignature(env);
     if(isReferenced() || (isSampleDecl() && hasDependencies() )){
       Signature signature = getSignature();
       signature.Java_emitSignature(env, !isSampleDecl());
     }
+  }
+
+  public void Decl.Java_emitIntentions(Java_env env){
+    env.println("private static byte[] intentions = new byte[] {");
+    env.indent();
+    byte[] data = getIntentionBytes();
+    if (data != null) {
+        for (int j = 0 ; j < data.length ; j++) {
+            env.print(data[j] + ", ");
+        }
+    }
+    env.unindent();
+    env.println("};");
+    env.println();
   }
 
   public void Decl.Java_emitFlatSignature(Java_env env){
@@ -491,7 +506,6 @@ aspect Java_Class {
     }
     env.unindent();
     env.println("};");
-    env.unindent();
     env.println();
   }
 

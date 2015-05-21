@@ -1,9 +1,8 @@
 import java.util.*;
 
-aspect NoIntentionForTypedefs {
+aspect NoIntentionForTypeOrSampledefs {
     inh boolean TypeInstance.addIntentions();
     eq Decl.getTypeInstance().addIntentions() = false;
-    eq SampleDecl.getTypeInstance().addIntentions() = true;
     eq StructType.getField(int i).addIntentions() = true;
 }
 

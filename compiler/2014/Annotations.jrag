@@ -36,6 +36,32 @@ aspect SigAnnotations {
            to Decl.allAnnotations()
            for parentDecl();
 
+   // Helper attribute to get the "outermost" intentions for Decls
+
+   syn byte[] TypeInstance.intentionBytes() = getIntentionBytes(sortedIntentions());
+   syn byte[] Decl.getIntentionBytes() = getTypeInstance().intentionBytes();
+
+    static Comparator TypeInstance.intentionComp =
+        new Comparator<Intention>() {
+            public int compare(Intention i1, Intention i2) {
+                    return i1.getKey().compareTo(i2.getKey());
+            }
+    };
+
+   syn List<Intention> TypeInstance.sortedIntentions() {
+       List<Intention> res = new List<Intention>();
+
+       //TODO: refactor out creation of sorted list of intentions
+
+       java.util.ArrayList<Intention> sorted = new ArrayList(intentionSet());
+       java.util.Collections.sort(sorted, intentionComp);
+       for(Intention i : sorted) {
+           res.add(i);
+       }
+       return res;
+   }
+
+
    public DocString.DocString(byte[] bs) {
            super("DOCSTRING", bs);
    }

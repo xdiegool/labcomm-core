@@ -99,21 +99,14 @@ aspect Signature {
             return getIntBytes(getData(), version);
         }
 
-        private static Comparator SignatureList.intentionComp =
-                new Comparator<Intention>() {
-                        public int compare(Intention i1, Intention i2) {
-                                return i1.getKey().compareTo(i2.getKey());
-                        }
-                };
-
         public void SignatureList.addIntentions(Set<Intention> data, String comment) {
                 //addString(TypeInstance.getIntentionString(data), comment);
                 //create IntenionSignatureLine
                 IntentionSignatureLine line = new IntentionSignatureLine(indent, comment, new List());
-                //TODO: create sorted list of intentions
+                //TODO: refactor out creation of sorted list of intentions
 
                 java.util.ArrayList<Intention> sorted = new ArrayList(data);
-                java.util.Collections.sort(sorted, intentionComp);
+                java.util.Collections.sort(sorted, TypeInstance.intentionComp);
                 for(Intention i : sorted) {
                         line.addIntention(i);
                 }
