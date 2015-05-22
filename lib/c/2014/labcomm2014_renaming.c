@@ -22,7 +22,6 @@
 
 #include "labcomm2014_renaming.h"
 #include <string.h>
-#include <stdio.h>
 
 char *labcomm2014_renaming_prefix(struct labcomm2014_memory *m,
                                   char *name, void *context)
@@ -36,7 +35,6 @@ char *labcomm2014_renaming_prefix(struct labcomm2014_memory *m,
     strcpy(result, prefix);
     strcat(result, name);
   }
-  fprintf(stderr, "%s + %s -> %s\n", prefix, name, result);
   return result;
   
 }

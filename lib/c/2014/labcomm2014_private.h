@@ -211,16 +211,17 @@ struct labcomm2014_decoder {
   int (*ioctl)(struct labcomm2014_decoder *d, 
                const struct labcomm2014_signature *s,
                uint32_t ioctl_action, va_list args);
-
   const struct labcomm2014_signature *(*index_to_signature)(
     struct labcomm2014_decoder *decoder, int index);
-
+  const struct labcomm2014_signature *(*get_ref_signature)(
+    struct labcomm2014_decoder *d,
+    const struct labcomm2014_signature *signature);
 };
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 
 #define LABCOMM_DECODE(name, type)					\
-  static inline type labcomm2014_read_##name(struct labcomm2014_reader *r) {	\
+  static inline type labcomm2014_read_##name(struct labcomm2014_reader *r) { \
     type result; int i;							\
     for (i = sizeof(type) - 1 ; i >= 0 ; i--) {				\
       if (r->pos >= r->count) {						\
@@ -393,6 +394,9 @@ struct labcomm2014_encoder {
              uint32_t ioctl_action, va_list args);
   int (*signature_to_index)(struct labcomm2014_encoder *e,
                             const struct labcomm2014_signature *signature);
+  const struct labcomm2014_signature *(*ref_get)(
+    struct labcomm2014_encoder *e,
+    const struct labcomm2014_signature *signature);
 };
 
 

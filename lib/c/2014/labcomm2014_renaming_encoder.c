@@ -179,6 +179,21 @@ static int do_signature_to_index(struct labcomm2014_encoder *e,
   return ie->next->signature_to_index(ie->next, get_renamed(e, signature));
 }
 
+static const struct labcomm2014_signature *do_ref_get(
+  struct labcomm2014_encoder *e,
+  const struct labcomm2014_signature *signature)
+{
+  const struct labcomm2014_signature *renamed;
+  struct encoder *ie = e->context;
+
+  renamed = get_renamed(e, signature);
+  if (renamed == NULL) {
+    return ie->next->ref_get(ie->next, signature);
+  } else {
+    return ie->next->ref_get(ie->next, renamed);
+  }
+}
+
 static void do_free(struct labcomm2014_encoder *e)
 {
   struct encoder *ie = e->context;
@@ -222,6 +237,7 @@ struct labcomm2014_encoder *labcomm2014_renaming_encoder_new(
       result->encoder.encode = do_encode;
       result->encoder.ioctl = do_ioctl;
       result->encoder.signature_to_index = do_signature_to_index;
+      result->encoder.ref_get = do_ref_get;
       result->next = e;
       result->rename = rename;
       result->context = context;

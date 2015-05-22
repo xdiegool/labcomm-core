@@ -155,6 +155,21 @@ static const struct labcomm2014_signature *do_index_to_signature(
   return id->next->index_to_signature(id->next, index);
 }
 
+static const struct labcomm2014_signature *do_get_ref_signature(
+  struct labcomm2014_decoder *d,
+  const struct labcomm2014_signature *signature)
+{
+  const struct labcomm2014_signature *renamed;
+  struct decoder *id = d->context;
+  
+ renamed = get_renamed(d, signature);
+  if (renamed == NULL) {
+    return id->next->get_ref_signature(id->next, signature);
+  } else {
+    return id->next->get_ref_signature(id->next, renamed);
+  }
+}
+
 static void do_free(struct labcomm2014_decoder *d)
 {
   struct decoder *id = d->context;
@@ -196,6 +211,7 @@ struct labcomm2014_decoder *labcomm2014_renaming_decoder_new(
       result->decoder.ref_register = do_ref_register;
       result->decoder.ioctl = do_ioctl;
       result->decoder.index_to_signature = do_index_to_signature;
+      result->decoder.get_ref_signature = do_get_ref_signature;
       result->next = d;
       result->rename = rename;
       result->context = context;

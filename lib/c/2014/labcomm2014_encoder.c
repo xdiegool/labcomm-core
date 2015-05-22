@@ -345,6 +345,13 @@ out:
 #endif
 }
 
+static const struct labcomm2014_signature *do_ref_get(
+  struct labcomm2014_encoder *e,
+  const struct labcomm2014_signature *signature)
+{
+  return signature;
+}
+
 void labcomm2014_encoder_free(struct labcomm2014_encoder* e)
 {
   e->free(e);
@@ -394,6 +401,7 @@ static struct labcomm2014_encoder *internal_encoder_new(
     result->encoder.encode = do_encode;
     result->encoder.ioctl = do_ioctl;
     result->encoder.signature_to_index = do_signature_to_index;
+    result->encoder.ref_get = do_ref_get;
     LABCOMM_SIGNATURE_ARRAY_INIT(result->registered, int);
     LABCOMM_SIGNATURE_ARRAY_INIT(result->sample_ref, int);
     LABCOMM_SIGNATURE_ARRAY_INIT(result->typedefs, int);
@@ -424,3 +432,10 @@ struct labcomm2014_encoder *labcomm2014_encoder_new(
 }
 
 
+const struct labcomm2014_signature *labcomm2014_encoder_get_sample_ref(
+  struct labcomm2014_encoder *encoder,
+  const struct labcomm2014_signature *signature)
+{
+  return encoder->ref_get(encoder, signature);
+}
+  

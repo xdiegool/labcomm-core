@@ -638,6 +638,13 @@ static const struct labcomm2014_signature *do_index_to_signature(
   return result;
 }
 
+static const struct labcomm2014_signature *do_get_ref_signature(
+  struct labcomm2014_decoder *d,
+  const struct labcomm2014_signature *signature)
+{
+  return signature;
+}
+
 static void do_free(struct labcomm2014_decoder* d)
 {
   struct decoder *id = d->context;
@@ -687,6 +694,7 @@ struct labcomm2014_decoder *labcomm2014_decoder_new(
     result->decoder.sample_register = do_register_sample;
     result->decoder.ioctl = do_ioctl;
     result->decoder.index_to_signature = do_index_to_signature;
+    result->decoder.get_ref_signature = do_get_ref_signature;
     LABCOMM_SIGNATURE_ARRAY_INIT(result->local, struct sample_entry);
     LABCOMM_SIGNATURE_ARRAY_INIT(result->remote_to_local, int);
     LABCOMM_SIGNATURE_ARRAY_INIT(result->local_ref, 
@@ -696,4 +704,11 @@ struct labcomm2014_decoder *labcomm2014_decoder_new(
   return &(result->decoder);
 }
 
+
+const struct labcomm2014_signature *labcomm2014_decoder_get_ref_signature(
+  struct labcomm2014_decoder *decoder,
+  const struct labcomm2014_signature *signature)
+{
+  return decoder->get_ref_signature(decoder, signature);
+}
 

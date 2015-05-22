@@ -50,7 +50,8 @@ TESTS=test_labcomm_basic_type_encoding \
       test_labcomm \
       test_labcomm_pthread_scheduler \
       test_labcomm_copy \
-      test_labcomm_renaming_encoder
+      test_labcomm_renaming_encoder \
+      test_labcomm_renaming_decoder
 #FIXME: test_labcomm_errors
 
 TEST_DIR=test
@@ -175,4 +176,7 @@ $(TEST_DIR)/gen/test_labcomm_copy: \
 	$(TEST_DIR)/gen/more_types.o
 
 $(TEST_DIR)/gen/test_labcomm_renaming_encoder: \
+	$(TEST_DIR)/gen/generated_encoding.o
+
+$(TEST_DIR)/gen/test_labcomm_renaming_decoder: \
 	$(TEST_DIR)/gen/generated_encoding.o
