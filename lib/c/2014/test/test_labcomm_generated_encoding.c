@@ -266,10 +266,14 @@ int main(void)
   EXPECT({VARIABLE(20), 0x01, 1});
 
   labcomm2014_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
-  R.a[0] = labcomm2014_signature_generated_encoding_V;
-  R.a[1] = labcomm2014_signature_generated_encoding_B;
-  R.a[2] = labcomm2014_signature_generated_encoding_UnusedE;
-  R.a[3] = labcomm2014_signature_generated_encoding_R;
+  R.a[0] = labcomm2014_encoder_get_sample_ref(
+    encoder, labcomm2014_signature_generated_encoding_V);
+  R.a[1] = labcomm2014_encoder_get_sample_ref(
+    encoder, labcomm2014_signature_generated_encoding_B);
+  R.a[2] = labcomm2014_encoder_get_sample_ref(
+    encoder, labcomm2014_signature_generated_encoding_UnusedE);
+  R.a[3] = labcomm2014_encoder_get_sample_ref(
+    encoder, labcomm2014_signature_generated_encoding_R);
   labcomm2014_encode_generated_encoding_R(encoder, &R);
   EXPECT({VARIABLE(4), 0x10, 0x00, 0x00, 0x00, VARIABLE(5),
                              0x00, 0x00, 0x00, VARIABLE(6),

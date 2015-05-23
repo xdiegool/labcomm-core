@@ -194,14 +194,16 @@ static int do_ioctl(
   return result;
 }
 
-static int do_signature_to_index(
-  struct labcomm2014_encoder *e, const struct labcomm2014_signature *signature)
+static int do_sample_ref_to_index(
+  struct labcomm2014_encoder *e,
+  const struct labcomm2014_sample_ref *sample_ref)
 {
   /* writer_lock should be held at this point */
   struct encoder *ie = e->context;
   int index = 0;
-  if (signature != NULL) {
-    index = labcomm2014_get_local_index(signature);
+  if (sample_ref != NULL) {
+    index = labcomm2014_get_local_index(
+      (struct labcomm2014_signature *)sample_ref);
     if (! LABCOMM_SIGNATURE_ARRAY_GET(ie->sample_ref, int, index, 0)) {
       index = 0;
     }
@@ -345,11 +347,11 @@ out:
 #endif
 }
 
-static const struct labcomm2014_signature *do_ref_get(
+static const struct labcomm2014_sample_ref *do_ref_get(
   struct labcomm2014_encoder *e,
   const struct labcomm2014_signature *signature)
 {
-  return signature;
+  return (const struct labcomm2014_sample_ref *) signature;
 }
 
 void labcomm2014_encoder_free(struct labcomm2014_encoder* e)
@@ -400,7 +402,7 @@ static struct labcomm2014_encoder *internal_encoder_new(
     result->encoder.ref_register = do_ref_register;
     result->encoder.encode = do_encode;
     result->encoder.ioctl = do_ioctl;
-    result->encoder.signature_to_index = do_signature_to_index;
+    result->encoder.sample_ref_to_index = do_sample_ref_to_index;
     result->encoder.ref_get = do_ref_get;
     LABCOMM_SIGNATURE_ARRAY_INIT(result->registered, int);
     LABCOMM_SIGNATURE_ARRAY_INIT(result->sample_ref, int);
@@ -432,7 +434,7 @@ struct labcomm2014_encoder *labcomm2014_encoder_new(
 }
 
 
-const struct labcomm2014_signature *labcomm2014_encoder_get_sample_ref(
+const struct labcomm2014_sample_ref *labcomm2014_encoder_get_sample_ref(
   struct labcomm2014_encoder *encoder,
   const struct labcomm2014_signature *signature)
 {

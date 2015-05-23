@@ -166,10 +166,14 @@ int main(int argc, char **argv)
   labcomm2014_encoder_sample_ref_register(encoder, 
                                       labcomm2014_signature_generated_encoding_UnusedD);
   labcomm2014_encoder_sample_ref_register(encoder, labcomm2014_signature_generated_encoding_R);
-  r.a[0] = labcomm2014_signature_generated_encoding_V;
-  r.a[1] = labcomm2014_signature_generated_encoding_UnusedE;
-  r.a[2] = labcomm2014_signature_generated_encoding_UnusedD;
-  r.a[3] = labcomm2014_signature_generated_encoding_R;
+  r.a[0] = labcomm2014_encoder_get_sample_ref(
+    encoder, labcomm2014_signature_generated_encoding_V);
+  r.a[1] = labcomm2014_encoder_get_sample_ref(
+    encoder, labcomm2014_signature_generated_encoding_UnusedE);
+  r.a[2] = labcomm2014_encoder_get_sample_ref(
+    encoder, labcomm2014_signature_generated_encoding_UnusedD);
+  r.a[3] = labcomm2014_encoder_get_sample_ref(
+    encoder, labcomm2014_signature_generated_encoding_R);
   labcomm2014_encode_generated_encoding_R(encoder, &r);
 
   labcomm2014_encoder_free(encoder);

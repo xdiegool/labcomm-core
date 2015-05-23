@@ -46,6 +46,8 @@ struct labcomm2014_signature_data {
 };
 
 #endif
+struct labcomm2014_sample_ref;
+
 struct labcomm2014_signature {
   char *name;
   int (*encoded_size)(void *); /* void* refers to sample_data */

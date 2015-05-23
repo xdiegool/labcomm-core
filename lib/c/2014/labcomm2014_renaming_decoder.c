@@ -147,15 +147,15 @@ static int do_ioctl(struct labcomm2014_decoder *d,
                          ioctl_action, args);
 }
 
-static const struct labcomm2014_signature *do_index_to_signature(
+static const struct labcomm2014_sample_ref *do_index_to_sample_ref(
   struct labcomm2014_decoder *d, int index)
 {
   struct decoder *id = d->context;
   
-  return id->next->index_to_signature(id->next, index);
+  return id->next->index_to_sample_ref(id->next, index);
 }
 
-static const struct labcomm2014_signature *do_get_ref_signature(
+static const struct labcomm2014_sample_ref *do_ref_get(
   struct labcomm2014_decoder *d,
   const struct labcomm2014_signature *signature)
 {
@@ -164,9 +164,9 @@ static const struct labcomm2014_signature *do_get_ref_signature(
   
  renamed = get_renamed(d, signature);
   if (renamed == NULL) {
-    return id->next->get_ref_signature(id->next, signature);
+    return id->next->ref_get(id->next, signature);
   } else {
-    return id->next->get_ref_signature(id->next, renamed);
+    return id->next->ref_get(id->next, renamed);
   }
 }
 
@@ -210,8 +210,8 @@ struct labcomm2014_decoder *labcomm2014_renaming_decoder_new(
       result->decoder.sample_register = do_sample_register;
       result->decoder.ref_register = do_ref_register;
       result->decoder.ioctl = do_ioctl;
-      result->decoder.index_to_signature = do_index_to_signature;
-      result->decoder.get_ref_signature = do_get_ref_signature;
+      result->decoder.index_to_sample_ref = do_index_to_sample_ref;
+      result->decoder.ref_get = do_ref_get;
       result->next = d;
       result->rename = rename;
       result->context = context;

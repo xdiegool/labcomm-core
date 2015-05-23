@@ -94,6 +94,25 @@ struct labcomm2014_memory {
 };
 
 /*
+ * sample_ref/signature helpers 
+ */
+static const inline
+struct labcomm2014_signature *labcomm2014_sample_ref_to_signature(
+  const struct labcomm2014_sample_ref *sample_ref
+  )
+{
+  return (struct labcomm2014_signature *)sample_ref;
+}
+
+static const inline
+struct labcomm2014_sample_ref *labcomm2014_signature_to_sample_ref(
+  const struct labcomm2014_signature *signature
+  )
+{
+  return (struct labcomm2014_sample_ref *)signature;
+}
+
+/*
  * Semi private decoder declarations
  */
 typedef void (*labcomm2014_handler_function)(void *value, void *context);
@@ -211,9 +230,9 @@ struct labcomm2014_decoder {
   int (*ioctl)(struct labcomm2014_decoder *d, 
                const struct labcomm2014_signature *s,
                uint32_t ioctl_action, va_list args);
-  const struct labcomm2014_signature *(*index_to_signature)(
+  const struct labcomm2014_sample_ref *(*index_to_sample_ref)(
     struct labcomm2014_decoder *decoder, int index);
-  const struct labcomm2014_signature *(*get_ref_signature)(
+  const struct labcomm2014_sample_ref *(*ref_get)(
     struct labcomm2014_decoder *d,
     const struct labcomm2014_signature *signature);
 };
@@ -247,7 +266,7 @@ struct labcomm2014_decoder {
 	if (r->error < 0) {						\
 	  return 0;							\
 	}								\
-      }									\
+      }				>					\
       ((unsigned char*)(&result))[i] = r->data[r->pos];			\
       r->pos++;								\
     }									\
@@ -392,9 +411,9 @@ struct labcomm2014_encoder {
   int (*ioctl)(struct labcomm2014_encoder *e, 
              const struct labcomm2014_signature *signature,
              uint32_t ioctl_action, va_list args);
-  int (*signature_to_index)(struct labcomm2014_encoder *e,
-                            const struct labcomm2014_signature *signature);
-  const struct labcomm2014_signature *(*ref_get)(
+  int (*sample_ref_to_index)(struct labcomm2014_encoder *e,
+                             const struct labcomm2014_sample_ref *s);
+  const struct labcomm2014_sample_ref *(*ref_get)(
     struct labcomm2014_encoder *e,
     const struct labcomm2014_signature *signature);
 };

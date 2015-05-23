@@ -171,15 +171,16 @@ static int do_ioctl(struct labcomm2014_encoder *e,
                          ioctl_action, args);
 }
 
-static int do_signature_to_index(struct labcomm2014_encoder *e,
-                                 const struct labcomm2014_signature *signature)
+static int do_sample_ref_to_index(
+  struct labcomm2014_encoder *e,
+  const struct labcomm2014_sample_ref *sample_ref)
 {
   struct encoder *ie = e->context;
-  
-  return ie->next->signature_to_index(ie->next, get_renamed(e, signature));
+
+  return ie->next->sample_ref_to_index(ie->next,sample_ref);
 }
 
-static const struct labcomm2014_signature *do_ref_get(
+static const struct labcomm2014_sample_ref *do_ref_get(
   struct labcomm2014_encoder *e,
   const struct labcomm2014_signature *signature)
 {
@@ -236,7 +237,7 @@ struct labcomm2014_encoder *labcomm2014_renaming_encoder_new(
       result->encoder.ref_register = do_ref_register;
       result->encoder.encode = do_encode;
       result->encoder.ioctl = do_ioctl;
-      result->encoder.signature_to_index = do_signature_to_index;
+      result->encoder.sample_ref_to_index = do_sample_ref_to_index;
       result->encoder.ref_get = do_ref_get;
       result->next = e;
       result->rename = rename;

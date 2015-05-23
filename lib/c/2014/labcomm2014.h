@@ -112,7 +112,7 @@ int labcomm2014_decoder_ioctl(struct labcomm2014_decoder *decoder,
                               uint32_t ioctl_action,
                               ...);
 
-const struct labcomm2014_signature *labcomm2014_decoder_get_ref_signature(
+const struct labcomm2014_sample_ref *labcomm2014_decoder_get_sample_ref(
   struct labcomm2014_decoder *decoder,
   const struct labcomm2014_signature *signature);
 
@@ -137,7 +137,7 @@ int labcomm2014_encoder_ioctl(struct labcomm2014_encoder *encoder,
                               uint32_t ioctl_action,
                               ...);
 
-const struct labcomm2014_signature *labcomm2014_encoder_get_sample_ref(
+const struct labcomm2014_sample_ref *labcomm2014_encoder_get_sample_ref(
   struct labcomm2014_encoder *encoder,
   const struct labcomm2014_signature *signature);
 

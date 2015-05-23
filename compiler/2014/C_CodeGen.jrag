@@ -311,7 +311,7 @@ aspect C_Type {
       case LABCOMM_DOUBLE: { env.print("double"); } break;
       case LABCOMM_STRING: { env.print("char*"); } break;
       case LABCOMM_SAMPLE: { 
-        env.print("const struct labcomm2014_signature *"); 
+        env.print("const struct labcomm2014_sample_ref *"); 
       } break;
     }
     env.print(" " + name);
@@ -528,7 +528,7 @@ aspect C_Decoder {
     env.print(env.qualid + " = ");
     switch (getToken()) {
       case LABCOMM_SAMPLE: { 
-        env.println("r->decoder->index_to_signature(" +
+        env.println("r->decoder->index_to_sample_ref(" +
                     "r->decoder, labcomm2014_read_int(r));");
       } break;
       default: {
@@ -1062,7 +1062,7 @@ aspect C_Encoder {
     switch (getToken()) {
       case LABCOMM_SAMPLE: { 
         env.println("labcomm2014_write_int(w, " + 
-                    "w->encoder->signature_to_index(w->encoder, " +
+                    "w->encoder->sample_ref_to_index(w->encoder, " +
                     env.qualid + "));");
       } break;
       default: {

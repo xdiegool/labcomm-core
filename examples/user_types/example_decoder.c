@@ -13,7 +13,7 @@ static void handle_test_doavoid(test_doavoid *v,void *context) {
 }
 
 static void handle_test_intAndRef(test_intAndRef *v,void *context) {
-  printf("Got intAndRef. (%d : %s) \n", v->x, v->reference->name); 
+  printf("Got intAndRef. (%d : %p) \n", v->x, v->reference); 
 }
 
 static void handle_test_twoInts(test_twoInts *v,void *context) {

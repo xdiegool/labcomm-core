@@ -619,7 +619,7 @@ out:
   return local_index;
 }
 
-static const struct labcomm2014_signature *do_index_to_signature(
+static const struct labcomm2014_sample_ref *do_index_to_sample_ref(
   struct labcomm2014_decoder *d, int index)
 {
   const struct labcomm2014_signature *result = 0;
@@ -635,14 +635,14 @@ static const struct labcomm2014_signature *do_index_to_signature(
                                          local_index, 0);
   }
   labcomm2014_scheduler_data_unlock(d->scheduler);
-  return result;
+  return labcomm2014_signature_to_sample_ref(result);
 }
 
-static const struct labcomm2014_signature *do_get_ref_signature(
+static const struct labcomm2014_sample_ref *do_ref_get(
   struct labcomm2014_decoder *d,
   const struct labcomm2014_signature *signature)
 {
-  return signature;
+  return (const struct labcomm2014_sample_ref *) signature;
 }
 
 static void do_free(struct labcomm2014_decoder* d)
@@ -693,8 +693,8 @@ struct labcomm2014_decoder *labcomm2014_decoder_new(
     result->decoder.ref_register = do_ref_register;
     result->decoder.sample_register = do_register_sample;
     result->decoder.ioctl = do_ioctl;
-    result->decoder.index_to_signature = do_index_to_signature;
-    result->decoder.get_ref_signature = do_get_ref_signature;
+    result->decoder.index_to_sample_ref = do_index_to_sample_ref;
+    result->decoder.ref_get = do_ref_get;
     LABCOMM_SIGNATURE_ARRAY_INIT(result->local, struct sample_entry);
     LABCOMM_SIGNATURE_ARRAY_INIT(result->remote_to_local, int);
     LABCOMM_SIGNATURE_ARRAY_INIT(result->local_ref, 
@@ -705,10 +705,10 @@ struct labcomm2014_decoder *labcomm2014_decoder_new(
 }
 
 
-const struct labcomm2014_signature *labcomm2014_decoder_get_ref_signature(
+const struct labcomm2014_sample_ref *labcomm2014_decoder_get_sample_ref(
   struct labcomm2014_decoder *decoder,
   const struct labcomm2014_signature *signature)
 {
-  return decoder->get_ref_signature(decoder, signature);
+  return decoder->ref_get(decoder, signature);
 }
 
