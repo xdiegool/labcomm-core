@@ -123,7 +123,8 @@ static int buf_writer_ioctl(
             seen_variable[VARIABLE(expected[i])] = buffer[i];
           }
           if (seen_variable[VARIABLE(expected[i])] != buffer[i]) {
-            fprintf(stderr, "Unexpected variable (%d:  != %d)\n",
+            fprintf(stderr, "Unexpected variable v%d (%d:  != %d)\n",
+                    VARIABLE(expected[i]),
                     seen_variable[VARIABLE(expected[i])], buffer[i]);
             mismatch = 1;
           }
@@ -228,9 +229,8 @@ int main(void)
   labcomm2014_encoder_register_generated_encoding_V(prefix);
   labcomm2014_encoder_register_generated_encoding_V(prefix);
   EXPECT({ 0x02, 0x08, VARIABLE(3), 0x03, 'p', '.', 'V', 0x02, 0x11, 0x00,
-           0x04, 0x0a, VARIABLE(4), 0x05, 'p', '.', 'v', '_', 't', 0x02, 0x11, 0x00,
-           0x04, 0x07, VARIABLE(5), 0x03, 'p', '.', 'V', 0x01, VARIABLE(1) /* WEIRD*/,
-           0x05, 0x02, VARIABLE(3), VARIABLE(5) });
+           0x04, 0x07, VARIABLE(4), 0x03, 'p', '.', 'V', 0x01, VARIABLE(1),
+           0x05, 0x02, VARIABLE(3), VARIABLE(4) });
 
   labcomm2014_encoder_ioctl(suffix, IOCTL_WRITER_RESET);
   labcomm2014_encoder_register_generated_encoding_V(suffix);
