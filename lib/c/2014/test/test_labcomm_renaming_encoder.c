@@ -123,7 +123,7 @@ static int buf_writer_ioctl(
             seen_variable[VARIABLE(expected[i])] = buffer[i];
           }
           if (seen_variable[VARIABLE(expected[i])] != buffer[i]) {
-            fprintf(stderr, "Unexpected variable v%d (%d:  != %d)\n",
+            fprintf(stderr, "Unexpected variable v%d (%02x:  != %02x)\n",
                     VARIABLE(expected[i]),
                     seen_variable[VARIABLE(expected[i])], buffer[i]);
             mismatch = 1;
@@ -132,7 +132,7 @@ static int buf_writer_ioctl(
 	  mismatch = 1;
 	}
       }
-      if (mismatch) {
+      if (1 || mismatch) {
 	fprintf(stderr, "Encoder mismatch (%s:%d)\n",
 		__FILE__, line);
 
@@ -148,7 +148,7 @@ static int buf_writer_ioctl(
 	  }
 	}
 	printf("\n");
-	exit(1);
+	if (mismatch) { exit(1); }
       }
       result = 0;
     } break;
@@ -229,16 +229,16 @@ int main(void)
   labcomm2014_encoder_register_generated_encoding_V(prefix);
   labcomm2014_encoder_register_generated_encoding_V(prefix);
   EXPECT({ 0x02, 0x08, VARIABLE(3), 0x03, 'p', '.', 'V', 0x02, 0x11, 0x00,
-           0x04, 0x07, VARIABLE(4), 0x03, 'p', '.', 'V', 0x01, VARIABLE(1),
+           0x04, 0x07, VARIABLE(4), 0x03, 'p', '.', 'V', 0x01, VARIABLE(2),
            0x05, 0x02, VARIABLE(3), VARIABLE(4) });
 
   labcomm2014_encoder_ioctl(suffix, IOCTL_WRITER_RESET);
   labcomm2014_encoder_register_generated_encoding_V(suffix);
   labcomm2014_encoder_register_generated_encoding_V(suffix);
-  EXPECT({ 0x02, 0x0a, VARIABLE(6), 0x05, 'p', '.', 'V', '.', 's', 0x02, 0x11, 0x00,
-           0x04, 0x0c, VARIABLE(7), 0x07, 'p', '.', 'v', '_', 't', '.', 's', 0x02, 0x11, 0x00,
-           0x04, 0x09, VARIABLE(8), 0x05, 'p', '.', 'V', '.', 's', 0x01, VARIABLE(1) /* WEIRD */,
-           0x05, 0x02, VARIABLE(6), VARIABLE(22) });
+  EXPECT({ 0x02, 0x0a, VARIABLE(5), 0x05, 'p', '.', 'V', '.', 's', 0x02, 0x11, 0x00,
+           0x04, 0x07, VARIABLE(6), 0x03, 'V', '.', 's', 0x01, VARIABLE(2),
+           0x04, 0x09, VARIABLE(7), 0x05, 'p', '.', 'V', '.', 's', 0x01, VARIABLE(6),
+           0x05, 0x02, VARIABLE(5), VARIABLE(7) });
 
 
   labcomm2014_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
@@ -247,7 +247,7 @@ int main(void)
                                           labcomm2014_signature_generated_encoding_V);
   labcomm2014_encoder_sample_ref_register(encoder, 
                                           labcomm2014_signature_generated_encoding_V);
-  EXPECT({0x03, 0x06, VARIABLE(9), 0x01, 'V', 0x02, 0x11, 0x00});
+  EXPECT({0x03, 0x06, VARIABLE(8), 0x01, 'V', 0x02, 0x11, 0x00});
 
   labcomm2014_encoder_ioctl(prefix, IOCTL_WRITER_RESET);
   /* Register twice to make sure that only one registration gets encoded */
@@ -255,15 +255,14 @@ int main(void)
                                           labcomm2014_signature_generated_encoding_V);
   labcomm2014_encoder_sample_ref_register(prefix, 
                                           labcomm2014_signature_generated_encoding_V);
-  EXPECT({0x03, 0x08, VARIABLE(10), 0x03, 'p', '.', 'V', 0x02, 0x11, 0x00});
-
+  EXPECT({0x03, 0x08, VARIABLE(9), 0x03, 'p', '.', 'V', 0x02, 0x11, 0x00});
   labcomm2014_encoder_ioctl(suffix, IOCTL_WRITER_RESET);
   /* Register twice to make sure that only one registration gets encoded */
   labcomm2014_encoder_sample_ref_register(suffix, 
                                           labcomm2014_signature_generated_encoding_V);
   labcomm2014_encoder_sample_ref_register(suffix, 
                                           labcomm2014_signature_generated_encoding_V);
-  EXPECT({0x03, 0x0a, VARIABLE(11), 0x05, 'p', '.', 'V', '.', 's', 0x02, 0x11, 0x00});
+  EXPECT({0x03, 0x0a, VARIABLE(10), 0x05, 'p', '.', 'V', '.', 's', 0x02, 0x11, 0x00});
 
 
   labcomm2014_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
@@ -276,7 +275,7 @@ int main(void)
 
   labcomm2014_encoder_ioctl(suffix, IOCTL_WRITER_RESET);
   labcomm2014_encode_generated_encoding_V(suffix);
-  EXPECT({VARIABLE(6), 0x00 });
+  EXPECT({VARIABLE(5), 0x00 });
 
   return 0;
 }

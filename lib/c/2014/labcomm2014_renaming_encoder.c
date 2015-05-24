@@ -26,8 +26,7 @@
 
 struct renamed {
   struct labcomm2014_signature signature;
-  struct labcomm2014_signature renamed;
-  struct labcomm2014_signature_data treedata[2]; 
+  struct labcomm2014_signature_data s_treedata[2]; 
 };
 
 struct encoder {
@@ -107,24 +106,16 @@ static struct renamed *set_renamed(
     result->signature.signature = signature->signature; 
     result->signature.index = 0;
 #ifndef LABCOMM_NO_TYPEDECL
-    result->renamed.name = result->signature.name;
-    result->renamed.encoded_size = NULL;
-    result->renamed.size = 0;
-    result->renamed.signature = NULL;
-    result->renamed.index = 0;
-    result->renamed.tdsize = signature->tdsize;
-    result->renamed.treedata = signature->treedata;
-    struct labcomm2014_signature_data treedata[2] = { 
-      LABCOMM_SIGDEF_SIGNATURE(result->renamed),
+    struct labcomm2014_signature_data s_treedata[2] = { 
+      LABCOMM_SIGDEF_SIGNATURE(*signature),
       LABCOMM_SIGDEF_END
     };
-    result->treedata[0] = treedata[0];
-    result->treedata[1] = treedata[1];
-    result->signature.tdsize = sizeof(result->treedata);
-    result->signature.treedata = result->treedata;
+    result->s_treedata[0] = s_treedata[0];
+    result->s_treedata[1] = s_treedata[1];
+    result->signature.tdsize = sizeof(result->s_treedata);
+    result->signature.treedata = result->s_treedata;
 #endif  
     labcomm2014_set_local_index(&result->signature);
-    labcomm2014_set_local_index(&result->renamed);
     *renamed = result;
     goto unlock;
   unlock_free_result:
@@ -146,10 +137,12 @@ static int do_type_register(struct labcomm2014_encoder *e,
 
   renamed = get_renamed(e, signature);
   if (renamed) {
-    /* Register renaming type */
-    ie->next->type_register(ie->next, &renamed->renamed);
+    /* Register base type and renamed type */
+    ie->next->type_register(ie->next, signature);
+    return ie->next->type_register(ie->next, &renamed->signature);
+  } else {
+    return ie->next->type_register(ie->next, signature);
   }
-  return ie->next->type_register(ie->next, signature);
 }
 
 static int do_type_bind(struct labcomm2014_encoder *e,
