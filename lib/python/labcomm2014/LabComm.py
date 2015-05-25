@@ -393,8 +393,11 @@ class SAMPLE(primitive):
 # Aggregate types
 #
 class sampledef_or_sampleref_or_typedef(type_decl):
-    def __init__(self, name=None, decl=None):
-        self.name = name
+    def __init__(self, intentions=None, decl=None):
+        if intentions is not None and '' in intentions:
+            self.name = intentions['']
+        else:
+            self.name = None
         self.decl = decl
 
     def encode_decl(self, encoder):
@@ -418,7 +421,7 @@ class sampledef_or_sampleref_or_typedef(type_decl):
             length = decoder.decode_packed32()
         decl = decoder.decode_decl()
         result = self.__class__.__new__(self.__class__)
-        result.__init__(name=name, decl=decl)
+        result.__init__(intentions={'':name}, decl=decl)
         self.add_index(decoder, index, result)
         return result
 
@@ -455,17 +458,23 @@ class sample_def(sampledef_or_sampleref_or_typedef):
         decoder.add_decl(decl, index)
 
     def rename(self, name):
-        return sample_def(name=name, decl=self.decl)
+        newIntentions = intentions.copy()
+        newIntentions['']=name
+        return sample_def(newIntentions, decl=self.decl)
 
 class sample_ref(sampledef_or_sampleref_or_typedef):
     type_index = i_SAMPLE_REF
     type_name = 'sample_ref'
 
-    def __init__(self, name=None, decl=None, sample=None):
-        self.name = name
+    def __init__(self, intentions=None, decl=None, sample=None):
+        if intentions is not None and '' in intentions:
+            self.name = intentions['']
+            print "sampleref: name = %d" % self.name
+        else:
+            self.name = None
         self.decl = decl
-        if sample == None and name != None and decl != None:
-            self.sample = sample_def(name, decl)
+        if sample == None and self.name != None and decl != None:
+            self.sample = sample_def(intentions, decl)
         else:
             self.sample = sample
 
