@@ -342,15 +342,12 @@ static int internal_reg_type(
 
   printf("internal_reg_type: %s\n", signature->name);
   int sig_size = calc_sig_encoded_size(e, signature);
-  int len1= labcomm2014_size_packed32(index);
-  int len2 =TODO_sizeof_intentions(signature);
-  int len3 =labcomm2014_size_packed32(signature->size);
-  int len4 =sig_size;
+  int len_idx= labcomm2014_size_packed32(index);
+  int len_ints =TODO_sizeof_intentions(signature);
+  int len_sigsize =labcomm2014_size_packed32(sig_size);
+  int len_sig =sig_size;
 
-  printf("len (index) : %d. (intentions) : %d, (sig_size): %d, (sig): %d)\n",
-      len1, len2, len3, len4);
-
-  int len = len1 + len2 + len3 + len4;
+  int len = len_idx + len_ints + len_sigsize + len_sig;
 
   labcomm2014_write_packed32(e->writer, LABCOMM_TYPE_DEF);
   labcomm2014_write_packed32(e->writer, len);
