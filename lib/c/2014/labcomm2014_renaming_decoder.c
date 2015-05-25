@@ -147,6 +147,13 @@ static int do_ioctl(struct labcomm2014_decoder *d,
                          ioctl_action, args);
 }
 
+static int do_decode_one(struct labcomm2014_decoder *d)
+{
+  struct decoder *id = d->context;
+
+  return id->next->decode_one(id->next);
+}
+
 static const struct labcomm2014_sample_ref *do_index_to_sample_ref(
   struct labcomm2014_decoder *d, int index)
 {
@@ -201,12 +208,12 @@ struct labcomm2014_decoder *labcomm2014_renaming_decoder_new(
     return NULL;
   } else {
       result->decoder.context = result;
-      result->decoder.reader = NULL;
+      result->decoder.reader = d->reader;
       result->decoder.error = d->error;
       result->decoder.memory = d->memory;
       result->decoder.scheduler = d->scheduler;
       result->decoder.free = do_free;
-      result->decoder.decode_one = d->decode_one;
+      result->decoder.decode_one = do_decode_one;
       result->decoder.sample_register = do_sample_register;
       result->decoder.ref_register = do_ref_register;
       result->decoder.ioctl = do_ioctl;
