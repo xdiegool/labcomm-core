@@ -151,7 +151,11 @@ aspect PythonTypes {
   }
 
   public void TypeInstance.Python_genIntentions(Python_env env) {
-    env.print("{'':'"+getName()+"'}");
+    env.print("{'':'"+getName()+"'");
+    for(Intention i : sortedIntentions()) {
+        env.print(", '"+i.getKey()+"':'"+new String(i.getValue())+"'");
+    }
+    env.print("}");
   }
 
   public void TypeInstance.Python_genTypedef(Python_env env) {

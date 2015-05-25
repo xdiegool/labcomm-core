@@ -96,12 +96,11 @@ run:
 	@echo "************ running python encoder: *****************"
 	@PYTHONPATH=${LCDIR}/lib/python:${GENDIR} ./example_encoder.py encoded_data_p LabComm2014
 
-	@echo "WARNING! python encoded data only decoded by python decoder,  pending intention implementation"
-#	@echo "************ running Java  decoder: *****************"
-#	@java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${GENDIR} Decoder encoded_data_p
-#
-#	@echo "************ running C decoder: *****************"
-#	@LD_LIBRARY_PATH=${LCDIR}/lib/c/ ./example_decoder encoded_data_p
+	@echo "************ running Java  decoder: *****************"
+	@java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${GENDIR} Decoder encoded_data_p
+
+	@echo "************ running C decoder: *****************"
+	@LD_LIBRARY_PATH=${LCDIR}/lib/c/ ./example_decoder encoded_data_p
 
 	@echo "************ running python decoder (from wiki_example):"
 	PYTHONPATH=${LCDIR}/lib/python ../wiki_example/example_decoder.py encoded_data_p LabComm2014
@@ -145,16 +144,15 @@ runwcs: build ExampleEncoder.exe ExampleDecoder.exe
 	@echo "************ running python encoder: *****************"
 	@PYTHONPATH=${LCDIR}/lib/python:${GENDIR} ./example_encoder.py encoded_data_p LabComm2014
 
-	@echo "WARNING! python encoded data only decoded by python decoder,  pending intention implementation"
-#	@echo "************ running Java  decoder: *****************"
-#	@java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${GENDIR} Decoder encoded_data_p
-#
-#	@echo "************ running C decoder: *****************"
-#	@LD_LIBRARY_PATH=${LCDIR}/lib/c/ ./example_decoder encoded_data_p
-#
-#	@echo "************ running C# decoder: *****************"
-#	@mono ./ExampleDecoder.exe encoded_data_p
-#
+	@echo "************ running Java  decoder: *****************"
+	@java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${GENDIR} Decoder encoded_data_p
+
+	@echo "************ running C decoder: *****************"
+	@LD_LIBRARY_PATH=${LCDIR}/lib/c/ ./example_decoder encoded_data_p
+
+	@echo "************ running C# decoder: *****************"
+	@mono ./ExampleDecoder.exe encoded_data_p
+
 	@echo "************ running python decoder (from wiki_example):"
 	PYTHONPATH=${LCDIR}/lib/python ../wiki_example/example_decoder.py encoded_data_p LabComm2014
 

@@ -893,8 +893,9 @@ class Encoder(Codec):
         keys.sort();
         self.encode_packed32(len(intentions))
         for k in keys:
+            v = intentions[k]
             self.encode_string(k)
-            self.encode_string(intentions[k])
+            self.encode_string(v)
 
 class Decoder(Codec):
     def __init__(self, reader, version=DEFAULT_VERSION):
