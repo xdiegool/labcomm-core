@@ -26,8 +26,13 @@
 #include <stdarg.h>
 #include "labcomm2014_private.h"
 #include "labcomm2014_fd_writer.h"
+#include "labcomm2014_ioctl.h"
 
 #define BUFFER_SIZE 2048
+
+#ifdef LABCOMM_WITH_SANITY_CHECKS
+static int bytecount_carry = 0;
+#endif
 
 struct labcomm2014_fd_writer {
   struct labcomm2014_writer writer;
@@ -36,10 +41,10 @@ struct labcomm2014_fd_writer {
   int close_fd_on_free;
 };
 
-static int fd_flush(struct labcomm2014_writer *w, 
+static int fd_flush(struct labcomm2014_writer *w,
 		    struct labcomm2014_writer_action_context *action_context);
 
-static int fd_alloc(struct labcomm2014_writer *w, 
+static int fd_alloc(struct labcomm2014_writer *w,
 		    struct labcomm2014_writer_action_context *action_context)
 {
   w->data = labcomm2014_memory_alloc(w->memory, 0, BUFFER_SIZE);
@@ -57,7 +62,7 @@ static int fd_alloc(struct labcomm2014_writer *w,
   return w->error;
 }
 
-static int fd_free(struct labcomm2014_writer *w, 
+static int fd_free(struct labcomm2014_writer *w,
 		   struct labcomm2014_writer_action_context *action_context)
 {
   struct labcomm2014_fd_writer *fd_writer = action_context->context;
@@ -76,23 +81,26 @@ static int fd_free(struct labcomm2014_writer *w,
   return 0;
 }
 
-static int fd_start(struct labcomm2014_writer *w, 
+static int fd_start(struct labcomm2014_writer *w,
 		    struct labcomm2014_writer_action_context *action_context,
 		    int index,
 		    const struct labcomm2014_signature *signature,
 		    void *value)
 {
+#ifdef LABCOMM_WITH_SANITY_CHECKS
+  bytecount_carry = w->pos;
+#endif
   w->pos = 0;
-  
+
   return w->error;
 }
 
-static int fd_flush(struct labcomm2014_writer *w, 
+static int fd_flush(struct labcomm2014_writer *w,
 		    struct labcomm2014_writer_action_context *action_context)
 {
   struct labcomm2014_fd_writer *fd_context = action_context->context;
   int start, err;
-  
+
   start = 0;
   err = 0;
   while (start < w->pos) {
@@ -107,10 +115,33 @@ static int fd_flush(struct labcomm2014_writer *w,
   } else if (err == 0) {
     w->error = -EINVAL;
   }
+#ifdef LABCOMM_WITH_SANITY_CHECKS
+  bytecount_carry = w->pos;
+#endif
   w->pos = 0;
-   
+
   return w->error;
 }
+
+
+#ifdef LABCOMM_WITH_SANITY_CHECKS
+static int fd_ioctl(struct labcomm2014_writer *w,
+		     struct labcomm2014_writer_action_context *action_context,
+		     int signature_index,
+		     const struct labcomm2014_signature *signature,
+		     uint32_t action, va_list arg)
+{
+  int result = -ENOTSUP;
+  switch (action) {
+    case LABCOMM_IOCTL_WRITER_GET_BYTES_WRITTEN: {
+      int *value = va_arg(arg, int*);
+      *value = w->pos + bytecount_carry;
+      result = 0;
+    } break;
+  }
+  return result;
+}
+#endif
 
 static const struct labcomm2014_writer_action action = {
   .alloc = fd_alloc,
@@ -118,7 +149,11 @@ static const struct labcomm2014_writer_action action = {
   .start = fd_start,
   .end = fd_flush,
   .flush = fd_flush,
+#ifdef LABCOMM_WITH_SANITY_CHECKS
+  .ioctl = fd_ioctl
+#else
   .ioctl = NULL
+#endif
 };
 
 struct labcomm2014_writer *labcomm2014_fd_writer_new(struct labcomm2014_memory *memory,

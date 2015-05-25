@@ -29,6 +29,8 @@
 //define the following to disable encoding of typedefs
 #undef LABCOMM_WITHOUT_TYPE_DEFS
 
+#undef LABCOMM2014_WITH_SANITY_CHECKS
+
 struct encoder {
   struct labcomm2014_encoder encoder;
   LABCOMM_SIGNATURE_ARRAY_DEF(registered, int);
@@ -36,10 +38,47 @@ struct encoder {
   LABCOMM_SIGNATURE_ARRAY_DEF(typedefs, int);
 };
 
+#ifdef LABCOMM2014_WITH_SANITY_CHECKS
+static int expectedByteCount;
+static void encoder_check_write_start(struct labcomm2014_encoder *e, int numBytes)
+{
+    int previouslyWritten = 0;
+    int err = labcomm2014_encoder_ioctl(e, LABCOMM_IOCTL_WRITER_GET_BYTES_WRITTEN, &previouslyWritten);
+    if(err) {
+      printf("ERROR: get_bytes_written returned %d (%s)\n", err, strerror(err));
+    }
+    expectedByteCount = numBytes + previouslyWritten;
+#ifdef LABCOMM2014_ENCODER_DEBUG
+    printf("previously written: %d bytes, length = %d bytes, expected = %d bytes\n",
+            previouslyWritten, numBytes, expectedByteCount);
+#endif
+}
+
+static int encoder_check_write_end(struct labcomm2014_encoder *e)
+{
+    int written = 0;
+    int err = labcomm2014_encoder_ioctl(e, LABCOMM_IOCTL_WRITER_GET_BYTES_WRITTEN, &written);
+    if(err) {
+      printf("ERROR: get_bytes_written returned %d (%s)\n", err, strerror(err));
+    }
+    int result = 0;
+#ifdef LABCOMM2014_ENCODER_DEBUG
+    printf("DEBUG: encoder_check_write_end: expected: %d, was: %d\n",
+        expectedByteCount, written);
+#endif
+    if(written != expectedByteCount) {
+        printf("WARNING! encoder_check_write_end: expected: %d, was: %d\n",
+            expectedByteCount, written);
+        result = -EINVAL;
+    }
+    return result;
+}
+#endif
 /* XXX: TEMPORARY PLACEHOLDERS FOR INTENTIONS */
 
 static int TODO_sizeof_intentions(const struct labcomm2014_signature *signature) {
-    return labcomm2014_size_string(signature->name) + 2;
+    int res = labcomm2014_size_string(signature->name) + 2;
+    return res;
 }
 
 static int TODO_encode_intentions(
@@ -72,7 +111,7 @@ static int do_sample_register(
       goto out; }
   *done = 1;
   err = labcomm2014_writer_start(e->writer, e->writer->action_context,
-			     index, signature, NULL);
+                index, signature, NULL);
   if (err == -EALREADY) { result = 0; goto out; }
   if (err != 0) { result = err; goto out; }
   labcomm2014_write_packed32(e->writer, LABCOMM_SAMPLE_DEF);
@@ -106,7 +145,7 @@ static int do_encode(
 {
   int result, index, length;
   struct encoder *ie = e->context;
-  
+
   index = labcomm2014_get_local_index(signature);
   length = (signature->encoded_size(value));
   labcomm2014_scheduler_writer_lock(e->scheduler);
@@ -152,7 +191,7 @@ static int do_ref_register(
   if (*done) { goto out; }
   *done = 1;
   err = labcomm2014_writer_start(e->writer, e->writer->action_context,
-			     index, signature, NULL);
+                index, signature, NULL);
   if (err == -EALREADY) { result = 0; goto out; }
   if (err != 0) { result = err; goto out; }
   labcomm2014_write_packed32(e->writer, LABCOMM_SAMPLE_REF);
@@ -208,8 +247,8 @@ static int do_ioctl(
 
   index = labcomm2014_get_local_index(signature);
   result = labcomm2014_writer_ioctl(encoder->writer,
-				encoder->writer->action_context,
-				index, signature, action, va);
+        encoder->writer->action_context,
+        index, signature, action, va);
   return result;
 }
 
@@ -252,8 +291,8 @@ static void write_sig_tree_byte(char b, const struct labcomm2014_signature *sign
   }
 }
 
-static void do_write_signature(struct labcomm2014_encoder * e, 
-                               const struct labcomm2014_signature *signature, 
+static void do_write_signature(struct labcomm2014_encoder * e,
+                               const struct labcomm2014_signature *signature,
                                unsigned char flatten)
 {
   map_signature(write_sig_tree_byte, e, signature, flatten);
@@ -289,7 +328,7 @@ static int internal_reg_type(
   int result = -EINVAL;
   int index, *done, err;
   struct encoder *ie = e->context;
-  
+
   index = labcomm2014_get_local_index(signature);
   labcomm2014_scheduler_writer_lock(e->scheduler);
   if (index <= 0) { goto out; }
@@ -301,19 +340,30 @@ static int internal_reg_type(
   if (err == -EALREADY) { result = 0; goto out; }
   if (err != 0) { result = err; goto out; }
 
+  printf("internal_reg_type: %s\n", signature->name);
   int sig_size = calc_sig_encoded_size(e, signature);
-  int len = (labcomm2014_size_packed32(index) +
-            TODO_sizeof_intentions(signature) +
-            labcomm2014_size_packed32(signature->size) +
-            sig_size);
+  int len1= labcomm2014_size_packed32(index);
+  int len2 =TODO_sizeof_intentions(signature);
+  int len3 =labcomm2014_size_packed32(signature->size);
+  int len4 =sig_size;
+
+  printf("len (index) : %d. (intentions) : %d, (sig_size): %d, (sig): %d)\n",
+      len1, len2, len3, len4);
+
+  int len = len1 + len2 + len3 + len4;
 
   labcomm2014_write_packed32(e->writer, LABCOMM_TYPE_DEF);
   labcomm2014_write_packed32(e->writer, len);
+#ifdef LABCOMM2014_WITH_SANITY_CHECKS
+  encoder_check_write_start(e, len);
+#endif
   labcomm2014_write_packed32(e->writer, index);
   TODO_encode_intentions(e, signature);
   labcomm2014_write_packed32(e->writer, sig_size);
   do_write_signature(e, signature, LABCOMM2014_FALSE);
-
+#ifdef LABCOMM2014_WITH_SANITY_CHECKS
+  encoder_check_write_end(e);
+#endif
   labcomm2014_writer_end(e->writer, e->writer->action_context);
   result = e->writer->error;
 out:
@@ -346,7 +396,7 @@ static int do_type_bind(
   labcomm2014_scheduler_writer_lock(e->scheduler);
   if(sindex <= 0 || (has_deps && tindex <= 0)) {goto out;}
   err = labcomm2014_writer_start(e->writer, e->writer->action_context,
-			     LABCOMM_TYPE_BINDING, signature, NULL);
+                LABCOMM_TYPE_BINDING, signature, NULL);
   if (err == -EALREADY) { result = 0; goto out; }
   if (err != 0) { result = err; goto out; }
   int length = (labcomm2014_size_packed32(sindex) +
