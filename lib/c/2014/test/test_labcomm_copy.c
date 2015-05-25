@@ -70,7 +70,7 @@ static void handle_as(more_types_AS *v, void *context)
   labcomm2014_copy_more_types_AS(labcomm2014_default_memory, context, v);
 }
 
-int main(int argc, char **argv)
+int do_test(int argc, char **argv)
 {
   struct labcomm2014_encoder *encoder;
   struct labcomm2014_decoder *decoder;
@@ -284,4 +284,15 @@ int main(int argc, char **argv)
   puts("NS deallocated ok");
   labcomm2014_copy_free_more_types_AS(labcomm2014_default_memory, &cache_as);
   puts("AS deallocated ok");
+
+  labcomm2014_copy_free_generated_encoding_R(labcomm2014_default_memory,
+                                             &cache_r);
+  puts("R deallocated ok");
+
+  return 0;
+}
+
+int main(int argc, char **argv)
+{
+  return do_test(argc, argv);
 }

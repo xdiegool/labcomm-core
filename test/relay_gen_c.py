@@ -74,6 +74,8 @@ if __name__ == '__main__':
        """ % { 'func': func, 'arg': arg }))
     result.extend(split_match('^[^|]*\|(.*)$', """
       |  labcomm2014_decoder_run(d);
+      |  labcomm2014_decoder_free(d);
+      |  labcomm2014_encoder_free(e);
       |  return 0;
       |}
     """))

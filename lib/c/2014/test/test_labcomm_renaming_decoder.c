@@ -169,7 +169,10 @@ int main(int argc, char **argv)
          labcomm2014_decoder_get_sample_ref(
            suffix_decoder, labcomm2014_signature_generated_encoding_R));
 
+  labcomm2014_decoder_free(suffix_decoder);
+  labcomm2014_decoder_free(prefix_decoder);
   labcomm2014_decoder_free(decoder);
+
   close(fd);
   unlink(DATA_FILE);
 }

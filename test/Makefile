@@ -26,7 +26,8 @@ test_%: gen/%/signatures.py \
 		./test_encoder_decoder.py \
 		--signatures=gen/$*/signatures.py \
 		--test tee gen/$*/testdata \
-		--test gen/$*/c_relay /dev/stdin /dev/stdout \
+		--test $(shell echo $(VALGRIND) | sed -e 's/[-][-]/\\\\--/g') \
+		       gen/$*/c_relay /dev/stdin /dev/stdout \
 		--test mono gen/$*/cs_relay.exe /dev/stdin /dev/stdout \
 		--test java \\-cp gen/$*:../lib/java/labcomm2014.jar java_relay \
 			    /dev/stdin /dev/stdout

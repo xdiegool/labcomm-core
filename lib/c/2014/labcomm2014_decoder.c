@@ -160,7 +160,7 @@ static int decode_sample_def_or_ref(struct labcomm2014_decoder *d, int kind)
   signature.name = labcomm2014_read_string(d->reader);
   if (d->reader->error < 0) {
     result = d->reader->error;
-    goto out;
+    goto free_signature_name;
   }
   signature.size = labcomm2014_read_packed32(d->reader);
   if (d->reader->error < 0) {
@@ -198,7 +198,9 @@ static int decode_sample_def_or_ref(struct labcomm2014_decoder *d, int kind)
 free_signature_signature:
   labcomm2014_memory_free(d->memory, 1,  signature.signature);
 free_signature_name:
-  labcomm2014_memory_free(d->memory, 0, signature.name);
+  if (signature.name) {
+    labcomm2014_memory_free(d->memory, 0, signature.name);
+  }
 out:
   return result;
 }
@@ -337,15 +339,16 @@ static int do_decode_one(struct labcomm2014_decoder *d)
     char *version = labcomm2014_read_string(d->reader);
     if (d->reader->error < 0) {
       result = d->reader->error;
-      goto out;
-    }
-    if (strcmp(version, CURRENT_VERSION) == 0) {
+    } else if (strcmp(version, CURRENT_VERSION) == 0) {
       result = LABCOMM_VERSION;
       d->version_ok = 1;
     } else {
       result = -ECONNRESET;
     }  
     labcomm2014_memory_free(d->memory, 1,  version);
+    if (result < 0) {
+      goto out;
+    }
   } else if (! d->version_ok) {
     DEBUG_FPRINTF(stderr, "No VERSION %d %d\n", remote_index, length);
     result = -ECONNRESET;
