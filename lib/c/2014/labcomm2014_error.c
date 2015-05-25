@@ -24,15 +24,21 @@
 #include <stdarg.h>
 #include "labcomm2014_error.h"
 
+static char *description[] = {
+#define LABCOMM2014_ERROR(name, description) description ,
+#include "labcomm2014_error.h"
+#undef LABCOMM2014_ERROR
+};
+
 void labcomm2014_error_fatal_global(enum labcomm2014_error error,
                                     char *format,
                                     ...)
 {
   va_list args;
 
-  fprintf(stderr, "Fatal error %d\n", error);
+  fprintf(stderr, "Fatal error %d (%s)\n", error, description[error]);
   va_start(args, format);
-  vprintf(format, args);
+  vfprintf(stderr, format, args);
   va_end(args);
 
   exit(1);
@@ -45,9 +51,9 @@ void labcomm2014_error_warning(struct labcomm2014_error_handler *e,
 {
   va_list args;
 
-  fprintf(stderr, "Fatal warning %d\n", error);
+  fprintf(stderr, "Fatal warning %d (%s)\n", error, description[error]);
   va_start(args, format);
-  vprintf(format, args);
+  vfprintf(stderr, format, args);
   va_end(args);
 
   exit(1);

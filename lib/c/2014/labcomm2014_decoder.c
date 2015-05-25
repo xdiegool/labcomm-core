@@ -199,6 +199,12 @@ free_signature_signature:
   labcomm2014_memory_free(d->memory, 1,  signature.signature);
 free_signature_name:
   if (signature.name) {
+    if (result == -ENOENT) {
+      labcomm2014_error_warning(d->error,
+                                LABCOMM2014_ERROR_DEC_NO_REG_SIGNATURE,
+                                "Signature not found: %s\n",
+                                signature.name);
+    }
     labcomm2014_memory_free(d->memory, 0, signature.name);
   }
 out:

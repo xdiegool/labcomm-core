@@ -52,6 +52,9 @@ LABCOMM2014_ERROR(LABCOMM2014_ERROR_ENC_NO_REG_SIGNATURE,
                   "Encoder has no registration for this signature")
 LABCOMM2014_ERROR(LABCOMM2014_ERROR_ENC_BUF_FULL,
                   "The labcomm2014 buffer is full")
+
+LABCOMM2014_ERROR(LABCOMM2014_ERROR_DEC_NO_REG_SIGNATURE,
+                  "Decoder has no registration for this signature")
 LABCOMM2014_ERROR(LABCOMM2014_ERROR_DEC_UNKNOWN_DATATYPE,
                   "Decoder: Unknown datatype")
 LABCOMM2014_ERROR(LABCOMM2014_ERROR_DEC_INDEX_MISMATCH,
