@@ -548,31 +548,30 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
             return current.getName();
         }
 
+        /** return name, (if any, or "") for now */
         String decodeIntentions() throws IOException {
             int n = decodePacked32() & 0xffffffff;
             if(n==0) return "";
 
-            StringBuilder sb = new StringBuilder();
+            String name = "";
+
             for(int i=0; i<n;i++) {
-                sb.append("(");
                 int klen = decodePacked32() & 0xffffffff;
                 byte[] kchars = new byte[klen];
                 for(int k=0; k<klen; k++) {
                     kchars[k] = in.readByte();
                 }
-                sb.append(new String(kchars));
-
-                sb.append(":");
 
                 int vlen = decodePacked32() & 0xffffffff;
                 byte[] vchars = new byte[vlen];
                 for(int j=0; j<vlen; j++) {
                     vchars[j] = in.readByte();
                 }
-                sb.append(new String(vchars));
-                sb.append(")");
+                if(klen==0) {
+                  name = new String(vchars);
+                }
             }
-            return sb.toString();
+            return name;
         }
 
         String decodeString() throws IOException {
@@ -648,13 +647,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     }
 
     private ParsedField parseParsedField(ParserState in) throws IOException {
-        String intentions = in.decodeString();
-        if(intentions.length()>0) {
-            System.out.println("parseParsedField intentions ("+intentions);
-        } else {
-            System.out.println("no intentions");
-        }
-        String name = in.decodeString();
+        String name = in.decodeIntentions();
         return new ParsedField(name, parseType(in, false));
     }
 
@@ -682,7 +675,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     }
     private ParsedTypeDef parseTypeDef(ParserState in, boolean parseIntentions) throws IOException {
         ParsedTypeDef result = in.newTypeDef();
-        result.setType(parseType(in, parseIntentions));
+        result.setType(parseType(in, false));
         return result;
     }
 
@@ -695,7 +688,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
                 System.out.println("no intentions");
             }
         } else {
-            System.out.println("not parsing intentions");
+//            System.out.println("not parsing intentions");
         }
 
         int tag = in.decodePacked32();

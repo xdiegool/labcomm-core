@@ -287,10 +287,12 @@ aspect Signature {
     eq TypeInstance.intentions() = intentionSet();
 
     public void TypeInstance.genSigLineForDecl(SignatureList list, boolean decl, ASTNode inst) {
-//              debugAnnotations(this.getName());
-//              list.addString(inst.getIntentionString(), "intention string");
-                list.addIntentions(intentionSet(), "intentions");
-                getDataType().genSigLineForDecl(list, decl, this);
+//      debugAnnotations(this.getName());
+//      list.addString(inst.getIntentionString(), "intention string");
+        if(addIntentions()) {
+          list.addIntentions(intentionSet(), "intentions");
+        }
+        getDataType().genSigLineForDecl(list, decl, this);
     }
 
 
