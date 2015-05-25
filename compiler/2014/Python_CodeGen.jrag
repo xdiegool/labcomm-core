@@ -7,7 +7,7 @@ aspect Python_CodeGenEnv {
   public class Python_env {
 
     final private class Python_printer {
-      
+
       private boolean newline = true;
       private PrintStream out;
 
@@ -99,7 +99,7 @@ aspect Python_CodeGen {
 }
 
 aspect PythonTypes {
-  
+
   public void Specification.Python_genTypes(Python_env env) {
     for (int i = 0 ; i < getNumDecl() ; i++) {
       getDecl(i).Python_genSignatureAndTypedef(env);
@@ -107,8 +107,8 @@ aspect PythonTypes {
   }
 
   public void Decl.Python_genSignatureAndTypedef(Python_env env) {
-    throw new Error(this.getClass().getName() + 
-                    ".Python_genSignatureAndTypedef(Python_env env)" + 
+    throw new Error(this.getClass().getName() +
+                    ".Python_genSignatureAndTypedef(Python_env env)" +
                     " not declared");
   }
 
@@ -151,9 +151,9 @@ aspect PythonTypes {
   }
 
   public void TypeInstance.Python_genIntentions(Python_env env) {
-    env.print("{'':'"+getName()+"'");
+    env.print("{");
     for(Intention i : sortedIntentions()) {
-        env.print(", '"+i.getKey()+"':'"+new String(i.getValue())+"'");
+        env.print("'"+i.getKey()+"':'"+new String(i.getValue())+"', ");
     }
     env.print("}");
   }
@@ -167,8 +167,8 @@ aspect PythonTypes {
   }
 
   public void DataType.Python_genSignature(Python_env env) {
-    throw new Error(this.getClass().getName() + 
-                    ".Python_genSignature(Python_env env)" + 
+    throw new Error(this.getClass().getName() +
+                    ".Python_genSignature(Python_env env)" +
                     " not declared");
   }
 
@@ -227,8 +227,8 @@ aspect PythonTypes {
   }
 
   public void DataType.Python_genTypedef(Python_env env) {
-    throw new Error(this.getClass().getName() + 
-                    ".Python_genTypedef(Python_env env)" + 
+    throw new Error(this.getClass().getName() +
+                    ".Python_genTypedef(Python_env env)" +
                     " not declared");
   }
 
@@ -297,8 +297,8 @@ aspect PythonTypes {
   }
 
   public String Exp.Python_getValue() {
-   throw new Error(this.getClass().getName() + 
-                    ".Python_getValue()" + 
+   throw new Error(this.getClass().getName() +
+                    ".Python_getValue()" +
                     " not declared");
   }
 
