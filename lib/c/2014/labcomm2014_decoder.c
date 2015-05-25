@@ -130,20 +130,45 @@ static int handle_sample_ref(struct labcomm2014_decoder *d, int remote_index,
   return result;
 }
 
-static int decoder_skip(struct labcomm2014_decoder *d, int len, int tag)
+static int reader_skip(struct labcomm2014_reader *r, int len, int tag)
 {
   int i;
   DECODER_DEBUG_FPRINTF(stdout, "got tag 0x%x, skipping %d bytes\n", tag, len);
   for(i = 0; i <len; i++){
     DECODER_DEBUG_FPRINTF(stderr, ".");
-    labcomm2014_read_byte(d->reader);
-    if (d->reader->error < 0) {
-      DECODER_DEBUG_FPRINTF(stderr, "\nerror while skipping: %d\n",  d->reader->error);
-      return d->reader->error;
+    labcomm2014_read_byte(r);
+    if (r->error < 0) {
+      DECODER_DEBUG_FPRINTF(stderr, "\nerror while skipping: %d\n",  r->error);
+      return r->error;
     }
   }
   DECODER_DEBUG_FPRINTF(stderr, "\n");
   return tag;
+}
+
+static char* TODO_read_intentions(struct labcomm2014_reader *r)
+{
+
+    int numInts = labcomm2014_read_byte(r);
+    int i;
+    char *name=NULL;
+
+    printf("TODO_read_intentions: numInts=%d\n", numInts);
+    for(i=0; i <numInts; i++){
+        int klen = labcomm2014_read_packed32(r);
+        printf("TODO_read_intentions: klen=%d\n", klen);
+        if(klen == 0) {
+            name = labcomm2014_read_string(r);
+            printf("TODO_read_intentions: name=%s\n", name);
+        }else{
+            int vlen;
+            reader_skip(r, klen, 1);
+            vlen = labcomm2014_read_packed32(r);
+            reader_skip(r, vlen, 1);
+            printf("TODO_read_intentions: skipping value, %d bytes\n", vlen);
+        }
+    }
+    return name;
 }
 
 static int decode_sample_def_or_ref(struct labcomm2014_decoder *d, int kind)
@@ -158,17 +183,7 @@ static int decode_sample_def_or_ref(struct labcomm2014_decoder *d, int kind)
     goto out;
   }
 
-   int numInts = labcomm2014_read_byte(d->reader);
-
-   if(numInts != 1) {
-       printf("WARNING! #intentions %d != 1, this will probably crash\n", numInts);
-   }
-  //XXX temporary kludge for intentions
-  //assume only one intention: the name
-  
-   labcomm2014_read_packed32(d->reader); // assume the empty key (i.e., name)
-
-  signature.name = labcomm2014_read_string(d->reader);
+  signature.name = TODO_read_intentions(d->reader);
   if (d->reader->error < 0) {
     result = d->reader->error;
     goto out;
@@ -262,7 +277,7 @@ static int decode_pragma(struct labcomm2014_decoder *d,
   }
   int bytes = labcomm2014_size_string(pragma_type);
   int psize = len-bytes;
-  result = decoder_skip(d, psize, LABCOMM_PRAGMA);
+  result = reader_skip(d->reader, psize, LABCOMM_PRAGMA);
 out:
   return result;
 }
@@ -368,19 +383,19 @@ static int do_decode_one(struct labcomm2014_decoder *d)
     result = decode_and_handle(d, d, remote_index);
     if(result == -ENOENT) { 
         //No handler for type_defs, skip
-        result = decoder_skip(d, length, remote_index);
+        result = reader_skip(d->reader, length, remote_index);
     }
   } else if (remote_index == LABCOMM_TYPE_BINDING) {
     result = decode_and_handle(d, d, remote_index);
     if(result == -ENOENT) { 
         //No handler for type_bindings, skip
-        result = decoder_skip(d, length, remote_index);
+        result = reader_skip(d->reader, length, remote_index);
     }
   } else if (remote_index == LABCOMM_PRAGMA) {
     result = decode_pragma(d, d, length);
   } else if (remote_index < LABCOMM_USER) {
     DECODER_DEBUG_FPRINTF(stderr, "SKIP %d %d\n", remote_index, length);
-    result = decoder_skip(d, length, remote_index);
+    result = reader_skip(d->reader, length, remote_index);
   } else {
     result = decode_and_handle(d, d, remote_index);
   }
@@ -482,17 +497,7 @@ static void decode_raw_type_def(
   struct labcomm2014_raw_type_def v;
   v.index = labcomm2014_read_packed32(r);
   if (r->error < 0) { goto out; }
-  {
-  int numInts = labcomm2014_read_byte(r);
-
-  if(numInts != 1) {
-    printf("WARNING! #intentions %d != 1, this will probably crash\n", numInts);
-  }
-  //XXX temporary kludge for intentions
-  //assume only one intention: the name
-  labcomm2014_read_packed32(r); // assume the empty key (i.e., name)
-  }
-  v.name  = labcomm2014_read_string(r);
+  v.name  = TODO_read_intentions(r);
   if (r->error < 0) { goto free_name; }
   v.length = labcomm2014_read_packed32(r);
   if (r->error < 0) { goto free_name; }
