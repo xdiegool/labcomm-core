@@ -31,7 +31,7 @@ namespace se.lth.control.labcomm2014 {
         } break;
         case Constant.SAMPLE_DEF: {
           int index = decodePacked32();
-          String name = decodeString();
+          String name = decodeIntentions();
           int signature_length = decodePacked32();
           byte[] signature = new byte[signature_length];
           ReadBytes(signature, signature_length);
@@ -39,17 +39,17 @@ namespace se.lth.control.labcomm2014 {
         } break;
         case Constant.SAMPLE_REF: {
           int index = decodePacked32();
-          String name = decodeString();
+          String name = decodeIntentions();
           int signature_length = decodePacked32();
           byte[] signature = new byte[signature_length];
           ReadBytes(signature, signature_length);
 	  ref_registry.add(index, name, signature);
         } break;
-        case Constant.TYPE_DEF: 
+        case Constant.TYPE_DEF:
         case Constant.TYPE_BINDING: {
             for(int i=0; i<length;i++){
                 decodeByte();
-            }                
+            }
         } break;
         default: {
           DecoderRegistry.Entry e = def_registry.get(tag);
@@ -77,7 +77,7 @@ namespace se.lth.control.labcomm2014 {
       }
     }
 
-    public void register(SampleDispatcher dispatcher, 
+    public void register(SampleDispatcher dispatcher,
 			 SampleHandler handler) {
       def_registry.add(dispatcher, handler);
     }
@@ -92,7 +92,7 @@ namespace se.lth.control.labcomm2014 {
 	int count = stream.Read(result, offset, length - offset);
 	if (count <= 0)
 	  throw new EndOfStreamException(
-	    String.Format("End of stream reached with {0} bytes left to read", 
+	    String.Format("End of stream reached with {0} bytes left to read",
 			  length - offset));
 	offset += count;
       }
@@ -115,7 +115,7 @@ namespace se.lth.control.labcomm2014 {
     public byte decodeByte() {
       return (byte)ReadInt(1);
     }
-  
+
     public short decodeShort() {
       return (short)ReadInt(2);
     }
@@ -123,11 +123,11 @@ namespace se.lth.control.labcomm2014 {
     public int decodeInt() {
       return (int)ReadInt(4);
     }
-    
+
     public long decodeLong() {
       return (long)ReadInt(8);
     }
-    
+
 
     [StructLayout(LayoutKind.Explicit)]
     private struct Int32SingleUnion {
@@ -141,7 +141,7 @@ namespace se.lth.control.labcomm2014 {
       u.AsInt = (int)ReadInt(4);
       return u.AsFloat;
     }
-    
+
     public double decodeDouble() {
       return BitConverter.Int64BitsToDouble(ReadInt(8));
     }
@@ -155,7 +155,7 @@ namespace se.lth.control.labcomm2014 {
 
     public int decodePacked32() {
       Int64 res = 0;
-      bool cont = true; 
+      bool cont = true;
 
       do {
         Int64 c = decodeByte();
@@ -165,6 +165,30 @@ namespace se.lth.control.labcomm2014 {
 
       return (int) (res & 0xffffffff);
     }
+
+  private byte[] decodeBytes() {
+    int len = decodePacked32();
+    byte[] result = new byte[len];
+
+    for(int i=0; i<len; i++) {
+      result[i] = decodeByte();
+    }
+    return result;
+  }
+
+  private String decodeIntentions() {
+    int numIntentions = decodePacked32();
+    string name = "";
+    for(int i = 0; i<numIntentions; i++) {
+      byte[] key = decodeBytes();
+      byte[] val = decodeBytes();
+
+      if(key.Length == 0) {
+        name = Encoding.UTF8.GetString(val, 0, val.Length);
+      }
+    }
+    return name;
+  }
 
     public Type decodeSampleRef() {
       int index = (int)ReadInt(4);
@@ -178,4 +202,4 @@ namespace se.lth.control.labcomm2014 {
 
   }
 
-} 
+}

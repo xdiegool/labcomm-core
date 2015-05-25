@@ -26,7 +26,7 @@ namespace se.lth.control.labcomm2014 {
       int index = def_registry.add(dispatcher);
       begin(Constant.SAMPLE_DEF);
       encodePacked32(index);
-      encodeString(dispatcher.getName());
+      encodeIntentions(dispatcher.getName());
       byte[] signature = dispatcher.getSignature();
       encodePacked32(signature.Length);
       for (int i = 0 ; i < signature.Length ; i++) {
@@ -39,7 +39,7 @@ namespace se.lth.control.labcomm2014 {
       int index = ref_registry.add(dispatcher);
       begin(Constant.SAMPLE_REF);
       encodePacked32(index);
-      encodeString(dispatcher.getName());
+      encodeIntentions(dispatcher.getName());
       byte[] signature = dispatcher.getSignature();
       encodePacked32(signature.Length);
       for (int i = 0 ; i < signature.Length ; i++) {
@@ -130,6 +130,12 @@ namespace se.lth.control.labcomm2014 {
 
     public void encodePacked32(Int64 value) {
       WritePacked32(bytes, value);
+    }
+
+    private void encodeIntentions(String name) {
+      encodePacked32(1); // one intention field
+      encodePacked32(0); // empty key: name
+      encodeString(name);
     }
 
     public void encodeSampleRef(Type value) {
