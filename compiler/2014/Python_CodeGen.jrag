@@ -211,7 +211,9 @@ aspect PythonTypes {
   }
 
   public void Field.Python_genSignature(Python_env env) {
-    env.print("('" + getName() + "', ");
+    env.print("(");
+    Python_genIntentions(env);
+    env.print(", ");
     getDataType().Python_genSignature(env);
     env.print(")");
   }
@@ -269,7 +271,9 @@ aspect PythonTypes {
   }
 
   public void Field.Python_genTypedef(Python_env env) {
-    env.print("('" + getName() + "', ");
+    env.print("(");
+    Python_genIntentions(env);
+    env.print(", ");
     getDataType().Python_genTypedef(env);
     env.print(")");
   }

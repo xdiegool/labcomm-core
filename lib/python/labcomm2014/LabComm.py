@@ -398,6 +398,7 @@ class sampledef_or_sampleref_or_typedef(type_decl):
             self.name = intentions['']
         else:
             self.name = None
+        self.intentions = intentions
         self.decl = decl
 
     def encode_decl(self, encoder):
@@ -405,7 +406,7 @@ class sampledef_or_sampleref_or_typedef(type_decl):
         with length_encoder(encoder) as e1:
             e1.encode_type(self.get_index(encoder))
             # XXX: temporary hack for intentions
-            e1.encode_empty_intentions(self.name)
+            e1.encode_intentions(self.intentions)
             with length_encoder(e1) as e2:
                 self.decl.encode_decl(e2)
 
@@ -416,12 +417,12 @@ class sampledef_or_sampleref_or_typedef(type_decl):
         index = decoder.decode_type_number()
          # XXX: temporary hack for intentions
          #      assume the name is the only intention
-        name = decoder.decode_intentions()
+        ints = decoder.decode_intentions()
         if usePacketLength(decoder.version):
             length = decoder.decode_packed32()
         decl = decoder.decode_decl()
         result = self.__class__.__new__(self.__class__)
-        result.__init__(intentions={'':name}, decl=decl)
+        result.__init__(intentions=ints, decl=decl)
         self.add_index(decoder, index, result)
         return result
 
@@ -469,7 +470,7 @@ class sample_ref(sampledef_or_sampleref_or_typedef):
     def __init__(self, intentions=None, decl=None, sample=None):
         if intentions is not None and '' in intentions:
             self.name = intentions['']
-            print "sampleref: name = %d" % self.name
+            print "sampleref: name = %s" % self.name
         else:
             self.name = None
         self.decl = decl
@@ -633,49 +634,55 @@ class struct(type_decl):
         return not self.__eq__(other)
 
     def __hash__(self):
-        return hash(self.__class__) ^ hash(self.field)
+        tmp = str(self.field)
+        return hash(self.__class__) ^ hash(tmp)
 
     def encode_decl(self, encoder):
         encoder.encode_type(i_STRUCT)
         encoder.encode_packed32(len(self.field))
-        for (name, decl) in self.field:
-            encoder.encode_empty_intentions(name)
-            encoder.encode_type_number(decl)
+        for (intentions, decl) in self.field:
+                encoder.encode_intentions(intentions)
+                encoder.encode_type_number(decl)
 
     def encode(self, encoder, obj):
         if isinstance(obj, dict):
-            for (name, decl) in self.field:
+            for (intentions, decl) in self.field:
+                name = intentions['']
                 decl.encode(encoder, obj[name])
         else:
-            for (name, decl) in self.field:
+            for (intentions, decl) in self.field:
+                name = intentions['']
                 decl.encode(encoder, getattr(obj, name))
 
     def decode_decl(self, decoder):
         n_field = decoder.decode_packed32()
         field = []
         for i in range(n_field):
-            name = decoder.decode_intentions()
+            ints = decoder.decode_intentions()
             decl = decoder.decode_decl()
-            field.append((name, decl))
+            field.append((ints, decl))
         return struct(field)
 
     def decode(self, decoder, obj=None):
         if obj == None:
             obj = decoder.create_object()
-        for (name, decl) in self.field:
+        for (intentions, decl) in self.field:
+            name = intentions['']
             obj.__setattr__(name, decl.decode(decoder))
         return obj
 
     def new_instance(self):
         result = anonymous_object()
-        for (name, decl) in self.field:
+        for (intentions, decl) in self.field:
+            name = intentions['']
             result.__setattr__(name, decl.new_instance())
         return result
 
     def __repr__(self):
         delim = ""
         result = "labcomm.struct(["
-        for (name, decl) in self.field:
+        for (intentions, decl) in self.field:
+            name = intentions[''] if '' in intentions  else '(no name)'
             result += "%s\n  ('%s', %s)" % (delim, name, decl)
             delim = ","
         result += "\n])"
@@ -881,11 +888,13 @@ class Encoder(Codec):
 	self.encode_packed32(len(s));
 	self.pack("%ds" % len(s),s)
 
-    def encode_empty_intentions(self, name):
-#        pass
-        self.encode_packed32(1)
-        self.encode_string("")
-        self.encode_string(name)
+    def encode_intentions(self, intentions):
+        keys = intentions.keys()
+        keys.sort();
+        self.encode_packed32(len(intentions))
+        for k in keys:
+            self.encode_string(k)
+            self.encode_string(intentions[k])
 
 class Decoder(Codec):
     def __init__(self, reader, version=DEFAULT_VERSION):
@@ -1020,13 +1029,12 @@ class Decoder(Codec):
 
     def decode_intentions(self):
         numIntentions = self.decode_packed32()
-        name = ""
+        res = {}
         for i in range(numIntentions):
             key = self.decode_string()
             val = self.decode_string()
-            if key=="":
-                name = val
-        return name
+            res[key] = val
+        return res
 
 class signature_reader:
     def __init__(self, signature):
