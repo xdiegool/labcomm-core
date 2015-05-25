@@ -168,8 +168,8 @@ static const struct labcomm2014_sample_ref *do_ref_get(
 {
   const struct labcomm2014_signature *renamed;
   struct decoder *id = d->context;
-  
- renamed = get_renamed(d, signature);
+
+  renamed = get_renamed(d, signature);
   if (renamed == NULL) {
     return id->next->ref_get(id->next, signature);
   } else {

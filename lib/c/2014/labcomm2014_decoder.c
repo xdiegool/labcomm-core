@@ -265,23 +265,26 @@ out:
 }
 
 static labcomm2014_decoder_function lookup_h(struct labcomm2014_decoder *d,
-		                         struct call_handler_context *wrap,
-		                         int remote_index,
-					 int **local_index)
+                                             struct call_handler_context *wrap,
+                                             int remote_index,
+                                             int *r_local_index)
 {
   struct decoder *id = d->context;
   labcomm2014_decoder_function do_decode = NULL;
+  int *local_index;
+
   labcomm2014_scheduler_data_lock(d->scheduler);
-  *local_index = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
-                                             id->remote_to_local, int,
-                                             remote_index);
-  if (**local_index != 0) {
+  local_index = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
+                                            id->remote_to_local, int,
+                                            remote_index);
+  *r_local_index = *local_index;
+  if (*local_index != 0) {
     struct sample_entry *entry;
 
     entry = LABCOMM_SIGNATURE_ARRAY_REF(d->memory,
                                         id->local, struct sample_entry,
-                                        **local_index);
-    wrap->local_index = **local_index;
+                                        *local_index);
+    wrap->local_index = *local_index;
     wrap->signature = entry->signature;
     wrap->handler = entry->handler;
     wrap->context = entry->context;
@@ -300,7 +303,7 @@ static int decode_and_handle(struct labcomm2014_decoder *d,
 		             int remote_index)
 {
   int result;
-  int *local_index;
+  int local_index;
   struct call_handler_context wrap = {
     .reader = d->reader,
     .remote_index = remote_index,
@@ -309,7 +312,7 @@ static int decode_and_handle(struct labcomm2014_decoder *d,
     .context = NULL,
   };
   labcomm2014_decoder_function do_decode = lookup_h(registry, &wrap, remote_index, &local_index);
-  result = *local_index;
+  result = local_index;
   if (do_decode) {
     do_decode(d->reader, call_handler, &wrap);
     if (d->reader->error < 0) {
