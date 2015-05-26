@@ -151,11 +151,16 @@ aspect PythonTypes {
   }
 
   public void TypeInstance.Python_genIntentions(Python_env env) {
-    env.print("{");
+//  env.print("{");
+//  for(Intention i : sortedIntentions()) {
+//      env.print("'"+i.getKey()+"':'"+new String(i.getValue())+"', ");
+//  }
+//  env.print("}");
+    env.print("tuple((");
     for(Intention i : sortedIntentions()) {
-        env.print("'"+i.getKey()+"':'"+new String(i.getValue())+"', ");
+        env.print("('"+i.getKey()+"','"+new String(i.getValue())+"'), ");
     }
-    env.print("}");
+    env.print("))");
   }
 
   public void TypeInstance.Python_genTypedef(Python_env env) {

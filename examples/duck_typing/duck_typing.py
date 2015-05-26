@@ -27,7 +27,7 @@ if __name__ == '__main__':
         while True:
             value,decl = decoder.decode()
             if value:
-                print decl.name, 'says', value.says
+                print decl.name, 'says', value
                 pass
             pass
         pass

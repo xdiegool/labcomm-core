@@ -389,15 +389,25 @@ class SAMPLE(primitive):
     def __repr__(self):
         return "labcomm.SAMPLE()"
 
+# helper function
+
+def dict_to_sorted_tuple(d):
+    tmpL = zip(d.keys(), d.values())
+    tmpL.sort()
+    return tuple(tmpL)
+
 #
 # Aggregate types
 #
 class sampledef_or_sampleref_or_typedef(type_decl):
     def __init__(self, intentions=None, decl=None):
-        if intentions is not None and '' in intentions:
-            self.name = intentions['']
+        self.name = None
+        if intentions is not None:
+            self.intentionDict = dict(intentions)
+            if '' in self.intentionDict:
+                self.name = self.intentionDict['']
         else:
-            self.name = None
+            self.intentionDict = {}
         self.intentions = intentions
         self.decl = decl
 
@@ -459,21 +469,25 @@ class sample_def(sampledef_or_sampleref_or_typedef):
         decoder.add_decl(decl, index)
 
     def rename(self, name):
-        newIntentions = intentions.copy()
+        newIntentions = intentionDict.copy()
         newIntentions['']=name
-        return sample_def(newIntentions, decl=self.decl)
+        return sample_def(dict_to_sorted_tuple(newIntentions), decl=self.decl)
 
 class sample_ref(sampledef_or_sampleref_or_typedef):
     type_index = i_SAMPLE_REF
     type_name = 'sample_ref'
 
     def __init__(self, intentions=None, decl=None, sample=None):
-        if intentions is not None and '' in intentions:
-            self.name = intentions['']
-            print "sampleref: name = %s" % self.name
+        if intentions is not None:
+            self.intentionDict = dict(intentions)
+            if '' in self.intentionDict:
+                self.name = self.intentionDict['']
+                print "sampleref: name = %s" % self.name
         else:
+            self.intentionDict = {}
             self.name = None
         self.decl = decl
+        self.intentions=intentions
         if sample == None and self.name != None and decl != None:
             self.sample = sample_def(intentions, decl)
         else:
@@ -624,6 +638,7 @@ class array(type_decl):
 
 class struct(type_decl):
     def __init__(self, field):
+        #print "struct __init__: field = %s" % str(field)
         self.field = tuple(field)
 
     def __eq__(self, other):
@@ -645,13 +660,24 @@ class struct(type_decl):
                 encoder.encode_type_number(decl)
 
     def encode(self, encoder, obj):
-        if isinstance(obj, dict):
+        try:
+            # hack to get names as keys in the obj:
+            tmp_foo = zip (map(lambda x:dict(x)[''],obj.keys()), obj.values())
+            tmp_obj = dict(tmp_foo)
             for (intentions, decl) in self.field:
-                name = intentions['']
-                decl.encode(encoder, obj[name])
-        else:
+                tmp = dict(intentions)
+                #print "struct.encode field intentionstmp: %s" % tmp
+                #print "struct.encode field obj: %s" % tmp_obj
+                name = tmp['']
+                decl.encode(encoder, tmp_obj[name])
+        except AttributeError:
+            print "HERE BE DRAGONS! hack to get duck-typing example to work"
             for (intentions, decl) in self.field:
-                name = intentions['']
+                tmp = dict(intentions)
+                #print "struct.encode field intentionstmp: %s" % tmp
+                #print "struct.encode field obj: %s" % tmp_obj
+                name = tmp['']
+                print "trying to encode [%s] " % (name)
                 decl.encode(encoder, getattr(obj, name))
 
     def decode_decl(self, decoder):
@@ -667,14 +693,14 @@ class struct(type_decl):
         if obj == None:
             obj = decoder.create_object()
         for (intentions, decl) in self.field:
-            name = intentions['']
-            obj.__setattr__(name, decl.decode(decoder))
+            #name = dict(intentions)['']
+            obj.__setattr__(intentions, decl.decode(decoder))
         return obj
 
     def new_instance(self):
         result = anonymous_object()
         for (intentions, decl) in self.field:
-            name = intentions['']
+            name = dict(intentions)['']
             result.__setattr__(name, decl.new_instance())
         return result
 
@@ -682,7 +708,10 @@ class struct(type_decl):
         delim = ""
         result = "labcomm.struct(["
         for (intentions, decl) in self.field:
-            name = intentions[''] if '' in intentions  else '(no name)'
+            try:
+                name = intentions['']
+            except:
+                name = '(no name)'
             result += "%s\n  ('%s', %s)" % (delim, name, decl)
             delim = ","
         result += "\n])"
@@ -696,12 +725,14 @@ STRUCT = struct([])
 
 class anonymous_object(dict):
     def __setattr__(self, name, value):
-        if name.startswith("_"):
+# XXX HERE BE DRAGONS! Is this used or should it be removed?
+        if (str(name)).startswith("_"):
             super(anonymous_object, self).__setattr__(name, value)
         else:
             self[name] = value
 
     def __getattr__(self, name):
+# XXX d:o        
         if name.startswith("_"):
             return super(anonymous_object, self).__getattr__(name)
         else:
@@ -815,7 +846,7 @@ class Encoder(Codec):
         if not isinstance(ref, type_decl):
             # Trying to register a sample class
             ref = ref.signature
-        decl = sample_ref(name=ref.name, decl=ref.decl, sample=ref)
+        decl = sample_ref(intentions=ref.intentions, decl=ref.decl, sample=ref)
         if index == 0:
             self.writer.mark_begin(ref, None)
             if super(Encoder, self).add_ref(decl, index):
@@ -889,13 +920,13 @@ class Encoder(Codec):
 	self.pack("%ds" % len(s),s)
 
     def encode_intentions(self, intentions):
-        keys = intentions.keys()
-        keys.sort();
         self.encode_packed32(len(intentions))
-        for k in keys:
-            v = intentions[k]
-            self.encode_string(k)
-            self.encode_string(v)
+        try:
+            for (k,v) in intentions:
+                self.encode_string(k)
+                self.encode_string(v)
+        except:
+             print "WARNING! encode_intentions: don't know what to do with %s" % intentions
 
 class Decoder(Codec):
     def __init__(self, reader, version=DEFAULT_VERSION):
@@ -1035,7 +1066,8 @@ class Decoder(Codec):
             key = self.decode_string()
             val = self.decode_string()
             res[key] = val
-        return res
+        result = dict_to_sorted_tuple(res)
+        return result
 
 class signature_reader:
     def __init__(self, signature):
