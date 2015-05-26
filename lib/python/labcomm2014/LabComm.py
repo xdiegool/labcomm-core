@@ -400,15 +400,10 @@ def dict_to_sorted_tuple(d):
 # Aggregate types
 #
 class sampledef_or_sampleref_or_typedef(type_decl):
-    def __init__(self, intentions=None, decl=None):
-        self.name = None
-        if intentions is not None:
-            self.intentionDict = dict(intentions)
-            if '' in self.intentionDict:
-                self.name = self.intentionDict['']
-        else:
-            self.intentionDict = {}
-        self.intentions = intentions
+    def __init__(self, intentions={}, decl=None):
+        self.intentionDict = dict(intentions)
+        self.name = self.intentionDict.get('', None)
+        self.intentions = tuple(sorted(self.intentionDict.iteritems()))
         self.decl = decl
 
     def encode_decl(self, encoder):
@@ -469,25 +464,19 @@ class sample_def(sampledef_or_sampleref_or_typedef):
         decoder.add_decl(decl, index)
 
     def rename(self, name):
-        newIntentions = intentionDict.copy()
+        newIntentions = dict(self.intentionDict)
         newIntentions['']=name
-        return sample_def(dict_to_sorted_tuple(newIntentions), decl=self.decl)
+        return sample_def(newIntentions, decl=self.decl)
 
 class sample_ref(sampledef_or_sampleref_or_typedef):
     type_index = i_SAMPLE_REF
     type_name = 'sample_ref'
 
-    def __init__(self, intentions=None, decl=None, sample=None):
-        if intentions is not None:
-            self.intentionDict = dict(intentions)
-            if '' in self.intentionDict:
-                self.name = self.intentionDict['']
-                print "sampleref: name = %s" % self.name
-        else:
-            self.intentionDict = {}
-            self.name = None
+    def __init__(self, intentions={}, decl=None, sample=None):
+        self.intentionDict = dict(intentions)
+        self.name = self.intentionDict.get('', None) # XXX should we allow  nameless?
         self.decl = decl
-        self.intentions=intentions
+        self.intentions=tuple(sorted(self.intentionDict.iteritems()))
         if sample == None and self.name != None and decl != None:
             self.sample = sample_def(intentions, decl)
         else:
@@ -638,7 +627,6 @@ class array(type_decl):
 
 class struct(type_decl):
     def __init__(self, field):
-        #print "struct __init__: field = %s" % str(field)
         self.field = tuple(field)
 
     def __eq__(self, other):
@@ -666,16 +654,12 @@ class struct(type_decl):
             tmp_obj = dict(tmp_foo)
             for (intentions, decl) in self.field:
                 tmp = dict(intentions)
-                #print "struct.encode field intentionstmp: %s" % tmp
-                #print "struct.encode field obj: %s" % tmp_obj
                 name = tmp['']
                 decl.encode(encoder, tmp_obj[name])
         except AttributeError:
             print "HERE BE DRAGONS! hack to get duck-typing example to work"
             for (intentions, decl) in self.field:
                 tmp = dict(intentions)
-                #print "struct.encode field intentionstmp: %s" % tmp
-                #print "struct.encode field obj: %s" % tmp_obj
                 name = tmp['']
                 print "trying to encode [%s] " % (name)
                 decl.encode(encoder, getattr(obj, name))
@@ -725,14 +709,13 @@ STRUCT = struct([])
 
 class anonymous_object(dict):
     def __setattr__(self, name, value):
-# XXX HERE BE DRAGONS! Is this used or should it be removed?
+# XXX HERE BE DRAGONS! Is this OK:
         if (str(name)).startswith("_"):
             super(anonymous_object, self).__setattr__(name, value)
         else:
             self[name] = value
 
     def __getattr__(self, name):
-# XXX d:o        
         if name.startswith("_"):
             return super(anonymous_object, self).__getattr__(name)
         else:
