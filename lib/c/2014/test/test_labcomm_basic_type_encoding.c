@@ -91,7 +91,7 @@ static void writer_assert(char *type,
   }
 }
 
-int main(void)
+static int do_test(int argc, char *argv[])
 {
   TEST_WRITE_READ(packed32, packed32, "%d", 0x0, 1, "\x00");
   TEST_WRITE_READ(packed32, packed32, "%d", 0x7f, 1, "\x7f");
@@ -141,3 +141,7 @@ int main(void)
   return 0;
 }
 
+int main(int argc, char *argv[])
+{
+  return do_test(argc, argv);
+}

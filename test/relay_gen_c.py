@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import argparse
 import re
 import sys
 
@@ -13,7 +14,13 @@ def split_match(pattern, multiline):
    
 
 if __name__ == '__main__':
-    f = open(sys.argv[1])
+    parser = argparse.ArgumentParser(description='Generate C test relay.')
+    parser.add_argument('--renaming', action='store_true')
+    parser.add_argument('typeinfo', help='typeinfo file')
+
+    options = parser.parse_args(sys.argv[1:])
+
+    f = open(options.typeinfo)
     sample = []
     for l in map(lambda s: s.strip(), f):
         lang,kind,func,arg,stype = l[1:].split(l[0])
@@ -27,12 +34,21 @@ if __name__ == '__main__':
       |#include <sys/types.h>
       |#include <sys/stat.h>
       |#include <fcntl.h>
+      |#include <stdio.h>
       |#include <labcomm2014.h>
       |#include <labcomm2014_default_error_handler.h>
       |#include <labcomm2014_default_memory.h>
       |#include <labcomm2014_default_scheduler.h>
       |#include <labcomm2014_fd_reader.h>
       |#include <labcomm2014_fd_writer.h>
+    """))
+    if options.renaming:
+        result.extend(split_match('^[^|]*\|(.*)$', """
+        |#include "labcomm2014_renaming.h"
+        |#include "labcomm2014_renaming_encoder.h"
+        |#include "labcomm2014_renaming_decoder.h"
+        """))
+    result.extend(split_match('^[^|]*\|(.*)$', """
       |#include "c_code.h"
     """))
     for func,arg,stype in sample:
@@ -45,26 +61,55 @@ if __name__ == '__main__':
         pass
     result.extend(split_match('^[^|]*\|(.*)$', """
       |int main(int argc, char *argv[]) {
-      |  struct labcomm2014_encoder *e;
-      |  struct labcomm2014_decoder *d;
-      |  int in, out;
+      |  struct labcomm2014_encoder *e, *e_e;
+      |  struct labcomm2014_decoder *d, *d_d;
+    """))
+    if options.renaming:
+        result.extend(split_match('^[^|]*\|(.*)$', """
+        |  struct labcomm2014_encoder *e_p, *e_s;
+        |  struct labcomm2014_decoder *d_p, *d_s;
+        """))
+    result.extend(split_match('^[^|]*\|(.*)$', """
+      |  int in, out, result;
       |  
       |  if (argc < 3) { return 1; }
       |  in = open(argv[1], O_RDONLY);
       |  if (in < 0) { return 1; }
       |  out = open(argv[2], O_WRONLY);
       |  if (out < 0) { return 1; }
-      |  e = labcomm2014_encoder_new(labcomm2014_fd_writer_new(
-      |                              labcomm2014_default_memory, out, 1), 
-      |                              labcomm2014_default_error_handler,
-      |                              labcomm2014_default_memory,
-      |                              labcomm2014_default_scheduler);
-      |  d = labcomm2014_decoder_new(labcomm2014_fd_reader_new(
-      |                              labcomm2014_default_memory, in, 1), 
-      |                              labcomm2014_default_error_handler,
-      |                              labcomm2014_default_memory,
-      |                              labcomm2014_default_scheduler);
+      |  e_e = labcomm2014_encoder_new(labcomm2014_fd_writer_new(
+      |                                labcomm2014_default_memory, out, 1),
+      |                                labcomm2014_default_error_handler,
+      |                                labcomm2014_default_memory,
+      |                                labcomm2014_default_scheduler);
+      |  d_d = labcomm2014_decoder_new(labcomm2014_fd_reader_new(
+      |                                labcomm2014_default_memory, in, 1),
+      |                                labcomm2014_default_error_handler,
+      |                                labcomm2014_default_memory,
+      |                                labcomm2014_default_scheduler);
     """))
+    if not options.renaming:
+        result.extend(split_match('^[^|]*\|(.*)$', """
+        |  e = e_e;
+        |  d = d_d;
+        """))
+    else:
+        result.extend(split_match('^[^|]*\|(.*)$', """
+        |  e_p = labcomm2014_renaming_encoder_new(e_e,
+        |                                         labcomm2014_renaming_prefix,
+        |                                         "prefix:");
+        |  e_s = labcomm2014_renaming_encoder_new(e_p,
+        |                                         labcomm2014_renaming_suffix,
+        |                                         ":suffix");
+        |  e = e_s;
+        |  d_p = labcomm2014_renaming_decoder_new(d_d,
+        |                                         labcomm2014_renaming_prefix,
+        |                                         "prefix:");
+        |  d_s = labcomm2014_renaming_decoder_new(d_p,
+        |                                         labcomm2014_renaming_suffix,
+        |                                         ":suffix");
+        |  d = d_s;
+        """))
     for func,arg,stype in sample:
         result.extend(split_match('^[^|]*\|(.*)$', """
           |  labcomm2014_encoder_register_%(func)s(e);
@@ -73,7 +118,19 @@ if __name__ == '__main__':
           |  labcomm2014_decoder_sample_ref_register(d, labcomm2014_signature_%(func)s);
        """ % { 'func': func, 'arg': arg }))
     result.extend(split_match('^[^|]*\|(.*)$', """
-      |  labcomm2014_decoder_run(d);
+      |  while ((result = labcomm2014_decoder_decode_one(d)) > 0) {};
+    """))
+    if options.renaming:
+        result.extend(split_match('^[^|]*\|(.*)$', """
+        |  labcomm2014_decoder_free(d_s);
+        |  labcomm2014_decoder_free(d_p);
+        |  labcomm2014_encoder_free(e_s);
+        |  labcomm2014_encoder_free(e_p);
+        """))
+    result.extend(split_match('^[^|]*\|(.*)$', """
+      |  labcomm2014_decoder_free(d_d);
+      |  labcomm2014_encoder_free(e_e);
+      |  fprintf(stderr, "Failed with %d", result);
       |  return 0;
       |}
     """))

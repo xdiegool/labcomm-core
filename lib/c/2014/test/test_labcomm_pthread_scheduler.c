@@ -40,6 +40,7 @@ static void func(void *arg)
   if (func_arg->i == 999) {
     labcomm2014_scheduler_wakeup(func_arg->scheduler);
   }
+  free(func_arg);
 }
 
 void enqueue(struct labcomm2014_scheduler *scheduler, 
@@ -56,7 +57,7 @@ void enqueue(struct labcomm2014_scheduler *scheduler,
   }
 }
 
-int main(int argc, char *argv[])
+static int do_test(int argc, char *argv[])
 {
   struct labcomm2014_scheduler *scheduler;
   struct labcomm2014_time *time;
@@ -78,5 +79,12 @@ int main(int argc, char *argv[])
   labcomm2014_scheduler_sleep(scheduler, NULL);
   labcomm2014_scheduler_sleep(scheduler, time);
 
+  labcomm2014_time_free(time);
+  labcomm2014_scheduler_free(scheduler);
   return 0;
+}
+
+int main(int argc, char *argv[])
+{
+  return do_test(argc, argv);
 }

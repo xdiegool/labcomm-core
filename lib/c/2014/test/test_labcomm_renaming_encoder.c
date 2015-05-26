@@ -26,7 +26,7 @@
 #include "labcomm2014_private.h"
 #include "labcomm2014_default_error_handler.h"
 #include "labcomm2014_default_memory.h"
-#include "labcomm2014_pthread_scheduler.h"
+#include "labcomm2014_default_scheduler.h"
 #include "labcomm2014_renaming.h"
 #include "labcomm2014_renaming_encoder.h"
 #include "test/gen/generated_encoding.h"
@@ -193,7 +193,7 @@ void dump_encoder(struct labcomm2014_encoder *encoder)
   printf("\n");
 }
 
-int main(void)
+static int do_test(int argc, char *argv[])
 {
   struct labcomm2014_encoder *encoder, *prefix, *suffix;
   int i;
@@ -206,7 +206,7 @@ int main(void)
     &buffer_writer, 
     labcomm2014_default_error_handler,
     labcomm2014_default_memory,
-    labcomm2014_pthread_scheduler_new(labcomm2014_default_memory));
+    labcomm2014_default_scheduler);
   prefix = labcomm2014_renaming_encoder_new(encoder,
                                             labcomm2014_renaming_prefix,
                                             "p.");
@@ -277,6 +277,14 @@ int main(void)
   labcomm2014_encode_generated_encoding_V(suffix);
   EXPECT({VARIABLE(5), 0x00 });
 
+  labcomm2014_encoder_free(suffix);
+  labcomm2014_encoder_free(prefix);
+  labcomm2014_encoder_free(encoder);
+
   return 0;
 }
 
+int main(int argc, char *argv[])
+{
+  return do_test(argc, argv);
+}

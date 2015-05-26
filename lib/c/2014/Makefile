@@ -108,7 +108,7 @@ endif
 # rules invoked by 'test'
 .PHONY: run-test-%
 run-test-%: $(TEST_DIR)/gen/% | $(TEST_DIR)/gen
-	$<
+	$(VALGRIND) $<
 
 .PRECIOUS: $(TEST_DIR)/gen/%
 

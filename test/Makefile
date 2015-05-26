@@ -1,4 +1,6 @@
-TESTS=basic simple nested ref
+TESTS_RENAME=basic simple nested # sample_ref's does not transfer between
+                                 # encoder decoder for now
+TESTS=$(TESTS_RENAME) ref
 LABCOMM_JAR=../compiler/labcomm2014_compiler.jar
 LABCOMM=java -jar $(LABCOMM_JAR)
 MONO_PATH=$(shell pwd)/../lib/csharp
@@ -8,7 +10,7 @@ include ../lib/c/os_compat.mk
 
 all:
 
-test: $(TESTS:%=test_%) compiler_errors
+test: $(TESTS:%=test_%) $(TESTS_RENAME:%=test_renaming_%) compiler_errors
 #	PYTHONPATH=../lib/python \
 #		./test_encoder_decoder.py --labcomm="$(LABCOMM)" basic.lc
 
@@ -26,10 +28,28 @@ test_%: gen/%/signatures.py \
 		./test_encoder_decoder.py \
 		--signatures=gen/$*/signatures.py \
 		--test tee gen/$*/testdata \
-		--test gen/$*/c_relay /dev/stdin /dev/stdout \
+		--test $(shell echo $(VALGRIND) | sed -e 's/[-][-]/\\\\--/g') \
+		       gen/$*/c_relay /dev/stdin /dev/stdout \
 		--test mono gen/$*/cs_relay.exe /dev/stdin /dev/stdout \
-		--test java \\-cp gen/$*:../lib/java/labcomm2014.jar java_relay \
-			    /dev/stdin /dev/stdout
+		--test java \\-cp gen/$*:../lib/java/labcomm2014.jar \
+		       java_relay /dev/stdin /dev/stdout
+
+.PHONY: test_renaming_%
+test_renaming_%: gen/%/signatures.py \
+		gen/%/c_renaming_relay \
+		gen/%/cs_relay.exe \
+		gen/%/java_relay.class \
+		gen/%/java_code
+	PYTHONPATH=$(PYTHONPATH) MONO_PATH=$(MONO_PATH) \
+		./test_renaming_encoder_decoder.py \
+		--signatures=gen/$*/signatures.py \
+		--test tee gen/$*/testdata.renamed \
+		--test $(shell echo $(VALGRIND) | sed -e 's/[-][-]/\\\\--/g') \
+		       gen/$*/c_renaming_relay /dev/stdin /dev/stdout
+	echo \
+		--test mono gen/$*/cs_relay.exe /dev/stdin /dev/stdout \
+		--test java \\-cp gen/$*:../lib/java/labcomm2014.jar \
+		       java_relay /dev/stdin /dev/stdout
 
 # test cases for compiler error checking
 .PHONY: compiler_errors testErrorsOK testErrorsNOK
@@ -68,6 +88,15 @@ gen/%/c_relay.c: gen/%/typeinfo relay_gen_c.py Makefile
 
 .PRECIOUS: gen/%/c_relay
 gen/%/c_relay: gen/%/c_relay.c gen/%/c_code.c Makefile
+	$(CC) $(CFLAGS) -o $@ $< -I../lib/c/2014 -I. -L../lib/c \
+		gen/$*/c_code.c -llabcomm2014
+
+.PRECIOUS: gen/%/c_renaming_relay.c
+gen/%/c_renaming_relay.c: gen/%/typeinfo relay_gen_c.py Makefile
+	./relay_gen_c.py --renaming $< > $@
+
+.PRECIOUS: gen/%/c_renaming_relay
+gen/%/c_renaming_relay: gen/%/c_renaming_relay.c gen/%/c_code.c Makefile
 	$(CC) $(CFLAGS) -o $@ $< -I../lib/c/2014 -I. -L../lib/c \
 		gen/$*/c_code.c -llabcomm2014
 

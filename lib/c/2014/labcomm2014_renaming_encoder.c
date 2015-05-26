@@ -263,7 +263,7 @@ struct labcomm2014_encoder *labcomm2014_renaming_encoder_new(
     return NULL;
   } else {
       result->encoder.context = result;
-      result->encoder.writer = NULL;
+      result->encoder.writer = e->writer;
       result->encoder.error = e->error;
       result->encoder.memory = e->memory;
       result->encoder.scheduler = e->scheduler;

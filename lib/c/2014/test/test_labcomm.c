@@ -171,7 +171,9 @@ static test_sample_test_var decoder_var = {
 
 void handle_test_var(test_sample_test_var *v, void *ctx)
 {
-  decoder_var.a[0] = v->a[0];  
+  if (v->n_0 * v->n_2 > 0) {
+    decoder_var.a[0] = v->a[0];
+  }
 }
 
 int test_decode_one(struct labcomm2014_decoder *decoder)
@@ -229,7 +231,7 @@ static void test_encode_decode(struct labcomm2014_encoder *encoder,
   }
 }
 
-int main(void)
+static int do_test(int argc, char *argv[])
 {
   int i;
   struct labcomm2014_decoder *decoder = labcomm2014_decoder_new(
@@ -273,5 +275,13 @@ int main(void)
     test_encode_decode(encoder, decoder, 4+i, 0, (1<<(7*i)));
   }
   test_encode_decode(encoder, decoder, 8, 0, 4294967295);
+
+  labcomm2014_encoder_free(encoder);
+  labcomm2014_decoder_free(decoder);
   return 0;
+}
+
+int main(int argc, char *argv[])
+{
+  return do_test(argc, argv);
 }

@@ -1,6 +1,7 @@
 SUBDIRS=compiler lib test examples packaging
 export LABCOMM_JAR=$(shell pwd)/compiler/labcomm2014_compiler.jar
 export LABCOMM=java -jar $(LABCOMM_JAR) 
+export VALGRIND=valgrind --leak-check=full --error-exitcode=1
 
 UNAME_S=$(shell uname -s)
 
