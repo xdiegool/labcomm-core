@@ -6,13 +6,13 @@ import se.lth.control.labcomm2014.compiler.LabCommParser.Terminals;
 
 %%
 
-%public 
-%final 
+%public
+%final
 %class LabCommScanner
 %extends Scanner
 
-%type Symbol 
-%function nextToken 
+%type Symbol
+%function nextToken
 %yylexthrow Scanner.Exception
 
 %unicode
@@ -47,12 +47,12 @@ EndOfLineComment = "//" {InputCharacter}* {LineTerminator}?
 Identifier = [[:letter:]_]([[:letter:]_[:digit:]])*
 StringLiteral = [:jletterdigit:]*
 
-DecimalNumeral = 0 | {NonZeroDigit} {Digits}? 
+DecimalNumeral = 0 | {NonZeroDigit} {Digits}?
 Digits = {Digit}+
 Digit = 0 | {NonZeroDigit}
 NonZeroDigit = [1-9]
 
-QuotedString = "\"" {InputCharacter}* "\""
+QuotedString = "\""~"\""
 
 %%
 
@@ -84,7 +84,7 @@ QuotedString = "\"" {InputCharacter}* "\""
   ";"                            { return sym(Terminals.SEMICOLON); }
   ":"                            { return sym(Terminals.COLON); }
   ","                            { return sym(Terminals.COMMA); }
-  
+
   {Identifier}                   { return sym(Terminals.IDENTIFIER); }
   {QuotedString}                 { return sym(Terminals.QUOTEDSTRING); }
 }
