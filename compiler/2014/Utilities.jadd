@@ -37,3 +37,197 @@ aspect Encoding {
     }
 }
 
+aspect PrintEnv {
+  public abstract class PrintEnv {
+
+    protected static class Printer {
+      private final String indentString = "    ";
+      private boolean newline = true; // last print ended with newline
+      protected PrintStream out;
+      private Printer printer;
+
+
+      /** dummy constructor motivated by the FilePrinter subclass */
+      protected Printer() {
+        this.out = null;
+      }
+      public Printer(PrintStream out) {
+        this.out = out;
+       }
+
+      public void print(PrintEnv env, String s) {
+        if (newline) {
+          newline = false;
+          for (int i = 0 ; i < env.getIndent() ; i++) {
+            out.print(indentString);
+          }
+        }
+        out.print(s);
+      }
+
+      public void println(PrintEnv env, String s) {
+        print(env, s);
+        out.println();
+        newline = true;
+      }
+
+      public void println(PrintEnv env) {
+        out.println();
+        newline = true;
+      }
+
+      public PrintStream getPrintStream() {
+        return(out);
+      }
+
+      public void close() throws IOException {
+        //do nothing
+      }
+    }
+
+    protected static class FilePrinter extends Printer {
+
+      private File file;
+      private IOException exception;
+
+      public FilePrinter(PrintStream out) {
+          super(out);
+      }
+
+      public FilePrinter(File f) {
+
+        file = f;
+        File parentFile = f.getParentFile();
+        if(parentFile != null) {
+            parentFile.mkdirs();
+        }
+      }
+
+      public void close() throws IOException {
+        if (out != null) {
+          out.close();
+        }
+        if (exception != null) {
+          throw exception;
+        }
+      }
+
+      public void checkOpen() {
+        if (out == null && exception == null) {
+          try {
+            out = new PrintStream(new FileOutputStream(file));
+          } catch (IOException e) {
+            exception = e;
+          }
+        }
+      }
+
+      public void print(PrintEnv env, String s) {
+        checkOpen();
+        super.print(env,s);
+      }
+
+      public void println(PrintEnv env, String s) {
+	      checkOpen();
+        super.println(env, s);
+      }
+    }
+
+    public final int version; //labcomm version (2006 or 2014)
+    public final String verStr; // version suffix to append (currently _2006 and empty string)
+    private Printer printer;
+    private int indent;
+    private int depth;
+
+    protected PrintEnv(PrintStream out) {
+      this(new Printer(out));
+    }
+
+    protected PrintEnv(Printer printer) {
+      this(printer, 2014);
+    }
+    protected PrintEnv(Printer printer, int version) {
+      this(0, printer, version);
+    }
+    protected PrintEnv(int indent, Printer printer, int version) {
+      this(indent, printer, version, 0);
+    }
+
+    protected PrintEnv(int indent, Printer printer, int version, int depth) {
+      this.version = version;
+      this.indent = indent;
+      this.printer = printer;
+      this.verStr = LabCommVersion.versionString(version);
+      this.depth = depth;
+    }
+
+    public void close() throws IOException {
+      printer.close();
+    }
+
+    public PrintStream getPrintStream() {
+      return printer.getPrintStream();
+    }
+    public void indent(int amount) {
+      indent += amount;
+    }
+
+    public void indent() {
+      indent(1);
+    }
+
+    public void unindent(int amount) {
+      indent -= amount;
+      if (indent < 0) {
+        throw new Error("Negative indent level");
+      }
+    }
+
+    public void unindent() {
+      unindent(1);
+    }
+
+    public void print(String s) {
+      printer.print(this, s);
+    }
+
+    public void println(String s) {
+      printer.println(this, s);
+    }
+
+    public void println() {
+      printer.println(this, "");
+    }
+
+    public void incDepth() {
+      depth++;
+    }
+
+    public void decDepth() {
+      if(depth<=0) {
+        throw new RuntimeException("decDepth() called when depth = "+depth);
+      }
+      depth--;
+    }
+
+    public int getDepth() {
+      return depth;
+    }
+
+    public int getVersion() {
+      return version;
+    }
+
+    public int getIndent() {
+      return indent;
+    }
+
+    public Printer getPrinter() {
+      return printer;
+    }
+
+    public boolean versionHasMetaData() {
+      return version != 2006;
+    }
+  }
+}

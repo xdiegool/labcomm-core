@@ -5,8 +5,15 @@ aspect Version {
      */
     class LabCommVersion {
         public static String versionString(int version) {
-            return (version == 2006) ? "2006" : "";
-        }       
+            switch(version) {
+                case 2006:
+                    return "2006";
+                case 2014:
+                    return "2014";
+                default:
+                    throw new Error("no versionString for version "+version);
+            }
+        }
 
         public static boolean versionHasPragma(int version) {
             return version != 2006;
