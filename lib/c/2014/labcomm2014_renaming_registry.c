@@ -21,6 +21,7 @@
 
 #include "labcomm2014.h"
 #include "labcomm2014_private.h"
+#include "labcomm2014_renaming_private.h"
 
 struct alias {
   int usecount;
@@ -65,6 +66,13 @@ struct labcomm2014_renaming_registry *labcomm2014_renaming_registry_new(
     LABCOMM_SIGNATURE_ARRAY_INIT(result->registry, struct registry *);
     return result;
   }
+}
+
+void labcomm2014_renaming_registry_free(
+  struct labcomm2014_renaming_registry *r)
+{
+  LABCOMM_SIGNATURE_ARRAY_FREE(r->memory, r->registry, struct registry *);
+  labcomm2014_memory_free(r->memory, 0, r);
 }
 
 static struct registry *registry_new(
@@ -138,10 +146,8 @@ struct labcomm2014_renaming_rename *labcomm2014_renaming_rename_new(
 
       entry = labcomm2014_memory_alloc(r->memory, 0, sizeof(*entry));
       if (entry == NULL) { goto out; }
-      entry->next = NULL;
-      entry->use_count = 0;
-      entry->base = base;
       entry->signature.name = new_name;
+      new_name = NULL;
       entry->signature.encoded_size = signature->encoded_size;
       entry->signature.size = signature->size;
       entry->signature.signature = signature->signature;
@@ -163,6 +169,9 @@ struct labcomm2014_renaming_rename *labcomm2014_renaming_rename_new(
         labcomm2014_memory_free(r->memory, 0, entry);
         goto out;
       } else {
+        entry->next = NULL;
+        entry->use_count = 0;
+        entry->base = base;
         (*l) = entry;
       }
     }
@@ -171,14 +180,53 @@ struct labcomm2014_renaming_rename *labcomm2014_renaming_rename_new(
       result->use_count++;
     }
   out:
-    ;
+    if (new_name != NULL) {
+      labcomm2014_memory_free(r->memory, 0, new_name);
+    }
   }
   labcomm2014_scheduler_data_unlock(r->scheduler);
   return result;
 }
 
-const struct labcomm2014_signature *labcomm2014_renaming_rename_signature(
+void labcomm2014_renaming_rename_free(
+  struct labcomm2014_renaming_registry *r,
   struct labcomm2014_renaming_rename *rename)
+{
+  labcomm2014_scheduler_data_lock(r->scheduler);
+  rename->use_count--;
+  if (rename->use_count == 0) {
+    int index;
+    struct labcomm2014_renaming_rename **l;
+    struct registry **registry;
+
+    for (l = &rename->base->rename ; *l ; l = &(*l)->next) {
+      if (*l == rename) { break; }
+    }
+    *l = rename->next;
+    if (rename->base->rename == NULL) {
+      /* Last use of base signature */
+      index = labcomm2014_get_local_index(rename->base->signature);
+      registry = LABCOMM_SIGNATURE_ARRAY_REF(r->memory, r->registry,
+                                             struct registry *, index);
+      labcomm2014_memory_free(r->memory, 0, *registry);
+      *registry = NULL;
+    }
+    index = labcomm2014_get_local_index(&rename->signature);
+    registry = LABCOMM_SIGNATURE_ARRAY_REF(r->memory, r->registry,
+                                           struct registry *, index);
+    labcomm2014_memory_free(r->memory, 0, *registry);
+    *registry = NULL;
+       
+    /* TODO: We should return the index to the pool*/
+    labcomm2014_memory_free(r->memory, 0, rename->signature.name);
+    labcomm2014_memory_free(r->memory, 0, rename);
+  }
+  labcomm2014_scheduler_data_unlock(r->scheduler);
+
+}
+
+const struct labcomm2014_signature *labcomm2014_renaming_rename_signature(
+  const struct labcomm2014_renaming_rename *rename)
 {
   return &rename->signature;
 }

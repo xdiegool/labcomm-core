@@ -15,7 +15,7 @@
 #include "labcomm2014_renaming.h"
 #include "test/gen/generated_encoding.h"
 
-int main(int argc, char **argv)
+static int do_test(int argc, char **argv)
 {
   struct labcomm2014_renaming_registry *registry;
   struct labcomm2014_renaming_rename *r1, *r2, *r3, *r4;
@@ -41,4 +41,15 @@ int main(int argc, char **argv)
     labcomm2014_renaming_rename_signature(r3),
     labcomm2014_renaming_prefix, "p:");
   assert(r2 == r4);
+  labcomm2014_renaming_rename_free(registry, r1);
+  labcomm2014_renaming_rename_free(registry, r2);
+  labcomm2014_renaming_rename_free(registry, r3);
+  labcomm2014_renaming_rename_free(registry, r4);
+  labcomm2014_renaming_registry_free(registry);
+  return 0;
+}
+
+int main(int argc, char **argv)
+{
+  return do_test(argc, argv);
 }

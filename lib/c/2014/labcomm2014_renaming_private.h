@@ -1,6 +1,6 @@
 /*
-  labcomm2014_renaming.h -- functions intended for renaming
-                            encoders and decoders
+  labcomm2014_renaming_private.h -- functions intended for renaming
+                                    encoders and decoders
 
   Copyright 2015 Anders Blomdell <anders.blomdell@control.lth.se>
 
@@ -20,23 +20,23 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __LABCOMM2014_RENAMING_H__
-#define __LABCOMM2014_RENAMING_H__
+#ifndef __LABCOMM2014_RENAMING__PRIVATE_H__
+#define __LABCOMM2014_RENAMING_PRIVATE_H__
 
 #include "labcomm2014.h"
+#include "labcomm2014_renaming.h"
 
-char *labcomm2014_renaming_prefix(struct labcomm2014_memory *m,
-                                  char *name, void *context);
+struct labcomm2014_renaming_rename *labcomm2014_renaming_rename_new(
+  struct labcomm2014_renaming_registry *r,
+  const struct labcomm2014_signature *signature,
+  char *(*rename)(struct labcomm2014_memory *m, char *name, void *context),
+  void *context);
 
-char *labcomm2014_renaming_suffix(struct labcomm2014_memory *m,
-                                  char *name, void *context);
+void labcomm2014_renaming_rename_free(
+  struct labcomm2014_renaming_registry *r,
+  struct labcomm2014_renaming_rename *rename);
 
-struct labcomm2014_renaming_registry *labcomm2014_renaming_registry_new(
-  struct labcomm2014_error_handler *error,
-  struct labcomm2014_memory *memory,
-  struct labcomm2014_scheduler *scheduler);
-
-void labcomm2014_renaming_registry_free(
-  struct labcomm2014_renaming_registry *r);
+const struct labcomm2014_signature *labcomm2014_renaming_rename_signature(
+  const struct labcomm2014_renaming_rename *rename);
 
 #endif
