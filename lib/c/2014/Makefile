@@ -24,6 +24,7 @@ OBJS=labcomm$(VERSION).o \
      labcomm$(VERSION)_fd_writer.o \
      labcomm$(VERSION)_pthread_scheduler.o \
      labcomm$(VERSION)_renaming.o \
+     labcomm$(VERSION)_renaming_registry.o \
      labcomm$(VERSION)_renaming_encoder.o \
      labcomm$(VERSION)_renaming_decoder.o
 
@@ -50,6 +51,7 @@ TESTS=test_labcomm_basic_type_encoding \
       test_labcomm \
       test_labcomm_pthread_scheduler \
       test_labcomm_copy \
+      test_labcomm_renaming_registry \
       test_labcomm_renaming_encoder \
       test_labcomm_renaming_decoder
 #FIXME: test_labcomm_errors
@@ -174,6 +176,9 @@ $(TEST_DIR)/gen/test_labcomm_copy: \
 	$(TEST_DIR)/gen/generated_encoding.o \
 	$(TEST_DIR)/gen/test_sample.o \
 	$(TEST_DIR)/gen/more_types.o
+
+$(TEST_DIR)/gen/test_labcomm_renaming_registry: \
+	$(TEST_DIR)/gen/generated_encoding.o
 
 $(TEST_DIR)/gen/test_labcomm_renaming_encoder: \
 	$(TEST_DIR)/gen/generated_encoding.o

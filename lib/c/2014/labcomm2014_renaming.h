@@ -31,4 +31,21 @@ char *labcomm2014_renaming_prefix(struct labcomm2014_memory *m,
 char *labcomm2014_renaming_suffix(struct labcomm2014_memory *m,
                                   char *name, void *context);
 
+struct labcomm2014_renaming_registry;
+struct labcomm2014_renaming_registry *labcomm2014_renaming_registry_new(
+  struct labcomm2014_error_handler *error,
+  struct labcomm2014_memory *memory,
+  struct labcomm2014_scheduler *scheduler);
+
+/* semi private */
+
+struct labcomm2014_renaming_rename *labcomm2014_renaming_rename_new(
+  struct labcomm2014_renaming_registry *r,
+  const struct labcomm2014_signature *signature,
+  char *(*rename)(struct labcomm2014_memory *m, char *name, void *context),
+  void *context);
+
+const struct labcomm2014_signature *labcomm2014_renaming_rename_signature(
+  struct labcomm2014_renaming_rename *rename);
+
 #endif
