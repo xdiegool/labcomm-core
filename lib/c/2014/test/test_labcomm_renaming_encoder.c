@@ -132,7 +132,7 @@ static int buf_writer_ioctl(
 	  mismatch = 1;
 	}
       }
-      if (1 || mismatch) {
+      if (mismatch) {
 	fprintf(stderr, "Encoder mismatch (%s:%d)\n",
 		__FILE__, line);
 
