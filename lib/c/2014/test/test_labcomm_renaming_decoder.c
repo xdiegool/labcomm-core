@@ -28,6 +28,7 @@ static void handle_r(generated_encoding_R *v, void *context)
 
 int main(int argc, char **argv)
 {
+  struct labcomm2014_renaming_registry *registry;
   struct labcomm2014_encoder *encoder, *prefix_encoder, *suffix_encoder;
   struct labcomm2014_decoder *decoder, *prefix_decoder, *suffix_decoder;
   int fd;
@@ -38,15 +39,19 @@ int main(int argc, char **argv)
   if (fd == -1) {
     err(1, "open()");
   }
+  registry = labcomm2014_renaming_registry_new(
+    labcomm2014_default_error_handler,
+    labcomm2014_default_memory,
+    labcomm2014_default_scheduler);
   encoder = labcomm2014_encoder_new(
     labcomm2014_fd_writer_new(labcomm2014_default_memory, fd, 0),
     labcomm2014_default_error_handler,
     labcomm2014_default_memory,
     labcomm2014_default_scheduler);
   prefix_encoder = labcomm2014_renaming_encoder_new(
-    encoder, labcomm2014_renaming_prefix, "p.");
+    encoder, registry, labcomm2014_renaming_prefix, "p.");
   suffix_encoder = labcomm2014_renaming_encoder_new(
-    prefix_encoder, labcomm2014_renaming_suffix, ".s");
+    prefix_encoder, registry, labcomm2014_renaming_suffix, ".s");
 
   labcomm2014_encoder_register_generated_encoding_R(encoder);
   labcomm2014_encoder_register_generated_encoding_R(prefix_encoder);
@@ -90,9 +95,9 @@ int main(int argc, char **argv)
       labcomm2014_default_memory,
       labcomm2014_default_scheduler);
   prefix_decoder = labcomm2014_renaming_decoder_new(
-    decoder, labcomm2014_renaming_prefix, "p.");
+    decoder, registry, labcomm2014_renaming_prefix, "p.");
   suffix_decoder = labcomm2014_renaming_decoder_new(
-    prefix_decoder, labcomm2014_renaming_suffix, ".s");
+    prefix_decoder, registry, labcomm2014_renaming_suffix, ".s");
 
   labcomm2014_decoder_register_generated_encoding_R(
     decoder, handle_r, &cache_r);
@@ -172,6 +177,7 @@ int main(int argc, char **argv)
   labcomm2014_decoder_free(suffix_decoder);
   labcomm2014_decoder_free(prefix_decoder);
   labcomm2014_decoder_free(decoder);
+  labcomm2014_renaming_registry_free(registry);
 
   close(fd);
   unlink(DATA_FILE);

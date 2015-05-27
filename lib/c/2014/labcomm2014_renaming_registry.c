@@ -148,18 +148,18 @@ struct labcomm2014_renaming_rename *labcomm2014_renaming_rename_new(
       if (entry == NULL) { goto out; }
       entry->signature.name = new_name;
       new_name = NULL;
-      entry->signature.encoded_size = signature->encoded_size;
-      entry->signature.size = signature->size;
-      entry->signature.signature = signature->signature;
+      entry->signature.encoded_size = base->signature->encoded_size;
+      entry->signature.size = base->signature->size;
+      entry->signature.signature = base->signature->signature;
       entry->signature.index = 0;
 #ifndef LABCOMM_NO_TYPEDECL
       struct labcomm2014_signature_data s_treedata[2] = {
-        LABCOMM_SIGDEF_SIGNATURE(*signature),
+        LABCOMM_SIGDEF_SIGNATURE(*base->signature),
         LABCOMM_SIGDEF_END
       };
       entry->s_treedata[0] = s_treedata[0];
       entry->s_treedata[1] = s_treedata[1];
-      entry->signature.tdsize = sizeof(result->s_treedata);
+      entry->signature.tdsize = sizeof(entry->s_treedata);
       entry->signature.treedata = entry->s_treedata;
 #endif
       labcomm2014_set_local_index(&entry->signature);

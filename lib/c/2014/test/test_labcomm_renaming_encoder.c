@@ -137,6 +137,14 @@ static int buf_writer_ioctl(
 		__FILE__, line);
 
 	for (i = 0 ; i < w->pos ; i++) {
+          if (32 <= w->data[i] &&  w->data[i] < 127) {
+            printf("%2c ", w->data[i]);
+          } else {
+            printf("%2.2x ", w->data[i]);
+          }
+	}
+	printf("\n");
+	for (i = 0 ; i < w->pos ; i++) {
 	  printf("%2.2x ", w->data[i]);
 	}
 	printf("\n");
@@ -195,6 +203,7 @@ void dump_encoder(struct labcomm2014_encoder *encoder)
 
 static int do_test(int argc, char *argv[])
 {
+  struct labcomm2014_renaming_registry *registry;
   struct labcomm2014_encoder *encoder, *prefix, *suffix;
   int i;
 
@@ -202,15 +211,21 @@ static int do_test(int argc, char *argv[])
     seen_variable[i] = -1;
   }
 
+  registry = labcomm2014_renaming_registry_new(
+    labcomm2014_default_error_handler,
+    labcomm2014_default_memory,
+    labcomm2014_default_scheduler);
   encoder = labcomm2014_encoder_new(
     &buffer_writer, 
     labcomm2014_default_error_handler,
     labcomm2014_default_memory,
     labcomm2014_default_scheduler);
   prefix = labcomm2014_renaming_encoder_new(encoder,
+                                            registry,
                                             labcomm2014_renaming_prefix,
                                             "p.");
   suffix = labcomm2014_renaming_encoder_new(prefix,
+                                            registry,
                                             labcomm2014_renaming_suffix,
                                             ".s");
   EXPECT({ 0x01, 0x0c, 0x0b, 
@@ -236,8 +251,8 @@ static int do_test(int argc, char *argv[])
   labcomm2014_encoder_register_generated_encoding_V(suffix);
   labcomm2014_encoder_register_generated_encoding_V(suffix);
   EXPECT({ 0x02, 0x0a, VARIABLE(5), 0x05, 'p', '.', 'V', '.', 's', 0x02, 0x11, 0x00,
-           0x04, 0x07, VARIABLE(6), 0x03, 'V', '.', 's', 0x01, VARIABLE(2),
-           0x04, 0x09, VARIABLE(7), 0x05, 'p', '.', 'V', '.', 's', 0x01, VARIABLE(6),
+           0x04, 0x07, VARIABLE(6), 0x03, 'V', '.', 's', 0x01, VARIABLE(2), /* BOGUS */
+           0x04, 0x09, VARIABLE(7), 0x05, 'p', '.', 'V', '.', 's', 0x01, VARIABLE(2),
            0x05, 0x02, VARIABLE(5), VARIABLE(7) });
 
 
@@ -280,6 +295,7 @@ static int do_test(int argc, char *argv[])
   labcomm2014_encoder_free(suffix);
   labcomm2014_encoder_free(prefix);
   labcomm2014_encoder_free(encoder);
+  labcomm2014_renaming_registry_free(registry);
 
   return 0;
 }

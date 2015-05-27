@@ -13,6 +13,7 @@
 #include "labcomm2014_default_memory.h"
 #include "labcomm2014_default_scheduler.h"
 #include "labcomm2014_renaming.h"
+#include "labcomm2014_renaming_private.h"
 #include "test/gen/generated_encoding.h"
 
 static int do_test(int argc, char **argv)

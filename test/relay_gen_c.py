@@ -35,6 +35,7 @@ if __name__ == '__main__':
       |#include <sys/stat.h>
       |#include <fcntl.h>
       |#include <stdio.h>
+      |#include <errno.h>
       |#include <labcomm2014.h>
       |#include <labcomm2014_default_error_handler.h>
       |#include <labcomm2014_default_memory.h>
@@ -66,6 +67,7 @@ if __name__ == '__main__':
     """))
     if options.renaming:
         result.extend(split_match('^[^|]*\|(.*)$', """
+        |  struct labcomm2014_renaming_registry *registry;
         |  struct labcomm2014_encoder *e_p, *e_s;
         |  struct labcomm2014_decoder *d_p, *d_s;
         """))
@@ -95,17 +97,25 @@ if __name__ == '__main__':
         """))
     else:
         result.extend(split_match('^[^|]*\|(.*)$', """
+        |  registry = labcomm2014_renaming_registry_new(
+        |    labcomm2014_default_error_handler,
+        |    labcomm2014_default_memory,
+        |    labcomm2014_default_scheduler);
         |  e_p = labcomm2014_renaming_encoder_new(e_e,
+        |                                         registry,
         |                                         labcomm2014_renaming_prefix,
         |                                         "prefix:");
         |  e_s = labcomm2014_renaming_encoder_new(e_p,
+        |                                         registry,
         |                                         labcomm2014_renaming_suffix,
         |                                         ":suffix");
         |  e = e_s;
         |  d_p = labcomm2014_renaming_decoder_new(d_d,
+        |                                         registry,
         |                                         labcomm2014_renaming_prefix,
         |                                         "prefix:");
         |  d_s = labcomm2014_renaming_decoder_new(d_p,
+        |                                         registry,
         |                                         labcomm2014_renaming_suffix,
         |                                         ":suffix");
         |  d = d_s;
@@ -126,12 +136,15 @@ if __name__ == '__main__':
         |  labcomm2014_decoder_free(d_p);
         |  labcomm2014_encoder_free(e_s);
         |  labcomm2014_encoder_free(e_p);
+        |  labcomm2014_renaming_registry_free(registry);
         """))
     result.extend(split_match('^[^|]*\|(.*)$', """
       |  labcomm2014_decoder_free(d_d);
       |  labcomm2014_encoder_free(e_e);
+      |  if (result == 0) return 0;
+      |  if (result == -EPIPE) return 0;
       |  fprintf(stderr, "Failed with %d", result);
-      |  return 0;
+      |  return 1;
       |}
     """))
     print "\n".join(result)
