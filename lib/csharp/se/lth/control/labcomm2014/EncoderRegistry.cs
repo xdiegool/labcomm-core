@@ -26,29 +26,29 @@ namespace se.lth.control.labcomm2014 {
     }
 
     private int userIndex = Constant.FIRST_USER_INDEX;
-    private Dictionary<Type, Entry> byClass;
+    private Dictionary<SampleDispatcher, Entry> byIdentity;
 
     public EncoderRegistry() {
-      byClass = new Dictionary<Type, Entry>();
+      byIdentity = new Dictionary<SampleDispatcher, Entry>();
     }
 
     public int add(SampleDispatcher dispatcher) {
       lock(this) {
 	Entry e;
-	byClass.TryGetValue(dispatcher.getSampleClass(), out e);
+	byIdentity.TryGetValue(dispatcher.getSampleIdentity(), out e);
 	if (e == null) {
 	  e = new Entry(dispatcher, userIndex);
-	  byClass.Add(dispatcher.getSampleClass(), e);
+	  byIdentity.Add(dispatcher.getSampleIdentity(), e);
 	  userIndex++;
 	}
 	return e.getIndex();
       }
     }
   
-    public int getTag(Type sample) {
+    public int getTag(SampleDispatcher sample) {
       lock(this) {
 	Entry e;
-	byClass.TryGetValue(sample, out e);
+	byIdentity.TryGetValue(sample, out e);
 	if (e == null) {
 	  throw new Exception("'" + 
 			      sample.ToString() + 

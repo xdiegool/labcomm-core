@@ -166,11 +166,11 @@ namespace se.lth.control.labcomm2014 {
       return (int) (res & 0xffffffff);
     }
 
-    public Type decodeSampleRef() {
+    public SampleDispatcher decodeSampleRef() {
       int index = (int)ReadInt(4);
       try {
         DecoderRegistry.Entry e = ref_registry.get(index);
-        return e.getSampleDispatcher().getSampleClass();
+        return e.getSampleDispatcher().getSampleIdentity();
       } catch (NullReferenceException) {
         return null;
       }

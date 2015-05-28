@@ -13,7 +13,6 @@ aspect CS_CodeGenEnv {
     private int indent;
     private int depth;
     private CS_printer printer;
-    private HashMap unique = new HashMap();
 
     final private static class CS_printer {
       
@@ -157,15 +156,6 @@ aspect CS_CodeGenEnv {
     public void print_block_end() {
       unindent();
       println("}");
-    }
-
-    public String getUnique(Object o) {
-      String result = (String)unique.get(o);
-      if (result == null) {
-   	result = "_" + (unique.size() + 1) + "_";
-      }
-      unique.put(o, result);
-      return result;
     }
 
   }
@@ -377,6 +367,7 @@ aspect CS_Class {
     CS_emitSignature(env);
 
     env.println("}");
+    env.unindent();
   }
 
   public void Decl.CS_emitSignature(CS_env env) {
@@ -422,12 +413,12 @@ aspect CS_Class {
     env.unindent();
     env.println("}");
     env.println();
-    env.println("private class Dispatcher : SampleDispatcher{");
+    env.println("private class Dispatcher : SampleDispatcher {");
     env.indent();
     env.println();
-    env.println("public Type getSampleClass() {");
+    env.println("public SampleDispatcher getSampleIdentity() {");
     env.indent();
-    env.println("return typeof(" + getName() + ");");
+    env.println("return dispatcher;");
     env.unindent();
     env.println("}");
     env.println();
@@ -459,21 +450,6 @@ aspect CS_Class {
     env.unindent();
     env.println("}");
     env.println();
-//    env.println("public void encodeSignature(Encoder e) throws IOException{");
-//    env.indent();
-//    env.println("emitSignature(e);");
-//    env.unindent();
-//    env.println("}");
-//    env.println();
-//  env.println("public void encodeSignatureMetadata(Encoder e, int index){");
-//  env.indent();
-//  env.println("e.encodePacked32(Constant.TYPE_DEF);");
-//  env.println("e.encodePacked32(index);");
-//  env.println("e.encodeString(getName());");
-//  env.println("emitSignature(e);");
-//  env.unindent();
-//  env.println("}");
-//  env.println();
     env.println("public bool canDecodeAndHandle() {");
     env.indent();
     env.println("return "+isSample+";");
@@ -499,7 +475,6 @@ aspect CS_Class {
     env.unindent();
     env.println("}");
     env.println("");
-
  } //TODO, fix above method
   
   public void TypeDecl.CS_emitEncoder(CS_env env) {
@@ -526,9 +501,9 @@ aspect CS_Class {
     }
     env.println(") {");
     env.indent();
-    env.println("e.begin(typeof(" + getName() + "));");
+    env.println("e.begin(dispatcher);");
     getDataType().CS_emitEncoder(env, "value");
-    env.println("e.end(typeof(" + getName() + "));");
+    env.println("e.end(dispatcher);");
     env.unindent();
     env.println("}");
     env.println();
@@ -736,7 +711,7 @@ aspect CS_Class {
   public void PrimType.CS_emitTypePrefix(CS_env env) {
     switch (getToken()) {
       case LABCOMM_STRING: { env.print("String"); } break;
-      case LABCOMM_SAMPLE: { env.print("Type"); } break;
+      case LABCOMM_SAMPLE: { env.print("SampleDispatcher"); } break;
       default: { env.print(getName()); } break;
     }
   }
@@ -866,7 +841,7 @@ aspect CS_Class {
     switch (getToken()) {
       case LABCOMM_STRING: { env.print("String"); } break;
       case LABCOMM_BOOLEAN: { env.print("bool"); } break;
-      case LABCOMM_SAMPLE: { env.print("Type"); } break;
+      case LABCOMM_SAMPLE: { env.print("SampleDispatcher"); } break;
       default: { env.print(getName()); } break;
     }
   }

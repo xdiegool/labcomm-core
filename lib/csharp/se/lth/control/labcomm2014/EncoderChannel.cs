@@ -53,11 +53,11 @@ namespace se.lth.control.labcomm2014 {
       bytes.SetLength(0);
     }
 
-    public void begin(Type c) {
-      begin(def_registry.getTag(c));
+    public void begin(SampleDispatcher identity) {
+      begin(def_registry.getTag(identity));
     }
 
-    public void end(Type c) {
+    public void end(SampleDispatcher identity) {
       WritePacked32(writer, current_tag);
       WritePacked32(writer, bytes.Length);
       bytes.WriteTo(writer);
@@ -132,7 +132,7 @@ namespace se.lth.control.labcomm2014 {
       WritePacked32(bytes, value);
     }
 
-    public void encodeSampleRef(Type value) {
+    public void encodeSampleRef(SampleDispatcher value) {
       int index = 0;
       try {
         index = ref_registry.getTag(value);

@@ -4,12 +4,12 @@ namespace se.lth.control.labcomm2014 {
 
   public interface SampleDispatcher {
     
-    Type getSampleClass();
+    SampleDispatcher getSampleIdentity();
     
     String getName();
     
     byte[] getSignature();
-    
+
     void decodeAndHandle(Decoder decoder,
 			 SampleHandler handler);
 
