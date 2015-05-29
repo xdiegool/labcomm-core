@@ -36,8 +36,9 @@ public class LabComm {
     println("[ Misc options ]");
     println(" --pretty=PFILE          Pretty prints to PFILE");
     println(" --typeinfo=TIFILE       Generates typeinfo in TIFILE");
+    println(" --typedefs=TIFILE       Generates typedefs in TIFILE");
   }
-    
+
   /** To be cleaned up.
    */
   private static void checkVersion(int v) {
@@ -48,12 +49,12 @@ public class LabComm {
      }
   }
 
-  private static void genH(Specification p, String hName, 
+  private static void genH(Specification p, String hName,
 			   Vector cIncludes, String coreName, String prefix, int ver) {
     try {
       FileOutputStream f;
       PrintStream out;
-      
+
       f = new FileOutputStream(hName);
       out = new PrintStream(f);
       p.C_genH(out, cIncludes, coreName, prefix, ver);
@@ -63,7 +64,7 @@ public class LabComm {
     }
   }
 
-  private static void genC(Specification p, String cName, 
+  private static void genC(Specification p, String cName,
 			   Vector cIncludes, String coreName, String prefix, int ver) {
     try {
       FileOutputStream f;
@@ -83,7 +84,7 @@ public class LabComm {
     try {
       p.CS_gen(csName, csNamespace, ver);
     } catch (IOException e) {
-      System.err.println("IOException: " + csName + " " + 
+      System.err.println("IOException: " + csName + " " +
 			 csNamespace + " " + e);
     }
   }
@@ -92,7 +93,7 @@ public class LabComm {
     try {
       p.J_gen(dirName, packageName, ver);
     } catch (IOException e) {
-      System.err.println("IOException: " + dirName + " " + 
+      System.err.println("IOException: " + dirName + " " +
 			 packageName + " " + e);
     }
   }
@@ -119,7 +120,7 @@ public class LabComm {
     }
   }
 
-  /** Helper class to contain command line options 
+  /** Helper class to contain command line options
       and their associated behaviour
    **/
   private static class Opts {
@@ -139,6 +140,7 @@ public class LabComm {
     String pythonFile = null;
     String prettyFile = null;
     String typeinfoFile = null;
+    String typedefsFile = null;
     String rapidFile = null;
     String fileName = null;
 
@@ -150,21 +152,21 @@ public class LabComm {
       int i = s.lastIndexOf('.');
       return s.substring(0, i > 0 ? i : s.length());
     }
-  
+
     private static String getFileName(String s) {
       return s.substring(s.lastIndexOf('/') + 1, s.length());
     }
-  
+
     private static String getBaseName(String s) {
       s = getFileName(s);
       int i = s.lastIndexOf('.');
       return s.substring(0, i > 0 ? i : s.length());
     }
-  
+
     private static String getPrefix(String s) {
       return s.substring(s.lastIndexOf('/') + 1, s.length());
     }
-  
+
     boolean processFilename(){
       // Scan for first non-option
       for (int i = 0 ; i < args.length ; i++) {
@@ -180,12 +182,12 @@ public class LabComm {
       }
       return fileName != null;
     }
-    
+
     void processArgs(){
       for (int i = 0 ; i < args.length ; i++) {
         if (fileName == null ||
-            args[i].equals("-help") || 
-            args[i].equals("-h") || 
+            args[i].equals("-help") ||
+            args[i].equals("-h") ||
             args[i].equals("--help")) {
           print_help();
           System.exit(0);
@@ -223,6 +225,8 @@ public class LabComm {
           prettyFile = args[i].substring(9);
         } else if (args[i].startsWith("--typeinfo=")) {
           typeinfoFile = args[i].substring(11);
+        } else if (args[i].startsWith("--typedefs=")) {
+          typedefsFile = args[i].substring(11);
         } else if (args[i].equals("--rapid")) {
           rapidFile = coreName + ".sys";
         } else if (i == args.length - 1) {
@@ -249,7 +253,7 @@ public class LabComm {
        Specification p = (Specification)parser.parse(scanner);
        Collection errors = new LinkedList();
        p.errorCheck(errors);
-         
+
        if (errors.isEmpty()) {
          ast = p;
        } else {
@@ -269,7 +273,7 @@ public class LabComm {
    }
 
    boolean generateC(Specification ast) {
-     boolean wroteFile = false; 
+     boolean wroteFile = false;
      Vector hIncludes = new Vector(cIncludes);
      if (hFile != null) {
        cIncludes.add(hFile);
@@ -286,19 +290,19 @@ public class LabComm {
      }
      return wroteFile;
    }
-  
+
    boolean generateCS(Specification ast) {
-     boolean wroteFile = false; 
+     boolean wroteFile = false;
      if (csFile != null) {
-       printStatus("C#: " , csFile); 
+       printStatus("C#: " , csFile);
        genCS(ast, csFile, csNamespace, ver);
        wroteFile = true;
      }
      return wroteFile;
    }
-  
+
    boolean generateJava(Specification ast) {
-     boolean wroteFile = false; 
+     boolean wroteFile = false;
      if (javaDir != null) {
        printStatus("Java: " , javaDir);
        genJava(ast, javaDir, javaPackage, ver);
@@ -306,19 +310,19 @@ public class LabComm {
      }
      return wroteFile;
    }
-  
+
    boolean generatePython(Specification ast) {
-     boolean wroteFile = false; 
+     boolean wroteFile = false;
      if (pythonFile != null) {
-       printStatus("Python: " , pythonFile); 
+       printStatus("Python: " , pythonFile);
        genPython(ast, pythonFile, prefix, ver);
        wroteFile = true;
      }
      return wroteFile;
    }
-  
+
    boolean generateRAPID(Specification ast) {
-     boolean wroteFile = false; 
+     boolean wroteFile = false;
      if (rapidFile != null) {
        printStatus("RAPID: " , rapidFile);
        genRAPID(ast, rapidFile, coreName, ver);
@@ -327,9 +331,9 @@ public class LabComm {
      return wroteFile;
    }
    boolean generatePrettyPrint(Specification ast) {
-     boolean wroteFile = false; 
+     boolean wroteFile = false;
      if (prettyFile != null) {
-       printStatus("Pretty: " , prettyFile); 
+       printStatus("Pretty: " , prettyFile);
        try {
          FileOutputStream f = new FileOutputStream(prettyFile);
          PrintStream out = new PrintStream(f);
@@ -338,15 +342,15 @@ public class LabComm {
          wroteFile = true;
        } catch (IOException e) {
          System.err.println("IOException: " + prettyFile + " " + e);
-       } 
+       }
      }
      return wroteFile;
    }
-  
+
    boolean generateTypeinfo(Specification ast) {
-     boolean wroteFile = false; 
+     boolean wroteFile = false;
      if (typeinfoFile != null) {
-       printStatus("TypeInfo: " , typeinfoFile); 
+       printStatus("TypeInfo: " , typeinfoFile);
        try {
          FileOutputStream f = new FileOutputStream(typeinfoFile);
          PrintStream out = new PrintStream(f);
@@ -361,9 +365,25 @@ public class LabComm {
      return wroteFile;
     }
 
+   boolean generateTypedefs(Specification ast) {
+     boolean wroteFile = false;
+     if (typedefsFile != null) {
+       printStatus("Typedefs: " , typedefsFile);
+       try {
+         FileOutputStream f = new FileOutputStream(typedefsFile);
+         PrintStream out = new PrintStream(f);
+         ast.generateTypedefs(out, ver);
+         wroteFile = true;
+       } catch (IOException e) {
+         System.err.println("IOException: " + typedefsFile + " " + e);
+       }
+     }
+     return wroteFile;
+    }
+
     private void printStatus(String kind, String filename){
-       if (verbose) { 
-         System.err.println("Generating "+kind+": " + filename); 
+       if (verbose) {
+         System.err.println("Generating "+kind+": " + filename);
        }
     }
   }
@@ -379,7 +399,7 @@ public class LabComm {
       Specification ast =  opts.parseFile();
 
       if (ast != null) {
-	
+
 	boolean fileWritten = false;
 
         fileWritten |= opts.generateC(ast);
@@ -389,6 +409,7 @@ public class LabComm {
         fileWritten |= opts.generateRAPID(ast);
         fileWritten |= opts.generatePrettyPrint(ast);
         fileWritten |= opts.generateTypeinfo(ast);
+        fileWritten |= opts.generateTypedefs(ast);
 
         // if no output to files, prettyprint on stdout
 	if (!fileWritten) {
@@ -400,5 +421,5 @@ public class LabComm {
           System.exit(3);
       }
     }
-  } 
+  }
 }

@@ -10,23 +10,23 @@ aspect User_Types {
 }
 
 aspect Type_References {
- 
+
   // The dependencies on other type declarations for a Decl.
   coll Set<Decl> Decl.type_dependencies() [new HashSet<Decl>()] with add;
 
-  Field contributes ((UserType)getDataType()).decl()   
+  Field contributes ((UserType)getDataType()).decl()
   when parentDecl() != null && getDataType().isUserType()
-  to Decl.type_dependencies() 
+  to Decl.type_dependencies()
   for parentDecl();
 
-  UserType contributes decl()   
-  when parentDecl() != null 
-  to Decl.type_dependencies() 
+  UserType contributes decl()
+  when parentDecl() != null
+  to Decl.type_dependencies()
   for parentDecl();
   /*
-  Field contributes getDataType().decl()   
+  Field contributes getDataType().decl()
   when parentDecl() != null && getDataType().isLeafType()
-  to Decl.type_dependencies() 
+  to Decl.type_dependencies()
   for parentDecl();
   */
 

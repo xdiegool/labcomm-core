@@ -1,0 +1,36 @@
+aspect TypeDefGen {
+
+    public void Specification.generateTypedefs(PrintStream out, int ver) {
+        for(Decl d : getDecls()) {
+            d.generateTypedefs(out);
+        }
+    }
+
+    public void Decl.generateTypedefs(PrintStream out) {
+    }
+
+
+    public void Decl.generateDepTypedefs(PrintStream out){
+        Iterator<Decl> it = type_dependencies().iterator();
+        while(it.hasNext()) {
+            Decl d = it.next();
+            d.generateDepTypedefs(out);
+        }
+        pp(out);
+    }
+
+    public void SampleDecl.generateTypedefs(PrintStream out){
+
+        if(hasDependencies()) {
+            out.println("sample "+getName()+"_def {");
+            out.println("    sample sample;");
+            out.println("    string typedef = <<EOL");
+            for(Decl d : type_dependencies()) {
+                d.generateDepTypedefs(out);
+            }
+            pp(out);
+            out.println("EOL;");
+        }
+    }
+
+}
