@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import argparse
 import re
 import sys
 import random
@@ -18,7 +19,13 @@ def shuffle(l):
     return result
 
 if __name__ == '__main__':
-    f = open(sys.argv[1])
+    parser = argparse.ArgumentParser(description='Generate C test relay.')
+    parser.add_argument('--renaming', action='store_true')
+    parser.add_argument('typeinfo', help='typeinfo file')
+
+    options = parser.parse_args(sys.argv[1:])
+
+    f = open(options.typeinfo)
     sample = []
     for l in map(lambda s: s.strip(), f):
         lang,kind,func,arg,dummy = l[1:].split(l[0])
@@ -40,7 +47,9 @@ if __name__ == '__main__':
     result.append('  %s.Handler' % sample[-1][0])
     result.extend(split_match('^[^|]*\|(.*)$', """
       |{
-      |  EncoderChannel encoder;
+      |  Encoder encoder;
+      |  Decoder decoder;
+      |
     """))
     for func,arg in sample:
         if arg == 'void':
@@ -63,13 +72,22 @@ if __name__ == '__main__':
       |    FileStream InFile = new FileStream(InName,
       |                                       FileMode.Open,
       |                                       FileAccess.Read);
-      |    DecoderChannel decoder = new DecoderChannel(InFile);
+      |    decoder = new DecoderChannel(InFile);
       |    FileStream OutFile = new FileStream(OutName,
       |                                        FileMode.OpenOrCreate,
       |                                        FileAccess.Write);
       |    encoder = new EncoderChannel(OutFile);
-      |
     """))
+    if options.renaming:
+        result.extend(split_match('^[^|]*\|(.*)$', """
+        |    RenamingRegistry registry = new RenamingRegistry();
+        |    decoder = new RenamingDecoder(
+        |        decoder, registry, s => "prefix:" + s + ":suffix");
+        |    encoder = new RenamingEncoder(
+        |        encoder, registry, s => "prefix:" + s + ":suffix");
+        """))
+
+
     for func,arg in shuffle(sample):
         result.append('    %s.register(decoder, this);' % func)
         pass

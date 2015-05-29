@@ -35,17 +35,18 @@ test_%: gen/%/signatures.py \
 .PHONY: test_renaming_%
 test_renaming_%: gen/%/signatures.py \
 		gen/%/c_renaming_relay \
-		gen/%/cs_relay.exe \
+		gen/%/cs_renaming_relay.exe \
 		gen/%/java_relay.class \
 		gen/%/java_code
 	PYTHONPATH=$(PYTHONPATH) MONO_PATH=$(MONO_PATH) \
-		./test_renaming_encoder_decoder.py \
+	    ./test_renaming_encoder_decoder.py \
 		--signatures=gen/$*/signatures.py \
 		--test tee gen/$*/testdata.renamed \
 		--test $(shell echo $(VALGRIND) | sed -e 's/[-][-]/\\\\--/g') \
-		       gen/$*/c_renaming_relay /dev/stdin /dev/stdout
+		       gen/$*/c_renaming_relay /dev/stdin /dev/stdout \
+		--test mono gen/$*/cs_renaming_relay.exe \
+		       /dev/stdin /dev/stdout
 	echo \
-		--test mono gen/$*/cs_relay.exe /dev/stdin /dev/stdout \
 		--test java \\-cp gen/$*:../lib/java/labcomm2014.jar \
 		       java_relay /dev/stdin /dev/stdout
 
@@ -109,6 +110,15 @@ gen/%/cs_relay.cs:  gen/%/typeinfo relay_gen_cs.py Makefile
 
 .PRECIOUS: gen/%/cs_relay.exe
 gen/%/cs_relay.exe: gen/%/cs_relay.cs gen/%/cs_code.cs Makefile
+	mcs -out:$@ $(filter %.cs, $^) -lib:../lib/csharp/ -r:labcomm2014
+
+.PRECIOUS: gen/%/cs_renaming_relay.cs
+gen/%/cs_renaming_relay.cs:  gen/%/typeinfo relay_gen_cs.py Makefile
+	./relay_gen_cs.py --renaming $< > $@
+
+.PRECIOUS: gen/%/cs_renaming_relay.exe
+gen/%/cs_renaming_relay.exe: gen/%/cs_renaming_relay.cs \
+			     gen/%/cs_code.cs Makefile
 	mcs -out:$@ $(filter %.cs, $^) -lib:../lib/csharp/ -r:labcomm2014
 
 # Java relay test rules
