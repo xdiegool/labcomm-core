@@ -180,7 +180,7 @@ class Test:
                 if p.poll() != None:
                     print>>sys.stderr, "Failed with:", p.poll()
                     self.failed = True
-                elif value != self.received_value:
+                elif value != self.received_value or decl != self.received_decl:
                     print>>sys.stderr, "Coding error"
                     print>>sys.stderr, value == self.received_value
                     print>>sys.stderr, "Got:     ", self.received_value 
