@@ -1,15 +1,19 @@
-MODULES=AbstractDecoder \
-        Constant\
+MODULES=Constant\
 	Decoder \
 	DecoderChannel \
 	DecoderRegistry \
 	Encoder \
 	EncoderChannel \
 	EncoderRegistry \
+	RenamingDecoder \
+	RenamingEncoder \
+	RenamingRegistry \
 	Sample \
 	SampleDispatcher \
 	SampleHandler \
-	SampleType
+	SampleType \
+	WrappingDecoder \
+	WrappingEncoder
 
 .PHONY: all
 all: labcomm2014.dll
