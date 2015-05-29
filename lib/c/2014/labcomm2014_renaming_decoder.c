@@ -23,92 +23,63 @@
 #include "labcomm2014_renaming_decoder.h"
 #include "labcomm2014.h"
 #include "labcomm2014_private.h"
+#include "labcomm2014_renaming_private.h"
 
 struct decoder {
   struct labcomm2014_decoder decoder;
   struct labcomm2014_decoder *next;
-  char *(*rename)(struct labcomm2014_memory *m, char *name, void *context);
+  struct labcomm2014_renaming_registry *registry;
+  char *(*rename_func)(struct labcomm2014_memory *m, char *name, void *context);
   void *context;
-  LABCOMM_SIGNATURE_ARRAY_DEF(renamed, struct labcomm2014_signature *);
+  LABCOMM_SIGNATURE_ARRAY_DEF(renamed,
+                              struct labcomm2014_renaming_rename *);
 };
 
-static struct labcomm2014_signature *get_renamed(
+static struct labcomm2014_renaming_rename *get_renamed(
   struct labcomm2014_decoder *d,
   const struct labcomm2014_signature *signature)
 {
-  struct labcomm2014_signature *result;
+  struct labcomm2014_renaming_rename *result;
   struct decoder *id = d->context;
   int index;
 
   index = labcomm2014_get_local_index(signature);
   labcomm2014_scheduler_data_lock(d->scheduler);
   result = LABCOMM_SIGNATURE_ARRAY_GET(id->renamed,
-                                      struct labcomm2014_signature *,
+                                      struct labcomm2014_renaming_rename *,
                                       index, NULL);
   labcomm2014_scheduler_data_unlock(d->scheduler);
   return result;
 }
   
-static struct labcomm2014_signature *set_renamed(
+static struct labcomm2014_renaming_rename *set_renamed(
   struct labcomm2014_decoder *d,
   const struct labcomm2014_signature *signature)
 {
-  struct labcomm2014_signature *result;
+  struct labcomm2014_renaming_rename *result = NULL;
 
   result = get_renamed(d, signature);
   if (result == NULL) {
-    /* create a renamed sample */
     struct decoder *id = d->context;
+    struct labcomm2014_renaming_rename **renamed;
+    struct labcomm2014_renaming_rename *entry = NULL;
     int index;
-    struct labcomm2014_signature **renamed;
-  
+
     index = labcomm2014_get_local_index(signature);
-    if (index <= 0) { goto out; /*result already NULL */}
+    entry = labcomm2014_renaming_rename_new(id->registry, signature,
+                                            id->rename_func, id->context);
+    if (entry == NULL) { goto out; }
     labcomm2014_scheduler_data_lock(d->scheduler);
     renamed = LABCOMM_SIGNATURE_ARRAY_REF(d->memory, id->renamed,
-                                          struct labcomm2014_signature *,
+                                          struct labcomm2014_renaming_rename *,
                                           index);
-    if (renamed == NULL) {
-      labcomm2014_error_warning(d->error,
-                                LABCOMM2014_ERROR_MEMORY,
-                                "Could not allocate rename slot: %s\n",
-                                signature->name);
-      goto unlock;
-    }
-    if (*renamed != NULL) {
-      /* Somebody beat as to allocation, this should never happen */
-      goto unlock;
-    }
-    result = labcomm2014_memory_alloc(d->memory, 0, sizeof(*result));
-    if (result == NULL) {
-      labcomm2014_error_warning(d->error,
-                                LABCOMM2014_ERROR_MEMORY,
-                                "Could not allocate rename signature: %s\n",
-                                signature->name);
-      goto unlock;
-    }
-    result->name = id->rename(d->memory, signature->name, id->context);
-    if (result->name == NULL) {
-      labcomm2014_error_warning(d->error,
-                                LABCOMM2014_ERROR_MEMORY,
-                                "Could not allocate rename name: %s\n",
-                                signature->name);
-      goto unlock_free_result;
-    }
-    result->encoded_size = signature->encoded_size;
-    result->size = signature->size;
-    result->signature = signature->signature; 
-    result->index = 0;
-#ifndef LABCOMM_NO_TYPEDECL
-    result->tdsize = signature->tdsize;
-    result->treedata = signature->treedata;
-#endif  
-    labcomm2014_set_local_index(result);
-    *renamed = result;
+    if (renamed == NULL) { goto free_unlock; }
+    if (*renamed != NULL) { result = *renamed; goto free_unlock; }
+    *renamed = entry;
+    result = entry;
     goto unlock;
-  unlock_free_result:
-    labcomm2014_memory_free(d->memory, 0, result);
-    result = NULL;
+  free_unlock:
+    labcomm2014_renaming_rename_free(id->registry, entry);
   unlock:
     labcomm2014_scheduler_data_unlock(d->scheduler);
   out:
@@ -118,33 +89,42 @@ static struct labcomm2014_signature *set_renamed(
 }
 
 static int do_sample_register(struct labcomm2014_decoder *d, 
-                         const struct labcomm2014_signature *s, 
+                         const struct labcomm2014_signature *signature, 
                          labcomm2014_decoder_function decoder,
                          labcomm2014_handler_function handler,
                          void *context)
 {
+  const struct labcomm2014_renaming_rename *renamed;
   struct decoder *id = d->context;
   
-  return id->next->sample_register(id->next, set_renamed(d, s), decoder,
-				   handler, context);
+  renamed = set_renamed(d, signature);  
+  return id->next->sample_register(
+    id->next, labcomm2014_renaming_rename_signature(renamed),
+    decoder, handler, context);
 }
 
 static int do_ref_register(struct labcomm2014_decoder *d, 
                       const struct labcomm2014_signature *signature)
 {
+  const struct labcomm2014_renaming_rename *renamed;
   struct decoder *id = d->context;
-  
-  return id->next->ref_register(id->next, set_renamed(d, signature));
+
+  renamed = set_renamed(d, signature);  
+  return id->next->ref_register(
+    id->next, labcomm2014_renaming_rename_signature(renamed));
 }
 
 static int do_ioctl(struct labcomm2014_decoder *d, 
                     const struct labcomm2014_signature *signature,
                     uint32_t ioctl_action, va_list args)
 {
+  const struct labcomm2014_renaming_rename *renamed;
   struct decoder *id = d->context;
   
-  return id->next->ioctl(id->next, get_renamed(d, signature),
-                         ioctl_action, args);
+  renamed = get_renamed(d, signature);
+  return id->next->ioctl(
+    id->next, labcomm2014_renaming_rename_signature(renamed),
+    ioctl_action, args);
 }
 
 static int do_decode_one(struct labcomm2014_decoder *d)
@@ -166,14 +146,15 @@ static const struct labcomm2014_sample_ref *do_ref_get(
   struct labcomm2014_decoder *d,
   const struct labcomm2014_signature *signature)
 {
-  const struct labcomm2014_signature *renamed;
+  const struct labcomm2014_renaming_rename *renamed;
   struct decoder *id = d->context;
 
   renamed = get_renamed(d, signature);
   if (renamed == NULL) {
     return id->next->ref_get(id->next, signature);
   } else {
-    return id->next->ref_get(id->next, renamed);
+    return id->next->ref_get(id->next,
+                             labcomm2014_renaming_rename_signature(renamed));
   }
 }
 
@@ -182,23 +163,25 @@ static void do_free(struct labcomm2014_decoder *d)
   struct decoder *id = d->context;
   int i;
 
-  LABCOMM_SIGNATURE_ARRAY_FOREACH(id->renamed, struct labcomm2014_signature *,
+  LABCOMM_SIGNATURE_ARRAY_FOREACH(id->renamed,
+                                  struct labcomm2014_renaming_rename *,
                                   i) {
-    struct labcomm2014_signature *s;
-    s = LABCOMM_SIGNATURE_ARRAY_GET(id->renamed,
-                                    struct labcomm2014_signature *, i, NULL);
-    if (s) {
-      labcomm2014_memory_free(d->memory, 0, s->name);
-      labcomm2014_memory_free(d->memory, 0, s);
+    struct labcomm2014_renaming_rename *r;
+    r = LABCOMM_SIGNATURE_ARRAY_GET(id->renamed,
+                                    struct labcomm2014_renaming_rename *,
+                                    i, NULL);
+    if (r) {
+      labcomm2014_renaming_rename_free(id->registry, r);
     }
   }
   LABCOMM_SIGNATURE_ARRAY_FREE(d->memory, id->renamed,
-                               struct labcomm2014_signature *);
+                               struct labcomm2014_renaming_rename *);
   labcomm2014_memory_free(d->memory, 0, id);
 }
 
 struct labcomm2014_decoder *labcomm2014_renaming_decoder_new(
   struct labcomm2014_decoder *d,
+  struct labcomm2014_renaming_registry *registry,
   char *(*rename)(struct labcomm2014_memory *m, char *name, void *context),
   void *context)
 {
@@ -220,10 +203,11 @@ struct labcomm2014_decoder *labcomm2014_renaming_decoder_new(
       result->decoder.index_to_sample_ref = do_index_to_sample_ref;
       result->decoder.ref_get = do_ref_get;
       result->next = d;
-      result->rename = rename;
+      result->registry = registry;
+      result->rename_func = rename;
       result->context = context;
       LABCOMM_SIGNATURE_ARRAY_INIT(result->renamed,
-                                   struct labcomm2014_signature *);
+                                   struct labcomm2014_renaming_rename *);
       return &(result->decoder);
   }
 }

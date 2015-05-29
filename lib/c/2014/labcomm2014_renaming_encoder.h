@@ -23,9 +23,11 @@
 #define __LABCOMM2014_RENAMING_ENCODER_H__
 
 #include "labcomm2014.h"
+#include "labcomm2014_renaming.h"
 
 struct labcomm2014_encoder *labcomm2014_renaming_encoder_new(
   struct labcomm2014_encoder *e,
+  struct labcomm2014_renaming_registry *r,
   char *(*rename)(struct labcomm2014_memory *m, char *name, void *context),
   void *context);
 

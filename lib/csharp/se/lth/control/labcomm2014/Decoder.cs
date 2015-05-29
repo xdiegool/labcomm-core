@@ -2,11 +2,7 @@ using System;
 
 namespace se.lth.control.labcomm2014 {
 
-  public interface Decoder {
-
-    void register(SampleDispatcher dispatcher, 
-		  SampleHandler handler);
-    void registerSampleRef(SampleDispatcher dispatcher);
+  public interface Decoder : AbstractDecoder {
 
     bool decodeBoolean();
     byte decodeByte();
@@ -17,7 +13,7 @@ namespace se.lth.control.labcomm2014 {
     double decodeDouble();
     String decodeString();
     int decodePacked32();
-    Type decodeSampleRef();
+    SampleDispatcher decodeSampleRef();
 
   }
 

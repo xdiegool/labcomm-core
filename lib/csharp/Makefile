@@ -1,4 +1,5 @@
-MODULES=Constant\
+MODULES=AbstractDecoder \
+        Constant\
 	Decoder \
 	DecoderChannel \
 	DecoderRegistry \
@@ -8,7 +9,7 @@ MODULES=Constant\
 	Sample \
 	SampleDispatcher \
 	SampleHandler \
-	SampleType 
+	SampleType
 
 .PHONY: all
 all: labcomm2014.dll
