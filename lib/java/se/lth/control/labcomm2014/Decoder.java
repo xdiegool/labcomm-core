@@ -4,6 +4,8 @@ import java.io.IOException;
 
 public interface Decoder {
   
+  public void runOne() throws Exception;
+  public void run() throws Exception;
   public void register(SampleDispatcher dispatcher, 
 		       SampleHandler handler) throws IOException;
   public void registerSampleRef(SampleDispatcher dispatcher) throws IOException;

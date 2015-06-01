@@ -6,11 +6,8 @@ public interface Encoder {
 
   public void register(SampleDispatcher dispatcher) throws IOException;
   public void registerSampleRef(SampleDispatcher dispatcher) throws IOException;
-  public void begin(Class<? extends SampleType> c) throws IOException;
-  public void end(Class<? extends SampleType> c) throws IOException;
-
-  public void begin(int t) throws IOException;
-  public int getTypeId(Class<? extends SampleType> c) throws IOException;
+  public void begin(SampleDispatcher dispatcher) throws IOException;
+  public void end(SampleDispatcher dispatcher) throws IOException;
 
   public void encodeBoolean(boolean value) throws IOException;
   public void encodeByte(byte value) throws IOException;

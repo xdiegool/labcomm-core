@@ -91,17 +91,17 @@ public class DecoderRegistry {
     }
   }
 
-  private HashMap<Class, Entry> byClass;
+  private HashMap<SampleDispatcher, Entry> byDispatcher;
   private HashMap<Integer, Entry> byIndex;
 
   public DecoderRegistry() {
-    byClass = new HashMap<Class, Entry>();
+    byDispatcher = new HashMap<SampleDispatcher, Entry>();
     byIndex = new HashMap<Integer, Entry>();
   }
 
   public synchronized void add(SampleDispatcher dispatcher,
 			       SampleHandler handler) throws IOException{
-    Entry e = byClass.get(dispatcher.getSampleClass());
+    Entry e = byDispatcher.get(dispatcher);
     if (e != null) {
       e.check(dispatcher.getName(), dispatcher.getSignature());
       e.setHandler(handler);
@@ -116,7 +116,7 @@ public class DecoderRegistry {
       }
       if (e == null) {
 	e = new Entry(dispatcher, handler);
-	byClass.put(dispatcher.getSampleClass(), e);
+	byDispatcher.put(dispatcher, e);
       }
     }
   }
@@ -128,7 +128,7 @@ public class DecoderRegistry {
     if (e != null) {
       e.check(name, signature);
     } else {
-      for (Entry e2 : byClass.values()) {
+      for (Entry e2 : byDispatcher.values()) {
 	if (e2.match(name, signature)) {
 	  e2.setIndex(index);
 	  e = e2;

@@ -45,12 +45,6 @@ namespace se.lth.control.labcomm2014 {
           ReadBytes(signature, signature_length);
 	  ref_registry.add(index, name, signature);
         } break;
-        case Constant.TYPE_DEF: 
-        case Constant.TYPE_BINDING: {
-            for(int i=0; i<length;i++){
-                decodeByte();
-            }                
-        } break;
         default: {
           DecoderRegistry.Entry e = def_registry.get(tag);
           if (e == null) {

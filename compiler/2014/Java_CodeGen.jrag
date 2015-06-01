@@ -631,9 +631,9 @@ aspect Java_Class {
     }
     env.println(") throws IOException {");
     env.indent();
-    env.println("e.begin(" + getName() + ".class);");
+    env.println("e.begin(dispatcher);");
     getDataType().Java_emitEncoder(env, "value");
-    env.println("e.end(" + getName() + ".class);");
+    env.println("e.end(dispatcher);");
     env.unindent();
     env.println("}");
     env.println();
@@ -998,8 +998,8 @@ aspect Java_Signature {
     public abstract void SignatureLine.Java_emitSignature(Java_env env, boolean decl);
 
     public void TypeRefSignatureLine.Java_emitSignature(Java_env env, boolean isDecl){
-      env.print(getIndentString());
-      env.println("e.encodePacked32(e.getTypeId("+decl.getName()+".class));");
+//      env.print(getIndentString());
+//      env.println("e.encodePacked32(e.getTypeId("+decl.getName()+".class));");
     }
 
     public void DataSignatureLine.Java_emitSignature(Java_env env, boolean decl){

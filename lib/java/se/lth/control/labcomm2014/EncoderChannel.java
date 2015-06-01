@@ -10,109 +10,38 @@ public class EncoderChannel implements Encoder {
   private Writer writer;
   private ByteArrayOutputStream bytes = new ByteArrayOutputStream();
   private DataOutputStream data = new DataOutputStream(bytes);
-  private EncoderRegistry sample_def_registry = new EncoderRegistry();
-  private EncoderRegistry sample_ref_registry = new EncoderRegistry();
-  private EncoderRegistry type_def_registry = new EncoderRegistry();
+  private EncoderRegistry def_registry = new EncoderRegistry();
+  private EncoderRegistry ref_registry = new EncoderRegistry();
   private int current_tag;
 
-  private EncoderChannel(Writer writer, boolean emitVersion) throws IOException {
+  private EncoderChannel(Writer writer) throws IOException {
     this.writer = writer;
 
-    if(emitVersion){
-      begin(Constant.VERSION);
-      encodeString(Constant.CURRENT_VERSION);
-      end(null);
-    }
-  }
-  public EncoderChannel(Writer writer) throws IOException {
-      this(writer, true);
+    begin(Constant.VERSION);
+    encodeString(Constant.CURRENT_VERSION);
+    end(null);
   }
 
   public EncoderChannel(OutputStream writer) throws IOException {
-    this(new WriterWrapper(writer), true);
-  }
-
-  private EncoderChannel(OutputStream writer, boolean emitVersion) throws IOException {
-    this(new WriterWrapper(writer), emitVersion);
-  }
-  private void bindType(int sampleId, int typeId) throws IOException {
-        begin(Constant.TYPE_BINDING);
-        encodePacked32(sampleId);
-        encodePacked32(typeId);
-        end(null);
-  }
-
-  private void registerSample(SampleDispatcher dispatcher) throws IOException {
-        int index = sample_def_registry.add(dispatcher);
-        begin(dispatcher.getTypeDeclTag());
-        encodePacked32(index);
-        encodeString(dispatcher.getName());
-        byte[] signature = dispatcher.getSignature();
-        encodePacked32(signature.length);
-        for (int i = 0 ; i < signature.length ; i++) {
-            encodeByte(signature[i]);
-        }
-        end(null);
-  }
-
-  private static class WrappedEncoder extends EncoderChannel{
-      private Encoder wrapped;
-
-      public WrappedEncoder(Encoder e, OutputStream s, boolean emitVersion) throws IOException {
-          super(s,emitVersion);
-          this.wrapped = e;
-      }
-      public int getTypeId(Class<? extends SampleType> c) throws IOException{
-         return wrapped.getTypeId(c);
-      }
-  }
-
-
-  private int registerTypeDef(SampleDispatcher dispatcher) throws IOException {
-      // check if already registered
-        try {
-            return type_def_registry.getTag(dispatcher);
-        } catch (IOException e) {
-            //otherwise, add to the registry
-            int index = type_def_registry.add(dispatcher);
-            //wrap encoder to get encoded length of signature
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            EncoderChannel wrapped = new WrappedEncoder(this, baos, false);
-            dispatcher.encodeTypeDef(wrapped, index);
-            wrapped.flush();
-            byte b[] = baos.toByteArray();
-
-            begin(Constant.TYPE_DEF);
-            encodePacked32(index);
-            encodeString(dispatcher.getName());
-            encodePacked32(b.length);
-            for(int i = 0; i<b.length; i++) {
-                encodeByte(b[i]);
-            }
-            end(null);
-
-            return index;
-        }
+    this(new WriterWrapper(writer));
   }
 
   public void register(SampleDispatcher dispatcher) throws IOException {
-    switch (dispatcher.getTypeDeclTag())  {
-        case Constant.SAMPLE_DEF: {
-            registerSample(dispatcher);
-            break;
-        }
-        case Constant.TYPE_DEF: {
-            registerTypeDef(dispatcher);
-            break;
-        }
-        default:
-            throw new Error("Unknown typeDeclTag: "+dispatcher.getTypeDeclTag());
+    int index = def_registry.add(dispatcher);
+    begin(Constant.SAMPLE_DEF);
+    encodePacked32(index);
+    encodeString(dispatcher.getName());
+    byte[] signature = dispatcher.getSignature();
+    encodePacked32(signature.length);
+    for (int i = 0 ; i < signature.length ; i++) {
+      encodeByte(signature[i]);
     }
+    end(null);
   }
 
   public void registerSampleRef(SampleDispatcher dispatcher) throws IOException {
     System.err.println(dispatcher);
-    int index = sample_ref_registry.add(dispatcher);
+    int index = ref_registry.add(dispatcher);
     begin(Constant.SAMPLE_REF);
     encodePacked32(index);
     encodeString(dispatcher.getName());
@@ -124,34 +53,21 @@ public class EncoderChannel implements Encoder {
     end(null);
   }
 
-  public void begin(int tag) {
+  private void begin(int tag) {
     current_tag = tag;
     bytes.reset();
   }
 
-  public void begin(Class<? extends SampleType> c) throws IOException {
-    begin(sample_def_registry.getTag(c));
+  public void begin(SampleDispatcher dispatcher) throws IOException {
+    begin(def_registry.getTag(dispatcher));
   }
 
-  /* aux. method used to allow nesting encoders to find encoded size */
-  private void flush() throws IOException{
-    data.flush();
-    writer.write(bytes.toByteArray());
-    bytes.reset();
-  }
-  public void end(Class<? extends SampleType> c) throws IOException {
+  public void end(SampleDispatcher dispatcher) throws IOException {
     data.flush();
     WritePacked32(writer, current_tag);
     WritePacked32(writer, bytes.size());
     writer.write(bytes.toByteArray());
     bytes.reset();
-  }
-
-  /**
-   * @return the id of a TYPE_DEF
-   */
-  public int getTypeId(Class<? extends SampleType> c) throws IOException {
-    return type_def_registry.getTag(c);
   }
 
   private void WritePacked32(Writer s, long value) throws IOException {
@@ -229,7 +145,7 @@ public class EncoderChannel implements Encoder {
   public void encodeSampleRef(Class value) throws IOException {
     int index = 0;
     try {
-      index = sample_ref_registry.getTag(value);
+      index = ref_registry.getTag(value);
     } catch (NullPointerException e) {
         //we want to return 0 for unregistered ref types
     }

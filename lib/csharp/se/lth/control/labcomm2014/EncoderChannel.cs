@@ -137,6 +137,7 @@ namespace se.lth.control.labcomm2014 {
       try {
         index = ref_registry.getTag(value);
       } catch (NullReferenceException) {
+        //we want to return 0 for unregistered ref types
       }
       WriteInt(index, 4);
     }
