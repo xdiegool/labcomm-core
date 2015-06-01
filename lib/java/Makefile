@@ -10,13 +10,9 @@ MODULES=Constant \
 	SampleDispatcher \
 	SampleHandler \
 	SampleType \
-	BuiltinType \
-	TypeDef \
-	TypeBinding \
-	ASTbuilder \
-	TypeDefParser \
 	Writer \
 	WriterWrapper
+
 
 .PHONY: all
 all: labcomm2014.jar

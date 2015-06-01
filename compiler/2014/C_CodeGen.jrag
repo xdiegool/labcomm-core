@@ -47,10 +47,6 @@ aspect C_CodeGenEnv {
     private boolean rootIsPointer;
     private int rootLevel;
 
-    public boolean versionHasMetaData() {
-      return version != 2006;
-    }
-
     private C_env(String qualid, String lcName, String rawPrefix, 
 		  int indent, int depth, C_printer printer,
                   int nestedLevel, int version)
@@ -1141,7 +1137,7 @@ aspect C_Encoder {
     env.indent();
     env.println("//TODO: add error handling for dependencies");
 
-    C_emitUserTypeDeps(env, null, true); 
+//    C_emitUserTypeDeps(env, null, true); 
 
     if(!isSampleDecl() || hasDependencies()) {
       env.println("return e->type_register(");
@@ -1171,7 +1167,7 @@ aspect C_Encoder {
     env.println(")");
     env.println("{");
     env.indent();
-    C_emitUserTypeDeps(env, null, false); //XXX HERE BE DRAGONS
+//    C_emitUserTypeDeps(env, null, false); //XXX HERE BE DRAGONS
                                           //currently set to false to turn off
                                           //outputting of code
     env.println("int result = e->sample_register(");
@@ -1181,17 +1177,17 @@ aspect C_Encoder {
     env.println("(labcomm2014_encoder_function)encode_" + env.prefix + getName());
     env.unindent();
     env.println(");");
-    env.println("if(result >= 0) {\n");
-    env.indent();
-    env.println("labcomm2014_encoder_type_register_" + env.prefix + getName()+"(e);");
-    env.println("e->type_bind(");
-    env.indent();
-    env.println("e,");
-    env.println("&signature_" + env.prefix + getName() + ",");
-    env.println( (hasDependencies() ? "1" : "0")  + ");");
-    env.unindent();
-    env.println("}");
-    env.unindent();
+//    env.println("if(result >= 0) {\n");
+//    env.indent();
+//    env.println("labcomm2014_encoder_type_register_" + env.prefix + getName()+"(e);");
+//    env.println("e->type_bind(");
+//    env.indent();
+//    env.println("e,");
+//    env.println("&signature_" + env.prefix + getName() + ",");
+//    env.println( (hasDependencies() ? "1" : "0")  + ");");
+//    env.unindent();
+//    env.println("}");
+//    env.unindent();
     env.println("return result;");
     env.unindent();
     env.println("}");
@@ -1235,41 +1231,41 @@ aspect C_EncoderIoctl {
 
 }
 
-aspect C_TypeDependencies {
-  public void Decl.C_emitUserTypeDeps(C_env env, String via, boolean outputCode) {
-    if( hasDependencies() ) {
-        Iterator<Decl> it = type_dependencies().iterator();
-        while(it.hasNext()) {
-            Decl t = it.next();
-
-            t.C_emitUserTypeDeps(env, t.getName(), outputCode);
-            if(outputCode) {
-               env.println("labcomm2014_encoder_type_register_"+env.prefix + t.getName()+"(e);");
-            } else {  // Just output a comment
-	        String refpath = (via == null) ? "directly" : "indirectly via "+via;
-	       env.println(" //Depends ("+refpath+") on "+t.getName() );
-            }
-        }
-    } 
-  }
-
-  public void Decl.C_emitUserTypeRefs(C_env env, String via, boolean outputCode) {
-    if( isReferenced() ) {
-        Iterator<Decl> it = type_references().iterator();
-        while(it.hasNext()) {
-            Decl t = it.next();
-
-            t.C_emitUserTypeRefs(env, t.getName(), outputCode);
-            if(outputCode) {
-               env.println("labcomm2014_encoder_type_register_"+env.prefix + t.getName()+"(e);");
-            } else {  // Just output a comment
-	        String refpath = (via == null) ? "directly" : "indirectly via "+via;
-	       env.println(" //Is referenced ("+refpath+")  by "+t.getName() );
-            }
-        }
-    } 
-  }
-}
+//aspect C_TypeDependencies {
+//  public void Decl.C_emitUserTypeDeps(C_env env, String via, boolean outputCode) {
+//    if( hasDependencies() ) {
+//        Iterator<Decl> it = type_dependencies().iterator();
+//        while(it.hasNext()) {
+//            Decl t = it.next();
+//
+//            t.C_emitUserTypeDeps(env, t.getName(), outputCode);
+//            if(outputCode) {
+//               env.println("labcomm2014_encoder_type_register_"+env.prefix + t.getName()+"(e);");
+//            } else {  // Just output a comment
+//	        String refpath = (via == null) ? "directly" : "indirectly via "+via;
+//	       env.println(" //Depends ("+refpath+") on "+t.getName() );
+//            }
+//        }
+//    } 
+//  }
+//
+//  public void Decl.C_emitUserTypeRefs(C_env env, String via, boolean outputCode) {
+//    if( isReferenced() ) {
+//        Iterator<Decl> it = type_references().iterator();
+//        while(it.hasNext()) {
+//            Decl t = it.next();
+//
+//            t.C_emitUserTypeRefs(env, t.getName(), outputCode);
+//            if(outputCode) {
+//               env.println("labcomm2014_encoder_type_register_"+env.prefix + t.getName()+"(e);");
+//            } else {  // Just output a comment
+//	        String refpath = (via == null) ? "directly" : "indirectly via "+via;
+//	       env.println(" //Is referenced ("+refpath+")  by "+t.getName() );
+//            }
+//        }
+//    } 
+//  }
+//}
 
 aspect C_Signature {
 

@@ -13,10 +13,6 @@ public interface SampleDispatcher <T extends SampleType>{
   public void decodeAndHandle(Decoder decoder,
 			      SampleHandler handler) throws Exception;
 
-  /** @return true if the type depends on one or more typedefs
-   */
-  public boolean hasDependencies();
-
   public void encodeTypeDef(Encoder e, int index) throws IOException;
 
   /** return the tag SAMPLE_DEF or TYPE_DEF, for use

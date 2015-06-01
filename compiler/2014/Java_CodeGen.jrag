@@ -329,13 +329,13 @@ aspect Java_Class {
   public void Decl.Java_emitRegisterEncoder(Java_env env) {
     env.println("public static void register(Encoder e) throws IOException {");
     env.indent();
-    env.println("register(e, true);");
-    env.unindent();
-    env.println("}");
-    env.println();
-    env.println("public static void register(Encoder e, boolean sendMetaData) throws IOException {");
-    env.indent();
-    Java_emitUserTypeDeps(env, null, true);
+//    env.println("register(e, true);");
+//    env.unindent();
+//    env.println("}");
+//    env.println();
+//    env.println("public static void register(Encoder e, boolean sendMetaData) throws IOException {");
+//    env.indent();
+//    Java_emitUserTypeDeps(env, null, true);
     env.println("e.register(dispatcher);");
     env.unindent();
     env.println("}");
@@ -382,11 +382,11 @@ aspect Java_Class {
 
       //if(hasDependencies() || isReferenced()) {
       //if( getDataType().isUserType() && isReferenced()) {
-      if( isReferenced()) {
-        Java_emitRegisterEncoder(env);
-        Java_emitDispatcher(env, false);
-      }
-      Java_emitSignature(env);
+//      if( isReferenced()) {
+//        Java_emitRegisterEncoder(env);
+//        Java_emitDispatcher(env, false);
+//      }
+//      Java_emitSignature(env);
 
       env.println("}");
       env.unindent();
@@ -540,17 +540,17 @@ aspect Java_Class {
     env.unindent();
     env.println("}");
     env.println();
-    env.println("public boolean isSample() {");
-    env.indent();
-    env.println("return "+isSample+";");
-    env.unindent();
-    env.println("}");
-    env.println("public boolean hasDependencies() {");
-    env.indent();
-    env.println("return "+hasDependencies()+";");
-    env.unindent();
-    env.println("}");
-    env.println();
+//    env.println("public boolean isSample() {");
+//    env.indent();
+//    env.println("return "+isSample+";");
+//    env.unindent();
+//    env.println("}");
+//    env.println("public boolean hasDependencies() {");
+//    env.indent();
+//    env.println("return "+hasDependencies()+";");
+//    env.unindent();
+//    env.println("}");
+//    env.println();
     env.println("/** return the flat signature. */");
     env.println("public byte[] getSignature() {");
     env.indent();

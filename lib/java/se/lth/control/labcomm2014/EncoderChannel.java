@@ -53,14 +53,6 @@ public class EncoderChannel implements Encoder {
             encodeByte(signature[i]);
         }
         end(null);
-        int tindex;
-        if(dispatcher.hasDependencies()){
-            tindex = registerTypeDef(dispatcher);
-        } else {
-            tindex = Constant.TYPE_BIND_SELF;
-        }
-        bindType(index, tindex);
-
   }
 
   private static class WrappedEncoder extends EncoderChannel{

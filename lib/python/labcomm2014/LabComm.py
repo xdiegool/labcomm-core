@@ -478,9 +478,11 @@ class typedef(sampledef_or_sampleref_or_typedef):
     type_name = 'typedef'
 
     def encode_decl(self, encoder):
+        raise Exception("typedef's are disabled")
         self.decl.encode_decl(encoder)
 
     def encode(self, encoder, value):
+        raise Exception("typedef's are disabled")
         self.decl.encode(encoder, value)
 
 class array(type_decl):
@@ -923,14 +925,17 @@ class Decoder(Codec):
             decl = self.index_to_decl[index].decode_decl(self)
             value = None
         elif index == i_TYPE_DEF:
+            raise Exception("typedef's are disabled")
             self.skip_or_raise(length, index) 
             decl = None
             value = None
         elif index == i_TYPE_BINDING:
+            raise Exception("typebindings's are disabled")
             self.skip_or_raise(length, index) 
             decl = None
             value = None
         elif index == i_PRAGMA:
+            raise Exception("pragma's are disabled")
             self.skip_or_raise(length, index) 
             decl = None
             value = None
