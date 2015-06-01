@@ -416,12 +416,6 @@ aspect CS_Class {
     env.println("private class Dispatcher : SampleDispatcher {");
     env.indent();
     env.println();
-    env.println("public SampleDispatcher getSampleIdentity() {");
-    env.indent();
-    env.println("return dispatcher;");
-    env.unindent();
-    env.println("}");
-    env.println();
     env.println("public String getName() {");
     env.indent();
     env.println("return \"" + getName() + "\";");

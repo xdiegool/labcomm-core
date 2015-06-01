@@ -16,10 +16,6 @@ namespace se.lth.control.labcomm2014 {
         this.name = name;
       }
 
-      public SampleDispatcher getSampleIdentity() {
-        return this;
-      }
-    
       public String getName() {
         return name;
       }
