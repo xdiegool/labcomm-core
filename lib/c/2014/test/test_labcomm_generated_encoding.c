@@ -206,8 +206,8 @@ int main(void)
     labcomm2014_default_error_handler,
     labcomm2014_default_memory,
     labcomm2014_pthread_scheduler_new(labcomm2014_default_memory));
-  EXPECT({ 0x01, 0x0c, 0x0b, 
-           'L', 'a', 'b', 'C', 'o', 'm', 'm', '2','0', '1', '4' });
+  EXPECT({ 0x01, 0x0f, 0x0e, 
+        'L', 'a', 'b', 'C', 'o', 'm', 'm', '2','0', '1', '4', '.', 'v', '1' });
 
   labcomm2014_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   /* Register twice to make sure that only one registration gets encoded */

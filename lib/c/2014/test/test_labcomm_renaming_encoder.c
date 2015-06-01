@@ -228,8 +228,8 @@ static int do_test(int argc, char *argv[])
                                             registry,
                                             labcomm2014_renaming_suffix,
                                             ".s");
-  EXPECT({ 0x01, 0x0c, 0x0b, 
-           'L', 'a', 'b', 'C', 'o', 'm', 'm', '2','0', '1', '4' });
+  EXPECT({ 0x01, 0x0f, 0x0e, 
+        'L', 'a', 'b', 'C', 'o', 'm', 'm', '2','0', '1', '4', '.', 'v', '1' });
 
   labcomm2014_encoder_ioctl(encoder, IOCTL_WRITER_RESET);
   /* Register twice to make sure that only one registration gets encoded */

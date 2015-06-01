@@ -169,7 +169,7 @@
 import types
 import struct as packer
 
-DEFAULT_VERSION = "LabComm2014"
+DEFAULT_VERSION = "LabComm2014.v1"
 
 # Allowed packet tags
 i_VERSION     = 0x01
@@ -197,7 +197,7 @@ i_SAMPLE  = 0x28
 
 # Version testing
 def usePacketLength(version):
-    return version in [ None, "LabComm2014" ]
+    return version in [ None, DEFAULT_VERSION ]
 
 class length_encoder:
     def __init__(self, encoder):
@@ -774,12 +774,12 @@ class Encoder(Codec):
         super(Encoder, self).__init__(codec)
         self.writer = writer
         self.version = version
-        if self.version in [ "LabComm2014" ]:
+        if self.version ==  DEFAULT_VERSION:
             self.encode_type(i_VERSION)
             with length_encoder(self) as e:
                 e.encode_string(version)
-        elif self.version in [ None,  "LabComm2006" ]:
-            pass
+        elif self.version == None:
+            pass # Don't send version on a length encoder
         else:
             raise Exception("Unsupported labcomm version %s" % self.version)    
 
@@ -825,7 +825,7 @@ class Encoder(Codec):
             decl.encode_decl(self)
             
     def encode_packed32(self, v):
-        if self.version in [ None, "LabComm2014" ]:
+        if self.version in [ None, DEFAULT_VERSION ]:
             v = v & 0xffffffff
             tmp = [ v & 0x7f ]
             v = v >> 7
@@ -834,9 +834,6 @@ class Encoder(Codec):
                 v = v >> 7
             for c in reversed(tmp):
                 self.encode_byte(c) 
-        elif self.version == "LabComm2006" :
-            v = v & 0xffffffff
-            self.encode_int(v)
         else :
             raise Exception("Unsupported labcomm version %s" % self.version)
 
@@ -961,7 +958,7 @@ class Decoder(Codec):
         return result
     
     def decode_packed32(self):
-        if self.version in [ "LabComm2013", "LabComm2014" ] :
+        if self.version in [ DEFAULT_VERSION ] :
             result = 0
             while True:
                 tmp = self.decode_byte()
@@ -969,8 +966,6 @@ class Decoder(Codec):
                 if (tmp & 0x80) == 0:
                     break
             return result
-        elif self.version == "LabComm2006" :
-            return self.decode_int()
         else :
             raise Exception("Unsupported labcomm version %s" % self.version)
 

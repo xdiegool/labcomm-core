@@ -2,7 +2,7 @@ namespace se.lth.control.labcomm2014 {
 
   public class Constant {
 
-    public const string CURRENT_VERSION = "LabComm2014";
+    public const string CURRENT_VERSION = "LabComm2014.v1";
 
     /*
      * Allowed packet tags

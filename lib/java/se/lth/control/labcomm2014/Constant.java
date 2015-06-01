@@ -2,7 +2,7 @@ package se.lth.control.labcomm2014;
 
 public class Constant {
 
-  public static final String CURRENT_VERSION = "LabComm2014";
+  public static final String CURRENT_VERSION = "LabComm2014.v1";
 
   /*
    * Allowed packet tags

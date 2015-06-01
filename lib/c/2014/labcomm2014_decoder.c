@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#define CURRENT_VERSION "LabComm2014"
+#define CURRENT_VERSION "LabComm2014.v1"
 
 #include <errno.h>
 #include "labcomm2014.h"
