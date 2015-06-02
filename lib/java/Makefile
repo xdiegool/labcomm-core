@@ -6,10 +6,15 @@ MODULES=Constant \
 	EncoderChannel \
 	EncoderRegistry \
 	Reader \
+	RenamingDecoder \
+	RenamingEncoder \
+	RenamingRegistry \
 	Sample \
 	SampleDispatcher \
 	SampleHandler \
 	SampleType \
+	WrappingDecoder \
+	WrappingEncoder \
 	Writer \
 	WriterWrapper
 

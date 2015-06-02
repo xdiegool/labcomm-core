@@ -19,6 +19,6 @@ public interface Decoder {
   public double decodeDouble() throws IOException;
   public String decodeString() throws IOException;
   public int decodePacked32() throws IOException;
-  public Class decodeSampleRef() throws IOException;
+  public SampleDispatcher decodeSampleRef() throws IOException;
 
 }

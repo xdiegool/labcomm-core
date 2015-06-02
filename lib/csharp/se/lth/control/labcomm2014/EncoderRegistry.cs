@@ -15,7 +15,7 @@ namespace se.lth.control.labcomm2014 {
 	this.index = index;
       }
 
-      public SampleDispatcher getSampleDispatcher() {
+      public SampleDispatcher getDispatcher() {
 	return dispatcher;
       }
 

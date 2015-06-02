@@ -40,7 +40,6 @@ public class EncoderChannel implements Encoder {
   }
 
   public void registerSampleRef(SampleDispatcher dispatcher) throws IOException {
-    System.err.println(dispatcher);
     int index = ref_registry.add(dispatcher);
     begin(Constant.SAMPLE_REF);
     encodePacked32(index);
@@ -129,7 +128,7 @@ public class EncoderChannel implements Encoder {
     }
   }
 
-  public void encodePacked32(long value) throws IOException {
+  public void encodePacked32(int value) throws IOException {
     byte[] tmp = new byte[5];
     long v = value & 0xffffffff;
     int i;
@@ -142,12 +141,12 @@ public class EncoderChannel implements Encoder {
     }
   }
 
-  public void encodeSampleRef(Class value) throws IOException {
+  public void encodeSampleRef(SampleDispatcher value) throws IOException {
     int index = 0;
     try {
       index = ref_registry.getTag(value);
     } catch (NullPointerException e) {
-        //we want to return 0 for unregistered ref types
+        // encode 0 for unregistered ref types
     }
     data.writeInt(index);
   }

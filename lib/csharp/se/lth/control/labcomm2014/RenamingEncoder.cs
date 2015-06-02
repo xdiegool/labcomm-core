@@ -5,7 +5,6 @@ namespace se.lth.control.labcomm2014 {
 
   public class RenamingEncoder : WrappingEncoder {
 
-    private Encoder encoder;
     private RenamingRegistry registry;
     private Func<String,String> rename;
     private Dictionary<SampleDispatcher, SampleDispatcher> alias;
@@ -14,7 +13,6 @@ namespace se.lth.control.labcomm2014 {
                            RenamingRegistry registry,
                            Func<String,String> rename)
     : base(encoder) {
-      this.encoder = encoder;
       this.registry = registry;
       this.rename = rename;
       alias = new Dictionary<SampleDispatcher, SampleDispatcher>();
@@ -28,7 +26,6 @@ namespace se.lth.control.labcomm2014 {
           alias.Add(identity, renamed);
         }
       }
-      get(identity);
       return renamed;
     }
 
@@ -40,11 +37,11 @@ namespace se.lth.control.labcomm2014 {
       return renamed;
     }
     public override void register(SampleDispatcher identity) {
-      encoder.register(add(identity));
+      base.register(add(identity));
     }
 
     public override void registerSampleRef(SampleDispatcher identity) {
-      encoder.registerSampleRef(add(identity));
+      base.registerSampleRef(add(identity));
     }
 
     public override void begin(SampleDispatcher identity) {

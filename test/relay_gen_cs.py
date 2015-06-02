@@ -19,7 +19,7 @@ def shuffle(l):
     return result
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Generate C test relay.')
+    parser = argparse.ArgumentParser(description='Generate C# test relay.')
     parser.add_argument('--renaming', action='store_true')
     parser.add_argument('typeinfo', help='typeinfo file')
 
@@ -86,8 +86,6 @@ if __name__ == '__main__':
         |    encoder = new RenamingEncoder(
         |        encoder, registry, s => "prefix:" + s + ":suffix");
         """))
-
-
     for func,arg in shuffle(sample):
         result.append('    %s.register(decoder, this);' % func)
         pass

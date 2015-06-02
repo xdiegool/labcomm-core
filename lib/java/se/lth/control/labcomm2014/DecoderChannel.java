@@ -16,42 +16,6 @@ public class DecoderChannel implements Decoder {
     this.in = new DataInputStream(in);
   }
 
-  private void processSampleDef() throws IOException {
-    int index = decodePacked32();
-    String name = decodeString();
-    int signature_length = decodePacked32();
-    byte[] signature = new byte[signature_length];
-    ReadBytes(signature, signature_length);
-    def_registry.add(index, name, signature);
-  }	   
-
-  private void processSampleRef() throws IOException {
-    int index = decodePacked32();
-    String name = decodeString();
-    int signature_length = decodePacked32();
-    byte[] signature = new byte[signature_length];
-    ReadBytes(signature, signature_length);
-    ref_registry.add(index, name, signature);
-  }	   
-
-  private void processSample(int tag) throws Exception {
-    DecoderRegistry.Entry e = def_registry.get(tag);
-    if (e == null) {
-      throw new IOException("Unhandled tag " + tag);
-    }
-    SampleDispatcher d = e.getDispatcher();
-    if (d == null) {
-      throw new IOException("No dispatcher for '" + e.getName() + "'");
-    }
-    SampleHandler h = e.getHandler();
-    if (h == null) {
-      throw new IOException("No handler for '" + e.getName() +"'");
-    }
-    // decodeAndHandle throws Exception and not IOException because
-    // the user provided handler might throw anything
-    d.decodeAndHandle(this, h);
-  }	  
-
   public void runOne() throws Exception {
     boolean done = false;
     while (!done) {
@@ -66,15 +30,38 @@ public class DecoderChannel implements Decoder {
           }
         } break;
         case Constant.SAMPLE_DEF: {
-            processSampleDef();
+          int index = decodePacked32();
+          String name = decodeString();
+          int signature_length = decodePacked32();
+          byte[] signature = new byte[signature_length];
+          ReadBytes(signature, signature_length);
+          def_registry.add(index, name, signature);
         } break;
         case Constant.SAMPLE_REF: {
-            processSampleRef();
+          int index = decodePacked32();
+          String name = decodeString();
+          int signature_length = decodePacked32();
+          byte[] signature = new byte[signature_length];
+          ReadBytes(signature, signature_length);
+          ref_registry.add(index, name, signature);
         } break;
         default: {
-            processSample(tag);
-            done = true;
-
+          DecoderRegistry.Entry e = def_registry.get(tag);
+          if (e == null) {
+            throw new IOException("Unhandled tag " + tag);
+          }
+          SampleDispatcher d = e.getDispatcher();
+          if (d == null) {
+            throw new IOException("No dispatcher for '" + e.getName() + "'");
+          }
+          SampleHandler h = e.getHandler();
+          if (h == null) {
+            throw new IOException("No handler for '" + e.getName() +"'");
+          }
+          // decodeAndHandle throws Exception and not IOException because
+          // the user provided handler might throw anything
+          d.decodeAndHandle(this, h);
+          done = true;
         }
       }
     }
@@ -162,27 +149,17 @@ public class DecoderChannel implements Decoder {
     return (int) (res & 0xffffffff);
   }
 
-  public Class decodeSampleRef() throws IOException {
+  public SampleDispatcher decodeSampleRef() throws IOException {
     int index = in.readInt();
     try {
       DecoderRegistry.Entry e = ref_registry.get(index);
-      return e.getDispatcher().getSampleClass();
+      return e.getDispatcher();
     } catch (NullPointerException e) {
+      // Handles both the case where index == 0 and unregistered sample
       return null;
     }
 
   }
     
-  /* Package visible methods for use from TypeDefParser */
-
-  String getSampleName(int idx) {
-    DecoderRegistry.Entry e = def_registry.get(idx); 
-    return e.getName();  
-  }
-
-  byte[] getSampleSignature(int idx) {
-    DecoderRegistry.Entry e = def_registry.get(idx); 
-    return e.getSignature();  
-  }
 }
 

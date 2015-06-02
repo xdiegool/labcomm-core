@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import argparse
 import re
 import sys
 import random
@@ -18,7 +19,17 @@ def shuffle(l):
     return result
 
 if __name__ == '__main__':
-    f = open(sys.argv[1])
+    parser = argparse.ArgumentParser(description='Generate Java test relay.')
+    parser.add_argument('--renaming', action='store_true')
+    parser.add_argument('typeinfo', help='typeinfo file')
+
+    options = parser.parse_args(sys.argv[1:])
+    if options.renaming:
+        relay_name = 'java_renaming_relay'
+    else:
+        relay_name = 'java_relay'
+
+    f = open(options.typeinfo)
     sample = []
     for l in map(lambda s: s.strip(), f):
         lang,kind,func,arg,dummy = l[1:].split(l[0])
@@ -31,19 +42,20 @@ if __name__ == '__main__':
       |import java.io.FileInputStream;
       |import java.io.FileOutputStream;
       |import java.io.IOException;
-      |import se.lth.control.labcomm2014.DecoderChannel;
-      |import se.lth.control.labcomm2014.EncoderChannel;
-      |import se.lth.control.labcomm2014.Sample;
+      |import se.lth.control.labcomm2014.*;
       |
-      |public class java_relay implements
     """))
+    result.extend(split_match('^[^|]*\|(.*)$', """
+    |public class %(relay_name)s implements
+    """ % dict(relay_name = relay_name)))
     for func,arg in sample[0:-1]:
         result.append('  %s.Handler,' % func)
         pass
     result.append('  %s.Handler' % sample[-1][0])
     result.extend(split_match('^[^|]*\|(.*)$', """
       |{
-      |  EncoderChannel encoder;
+      |  Encoder encoder;
+      |  Decoder decoder;
     """))
     for func,arg in sample:
         if arg == 'void':
@@ -62,13 +74,21 @@ if __name__ == '__main__':
             pass
         pass
     result.extend(split_match('^[^|]*\|(.*)$', """
-      |  public java_relay(String InName, String OutName) throws Exception {
+      |  public %(relay_name)s(String InName, String OutName) throws Exception {
       |    FileInputStream InFile = new FileInputStream(InName);
-      |    DecoderChannel decoder = new DecoderChannel(InFile);
+      |    decoder = new DecoderChannel(InFile);
       |    FileOutputStream OutFile = new FileOutputStream(OutName);
       |    encoder = new EncoderChannel(OutFile);
       |
-    """))
+    """ % dict(relay_name=relay_name)))
+    if options.renaming:
+        result.extend(split_match('^[^|]*\|(.*)$', """
+        |    RenamingRegistry registry = new RenamingRegistry();
+        |    decoder = new RenamingDecoder(
+        |        decoder, registry, s -> "prefix:" + s + ":suffix");
+        |    encoder = new RenamingEncoder(
+        |        encoder, registry, s -> "prefix:" + s + ":suffix");
+        """))
     for func,arg in shuffle(sample):
         result.append('    %s.register(decoder, this);' % func)
         pass
@@ -88,9 +108,9 @@ if __name__ == '__main__':
       |    }
       |  }
       |  public static void main(String[] arg) throws Exception {
-      |    new java_relay(arg[0], arg[1]);
+      |    new %(relay_name)s(arg[0], arg[1]);
       |  }
       |}
-    """))
+    """ % dict(relay_name=relay_name)))
     print "\n".join(result)
     pass

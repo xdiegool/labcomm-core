@@ -36,7 +36,7 @@ test_%: gen/%/signatures.py \
 test_renaming_%: gen/%/signatures.py \
 		gen/%/c_renaming_relay \
 		gen/%/cs_renaming_relay.exe \
-		gen/%/java_relay.class \
+		gen/%/java_renaming_relay.class \
 		gen/%/java_code
 	PYTHONPATH=$(PYTHONPATH) MONO_PATH=$(MONO_PATH) \
 	    ./test_renaming_encoder_decoder.py \
@@ -45,10 +45,9 @@ test_renaming_%: gen/%/signatures.py \
 		--test $(shell echo $(VALGRIND) | sed -e 's/[-][-]/\\\\--/g') \
 		       gen/$*/c_renaming_relay /dev/stdin /dev/stdout \
 		--test mono gen/$*/cs_renaming_relay.exe \
-		       /dev/stdin /dev/stdout
-	echo \
+		       /dev/stdin /dev/stdout \
 		--test java \\-cp gen/$*:../lib/java/labcomm2014.jar \
-		       java_relay /dev/stdin /dev/stdout
+		       java_renaming_relay /dev/stdin /dev/stdout
 
 # test cases for compiler error checking
 .PHONY: compiler_errors testErrorsOK testErrorsNOK
@@ -133,4 +132,13 @@ gen/%/java_relay.java: gen/%/typeinfo relay_gen_java.py Makefile
 
 .PRECIOUS: gen/%/java_relay.class
 gen/%/java_relay.class: gen/%/java_relay.java gen/%/java_code Makefile
-	javac -d gen/$*  -cp ../lib/java/labcomm2014.jar:gen/$*/java_code $<
+	javac -d gen/$* -cp ../lib/java/labcomm2014.jar:gen/$*/java_code $<
+
+.PRECIOUS: gen/%/java_renaming_relay.java
+gen/%/java_renaming_relay.java: gen/%/typeinfo relay_gen_java.py Makefile
+	./relay_gen_java.py --renaming $< > $@
+
+.PRECIOUS: gen/%/java_renaming_relay.class
+gen/%/java_renaming_relay.class: gen/%/java_renaming_relay.java \
+                                 gen/%/java_code Makefile
+	javac -d gen/$* -cp ../lib/java/labcomm2014.jar:gen/$*/java_code $<

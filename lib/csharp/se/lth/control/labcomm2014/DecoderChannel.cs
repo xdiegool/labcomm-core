@@ -50,9 +50,10 @@ namespace se.lth.control.labcomm2014 {
           if (e == null) {
             throw new IOException("Unhandled tag " + tag);
           }
-          SampleDispatcher d = e.getSampleDispatcher();
+          SampleDispatcher d = e.getDispatcher();
           if (d == null) {
-            throw new IOException("No dispatcher for '" + e.getName() + "'" + e.getSignature());
+            throw new IOException("No dispatcher for '" + e.getName() + "' " +
+                                  e.getSignature());
           }
           SampleHandler h = e.getHandler();
           if (h == null) {
@@ -164,8 +165,9 @@ namespace se.lth.control.labcomm2014 {
       int index = (int)ReadInt(4);
       try {
         DecoderRegistry.Entry e = ref_registry.get(index);
-        return e.getSampleDispatcher();
+        return e.getDispatcher();
       } catch (NullReferenceException) {
+        // Handles both the case where index == 0 and unregistered sample
         return null;
       }
     }

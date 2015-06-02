@@ -27,7 +27,7 @@ namespace se.lth.control.labcomm2014 {
 	this.signature = signature;
       }
 
-      public SampleDispatcher getSampleDispatcher() {
+      public SampleDispatcher getDispatcher() {
 	return dispatcher;
       }
 

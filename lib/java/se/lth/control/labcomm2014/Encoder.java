@@ -17,7 +17,7 @@ public interface Encoder {
   public void encodeFloat(float value) throws IOException;
   public void encodeDouble(double value) throws IOException;
   public void encodeString(String value) throws IOException;
-  public void encodePacked32(long value) throws IOException;
-  public void encodeSampleRef(Class value) throws IOException;
+  public void encodePacked32(int value) throws IOException;
+  public void encodeSampleRef(SampleDispatcher value) throws IOException;
 
 }

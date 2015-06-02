@@ -510,36 +510,36 @@ aspect Java_Class {
     env.println("private static class Dispatcher implements SampleDispatcher "+genericStr+"{");
     env.indent();
     env.println();
-    env.println("public Class"+genericStr+" getSampleClass() {");
-    env.indent();
-    env.println("return " + getName() + ".class;");
-    env.unindent();
-    env.println("}");
-    env.println();
+//    env.println("public Class"+genericStr+" getSampleClass() {");
+//    env.indent();
+//    env.println("return " + getName() + ".class;");
+//    env.unindent();
+//    env.println("}");
+//    env.println();
     env.println("public String getName() {");
     env.indent();
     env.println("return \"" + getName() + "\";");
     env.unindent();
     env.println("}");
     env.println();
-    env.println("public byte getTypeDeclTag() {");
-    env.indent();
-    if(env.version == 2006) {
-      if(isSample) {
-        env.println("return Constant.SAMPLE;");
-      } else {
-        env.println("return Constant.TYPEDEF;");
-      }
-    } else {
-      if(isSample) {
-        env.println("return Constant.SAMPLE_DEF;");
-      } else {
-        env.println("return Constant.TYPE_DEF;");
-      }
-    }
-    env.unindent();
-    env.println("}");
-    env.println();
+//    env.println("public byte getTypeDeclTag() {");
+//    env.indent();
+//    if(env.version == 2006) {
+//      if(isSample) {
+//        env.println("return Constant.SAMPLE;");
+//      } else {
+//        env.println("return Constant.TYPEDEF;");
+//      }
+//    } else {
+//      if(isSample) {
+//        env.println("return Constant.SAMPLE_DEF;");
+//      } else {
+//        env.println("return Constant.TYPE_DEF;");
+//      }
+//    }
+//    env.unindent();
+//    env.println("}");
+//    env.println();
 //    env.println("public boolean isSample() {");
 //    env.indent();
 //    env.println("return "+isSample+";");
@@ -568,16 +568,16 @@ aspect Java_Class {
 //    env.unindent();
 //    env.println("}");
 //    env.println();
-    env.println("public void encodeTypeDef(Encoder e, int index) throws IOException{");
-    env.indent();
-    if(!isSample || hasDependencies()) {
-      env.println("emitSignature(e);");
-    } else {
-      env.println("// the type has no dependencies, do nothing");
-    }
-    env.unindent();
-    env.println("}");
-    env.println();
+//    env.println("public void encodeTypeDef(Encoder e, int index) throws IOException{");
+//    env.indent();
+//    if(!isSample || hasDependencies()) {
+//      env.println("emitSignature(e);");
+//    } else {
+//      env.println("// the type has no dependencies, do nothing");
+//    }
+//    env.unindent();
+//    env.println("}");
+//    env.println();
     env.println("public boolean canDecodeAndHandle() {");
     env.indent();
     env.println("return "+isSample+";");
@@ -834,7 +834,7 @@ aspect Java_Class {
   public void PrimType.Java_emitTypePrefix(Java_env env) {
     switch (getToken()) {
       case LABCOMM_STRING: { env.print("String"); } break;
-      case LABCOMM_SAMPLE: { env.print("Class"); } break;
+      case LABCOMM_SAMPLE: { env.print("SampleDispatcher"); } break;
       default: { env.print(getName()); } break;
     }
   }
@@ -961,7 +961,7 @@ aspect Java_Class {
   public void PrimType.Java_emitType(Java_env env) {
     switch (getToken()) {
       case LABCOMM_STRING: { env.print("String"); } break;
-      case LABCOMM_SAMPLE: { env.print("Class"); } break;
+      case LABCOMM_SAMPLE: { env.print("SampleDispatcher"); } break;
       default: { env.print(getName()); } break;
     }
   }

@@ -1,4 +1,4 @@
-MODULES=Constant\
+MODULES=Constant \
 	Decoder \
 	DecoderChannel \
 	DecoderRegistry \

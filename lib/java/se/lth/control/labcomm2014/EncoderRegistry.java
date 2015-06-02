@@ -26,38 +26,30 @@ public class EncoderRegistry {
   }
 
   private int userIndex = Constant.FIRST_USER_INDEX;
-  private HashMap<Class, Entry> byClass;
+  private HashMap<SampleDispatcher, Entry> byDispatcher;
 
   public EncoderRegistry() {
-    byClass = new HashMap<Class, Entry>();
+    byDispatcher = new HashMap<SampleDispatcher, Entry>();
   }
 
   public synchronized int add(SampleDispatcher dispatcher) {
-    Entry e = byClass.get(dispatcher.getSampleClass());
+    Entry e = byDispatcher.get(dispatcher);
     if (e == null) {
       e = new Entry(dispatcher, userIndex);
-      byClass.put(dispatcher.getSampleClass(), e);
+      byDispatcher.put(dispatcher, e);
       userIndex++;
     }
     return e.getIndex();
   }
   
-  public int getTag(SampleDispatcher d) throws IOException {
-      return getTag(d.getSampleClass());
-  }
-
-  public int getTag(Class<? extends SampleType> sample) throws IOException {
-    Entry e = byClass.get(sample);
+  public synchronized int getTag(SampleDispatcher sample) throws IOException {
+    Entry e = byDispatcher.get(sample);
     if (e == null) {
       throw new IOException("'" + 
-			    sample.getSimpleName() + 
+			    sample.getName() + 
 			    "' is not registered");
     }
-    return e.index;
-  }
-
-  public boolean contains(Class<? extends SampleType> sample) {
-    return byClass.containsKey(sample);
+    return e.getIndex();
   }
 
 }
