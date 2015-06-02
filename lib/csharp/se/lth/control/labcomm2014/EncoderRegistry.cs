@@ -26,19 +26,19 @@ namespace se.lth.control.labcomm2014 {
     }
 
     private int userIndex = Constant.FIRST_USER_INDEX;
-    private Dictionary<SampleDispatcher, Entry> byIdentity;
+    private Dictionary<SampleDispatcher, Entry> byDispatcher;
 
     public EncoderRegistry() {
-      byIdentity = new Dictionary<SampleDispatcher, Entry>();
+      byDispatcher = new Dictionary<SampleDispatcher, Entry>();
     }
 
     public int add(SampleDispatcher dispatcher) {
       lock(this) {
 	Entry e;
-	byIdentity.TryGetValue(dispatcher.getSampleIdentity(), out e);
+	byDispatcher.TryGetValue(dispatcher, out e);
 	if (e == null) {
 	  e = new Entry(dispatcher, userIndex);
-	  byIdentity.Add(dispatcher.getSampleIdentity(), e);
+	  byDispatcher.Add(dispatcher, e);
 	  userIndex++;
 	}
 	return e.getIndex();
@@ -48,7 +48,7 @@ namespace se.lth.control.labcomm2014 {
     public int getTag(SampleDispatcher sample) {
       lock(this) {
 	Entry e;
-	byIdentity.TryGetValue(sample, out e);
+	byDispatcher.TryGetValue(sample, out e);
 	if (e == null) {
 	  throw new Exception("'" + 
 			      sample.ToString() + 

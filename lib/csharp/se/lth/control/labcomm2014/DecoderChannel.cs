@@ -194,7 +194,7 @@ namespace se.lth.control.labcomm2014 {
       int index = (int)ReadInt(4);
       try {
         DecoderRegistry.Entry e = ref_registry.get(index);
-        return e.getSampleDispatcher().getSampleIdentity();
+        return e.getSampleDispatcher();
       } catch (NullReferenceException) {
         return null;
       }

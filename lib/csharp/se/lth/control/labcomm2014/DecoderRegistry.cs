@@ -90,11 +90,11 @@ namespace se.lth.control.labcomm2014 {
       }
     }
 
-    private Dictionary<SampleDispatcher, Entry> byIdentity;
+    private Dictionary<SampleDispatcher, Entry> byDispatcher;
     private Dictionary<int, Entry> byIndex;
 
     public DecoderRegistry() {
-      byIdentity = new Dictionary<SampleDispatcher, Entry>();
+      byDispatcher = new Dictionary<SampleDispatcher, Entry>();
       byIndex = new Dictionary<int, Entry>();
     }
 
@@ -102,7 +102,7 @@ namespace se.lth.control.labcomm2014 {
 		    SampleHandler handler) {
       lock(this) {
 	Entry e;
-	byIdentity.TryGetValue(dispatcher.getSampleIdentity(), out e);
+	byDispatcher.TryGetValue(dispatcher, out e);
 	if (e != null) {
 	  e.check(dispatcher.getName(), dispatcher.getSignature());
 	  e.setHandler(handler);
@@ -117,7 +117,7 @@ namespace se.lth.control.labcomm2014 {
 	  }
 	  if (e == null) {
 	    e = new Entry(dispatcher, handler);
-	    byIdentity.Add(dispatcher.getSampleIdentity(), e);
+	    byDispatcher.Add(dispatcher, e);
 	  }
 	}
       }
@@ -132,7 +132,7 @@ namespace se.lth.control.labcomm2014 {
 	if (e != null) {
 	  e.check(name, signature);
 	} else {
-	  foreach (Entry e2 in byIdentity.Values) {
+	  foreach (Entry e2 in byDispatcher.Values) {
 	    if (e2.match(name, signature)) {
 	      e2.setIndex(index);
 	      e = e2;
