@@ -89,6 +89,10 @@ public class TypeBinding implements BuiltinType {
       throw new Error("Should not be called");
     }
 
+    public void registerTypeDeps(Encoder e) throws IOException{
+      throw new Error("Should not be called");
+    }
+
     public void decodeAndHandle(Decoder d,
                                 SampleHandler h) throws Exception {
       ((Handler)h).handle_TypeBinding(TypeBinding.decode(d));

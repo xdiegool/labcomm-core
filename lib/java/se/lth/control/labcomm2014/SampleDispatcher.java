@@ -29,5 +29,7 @@ public interface SampleDispatcher <T extends SampleType>{
    *  applicable to both type and sample defs.
    */
   public byte getTypeDeclTag();
+
+  public void registerTypeDeps(Encoder e) throws IOException;
 }
 

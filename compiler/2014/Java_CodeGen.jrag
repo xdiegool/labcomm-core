@@ -167,6 +167,42 @@ aspect Java_Class {
 
   }
 
+  private void Decl.Java_declareUserTypeDeps(Java_env env) {
+    int numDeps = type_dependencies().size();
+    int i=0;
+    env.println("private Set<SampleDispatcher> typeDependencies = new HashSet<SampleDispatcher>();");
+
+    env.println("public Dispatcher(){");
+    env.indent();
+    Iterator<Decl> it = type_dependencies().iterator();
+    while(it.hasNext()) {
+        Decl t = it.next();
+        //env.println("deps["+(i++)+"] = "+t.getName()+";");
+        env.println("typeDependencies.add("+t.getName()+".dispatcher);");
+    }
+    env.unindent();
+    env.println("}");
+
+    env.println("public Iterator<SampleDispatcher> getDependencyIterator(){");
+    env.indent();
+    env.println("return typeDependencies.iterator();");
+    env.unindent();
+    env.println("}");
+
+    env.println("public void registerTypeDeps(Encoder e) throws IOException {");
+    env.indent();
+//    env.println("for (SampleDispatcher d : typeDependencies) {");
+    env.println("Iterator<SampleDispatcher> it = typeDependencies.iterator();");
+    env.println("while (it.hasNext()) {");
+    env.indent();
+    env.println("SampleDispatcher d = it.next();");
+    env.println("d.registerTypeDeps(e);");
+    env.println("e.register(d);");
+    env.unindent();
+    env.println("}");
+    env.unindent();
+    env.println("}");
+  }
   public void Decl.Java_emitUserTypeDeps(Java_env env, String via, boolean outputCode) {
   // XXX TODO will generate unnecessary recursion for types. fix this per commented out code
   // XXX      but ensure that types with references actually register themselves.. (i.e., add "nested" argument)
@@ -227,7 +263,8 @@ aspect Java_Class {
     env.println();
     env.println("public static void register(Encoder e, boolean sendMetaData) throws IOException {");
     env.indent();
-    Java_emitUserTypeDeps(env, null, true);
+//    Java_emitUserTypeDeps(env, null, true);
+    env.println("dispatcher.registerTypeDeps(e);");
     env.println("e.register(dispatcher);");
     env.unindent();
     env.println("}");
@@ -252,6 +289,9 @@ aspect Java_Class {
           env.println("import se.lth.control.labcomm"+env.verStr+".Encoder;");
           env.println("import se.lth.control.labcomm"+env.verStr+".SampleDispatcher;");
           env.println("import se.lth.control.labcomm"+env.verStr+".SampleHandler;");
+          env.println("import java.util.Set;");
+          env.println("import java.util.HashSet;");
+          env.println("import java.util.Iterator;");
 //          env.println();
 //      }
 //
@@ -300,6 +340,9 @@ aspect Java_Class {
     env.println("import se.lth.control.labcomm"+env.verStr+".Encoder;");
     env.println("import se.lth.control.labcomm"+env.verStr+".SampleHandler;");
     env.println("import se.lth.control.labcomm"+env.verStr+".Sample;");
+    env.println("import java.util.Set;");
+    env.println("import java.util.HashSet;");
+    env.println("import java.util.Iterator;");
     env.println();
     env.print("public class " + getName());
 //  TODO: ?
@@ -410,9 +453,9 @@ aspect Java_Class {
 
   //XXX TODO: refactor: split into a static class ("TypeDefSingleton"?)and a (smaller) dispatcher
   public void Decl.Java_emitDispatcher(Java_env env, boolean isSample) {
-    // String genericStr = ""; //env.versionHasMetaData()?"<"+getName()+">":""; 
-    String genericStr = "<"+getName()+">"; 
-    env.println("private static Dispatcher dispatcher = new Dispatcher();");
+    // String genericStr = ""; //env.versionHasMetaData()?"<"+getName()+">":"";
+    String genericStr = "<"+getName()+">";
+    env.println("static Dispatcher dispatcher = new Dispatcher();");
     env.println();
     getTypeInstance().Java_emitAnnotationComment(env);
     env.println("public SampleDispatcher getDispatcher() {");
@@ -421,9 +464,10 @@ aspect Java_Class {
     env.unindent();
     env.println("}");
     env.println();
-    env.println("private static class Dispatcher implements SampleDispatcher "+genericStr+"{");
+    env.println("static class Dispatcher implements SampleDispatcher "+genericStr+"{");
     env.indent();
     env.println();
+    Java_declareUserTypeDeps(env);
     env.println("public Class"+genericStr+" getSampleClass() {");
     env.indent();
     env.println("return " + getName() + ".class;");

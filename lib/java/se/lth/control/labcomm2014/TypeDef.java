@@ -97,6 +97,10 @@ public class TypeDef implements BuiltinType {
       throw new Error("Should not be called");
     }
 
+    public void registerTypeDeps(Encoder e) throws IOException{
+      throw new Error("Should not be called");
+    }
+
 //    public boolean canDecodeAndHandle() {
 //      return true;
 //    }
