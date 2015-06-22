@@ -10,6 +10,7 @@ ifeq ($(UNAME_S),Linux)
   CFLAGS_TEST=$(CFLAGS) -Itest
   LDFLAGS=-L..
   LDLIBS=-llabcomm$(LIBVERSION) -lrt
+  LD_LIBRARY_PATH_NAME=LD_LIBRARY_PATH
   MAKESHARED=gcc -o $1 -shared -Wl,-soname,$2 $3 -lc -lrt
 else ifeq ($(UNAME_S),Darwin)
   #CC=$(CROSS_COMPILE)clang
@@ -24,6 +25,7 @@ else ifeq ($(UNAME_S),Darwin)
   CFLAGS+=-std=c99
   LDFLAGS=-L..
   LDLIBS=-llabcomm$(LIBVERSION)
+  LD_LIBRARY_PATH_NAME=DYLD_LIBRARY_PATH
   MAKESHARED=clang -o $1 -shared -Wl,-install_name,$2 $3 -lc
 else ifneq ($(findstring CYGWIN,$(UNAME_S)),)
   CC=$(CROSS_COMPILE)gcc
