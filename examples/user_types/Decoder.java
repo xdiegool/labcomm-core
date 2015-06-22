@@ -6,6 +6,7 @@ import java.io.IOException;
 import se.lth.control.labcomm2014.DecoderChannel;
 import se.lth.control.labcomm2014.TypeDef;
 import se.lth.control.labcomm2014.TypeDefParser;
+import se.lth.control.labcomm2014.SigTypeDef;
 //import se.lth.control.labcomm2014.TypeBinding;
 
 public class Decoder
@@ -65,7 +66,7 @@ public class Decoder
 //    System.out.println("Got TypeBinding: "+d.getSampleIndex()+" --> "+d.getTypeIndex()+"");
 //  }
 
-  public void onTypeDef(TypeDefParser.ParsedTypeDef d) {
+  public void onTypeDef(SigTypeDef d) {
     System.out.println("ontype_def: ");
     if(d != null) {
         System.out.print((d.isSampleDef()?"sample ":"typedef ")+d);

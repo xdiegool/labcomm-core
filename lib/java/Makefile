@@ -15,8 +15,27 @@ MODULES=Constant \
 	TypeBinding \
 	ASTbuilder \
 	TypeDefParser \
+	SigTypeDef \
+	SigSampleDef \
+	ParsedTypeDef \
+	ParsedSampleDef \
 	Writer \
-	WriterWrapper
+	WriterWrapper \
+	DataType \
+	VoidType \
+	SignatureSymbolVisitor \
+	SignatureSymbol \
+	TypeSymbol \
+	SampleSymbol \
+	NameSymbol \
+	SigPrimitiveType \
+	SigStructType \
+	SigField \
+	SigArrayType \
+	SigUserType 
+
+
+
 
 .PHONY: all
 all: labcomm2014.jar

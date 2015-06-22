@@ -10,9 +10,6 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.EOFException;
 
-import se.lth.control.labcomm2014.TypeDef;
-import se.lth.control.labcomm2014.TypeDefParser;
-
 import se.lth.control.labcomm2014.compiler.LabComm;
 import se.lth.control.labcomm2014.compiler.LabCommParser;
 
@@ -40,7 +37,7 @@ import se.lth.control.labcomm2014.compiler.VariableSize;
 /** A class for building a JastAdd AST from the parsed types
  *  created by a TypeDefParser. This class depends on the LabComm compiler.
  */
-public class ASTbuilder implements TypeDefParser.ParsedSymbolVisitor {
+public class ASTbuilder implements SignatureSymbolVisitor {
 
         private LinkedList<DataType> typeStack;
         private LinkedList<Field> fieldStack;
@@ -59,19 +56,19 @@ public class ASTbuilder implements TypeDefParser.ParsedSymbolVisitor {
             }
         }
 
-        public void visit(TypeDefParser.TypeSymbol s){
+        public void visit(TypeSymbol s){
             throw new Error("not implemented? needed?");
 
         }
-        public void visit(TypeDefParser.SampleSymbol s){
+        public void visit(SampleSymbol s){
             throw new Error("not implemented? needed?");
 
         }
-        public void visit(TypeDefParser.NameSymbol s){
+        public void visit(NameSymbol s){
             throw new Error("not implemented? needed?");
         }
 
-        public void visit(TypeDefParser.PrimitiveType t){
+        public void visit(SigPrimitiveType t){
             typeStack.push(new PrimType(t.getName(), t.getTag()));
         }
 
@@ -81,24 +78,24 @@ public class ASTbuilder implements TypeDefParser.ParsedSymbolVisitor {
 //            typeStack.push(new SampleRefType());
 //        }
 
-        public void visit(TypeDefParser.ParsedStructType t){
+        public void visit(SigStructType t){
             if(t.isVoid()) {
                 typeStack.push(new VoidType());
             } else {
                 List<Field> tmpF = new List<Field>();
-                for( TypeDefParser.ParsedField f : t.getFields()) {
+                for( SigField f : t.getFields()) {
                     f.accept(this);
                     tmpF.add(fieldStack.pop());
                 }
                 typeStack.push(new StructType(tmpF));
             }
         }
-        public void visit(TypeDefParser.ParsedField t){
+        public void visit(SigField t){
             t.getType().accept(this);
             fieldStack.push(new Field(new TypeInstance(typeStack.pop(),t.getName())));
 
         }
-        public void visit(TypeDefParser.ArrayType t){
+        public void visit(SigArrayType t){
             boolean isFixed = true;
             List<Exp> dim = new List<Exp>();
             for(int i : t.getIdx()) {
@@ -111,18 +108,18 @@ public class ASTbuilder implements TypeDefParser.ParsedSymbolVisitor {
             }
             t.getType().accept(this);
             if(isFixed) {
-                typeStack.push(new FixedArrayType(typeStack.pop(), dim));
+                typeStack.push(new FixedArrayType(typeStack.pop(), new Dim(dim)));
             } else {
-                typeStack.push(new VariableArrayType(typeStack.pop(), dim));
+                typeStack.push(new VariableArrayType(typeStack.pop(), new Dim(dim)));
             }
 
         }
-        public void visit(TypeDefParser.ParsedUserType t){
+        public void visit(SigUserType t){
             typeStack.push(new UserType(t.getName()));
         }
 
 
-       public Decl makeDecl(TypeDefParser.ParsedTypeDef d) {
+       public Decl makeDecl(SigTypeDef d) {
            d.getType().accept(this);
            Decl result = new TypeDecl(new TypeInstance(typeStack.pop(), d.getName()));
            return result;
@@ -146,7 +143,7 @@ public class ASTbuilder implements TypeDefParser.ParsedSymbolVisitor {
             }
        }
 
-       public Specification makeSpecification(TypeDefParser.ParsedTypeDef d) {
+       public Specification makeSpecification(SigTypeDef d) {
            assertStacksEmpty();
            List<Decl> ds = new List<Decl>();
 
@@ -155,19 +152,26 @@ public class ASTbuilder implements TypeDefParser.ParsedSymbolVisitor {
            return createAndCheckSpecification(ds);
        }
 
-       public Decl makeDecl(TypeDefParser.ParsedSampleDef d) {
+       public Decl makeDecl(SigSampleDef d) {
            d.getType().accept(this);
            Decl result = new SampleDecl(new TypeInstance(typeStack.pop(), d.getName()));
            return result;
        }
-       public Specification makeSpecification(TypeDefParser.ParsedSampleDef d) {
+
+       private void addAllDeps(List<Decl> ds, SigTypeDef d) {
+           Iterator<SigTypeDef> it = d.getDepIterator();
+           while(it.hasNext()){
+               SigTypeDef dd = it.next();
+               addAllDeps(ds,dd);
+               ds.add(makeDecl(dd));
+           }
+       }
+
+       public Specification makeSpecification(ParsedSampleDef d) {
            assertStacksEmpty();
            List<Decl> ds = new List<Decl>();
 
-           Iterator<TypeDefParser.ParsedTypeDef> it = d.getDepIterator();
-           while(it.hasNext()){
-               ds.add(makeDecl(it.next()));
-           }
+           addAllDeps(ds, d);
 
            ds.add(makeDecl(d));
 

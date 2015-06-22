@@ -1,5 +1,5 @@
 package se.lth.control.labcomm2014;
-
+import java.util.Iterator;
 import java.io.IOException;
 
 public interface SampleDispatcher <T extends SampleType>{
@@ -31,5 +31,9 @@ public interface SampleDispatcher <T extends SampleType>{
   public byte getTypeDeclTag();
 
   public void registerTypeDeps(Encoder e) throws IOException;
+
+  public Iterator<SampleDispatcher> getDependencyIterator();
+
+  public DataType getDataType();
 }
 

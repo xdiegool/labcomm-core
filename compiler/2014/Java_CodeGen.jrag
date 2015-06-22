@@ -170,6 +170,13 @@ aspect Java_Class {
   private void Decl.Java_declareUserTypeDeps(Java_env env) {
     int numDeps = type_dependencies().size();
     int i=0;
+    env.println("private static DataType dataType;");
+    env.println("static {");
+    env.indent();
+    Java_emitTypeTree(env);
+    env.unindent();
+    env.println("}");
+
     env.println("private Set<SampleDispatcher> typeDependencies = new HashSet<SampleDispatcher>();");
 
     env.println("public Dispatcher(){");
@@ -180,6 +187,12 @@ aspect Java_Class {
         //env.println("deps["+(i++)+"] = "+t.getName()+";");
         env.println("typeDependencies.add("+t.getName()+".dispatcher);");
     }
+    env.unindent();
+    env.println("}");
+
+    env.println("public DataType getDataType(){");
+    env.indent();
+    env.println("return dataType;");
     env.unindent();
     env.println("}");
 
@@ -274,6 +287,12 @@ aspect Java_Class {
     env.unindent();
     env.println("}");
     env.println();
+    env.println("public static DataType getDataType(){");
+    env.indent();
+    env.println("return dispatcher.getDataType();");
+    env.unindent();
+    env.println("}");
+    env.println();
   }
 
   public void TypeDecl.Java_emitClass(Java_env env, String pack) {
@@ -284,6 +303,7 @@ aspect Java_Class {
 
       env.println("import se.lth.control.labcomm"+env.verStr+".Constant;");
       env.println("import se.lth.control.labcomm"+env.verStr+".SampleType;");
+      env.println("import se.lth.control.labcomm"+env.verStr+".*;");
 
       if (getDataType().Java_needInstance() || hasDependencies() || isReferenced()) {
           env.println("import se.lth.control.labcomm"+env.verStr+".Encoder;");
@@ -340,6 +360,7 @@ aspect Java_Class {
     env.println("import se.lth.control.labcomm"+env.verStr+".Encoder;");
     env.println("import se.lth.control.labcomm"+env.verStr+".SampleHandler;");
     env.println("import se.lth.control.labcomm"+env.verStr+".Sample;");
+    env.println("import se.lth.control.labcomm"+env.verStr+".*;");
     env.println("import java.util.Set;");
     env.println("import java.util.HashSet;");
     env.println("import java.util.Iterator;");
@@ -451,6 +472,98 @@ aspect Java_Class {
       }
   }
 
+  public void TypeInstance.Java_emitTypeTree(Java_env env, String varName) {
+      getDataType().Java_emitTypeTree(env, varName);
+  }
+
+  public void TypeInstance.Java_emitTypeField(Java_env env, String struct, String name) {
+      getDataType().Java_emitTypeField(env, struct, name);
+  }
+
+  public abstract void DataType.Java_emitTypeTree(Java_env env, String name);
+  public abstract void DataType.Java_emitTypeField(Java_env env, String struct, String name);
+
+  public void PrimType.Java_emitTypeTree(Java_env env, String name) {
+      env.println("// "+name+"="+getName() + " : " + getToken());
+      env.println(name+" = new SigPrimitiveType("+getToken()+");");
+  }
+  public void PrimType.Java_emitTypeField(Java_env env, String struct, String name) {
+      //env.println("// "+struct+".addField("+name+ ", "+getName()+");");
+      env.println(struct+".addField(\""+name+ "\", new SigPrimitiveType("+getToken()+"));");
+  }
+  public void VoidType.Java_emitTypeTree(Java_env env, String name) {
+      env.println(name+"= new VoidType();");
+  }
+  public void VoidType.Java_emitTypeField(Java_env env, String struct, String name) {
+      throw new Error("Void may not be field");
+  }
+  public void ParseArrayType.Java_emitTypeTree(Java_env env, String name) {
+      String elementType = name + "_element";
+      env.println("DataType "+elementType+";");
+      getDataType().Java_emitTypeTree(env, elementType);
+      env.println("// "+name+"=  array("+elementType+");");
+  }
+
+  syn String Exp.dimArrayPart();
+  eq IntegerLiteral.dimArrayPart() = getValue();
+  eq VariableSize.dimArrayPart() = "-1";
+
+  syn String Dim.dimArrayString() {
+      StringBuilder sb = new StringBuilder();
+      sb.append("new int[] {");
+      for(int i=0; i<getNumExp(); i++) {
+            sb.append(getExp(i).dimArrayPart());
+            if(i < getNumExp()-1) {
+                sb.append(", ");
+            }
+      }
+      sb.append("}");
+
+      return sb.toString();
+  }
+
+  public void ArrayType.Java_emitTypeTree(Java_env env, String name) {
+      String elementType = name + "_element";
+      StringBuilder dim = new StringBuilder();
+      dim.append("new int[] {");
+      env.println("DataType "+elementType+";");
+      getDataType().Java_emitTypeTree(env, elementType);
+      env.println(name+"=  new SigArrayType("+elementType+","+getDim().dimArrayString()+");");
+  }
+  public void ParseArrayType.Java_emitTypeField(Java_env env, String struct, String name) {
+      env.println("// field "+name+ " = array("+getDataType().Java_getTypeName()); }
+  public void ArrayType.Java_emitTypeField(Java_env env, String struct, String name) {
+      String innerName = struct+"_"+name;
+      env.println("DataType "+innerName+";");
+      Java_emitTypeTree(env, innerName);
+      env.println(struct+".addField(\""+name+ "\", "+innerName+");");
+      //env.println(struct+".addField(\""+name+ "\", new UserType(\""+getName()+"\"));");
+  }
+  public void StructType.Java_emitTypeTree(Java_env env, String name) {
+      env.println(name+" = new SigStructType();");
+      for(Field f : getFields()) {
+          f.Java_emitTypeField(env, name, f.getName());
+      }
+  }
+  public void StructType.Java_emitTypeField(Java_env env, String struct, String name) {
+      String innerName = struct+"_"+name;
+      env.println("SigStructType "+innerName+" = new SigStructType();");
+      for(Field f : getFields()) {
+          f.Java_emitTypeField(env, innerName, f.getName());
+      }
+      env.println(struct+".addField(\""+name+ "\", "+innerName+");");
+  }
+  public void UserType.Java_emitTypeTree(Java_env env, String name) {
+      env.println(name+" = new SigUserType(\""+getName()+"\");");
+  }
+  public void UserType.Java_emitTypeField(Java_env env, String struct, String name) {
+      env.println(struct+".addField(\""+name+ "\", new SigUserType(\""+getName()+"\"));");
+  }
+
+  public void Decl.Java_emitTypeTree(Java_env env) {
+      getTypeInstance().Java_emitTypeTree(env, "dataType");
+
+  }
   //XXX TODO: refactor: split into a static class ("TypeDefSingleton"?)and a (smaller) dispatcher
   public void Decl.Java_emitDispatcher(Java_env env, boolean isSample) {
     // String genericStr = ""; //env.versionHasMetaData()?"<"+getName()+">":"";
@@ -626,6 +739,39 @@ aspect Java_Class {
   }
 
   public void VoidType.Java_emitEncoder(Java_env env, String name) {
+  }
+
+  public abstract String DataType.Java_getTypeName();
+
+  public String UserType.Java_getTypeName() {
+      return "UserType";
+  }
+  public String VoidType.Java_getTypeName() {
+      return "VoidType";
+  }
+  public String ArrayType.Java_getTypeName() {
+      return "SigArrayType";
+  }
+  public String ParseArrayType.Java_getTypeName() {
+      throw new Error("should not be called");
+      //return "ParseArrayType";
+  }
+  public String StructType.Java_getTypeName() {
+      return "SigStructType";
+  }
+  public String PrimType.Java_getTypeName() {
+    switch (getToken()) {
+      case LABCOMM_BOOLEAN: { return "BooleanType"; }
+      case LABCOMM_BYTE: { return "ByteType"; }
+      case LABCOMM_SHORT: { return "ShortType"; }
+      case LABCOMM_INT: { return "IntType"; }
+      case LABCOMM_LONG: { return "LongType"; }
+      case LABCOMM_FLOAT: { return "FloatType"; }
+      case LABCOMM_DOUBLE: { return "DoubleType"; }
+      case LABCOMM_STRING: { return "StringType"; }
+      case LABCOMM_SAMPLE: { return "SampleRefType"; }
+    }
+    throw new Error( "unknown primitive type ("+getToken()+")");
   }
 
   public void PrimType.Java_emitEncoder(Java_env env, String name) {

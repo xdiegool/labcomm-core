@@ -4,6 +4,7 @@ LCLJAR=${LCDIR}/lib/java/labcomm2014.jar# the LabComm library
 
 EXECUTABLES=example_encoder example_decoder \
 	    Encoder.class Decoder.class TDDecoder.class \
+	    TestDataType.class \
 	    ExampleEncoder.exe ExampleDecoder.exe
 
 include ${LCDIR}/lib/c/os_compat.mk
@@ -51,6 +52,7 @@ build :
 
 	javac -cp ${LCDIR}/lib/java/labcomm2014.jar:. ${GENDIR}/*.java Encoder.java Decoder.java
 	javac -cp ${LCDIR}/lib/java/labcomm2014.jar:${LCCJAR}:${GENDIR}:. TDDecoder.java
+	javac -cp ${LCDIR}/lib/java/labcomm2014.jar:${LCCJAR}:${GENDIR}:. TestDataType.java
 
 	${CC} ${CFLAGS} ${LDFLAGS} -Wall -Werror -Wno-unused-function \
 	    -I. -I${LCDIR}/lib/c/2014 -L${LCDIR}/lib/c \
@@ -182,6 +184,15 @@ runjastadd: cleanbuild
 
 	@echo "************ running Java  TypeDefdecoder: *****************"
 	java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${LCCJAR}:${GENDIR} TDDecoder encoded_data_j
+
+rundatatype: cleanbuild
+	@echo
+	@echo "********************************************"
+	@echo "*************** running datatype example ***"
+	@echo "********************************************"
+	@echo
+
+	@java -cp .:${LCDIR}/lib/java/labcomm2014.jar:${GENDIR} TestDataType 
 
 
 clean:

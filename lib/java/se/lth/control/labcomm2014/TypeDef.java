@@ -3,6 +3,8 @@ package se.lth.control.labcomm2014;
 import java.io.IOException;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 import se.lth.control.labcomm2014.Decoder;
 import se.lth.control.labcomm2014.DecoderChannel;
 import se.lth.control.labcomm2014.SampleDispatcher;
@@ -112,6 +114,25 @@ public class TypeDef implements BuiltinType {
 
     public boolean hasDependencies() {
         return false;
+    }
+
+    public Iterator<SampleDispatcher> getDependencyIterator() {
+        return new Iterator<SampleDispatcher>() {
+            public boolean hasNext() {
+                return false;
+            }
+
+            public SampleDispatcher next() throws NoSuchElementException {
+                throw new NoSuchElementException();
+            }
+            public void remove() throws UnsupportedOperationException {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
+
+    public DataType getDataType() {
+        throw new Error("not implemented");
     }
   }
 

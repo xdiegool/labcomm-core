@@ -1,5 +1,8 @@
 /* Temporary aspect with forwarding methods */
 aspect Refactoring {
+    syn int ArrayType.getNumExp() = getDim().getNumExp();
+    syn Exp ArrayType.getExp(int i) = getDim().getExp(i);
+
     syn String Decl.getName() = getTypeInstance().getName();
     syn DataType Decl.getDataType() = getTypeInstance().getDataType();
 

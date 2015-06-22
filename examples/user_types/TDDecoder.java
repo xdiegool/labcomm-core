@@ -6,8 +6,11 @@ import java.io.IOException;
 import se.lth.control.labcomm2014.DecoderChannel;
 import se.lth.control.labcomm2014.TypeDef;
 import se.lth.control.labcomm2014.TypeDefParser;
+import se.lth.control.labcomm2014.SigTypeDef;
+import se.lth.control.labcomm2014.ParsedSampleDef;
 import se.lth.control.labcomm2014.ASTbuilder;
 //import se.lth.control.labcomm2014.TypeBinding;
+import se.lth.control.labcomm2014.DataType;
 
 import se.lth.control.labcomm2014.compiler.Specification;
 import java.io.FileOutputStream;
@@ -75,18 +78,29 @@ public class TDDecoder
 //    System.out.println("Got TypeBinding: "+d.getSampleIndex()+" --> "+d.getTypeIndex()+"");
 //  }
 
-  public void onTypeDef(TypeDefParser.ParsedTypeDef d) {
+  public void onTypeDef(SigTypeDef d) {
     if(d != null && d.isSampleDef()){
         System.out.println("onTypeDef (sample): ");
-        ASTbuilder v = new ASTbuilder();
-        Specification p = v.makeSpecification((TypeDefParser.ParsedSampleDef) d);
+        //------------
         try {
-                //FileOutputStream f = new FileOutputStream("/tmp/foopp"+d.getName()+".txt");
-                //PrintStream out = new PrintStream(f);
+            System.out.println("==================== DataType ======");
+            DataType.printDataType(System.out, d);
+            System.out.println();
+            System.out.println("==================== end ======");
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
+        ASTbuilder v = new ASTbuilder();
+        Specification p = v.makeSpecification((ParsedSampleDef) d);
+        try {
+                FileOutputStream f = new FileOutputStream("/tmp/foopp"+d.getName()+".txt");
+                PrintStream out = new PrintStream(f);
                 p.pp(System.out);
                 //p.C_genC(System.out, new Vector(), "lcname", "prefix", 2014);
-                //p.J_gen(out, "testpackage", 2014);
-                //out.close();
+                p.J_gen(out, "testpackage", 2014);
+                out.close();
+
+
         } catch (Throwable e) {
                 System.err.println("Exception: " + e);
                 e.printStackTrace();

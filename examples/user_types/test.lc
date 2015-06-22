@@ -41,3 +41,19 @@ sample struct {
 
 sample anInt theFirstInt;
 sample anInt theSecondInt;
+
+sample struct {
+    struct {
+        int x;
+        int y;
+    } s1;
+
+    struct {
+        int a;
+        int b;
+    } s2;
+
+    int i;
+    double double_array[2,3,_][3][_];
+} twoStructsAndInt;
+

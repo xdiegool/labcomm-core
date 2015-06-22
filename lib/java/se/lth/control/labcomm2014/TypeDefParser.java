@@ -49,13 +49,14 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     }
 
     public interface TypeDefListener {
-        void onTypeDef(ParsedTypeDef d);
+        void onTypeDef(SigTypeDef d);
     }
 
     private HashMap<Integer,TypeDef> typeDefs;
     private HashMap<Integer,Integer> typeBindings;
     private HashSet<TypeDefListener> listeners;
     private LinkedList<ParsedSampleDef> sampleDefs;
+    private HashMap<Integer,ParsedTypeDef> pts;
     private Decoder decoder;
 
     protected TypeDefParser(Decoder d) {
@@ -64,6 +65,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         typeBindings = new HashMap<Integer,Integer>();
         listeners = new HashSet<TypeDefListener>();
         sampleDefs = new LinkedList<ParsedSampleDef>();
+        pts = new HashMap<Integer,ParsedTypeDef>();
     }
 
     public void addListener(TypeDefListener l) {
@@ -78,6 +80,8 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     public void handle_TypeDef(TypeDef d) throws java.io.IOException {
         System.out.println("handle_TypeDef: "+d.getIndex());
         typeDefs.put(d.getIndex(), d);
+        ParsedTypeDef td = parseSignatureTD(d);
+        pts.put(d.getIndex(), td);
     }
 
     public void handle_TypeBinding(TypeBinding d) throws java.io.IOException {
@@ -102,7 +106,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     private void notifyListener(TypeDefListener l, ParsedTypeDef d) {
         l.onTypeDef(d);
         if(d instanceof ParsedSampleDef) {
-            for(ParsedTypeDef dep : ((ParsedSampleDef)d).getDependencies()) {
+            for(SigTypeDef dep : ((ParsedSampleDef)d).getDependencies()) {
                 //do we want to change ParseTypeDef to have dependencies,
                 //and do recursion here?
                 //if so, do notifyListener(l, dep);
@@ -132,21 +136,21 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         return res;
     }
 
-    public LinkedList<ParsedSymbol> symbolify() {
+    public LinkedList<SignatureSymbol> symbolify() {
 
-        LinkedList<ParsedSymbol> result = new LinkedList<ParsedSymbol>();
+        LinkedList<SignatureSymbol> result = new LinkedList<SignatureSymbol>();
 
         Iterator<ParsedSampleDef> sdi = sampleDefIterator();
 
         while(sdi.hasNext()) {
-            ParsedSampleDef sd = sdi.next();
+            SigTypeDef sd = sdi.next();
             result.add(new SampleSymbol());
             result.add(sd.getType());
             result.add(new NameSymbol(sd.getName()));
 
-            Iterator<ParsedTypeDef> di = sd.getDepIterator();
+            Iterator<SigTypeDef> di = sd.getDepIterator();
             while(di.hasNext()) {
-                ParsedTypeDef d = di.next();
+                SigTypeDef d = di.next();
                 result.add(new TypeSymbol());
                 result.add(d.getType());
                 result.add(new NameSymbol(d.getName()));
@@ -156,7 +160,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     }
 
     public String symbolString() {
-        Iterator<ParsedSymbol> i = symbolify().iterator();
+        Iterator<SignatureSymbol> i = symbolify().iterator();
 
         StringBuilder sb = new StringBuilder();
 
@@ -166,324 +170,15 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         return sb.toString();
     }
 
-    /* An interface for using Visitor pattern to traverse
-     * ParsedTypeDefs
-     */
-    public interface ParsedSymbolVisitor {
-        void visit(TypeSymbol s);
-        void visit(SampleSymbol s);
-        void visit(NameSymbol s);
-        void visit(PrimitiveType t);
-        //sampleRefs are sent as primitive types
-        //Put this back if that is changed to SampleRefType
-        //void visit(SampleRefType t);
-        void visit(ParsedStructType t);
-        void visit(ParsedField t);
-        void visit(ArrayType t);
-        void visit(ParsedUserType t);
-    }
-    public abstract class ParsedSymbol{
-        public abstract void accept(ParsedSymbolVisitor v);
-    }
-
-    public class TypeSymbol extends ParsedSymbol {
-        public String toString() {
-            return "typedef ";
-        }
-        public void accept(ParsedSymbolVisitor v){
-            v.visit(this);
-        }
-    }
-
-    public class SampleSymbol extends ParsedSymbol {
-        public String toString() {
-            return "sample ";
-        }
-        public void accept(ParsedSymbolVisitor v){
-            v.visit(this);
-        }
-    }
-
-    public class NameSymbol extends ParsedSymbol {
-        private String name;
-
-        public NameSymbol(String name) {
-            this.name = name;
-        }
-
-        public String toString() {
-            return name;
-        }
-        public void accept(ParsedSymbolVisitor v){
-            v.visit(this);
-        }
-    }
-
-    public abstract class ParsedType extends ParsedSymbol{
-    }
-
 // SampleRefType currently not sent, se above
-//    public class SampleRefType extends ParsedType {
-//        public void accept(ParsedSymbolVisitor v) {
+//    public class SampleRefType extends DataType {
+//        public void accept(SignatureSymbolVisitor v) {
 //            v.visit(this);
 //        }
 //
 //        public String toString() {
 //            return "sample";}
 //    }
-
-    public class PrimitiveType extends ParsedType {
-        private final String name;
-        private int tag;
-
-        String getName() {
-            return name;
-        }
-
-        int getTag() {
-            return tag;
-        }
-        PrimitiveType(int tag) {
-            this.tag = tag;
-            switch(tag) {
-                case Constant.BOOLEAN:
-                    this.name = "boolean";
-                    break;
-                case Constant.BYTE:
-                    this.name = "byte";
-                    break;
-                case Constant.SHORT:
-                    this.name = "short";
-                    break;
-                case Constant.INT:
-                    this.name = "int";
-                    break;
-                case Constant.LONG:
-                    this.name = "long";
-                    break;
-                case Constant.FLOAT:
-                    this.name = "float";
-                    break;
-                case Constant.DOUBLE:
-                    this.name = "double";
-                    break;
-                case Constant.STRING:
-                    this.name = "string";
-                    break;
-                case Constant.SAMPLE:
-                    this.name = "sample";
-                    break;
-                default:
-                    this.name = "??? unknown tag 0x"+Integer.toHexString(tag);
-            }
-        }
-
-        public void accept(ParsedSymbolVisitor v) {
-            v.visit(this);
-        }
-
-        public String toString() {
-            return name;}
-    }
-
-    public class ParsedStructType extends ParsedType {
-        private ParsedField fields[];
-
-        ParsedStructType(int nParsedFields) {
-            this.fields = new ParsedField[nParsedFields];
-        }
-
-        public ParsedField[] getFields() {
-            return fields;
-        }
-
-        void setParsedField(int idx, ParsedField f) {
-            fields[idx] = f;
-        }
-
-        public boolean isVoid() {
-            return fields.length == 0;
-        }
-
-        public String toString() {
-            if(isVoid()) { //void type is empty struct
-                return "void";
-            } else {
-                StringBuilder sb = new StringBuilder();
-                sb.append("struct {\n");
-                for(ParsedField f : fields) {
-                    sb.append(f.toString());
-                    sb.append(";\n");
-                }
-                sb.append("}");
-                return sb.toString();
-            }
-        }
-
-        public void accept(ParsedSymbolVisitor v) {
-            v.visit(this);
-        }
-    }
-
-    public class ParsedField extends ParsedSymbol{
-        private ParsedType type;
-        private String name;
-
-        ParsedField(String name, ParsedType type) {
-            this.name = name;
-            this.type = type;
-        }
-
-        public ParsedType getType() {
-            return type;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String toString() {
-            return type.toString() + " " + name;
-        }
-
-        public void accept(ParsedSymbolVisitor v) {
-            v.visit(this);
-        }
-    }
-
-    public class ArrayType extends ParsedType {
-        private int idx[];
-        private ParsedType type;
-
-        ArrayType(int idx[], ParsedType elementType) {
-            this.idx = idx;
-            this.type = elementType;
-        }
-
-        public ParsedType getType() {
-            return type;
-        }
-
-        public int[] getIdx() {
-            return idx;
-        }
-
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append(type.toString());
-            for(int i : idx) {
-                sb.append("["+(i>0 ? i : "_")+"]");
-            }
-            return sb.toString();
-        }
-
-        public void accept(ParsedSymbolVisitor v) {
-            v.visit(this);
-        }
-    }
-
-    public class ParsedUserType extends ParsedType {
-        private String name;
-        public String getName() {
-            return name;
-        }
-
-        public String toString() {
-            return name;
-        }
-
-        ParsedUserType(String name) {
-            this.name = name;
-        }
-
-        public void accept(ParsedSymbolVisitor v) {
-            v.visit(this);
-        }
-    }
-
-    public class ParsedTypeDef{
-       private int idx;
-       private String name;
-       private ParsedType type;
-
-       ParsedTypeDef(int idx, String name){
-            this.idx = idx;
-            this.name = name;
-       }
-
-       ParsedTypeDef(int idx, String name, ParsedType type) {
-           this(idx, name);
-           this.type = type;
-       }
-
-       /** To be overridden in ParsedSampleDef
-        */
-       public boolean isSampleDef() {
-           return false;
-       }
-
-       void setType(ParsedType type) {
-           this.type = type;
-       }
-
-       ParsedType getType() {
-           return type;
-       }
-
-       int getIndex() {
-           return idx;
-       }
-
-       public String getName() {
-            return name;
-       }
-
-       public String toString() {
-          return type.toString();
-       }
-
-       public int hashCode() {
-           return name.hashCode();
-       }
-
-       public boolean equals(Object o) {
-            if(! (o instanceof ParsedTypeDef)){
-                return false;
-            } else {
-                ParsedTypeDef other = (ParsedTypeDef) o;
-                return other.idx == idx && other.name.equals(name);
-            }
-       }
-
-       public void accept(ParsedSymbolVisitor v) {
-            type.accept(v);
-       }
-    }
-
-    public class ParsedSampleDef extends ParsedTypeDef{
-
-        private HashSet<ParsedTypeDef> deps;
-        ParsedSampleDef(ParsedTypeDef td) {
-            super(td.getIndex(), td.getName(), td.getType());
-            this.deps = new HashSet<ParsedTypeDef>();
-        }
-
-        void addDependency(ParsedTypeDef d) {
-            deps.add(d);
-        }
-
-        @Override
-        public boolean isSampleDef() {
-            return true;
-        }
-        private HashSet<ParsedTypeDef> getDependencies() {
-            return deps;
-        }
-
-        Iterator<ParsedTypeDef> getDepIterator() {
-            return deps.iterator();
-        }
-    }
 
     private class ParserState {
         private ByteArrayInputStream bis;
@@ -548,6 +243,14 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
             return current.getName();
         }
 
+        void addTypeUse(int tag) {
+            SigTypeDef td = pts.get(tag);
+            if(td != null) {
+                currentParsed.addDependency(td);
+            } else {
+                System.out.println("******* WARNING: TypeDefParser:addTypeUse ("+tag+"): null???");
+            }
+        }
         /** return name, (if any, or "") for now */
         String decodeIntentions() throws IOException {
             int n = decodePacked32() & 0xffffffff;
@@ -605,63 +308,76 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         }
     }
 
+    private ParsedTypeDef parseSignatureTD(TypeDef td) throws IOException{
+        return parseSignatureTD(td, new ParserState(td));
+    }
+
+    private ParsedTypeDef parseSignatureTD(TypeDef td, ParserState s) throws IOException{
+
+        ParsedTypeDef result=null;
+        s.popType();
+        result = parseTypeDef(s);
+        return result;
+    }
+
     public ParsedSampleDef parseSignature(TypeDef td) throws IOException{
         ParserState s = new ParserState(td);
 
         ParsedSampleDef result=null;
         try {
-            s.popType();
-            result = parseSampleTypeDef(s);
-            while(s.moreTypes()) {
-                s.popType();
-                result.addDependency(parseTypeDef(s));
-            }
+            result = new ParsedSampleDef(parseSignatureTD(td,s));
+
+//            while(s.moreTypes()) {
+//                s.popType();
+//                result.addDependency(parseTypeDef(s));
+//            }
         } catch(java.io.EOFException ex) {
             System.out.println("EOF: self_binding");
         }
         return result;
     }
 
-    private ArrayType  parseArray(ParserState in) throws IOException {
+    private SigArrayType  parseArray(ParserState in) throws IOException {
         int numIdx = in.decodePacked32();
         int idx[] = new int[numIdx];
         for(int i=0; i<numIdx; i++){
             idx[i] = in.decodePacked32();
         }
         int type = in.decodePacked32();
-        ParsedType elementType = lookupType(type, in);
-        ArrayType result = new ArrayType(idx, elementType);
+        DataType elementType = lookupType(type, in);
+        SigArrayType result = new SigArrayType(elementType, idx);
         for(int i=0; i<numIdx; i++){
             idx[i] = in.decodePacked32();
         }
         return result;
     }
 
-    private ParsedStructType parseStruct(ParserState in) throws IOException {
-        int numParsedFields = in.decodePacked32();
-        ParsedStructType result = new ParsedStructType(numParsedFields);
-        for(int i=0; i<numParsedFields; i++) {
-            result.setParsedField(i, parseParsedField(in));
+    private SigStructType parseStruct(ParserState in) throws IOException {
+        int numSigFields = in.decodePacked32();
+        SigStructType result = new SigStructType(numSigFields);
+        for(int i=0; i<numSigFields; i++) {
+            result.addField(parseSigField(in));
         }
         return result;
     }
 
-    private ParsedField parseParsedField(ParserState in) throws IOException {
+    private SigField parseSigField(ParserState in) throws IOException {
         String name = in.decodeIntentions();
-        return new ParsedField(name, parseType(in, false));
+        return new SigField(name, parseType(in, false));
     }
 
-    private ParsedType lookupType(int tag, ParserState in) {
-        ParsedType result;
+    private DataType lookupType(int tag, ParserState in) {
+        DataType result;
         if(tag >= Constant.FIRST_USER_INDEX) {
                 TypeDef td = typeDefs.get(tag);
-                result = new ParsedUserType(td.getName());
+                result = new SigUserType(td.getName());
+                in.addTypeUse(tag);
                 in.pushType(tag);
 // sampleRefs are sent as primitive types, see above
 //        } else if(tag == Constant.SAMPLE) {
 //                result = new SampleRefType();
         } else {
-                result = new PrimitiveType(tag);
+                result = new SigPrimitiveType(tag);
         }
         return result;
     }
@@ -673,13 +389,22 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
     private ParsedTypeDef parseTypeDef(ParserState in) throws IOException {
         return parseTypeDef(in, false);
     }
+
+    private void addParsedTypeDef(ParsedTypeDef td) {
+        int idx = td.getIndex();
+        if(idx>=0x40) {
+            pts.put(idx, td);
+        }
+    }
+
     private ParsedTypeDef parseTypeDef(ParserState in, boolean parseIntentions) throws IOException {
         ParsedTypeDef result = in.newTypeDef();
         result.setType(parseType(in, false));
+        addParsedTypeDef(result);
         return result;
     }
 
-    private ParsedType parseType(ParserState in, boolean parseIntentions) throws IOException {
+    private DataType parseType(ParserState in, boolean parseIntentions) throws IOException {
         if(parseIntentions) {
             String intentions = in.decodeIntentions();
             if(intentions.length()>0) {
@@ -692,7 +417,7 @@ public class TypeDefParser implements TypeDef.Handler, TypeBinding.Handler {
         }
 
         int tag = in.decodePacked32();
-        ParsedType result = null;
+        DataType result = null;
         switch(tag) {
             case 0:
                 System.out.println("SELF");

@@ -14,28 +14,28 @@ aspect ArrayRewrite {
     to FixedArrayType  { 
       if (getNumDim() == 1) {
         return new FixedArrayType(getDataType(), 
-				  getDim(0).getExpList());
+				  getDim(0));
       } else {
         List l = new List();
         for (int i = 1 ; i < getNumDim() ; i++) {
 	  l.add(getDim(i));
         }
         return new FixedArrayType(new ParseArrayType(getDataType(), l), 
-				  getDim(0).getExpList());
+				  getDim(0));
       }
     }
     when (getDim(0).isVariable()) 
     to VariableArrayType  { 
       if (getNumDim() == 1) {
         return new VariableArrayType(getDataType(), 
-				     getDim(0).getExpList());
+				     getDim(0));
       } else {
         List l = new List();
         for (int i = 1 ; i < getNumDim() ; i++) {
 	  l.add(getDim(i));
         }
         return new VariableArrayType(new ParseArrayType(getDataType(), l), 
-				     getDim(0).getExpList());
+				     getDim(0));
       }
     }
   }

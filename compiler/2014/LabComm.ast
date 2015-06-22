@@ -35,7 +35,7 @@ PrimType           : DataType ::= <Name:String> <Token:int>;
 UserType           : DataType ::= <Name:String>;
 StructType         : DataType ::= Field*;
 ParseArrayType     : DataType ::= DataType Dim*;
-abstract ArrayType : DataType ::= DataType Exp*;
+abstract ArrayType : DataType ::= DataType Dim;
 VariableArrayType  : ArrayType;
 FixedArrayType     : ArrayType;
 
