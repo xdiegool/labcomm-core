@@ -15,6 +15,7 @@ BuildRequires: gcc
 BuildRequires: ant
 BuildRequires: java
 BuildRequires: mono-core
+BuildRequires: python2-devel
 
 %description
 LabComm communication protocol
@@ -67,8 +68,8 @@ install -m u=r,g=r,o=r lib/csharp/labcomm2014.dll ${RPM_BUILD_ROOT}/usr/lib
 #
 # Python
 #
-install -d ${RPM_BUILD_ROOT}/%{python_sitelib}/labcomm2014
-install lib/python/labcomm2014/* ${RPM_BUILD_ROOT}/%{python_sitelib}/labcomm2014
+install -d ${RPM_BUILD_ROOT}/%{python2_sitelib}/labcomm2014
+install lib/python/labcomm2014/* ${RPM_BUILD_ROOT}/%{python2_sitelib}/labcomm2014
 
 %files
 %defattr (-, root, root)
