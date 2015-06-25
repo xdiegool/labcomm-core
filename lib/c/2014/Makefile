@@ -37,9 +37,9 @@ ifeq ($(LABCOMM_EXPERIMENTAL),true)
 	    experimental/labcomm_udp_reader_writer.o
 endif
 
-# Enable experimental objects by `make LABCOMM_SIG_PARSER=true`
+# Enable experimental objects by `make labcomm2014_sig_PARSER=true`
 ifeq ($(LABCOMM_SIG_PARSER),true)
-    OBJS += experimental/labcomm_sig_parser.o 
+    OBJS += experimental/labcomm2014_sig_parser.o 
 endif
 
 LABCOMM_JAR=../../../compiler/labcomm$(LIBVERSION)_compiler.jar
@@ -95,9 +95,9 @@ distclean: clean
 ../liblabcomm$(LIBVERSION).a: $(OBJS)
 	ar -r $@ $^
 
-# Enable sig parser objects by `make LABCOMM_SIG_PARSER=true`
+# Enable sig parser objects by `make labcomm2014_sig_PARSER=true`
 ifeq ($(LABCOMM_SIG_PARSER),true)
-experimental/test_sig_parser : experimental/labcomm_sig_parser.o experimental/test_sig_parser.c
+experimental/test_sig_parser : experimental/labcomm2014_sig_parser.o experimental/test_sig_parser.c
 endif
 
 # compilation rules 
