@@ -272,7 +272,7 @@ int labcomm2014_get_local_type_index(const struct labcomm2014_signature *signatu
 int labcomm2014_internal_sizeof(const struct labcomm2014_signature *signature,
                             void *v)
 {
-  int length = signature->encoded_size(v);
+  int length = signature->encoded_size(signature, v);
   return (labcomm2014_size_packed32(signature->index) +
           labcomm2014_size_packed32(length) +
           length);

@@ -147,7 +147,7 @@ static int do_encode(
   struct encoder *ie = e->context;
 
   index = labcomm2014_get_local_index(signature);
-  length = (signature->encoded_size(value));
+  length = (signature->encoded_size(signature, value));
   labcomm2014_scheduler_writer_lock(e->scheduler);
   if (! LABCOMM_SIGNATURE_ARRAY_GET(ie->registered, int, index, 0)) {
     result = -EINVAL;

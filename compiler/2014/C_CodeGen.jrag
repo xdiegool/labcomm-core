@@ -1458,7 +1458,7 @@ aspect C_Sizeof {
 
   public void SampleDecl.C_emitSizeofDeclaration(C_env env) {
     env.println("extern int labcomm2014_sizeof_" + env.prefix + getName() +
-        "(" + env.prefix + getName() + " *v);");
+        "( const struct labcomm2014_signature *sig, " + env.prefix + getName() + " *v);");
   }
 
   public int Decl.C_fixedSizeof() {
@@ -1471,7 +1471,7 @@ aspect C_Sizeof {
   public void SampleDecl.C_emitSizeof(C_env env) {
     env = env.nestStruct("(*v)");
     env.println("int labcomm2014_sizeof_" + env.prefix + getName() +
-        "(" + env.prefix + getName() + " *v)");
+        "( const struct labcomm2014_signature *sig, " + env.prefix + getName() + " *v)");
     env.println("{");
     env.indent();
     env.println("return labcomm2014_internal_sizeof(" +
@@ -1535,7 +1535,7 @@ aspect C_Sizeof {
 
   public void SampleDecl.C_emitSizeofValue(C_env env) {
     env = env.nestStruct("(*v)");
-    env.println("static int sizeof_" + env.prefix + getName() + "(void *vv)");
+    env.println("static int sizeof_" + env.prefix + getName() + "( const struct labcomm2014_signature *sig, void *vv)");
     env.println("{");
     env.indent();
     env.println("int result = 0;");

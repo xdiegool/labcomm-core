@@ -217,10 +217,10 @@ static void test_encode_decode(struct labcomm2014_encoder *encoder,
   err = test_decode_one(decoder);
   fprintf(stderr, "decode of sample %u * 2 * %u -> size=%d err=%d\n", 
 	  n_0, n_2, writer.pos, err);
-  if (writer.pos != labcomm2014_sizeof_test_sample_test_var(&encoder_var)) {
+  if (writer.pos != labcomm2014_sizeof_test_sample_test_var(NULL, &encoder_var)) {
     fprintf(stderr, "Incorrect sizeof %u * 2 * %u (%d != %d)\n",
 	    n_0, n_2, 
-	    writer.pos, labcomm2014_sizeof_test_sample_test_var(&encoder_var));
+	    writer.pos, labcomm2014_sizeof_test_sample_test_var(NULL, &encoder_var));
     exit(1);
   }
   if (writer.pos != expected) {
