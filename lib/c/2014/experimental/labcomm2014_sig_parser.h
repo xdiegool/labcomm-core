@@ -1,6 +1,6 @@
 /* labcomm2014_sig_parser.h:
  * an example parser for labcomm signatures, illustrating how to skip samples
- * based on their signature. Intended as an embryo for introducing this 
+ * based on their signature. Intended as an embryo for introducing this
  * functionality into the lib to allow a channel to survive types with no
  * registered handler.
  */
@@ -11,7 +11,7 @@
 #include "labcomm2014.h"
 #include "labcomm2014_private.h"
 
-#define DEBUG 
+#undef DEBUG
 #define QUIET_STACK	   // don't print anything for push/pop
 #undef DEBUG_STACK_VERBOSE // dump stack, otherwise just print value of top
 
@@ -26,7 +26,7 @@
 #ifdef STATIC_ALLOCATION
 
 #define MAX_SIGNATURES 100
-#define MAX_NAME_LEN 32 
+#define MAX_NAME_LEN 32
 #define MAX_SIG_LEN 128
 #define TYPEDEF_BASE MAX_SIGNATURES
 
@@ -47,7 +47,7 @@ typedef struct {
 
 	size_t max_signatures;                 // set by init(...)
 	size_t max_name_len;
-	size_t max_sig_len; 
+	size_t max_sig_len;
     // arrays for signatures and typedefs
     // signatures start at index 0
     // typedefs start at index MAX_SIGNATURES
@@ -56,7 +56,7 @@ typedef struct {
 
 	unsigned int signatures_length[2*MAX_SIGNATURES];
 	unsigned int signatures_name_length[2*MAX_SIGNATURES];
-	unsigned char signatures_name[2*MAX_SIGNATURES][MAX_NAME_LEN]; 
+	unsigned char signatures_name[2*MAX_SIGNATURES][MAX_NAME_LEN];
 	unsigned char signatures[2*MAX_SIGNATURES][MAX_SIG_LEN];
 #else
 	struct labcomm2014_signature *sig_ts;           // [2*MAX_SIGNATURES]
@@ -71,9 +71,10 @@ typedef struct {
 } labcomm2014_sig_parser_t;
 
 
-int labcomm2014_sig_parser_init(labcomm2014_sig_parser_t *p, size_t size, 
-                            size_t stacksize, size_t max_num_signatures, 
+int labcomm2014_sig_parser_init(labcomm2014_sig_parser_t *p, size_t size,
+                            size_t stacksize, size_t max_num_signatures,
                             size_t max_name_len, size_t max_sig_len);
+void labcomm2014_sig_parser_free(labcomm2014_sig_parser_t *b);
 int labcomm2014_sig_parser_read_file(labcomm2014_sig_parser_t *p, FILE *f);
 
 int accept_packet(labcomm2014_sig_parser_t *p);
@@ -89,12 +90,12 @@ void dump_signature(labcomm2014_sig_parser_t *p,unsigned int uid);
 int more(labcomm2014_sig_parser_t *b);
 
 
-/* parse signature and skip the corresponding bytes in the labcomm2014_sig_parser 
+/* parse signature and skip the corresponding bytes in the labcomm2014_sig_parser
  */
 int skip_packed_sample_data(labcomm2014_sig_parser_t *p, struct labcomm2014_signature *sig);
 
 #ifdef QUIET
-#define INFO_PRINTF(format, args...)  
+#define INFO_PRINTF(format, args...)
 #undef VERBOSE
 #else
 #define INFO_PRINTF(format, args...)  \
@@ -105,10 +106,10 @@ int skip_packed_sample_data(labcomm2014_sig_parser_t *p, struct labcomm2014_sign
 #define VERBOSE_PRINTF(format, args...)  \
       printf (format , ## args)
 #else
-#define VERBOSE_PRINTF(format, args...)  
+#define VERBOSE_PRINTF(format, args...)
 #endif
 
-#undef EXIT_WHEN_RECEIVING_DATA 
+#undef EXIT_WHEN_RECEIVING_DATA
 
 #undef RETURN_STRINGS  //  not really tested
 

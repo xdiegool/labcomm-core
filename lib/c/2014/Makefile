@@ -37,7 +37,7 @@ ifeq ($(LABCOMM_EXPERIMENTAL),true)
 	    experimental/labcomm_udp_reader_writer.o
 endif
 
-# Enable experimental objects by `make labcomm2014_sig_PARSER=true`
+# Enable experimental objects by `make LABCOMM_SIG_PARSER=true`
 ifeq ($(LABCOMM_SIG_PARSER),true)
     OBJS += experimental/labcomm2014_sig_parser.o 
 endif

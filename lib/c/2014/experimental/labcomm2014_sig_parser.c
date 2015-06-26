@@ -167,6 +167,27 @@ int labcomm2014_sig_parser_init(labcomm2014_sig_parser_t *b, size_t buffer_size,
 	return b->c == NULL || b->val_stack == NULL || b->ptr_stack == NULL;
 }
 
+/* free the objects allocated by labcomm_sig_parser_init(b)
+ * NB! does not free b itself */
+void labcomm2014_sig_parser_free(labcomm2014_sig_parser_t *b)
+{
+    int i;
+	free(b->c);
+	free(b->val_stack);
+	free(b->ptr_stack);
+#ifndef STATIC_ALLOCATION
+	for(i = 0; i<b->max_signatures; i++) {
+		free(b->signatures[i]);
+		free(b->signatures_name[i]);
+	}
+	free(b->signatures);
+	free(b->signatures_name);
+	free(b->signatures_name_length);
+	free(b->signatures_length);
+	free(b->sig_ts);
+#endif
+}
+
 int labcomm2014_sig_parser_read_file(labcomm2014_sig_parser_t *b, FILE *f) {
         int s = fread(b->c, sizeof(char), b->capacity, f);
         b->size = s;

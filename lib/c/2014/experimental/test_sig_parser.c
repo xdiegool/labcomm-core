@@ -41,5 +41,6 @@ int main() {
 		printf("--------------------------------------------- new packet: \n");
 	} while(more(&p) && accept_packet(&p)); 
 	printf("EOF\n");
+    labcomm2014_sig_parser_free(&p);
 }
 
