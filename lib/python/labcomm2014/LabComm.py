@@ -874,7 +874,11 @@ class Decoder(Codec):
         super(Decoder, self).__init__()
         self.reader = reader
         self.version = version
-        
+        self.handlers = {}
+
+    def register_handler(self, sig, handler):
+        self.handlers[str(sig)] = handler
+
     def unpack(self, format):
         size = packer.calcsize(format)
         data = ""
@@ -902,6 +906,17 @@ class Decoder(Codec):
             self.skip(length)
         else:    
             raise Exception("Invalid type index %d" % index)
+
+    def runOne(self):
+        data,decl = self.decode()
+        if decl:
+            if data:
+                if str(decl) in self.handlers:
+                    handler = self.handlers[str(decl)]
+                    handler(data)
+                else:
+                    print ("No handler for %s" % decl.name )
+
 
     def decode(self):
         while True:
