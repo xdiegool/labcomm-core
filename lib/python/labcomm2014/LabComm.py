@@ -909,14 +909,16 @@ class Decoder(Codec):
 
     def runOne(self):
         data,decl = self.decode()
+         # decode any signatures until next sample
+        while data == None:
+             data,decl = self.decode()
         if decl:
-            if data:
+            if data != None:
                 if str(decl) in self.handlers:
                     handler = self.handlers[str(decl)]
                     handler(data)
                 else:
                     print ("No handler for %s" % decl.name )
-
 
     def decode(self):
         while True:
