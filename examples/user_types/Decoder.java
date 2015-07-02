@@ -4,15 +4,9 @@ import java.io.InputStream;
 import java.io.IOException;
 
 import se.lth.control.labcomm2014.DecoderChannel;
-import se.lth.control.labcomm2014.TypeDef;
-import se.lth.control.labcomm2014.TypeDefParser;
-//import se.lth.control.labcomm2014.TypeBinding;
 
 public class Decoder
   implements twoLines.Handler,
-//             TypeDef.Handler,
-//             TypeBinding.Handler,
-             TypeDefParser.TypeDefListener,
              twoInts.Handler,
              theFirstInt.Handler,
              theSecondInt.Handler,
@@ -21,7 +15,6 @@ public class Decoder
 {
 
   private DecoderChannel decoder;
-  private TypeDefParser tdp;
 
   public Decoder(InputStream in) 
     throws Exception 
@@ -34,13 +27,7 @@ public class Decoder
     theSecondInt.register(decoder, this);
     intAndRef.register(decoder, this);
     doavoid.registerSampleRef(decoder);
-    this.tdp = TypeDefParser.registerTypeDefParser(decoder); 
- //   TypeDef.register(decoder, this);
- //   TypeBinding.register(decoder, this);
 
-        
-    tdp.addListener(this);
-    
     try {
       System.out.println("Running decoder.");
       decoder.run();
@@ -55,27 +42,6 @@ public class Decoder
 
   private String genLine(line l) {
     return "Line from "+genPoint(l.start)+" to "+genPoint(l.end);
-  }
-
-//  public void handle_TypeDef(TypeDef d) throws java.io.IOException {
-//    System.out.println("Got TypeDef: "+d.getName()+"("+d.getIndex()+")");
-//  }
-//
-//  public void handle_TypeBinding(TypeBinding d) throws java.io.IOException {
-//    System.out.println("Got TypeBinding: "+d.getSampleIndex()+" --> "+d.getTypeIndex()+"");
-//  }
-
-  public void onTypeDef(TypeDefParser.ParsedTypeDef d) {
-    System.out.println("ontype_def: ");
-    System.out.print((d.isSampleDef()?"sample ":"typedef ")+d);
-    System.out.println(" "+d.getName()+";");
-    //for(byte b: d.getSignature()) {
-    //   System.out.print(Integer.toHexString(b)+" ");
-    //}
-    //System.out.println(); 
-    //try {
-    //   tdp.parseSignature(d.getIndex());
-    //} catch(IOException ex) { ex.printStackTrace();}   
   }
 
   public void handle_doavoid() throws java.io.IOException {
@@ -104,7 +70,6 @@ public class Decoder
     System.out.println("Line l1: "+genLine(d.l1));
     System.out.println("              Line l2: "+genLine(d.l2));
   }
-
 
   public static void main(String[] arg) throws Exception {
     Decoder example = new Decoder(

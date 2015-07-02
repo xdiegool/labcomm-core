@@ -85,9 +85,9 @@ if __name__ == '__main__':
         result.extend(split_match('^[^|]*\|(.*)$', """
         |    RenamingRegistry registry = new RenamingRegistry();
         |    decoder = new RenamingDecoder(
-        |        decoder, registry, s -> "prefix:" + s + ":suffix");
+        |        decoder, registry, new RenamingDecoder.Rename() {public String rename(String s){return "prefix:" + s + ":suffix";}});
         |    encoder = new RenamingEncoder(
-        |        encoder, registry, s -> "prefix:" + s + ":suffix");
+        |        encoder, registry, new RenamingEncoder.Rename() {public String rename(String s){return "prefix:" + s + ":suffix";}});
         """))
     for func,arg in shuffle(sample):
         result.append('    %s.register(decoder, this);' % func)
