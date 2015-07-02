@@ -83,6 +83,9 @@ run:
 	@echo "************ running python decoder (from wiki_example):"
 	@PYTHONPATH=${LCDIR}/lib/python ../wiki_example/example_decoder.py encoded_data_j LabComm2014
 
+	@echo "************ running python decoder (with handlers):"
+	@PYTHONPATH=${LCDIR}/lib/python:gen:. ./example_handlers.py encoded_data_j LabComm2014
+
 	@echo "************ running C encoder: *****************"
 	@${LD_LIBRARY_PATH_NAME}=${LCDIR}/lib/c/ ./example_encoder encoded_data_c
 
@@ -95,6 +98,9 @@ run:
 	@echo "************ running python decoder (from wiki_example):"
 	@PYTHONPATH=${LCDIR}/lib/python ../wiki_example/example_decoder.py encoded_data_c LabComm2014
 
+	@echo "************ running python decoder (with handlers):"
+	@PYTHONPATH=${LCDIR}/lib/python:gen:. ./example_handlers.py encoded_data_j LabComm2014
+
 	@echo "************ running python encoder: *****************"
 	@PYTHONPATH=${LCDIR}/lib/python:${GENDIR} ./example_encoder.py encoded_data_p LabComm2014
 
@@ -106,6 +112,10 @@ run:
 
 	@echo "************ running python decoder (from wiki_example):"
 	PYTHONPATH=${LCDIR}/lib/python ../wiki_example/example_decoder.py encoded_data_p LabComm2014
+
+	@echo "************ running python decoder (with handlers):"
+	@PYTHONPATH=${LCDIR}/lib/python:gen:. ./example_handlers.py encoded_data_j LabComm2014
+
 
 runwcs: build ExampleEncoder.exe ExampleDecoder.exe
 	@echo
