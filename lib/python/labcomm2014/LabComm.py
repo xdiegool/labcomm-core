@@ -876,8 +876,8 @@ class Decoder(Codec):
         self.version = version
         self.handlers = {}
 
-    def register_handler(self, sig, handler):
-        self.handlers[str(sig)] = handler
+    def register_handler(self, decl, handler):
+        self.handlers[decl] = handler
 
     def unpack(self, format):
         size = packer.calcsize(format)
@@ -914,8 +914,8 @@ class Decoder(Codec):
              data,decl = self.decode()
         if decl:
             if data != None:
-                if str(decl) in self.handlers:
-                    handler = self.handlers[str(decl)]
+                if decl in self.handlers:
+                    handler = self.handlers[decl]
                     handler(data)
                 else:
                     print ("No handler for %s" % decl.name )
