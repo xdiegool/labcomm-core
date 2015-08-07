@@ -499,9 +499,15 @@ aspect Java_Class {
   public void Decl.Java_emitDispatcher(Java_env env, boolean isSample) {
     // String genericStr = ""; //env.versionHasMetaData()?"<"+getName()+">":""; 
     String genericStr = "<"+getName()+">"; 
-    env.println("public static final Dispatcher dispatcher = new Dispatcher();");
+    env.println("private static Dispatcher dispatcher = new Dispatcher();");
     env.println();
     env.println("public SampleDispatcher getDispatcher() {");
+    env.indent();
+    env.println("return dispatcher;");
+    env.unindent();
+    env.println("}");
+    env.println();
+    env.println("public static SampleDispatcher staticGetDispatcher() {");
     env.indent();
     env.println("return dispatcher;");
     env.unindent();

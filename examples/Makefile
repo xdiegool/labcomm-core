@@ -1,6 +1,6 @@
 SUBDIRS=duck_typing dynamic jgrafchart robot simple tcp \
-	twoway wiki_example
-# user_types # Disabled until typeefs are reimplemented in library
+	twoway wiki_example user_types
+# user_types # Disabled until typedefs are reimplemented in library
 
 .PHONY: all
 
@@ -14,11 +14,11 @@ UNAME_S=$(shell uname -s)
 test:
 	echo More to be done...
 ifeq ($(UNAME_S),Darwin)
-#	$(MAKE) -C user_types all 
+	$(MAKE) -C user_types test 
 else	
 	cd simple ; sh compile.sh && sh run.sh
 	$(MAKE) -C  wiki_example test
-#	$(MAKE) -C user_types test 
+	$(MAKE) -C user_types test 
 endif	
 	$(MAKE) -C duck_typing test
 	$(MAKE) -C twoway test 

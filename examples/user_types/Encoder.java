@@ -31,7 +31,7 @@ public class Encoder
       
     intAndRef iar = new intAndRef();
     iar.x = 17;
-    iar.reference = doavoid.dispatcher;
+    iar.reference = doavoid.staticGetDispatcher();
 
     System.out.println("Encoding intAndRef");
     intAndRef.encode(encoder, iar);
