@@ -637,8 +637,7 @@ class struct(type_decl):
         return not self.__eq__(other)
 
     def __hash__(self):
-        tmp = str(self.field)
-        return hash(self.__class__) ^ hash(tmp)
+        return hash(self.__class__) ^ hash(self.field)
 
     def encode_decl(self, encoder):
         encoder.encode_type(i_STRUCT)
@@ -961,6 +960,11 @@ class Decoder(Codec):
                     handler(data)
                 else:
                     print ("No handler for %s" % decl.name )
+                    for key, value in self.handlers.iteritems():
+                        if key == decl:
+                            print "but value %s == decl %s" % (key,decl)
+                            print "hashes %d : %d" % (hash(key),hash(decl))
+                            raise Exception()
 
     def decode(self):
         while True:
