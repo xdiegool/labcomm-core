@@ -17,7 +17,7 @@ ifeq ($(UNAME_S),Darwin)
 else	
 	cd simple ; sh compile.sh && sh run.sh
 	$(MAKE) -C  wiki_example test
-	$(MAKE) -C user_types test 
+	$(MAKE) -C user_types all 
 endif	
 	$(MAKE) -C duck_typing test
 	$(MAKE) -C twoway test 
